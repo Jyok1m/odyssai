@@ -5,6 +5,7 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations } from "next-intl/server";
 
 import { JsonLd } from "@/components/seo/json-ld";
+import { Toaster } from "@/components/ui/toaster";
 import { routing } from "@/i18n/routing";
 import { OG_LOCALE, SITE_URL, alternatesFor } from "@/lib/seo";
 import { BRAND_INK, SITE_NAME } from "@/lib/site";
@@ -130,6 +131,7 @@ export default async function LocaleLayout({
     >
       <body className="min-h-full bg-ink text-vellum">
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <Toaster />
         <JsonLd locale={locale} />
       </body>
     </html>
