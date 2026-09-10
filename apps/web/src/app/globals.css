@@ -60,6 +60,8 @@
   --container-wrap: 1120px;
   /* Longueur de ligne confortable (.hero .meta du kit). */
   --container-measure: 52ch;
+  /* Largeur des chapeaux de section (.sec-head du kit). */
+  --container-headline: 64ch;
 }
 
 /* En `inline`, les utilitaires pointent sur `var(--accent)` au lieu d'en

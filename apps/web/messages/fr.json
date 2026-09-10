@@ -1,31 +1,259 @@
 {
-  "Metadata": {
-    "title": "OdyssAI — Le multivers narré par IA",
-    "description": "Jeu narratif multivers : ton propre univers, narré par une IA, relié à ceux des autres joueurs par un Lore Général commun."
-  },
-  "Nav": {
-    "home": "OdyssAI, retour à l’accueil",
-    "concept": "Concept",
-    "universes": "Univers",
-    "multiverse": "Multivers",
-    "lore": "Lore",
-    "login": "Se connecter",
-    "openMenu": "Ouvrir le menu principal",
-    "closeMenu": "Fermer le menu"
-  },
-  "Hero": {
-    "badge": "Alpha privée en préparation.",
-    "badgeCta": "En savoir plus",
-    "title": "Crée n'importe quel monde. Puis pars visiter ceux des autres.",
-    "description": "Chaque joueur façonne son propre monde, guidé par un narrateur IA. Les univers se croisent, échangent personnages et événements, et partagent un même Lore Général. L’IA raconte, le moteur décide.",
-    "primaryCta": "Créer mon univers",
-    "secondaryCta": "Découvrir le concept"
-  },
-  "LocaleSwitcher": {
-    "label": "Langue",
-    "current": "Langue actuelle : {language}"
-  },
-  "Seo": {
-    "genre": "Jeu de rôle narratif, multivers"
-  }
+	"Metadata": {
+		"title": "OdyssAI : Le multivers narré par IA",
+		"description": "Jeu narratif multivers : ton propre univers, narré par une IA, relié à ceux des autres joueurs par un Lore Général commun."
+	},
+	"Nav": {
+		"home": "OdyssAI, retour à l’accueil",
+		"concept": "Concept",
+		"universes": "Univers",
+		"multiverse": "Multivers",
+		"lore": "Lore",
+		"login": "Se connecter",
+		"openMenu": "Ouvrir le menu principal",
+		"closeMenu": "Fermer le menu",
+		"glossary": "Glossaire"
+	},
+	"Hero": {
+		"badge": "Alpha privée en préparation.",
+		"badgeCta": "En savoir plus",
+		"title": "Crée n'importe quel monde. Puis pars visiter ceux des autres.",
+		"description": "Chaque joueur façonne son propre monde, guidé par un narrateur IA. Les univers se croisent, échangent personnages et événements, et partagent un même Lore Général. L’IA raconte, le moteur décide.",
+		"primaryCta": "Créer mon univers",
+		"secondaryCta": "Découvrir le concept"
+	},
+	"LocaleSwitcher": {
+		"label": "Langue",
+		"current": "Langue actuelle : {language}"
+	},
+	"Seo": {
+		"genre": "Jeu de rôle narratif, multivers"
+	},
+	"Alpha": {
+		"closed": "L'alpha privée n'est pas encore ouverte. Reviens bientôt."
+	},
+	"Concept": {
+		"metaTitle": "Concept",
+		"metaDescription": "Un jeu de rôle narratif en ligne, mené par un narrateur IA qui se souvient de tout. Tes choix ont des conséquences qui durent.",
+		"lead": "Tu inventes un monde. Tu y vis ton histoire. Puis tu pars vivre celle des autres.",
+		"intro": [
+			"OdyssAI est un jeu de rôle narratif qui se joue en ligne. Le maître du jeu est un narrateur IA : il décrit les lieux, fait parler les personnages, arbitre tes actions et se souvient de tout ce qui s'est passé. Pas besoin de réunir un groupe un vendredi soir ni de trouver quelqu'un pour mener la partie. Le narrateur est toujours là, et il connaît ton histoire."
+		],
+		"sections": [
+			{
+				"title": "Tu es le héros",
+				"body": [
+					"Le narrateur te propose des choix, mais tu n'es jamais obligé de t'y tenir. Tu peux écrire ce que fait ton personnage, avec tes mots, et le monde réagit. Quand l'issue est incertaine, tu lances un d20. Le hasard reste une partie du jeu, comme autour d'une vraie table.",
+					"Tes décisions ont des conséquences qui durent. Un personnage que tu as trahi s'en souviendra trois sessions plus tard. Une porte que tu as laissée ouverte le restera."
+				]
+			},
+			{
+				"title": "Tu crées ton monde",
+				"body": [
+					"Fantasy, space opera, cyberpunk, horreur, ou quelque chose qui n'a pas encore de nom. Une phrase suffit pour commencer : un lieu, une époque, une règle étrange. Le narrateur construit le reste avec toi, et tu gardes le dernier mot sur tout."
+				]
+			},
+			{
+				"title": "Tu voyages",
+				"body": [
+					"Tous les mondes créés sur OdyssAI font partie du même multivers. Ton personnage peut franchir les failles qui les relient et partir vivre une aventure dans le monde d'un autre joueur. Il reste lui-même, avec son caractère et ses souvenirs, mais il y trouve un rôle qui a du sens là-bas."
+				]
+			},
+			{
+				"title": "Rien n'est isolé",
+				"body": [
+					"Les mondes se croisent. Tu peux tomber sur les traces d'un autre voyageur : une lettre, une rumeur, un lieu qu'il a changé avant ton passage. Tu peux aussi le rencontrer. Et ce qui compte vraiment finit par rejoindre le Lore général, l'histoire commune à tous les mondes."
+				]
+			},
+			{
+				"title": "Pour qui",
+				"body": [
+					"Pour les rôlistes qui n'ont pas toujours une table. Pour ceux qui ont un monde dans la tête depuis des années et veulent enfin le voir vivre. Pour les curieux qui ont envie d'une histoire où leurs choix comptent."
+				]
+			}
+		]
+	},
+	"Universes": {
+		"metaTitle": "Univers",
+		"metaDescription": "Crée ton monde, sa charte et ses lois. Tu en restes le créateur : le narrateur y joue, il ne décide jamais à ta place de ce qui est vrai.",
+		"lead": "Ton monde, tes règles.",
+		"intro": [
+			"Sur OdyssAI, chaque joueur peut créer son univers : un monde avec ses lieux, ses peuples, son histoire et ses lois. Tu en es le créateur et le gardien. Le narrateur y joue, le fait vivre et l'étend avec toi, mais il ne décide jamais à ta place de ce qui est vrai chez toi."
+		],
+		"sections": [
+			{
+				"title": "Commencer par une phrase",
+				"body": [
+					"« Un archipel où la marée ne redescend jamais. » « Une station spatiale dont personne ne connaît le propriétaire. » Tu pars de là, et le narrateur te propose une géographie, des factions, des tensions, des secrets. Tu gardes, tu modifies, tu jettes. Tu peux tout définir en détail avant de jouer, ou laisser le monde se révéler au fil des parties."
+				]
+			},
+			{
+				"title": "La charte du monde",
+				"body": [
+					"Chaque univers a une charte. C'est son ADN : ce qui existe ou non (la magie, la technologie, les dieux), le ton, les règles qui ne se discutent pas, ce qui est interdit, le niveau de contenu. La mort est-elle définitive ? Les machines peuvent-elles rêver ? C'est toi qui décides. Le narrateur respecte la charte en toutes circonstances, y compris face aux voyageurs venus d'ailleurs."
+				]
+			},
+			{
+				"title": "Un monde qui se souvient",
+				"body": [
+					"Chaque personnage rencontré, chaque lieu visité, chaque événement marquant est inscrit dans le canon de ton monde. Les habitants se souviennent de ce qui s'est passé. Plus tu joues, plus ton monde devient dense, cohérent, habité."
+				]
+			},
+			{
+				"title": "Ouvrir ses portes",
+				"body": [
+					"Ton monde peut rester fermé, s'ouvrir sur invitation ou accueillir tous les voyageurs du multivers. Tu choisis comment ils arrivent : comme des habitants qui ont toujours vécu là, comme des étrangers tombés d'une faille, ou comme de simples échos de passage. Tu fixes aussi jusqu'où ils peuvent changer les choses.",
+					"Après chaque visite, tu reçois la chronique des voyageurs : ce qu'ils ont fait, qui ils ont rencontré, ce qui a bougé. Tu décides ce qui devient canon. Ton monde reste le tien."
+				]
+			},
+			{
+				"title": "Une identité",
+				"body": [
+					"Chaque monde a sa couleur, qui teinte toute l'interface quand on y entre, et sa constellation sur la carte du multivers. On sait où l'on est dès le premier regard."
+				]
+			}
+		]
+	},
+	"Multiverse": {
+		"metaTitle": "Multivers",
+		"metaDescription": "Ton personnage franchit les failles et garde son essence. Tu choisis ce qu'il fait, le créateur du monde décide de ce que ça change.",
+		"lead": "Ton personnage voyage. Il reste lui-même.",
+		"intro": [
+			"Tous les mondes d'OdyssAI forment un seul multivers. Entre eux s'ouvrent des failles, et ton personnage peut les franchir.",
+			"Une règle tient tout le reste : tu choisis ce que fait ton personnage, le créateur du monde décide de ce que ça change. Personne ne prend le contrôle du monde d'un autre, ni du personnage d'un autre."
+		],
+		"sections": [
+			{
+				"title": "Ce qui traverse, ce qui reste",
+				"body": [
+					"Ton personnage emporte son essence : son nom, son caractère, ce qui le pousse à avancer, sa faille, ses souvenirs. Tout le reste appartient au monde qu'il quitte : son métier, son apparence, ses compétences, ses objets, sa réputation.",
+					"À son arrivée, le narrateur traduit cette essence dans la réalité du nouveau monde. Tu vois la proposition avant d'entrer, et tu peux l'ajuster."
+				]
+			},
+			{
+				"title": "Le même, autrement",
+				"body": [
+					"Ilse est cartographe dans les Terres de Vasse, obsédée par les lieux qui n'existent sur aucune carte. En passant la faille vers Station Hélione, elle devient navigatrice et trace des routes hors des balises officielles. Dans Ville-Basse 2099, elle cartographie les réseaux souterrains pour qui la paie. Dans le Marais d'Ossian, elle dessine des chemins qui changent la nuit.",
+					"Quatre rôles qui n'ont rien à voir. Et pourtant, c'est bien elle à chaque fois."
+				]
+			},
+			{
+				"title": "Trois façons d'arriver",
+				"body": [
+					"Selon ce que le monde accepte, tu entres comme natif, voyageur ou écho.",
+					"Natif, le monde t'absorbe : tu y as toujours vécu, seuls quelques souvenirs flous trahissent ton origine. Voyageur, tu arrives en étranger, conscient d'où tu viens, et les habitants le sentent. Écho, tu n'es qu'une projection de passage : tu ne peux pas mourir, mais ton influence reste légère."
+				]
+			},
+			{
+				"title": "Croiser les autres",
+				"body": [
+					"Les rencontres commencent souvent par des traces. Une lettre signée d'un nom inconnu, un aubergiste qui parle d'une étrangère aux cartes étranges, un lieu qu'un autre voyageur a transformé avant toi. Puis vient le jour où vous êtes dans la même scène. Chacun garde la main sur son personnage, le narrateur joue le monde et arbitre ce qui se passe entre vous."
+				]
+			},
+			{
+				"title": "Ce que tu rapportes",
+				"body": [
+					"Tu ne reviens pas avec l'épée d'un autre monde. Tu reviens avec des souvenirs, et parfois une marque : une cicatrice, une peur nouvelle, une conviction. Ce que tu vis ailleurs change qui est ton personnage, pas ce qu'il possède. Chaque monde reste ainsi équilibré, et chaque voyage compte."
+				]
+			}
+		]
+	},
+	"Lore": {
+		"metaTitle": "Lore",
+		"metaDescription": "L'Étoile fixe, les failles, les grands arcs : les vérités communes à tous les mondes d'OdyssAI.",
+		"lead": "Ce que tous les mondes ont en commun.",
+		"intro": [
+			"Chaque monde a son histoire. Le Lore général est celle qui les relie : les quelques vérités valables partout, et les événements assez grands pour avoir marqué plusieurs mondes à la fois."
+		],
+		"sections": [
+			{
+				"title": "L'Étoile fixe",
+				"body": [
+					"Dans chaque monde, quelle que soit sa nature, une étoile brille au même endroit du ciel. Les marins de Vasse s'en servent pour rentrer au port. Les pilotes d'Hélione l'ont longtemps prise pour une balise. À Ville-Basse, on ne la voit que les nuits de coupure de courant, et ces nuits-là, les gens sortent dans la rue pour la regarder.",
+					"Personne ne sait ce qu'elle est. On sait seulement qu'elle est la même partout."
+				]
+			},
+			{
+				"title": "Les failles",
+				"body": [
+					"Là où le voile entre deux mondes s'use, une faille s'ouvre. Certaines sont stables et connues, gardées, parfois vénérées. D'autres s'ouvrent une nuit et se referment le lendemain. Personne ne sait qui les a ouvertes la première fois, ni si quelqu'un les contrôle."
+				]
+			},
+			{
+				"title": "Les voyageurs",
+				"body": [
+					"Ceux qui passent d'un monde à l'autre portent des noms différents selon l'endroit. Dans certains mondes, on les accueille comme des messagers. Dans d'autres, on les craint, ou on les chasse. Chaque créateur décide de la façon dont son monde regarde les voyageurs."
+				]
+			},
+			{
+				"title": "Comment une histoire devient légende",
+				"body": [
+					"Tout commence dans un monde. Ce qui s'y passe devient canon quand son créateur le valide. Quand un événement touche plusieurs mondes, qu'il a été vécu par plusieurs voyageurs ou qu'il change la nature des failles, il peut entrer dans le Lore général. Il devient alors une vérité pour tout le multivers, et chaque monde l'interprète à sa manière.",
+					"Ton monde peut ainsi devenir une légende ailleurs. Un jour, dans un monde que tu n'as jamais visité, quelqu'un parlera de l'archipel où la marée ne redescend jamais."
+				]
+			},
+			{
+				"title": "Les grands arcs",
+				"body": [
+					"De temps en temps, quelque chose arrive à tous les mondes en même temps. L'Étoile vacille. Les failles se multiplient. Chaque monde vit l'événement selon sa propre logique, et chaque joueur peut en influencer l'issue. Ce sont les grands arcs du multivers, et ce sont eux qui écrivent le Lore général."
+				]
+			}
+		],
+		"glossaryCta": "Voir le glossaire"
+	},
+	"Glossary": {
+		"metaTitle": "Glossaire",
+		"metaDescription": "Monde, charte, essence, incarnation, faille, Lore général : les termes d'OdyssAI et ce qu'ils désignent.",
+		"lead": "Les termes propres à OdyssAI, et ce qu'ils désignent.",
+		"entries": [
+			{
+				"term": "Monde, univers",
+				"meaning": "Un monde créé par un joueur, avec ses lieux, ses habitants et sa charte."
+			},
+			{
+				"term": "Créateur",
+				"meaning": "Le joueur qui a créé un monde et en garde l'autorité."
+			},
+			{
+				"term": "Charte",
+				"meaning": "Les règles fondatrices d'un monde : ce qui existe, le ton, les interdits, l'accueil des voyageurs."
+			},
+			{
+				"term": "Canon",
+				"meaning": "Ce qui est officiellement vrai dans un monde, validé par son créateur."
+			},
+			{
+				"term": "Essence",
+				"meaning": "Ce qu'un personnage emporte partout : nom, caractère, moteur, faille, souvenirs."
+			},
+			{
+				"term": "Incarnation",
+				"meaning": "La forme que prend un personnage dans un monde donné : rôle, apparence, compétences, objets."
+			},
+			{
+				"term": "Natif, voyageur, écho",
+				"meaning": "Les trois façons d'entrer dans le monde d'un autre."
+			},
+			{
+				"term": "Faille",
+				"meaning": "Passage entre deux mondes."
+			},
+			{
+				"term": "Chronique des voyageurs",
+				"meaning": "Le récit des visites reçues, envoyé au créateur pour validation."
+			},
+			{
+				"term": "Lore général",
+				"meaning": "L'histoire commune à tout le multivers."
+			},
+			{
+				"term": "Étoile fixe",
+				"meaning": "La seule chose visible depuis tous les mondes."
+			},
+			{
+				"term": "Grand arc",
+				"meaning": "Un événement qui touche tous les mondes en même temps."
+			}
+		]
+	}
 }
