@@ -27,6 +27,9 @@
 #   API_BASE_URL      (defaut: http://localhost:3001)  origine publique de apps/api
 #   WEB_BASE_URL      (defaut: http://localhost:3000)  origine publique de apps/web
 #   API_CLIENT_ID     (defaut: odyssai-api)
+#   DISPLAY_NAME      (defaut: OdyssAI)  nom affiche dans la console et sur les
+#                     pages de connexion. A distinguer entre environnements,
+#                     sinon rien ne dit sur quel realm on est en train d agir.
 #   EXTRA_REDIRECT_URIS  URI de redirection supplementaires, separees par des
 #                     virgules. Sert au realm de developpement, ou la machine du
 #                     developpeur doit etre acceptee a cote du domaine deploye.
@@ -53,6 +56,7 @@ API_BASE_URL="${API_BASE_URL%/}"
 WEB_BASE_URL="${WEB_BASE_URL:-http://localhost:3000}"
 WEB_BASE_URL="${WEB_BASE_URL%/}"
 API_CLIENT_ID="${API_CLIENT_ID:-odyssai-api}"
+DISPLAY_NAME="${DISPLAY_NAME:-OdyssAI}"
 EXTRA_REDIRECT_URIS="${EXTRA_REDIRECT_URIS:-}"
 LOGIN_THEME="${LOGIN_THEME:-keycloak}"
 SSL_REQUIRED="${SSL_REQUIRED:-all}"
@@ -147,10 +151,11 @@ step "Realm $REALM"
 
 REALM_CONFIG="$(jq -n \
   --arg realm "$REALM" \
+  --arg display "$DISPLAY_NAME" \
   --arg theme "$LOGIN_THEME" \
   --arg ssl "$SSL_REQUIRED" '{
   realm: $realm,
-  displayName: "OdyssAI",
+  displayName: $display,
   enabled: true,
 
   # Inscription et connexion sont servies par Keycloak : c est ce qui permet a
