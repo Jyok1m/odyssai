@@ -14,11 +14,22 @@
 # Variables d'environnement :
 #   KC_URL            (defaut: https://sso.joachimjasmin.com)
 #   KC_ADMIN_REALM    (defaut: master)
-#   KC_ADMIN_USER     (defaut: admin)
-#   KC_ADMIN_PASSWORD (requis)
+#
+#   Deux facons de s'authentifier, dans cet ordre de preference :
+#
+#   KC_ADMIN_CLIENT_ID / KC_ADMIN_CLIENT_SECRET
+#                     service account du realm d'administration. A privilegier :
+#                     insensible au MFA, revocable, et sans identite humaine
+#                     partagee.
+#   KC_ADMIN_USER / KC_ADMIN_PASSWORD
+#                     compte humain. Echoue des que le compte porte du MFA, le
+#                     direct grant ne sachant pas presenter un second facteur.
 #   API_BASE_URL      (defaut: http://localhost:3001)  origine publique de apps/api
 #   WEB_BASE_URL      (defaut: http://localhost:3000)  origine publique de apps/web
 #   API_CLIENT_ID     (defaut: odyssai-api)
+#   EXTRA_REDIRECT_URIS  URI de redirection supplementaires, separees par des
+#                     virgules. Sert au realm de developpement, ou la machine du
+#                     developpeur doit etre acceptee a cote du domaine deploye.
 #   LOGIN_THEME       (defaut: keycloak)  passer a "odyssai" une fois le theme deploye
 #   SSL_REQUIRED      (defaut: all)  "external" si le proxy devant Keycloak ne
 #                     transmet pas X-Forwarded-Proto (sinon boucle de redirection)
@@ -33,13 +44,16 @@ set -euo pipefail
 KC_URL="${KC_URL:-https://sso.joachimjasmin.com}"
 KC_URL="${KC_URL%/}"
 KC_ADMIN_REALM="${KC_ADMIN_REALM:-master}"
-KC_ADMIN_USER="${KC_ADMIN_USER:-admin}"
+KC_ADMIN_USER="${KC_ADMIN_USER:-}"
 KC_ADMIN_PASSWORD="${KC_ADMIN_PASSWORD:-}"
+KC_ADMIN_CLIENT_ID="${KC_ADMIN_CLIENT_ID:-}"
+KC_ADMIN_CLIENT_SECRET="${KC_ADMIN_CLIENT_SECRET:-}"
 API_BASE_URL="${API_BASE_URL:-http://localhost:3001}"
 API_BASE_URL="${API_BASE_URL%/}"
 WEB_BASE_URL="${WEB_BASE_URL:-http://localhost:3000}"
 WEB_BASE_URL="${WEB_BASE_URL%/}"
 API_CLIENT_ID="${API_CLIENT_ID:-odyssai-api}"
+EXTRA_REDIRECT_URIS="${EXTRA_REDIRECT_URIS:-}"
 LOGIN_THEME="${LOGIN_THEME:-keycloak}"
 SSL_REQUIRED="${SSL_REQUIRED:-all}"
 REALM="${1:-}"
@@ -48,8 +62,16 @@ if [[ -z "$REALM" ]]; then
   echo "usage: KC_ADMIN_PASSWORD='...' $0 <realm>   (ex: odyssai-dev)" >&2
   exit 2
 fi
-if [[ -z "$KC_ADMIN_PASSWORD" ]]; then
-  echo "KC_ADMIN_PASSWORD manquant" >&2
+if [[ -z "$KC_ADMIN_CLIENT_SECRET" && -z "$KC_ADMIN_PASSWORD" ]]; then
+  cat >&2 <<'USAGE'
+Aucun identifiant d'administration.
+
+  Service account (recommande) :
+    KC_ADMIN_CLIENT_ID=odyssai-provisioner KC_ADMIN_CLIENT_SECRET='...'
+
+  Compte humain, impossible si le compte porte du MFA :
+    KC_ADMIN_USER=admin KC_ADMIN_PASSWORD='...'
+USAGE
   exit 2
 fi
 for bin in curl jq; do
@@ -63,22 +85,36 @@ step() { printf '\n== %s\n' "$*" >&2; }
 
 step "Authentification sur $KC_URL (realm $KC_ADMIN_REALM)"
 
-TOKEN="$(
-  curl -sS -X POST \
-    "$KC_URL/realms/$KC_ADMIN_REALM/protocol/openid-connect/token" \
+TOKEN_ENDPOINT="$KC_URL/realms/$KC_ADMIN_REALM/protocol/openid-connect/token"
+
+if [[ -n "$KC_ADMIN_CLIENT_SECRET" ]]; then
+  AUTH_MODE="service account $KC_ADMIN_CLIENT_ID"
+  AUTH_RESPONSE="$(curl -sS -X POST "$TOKEN_ENDPOINT" \
+    -H 'Content-Type: application/x-www-form-urlencoded' \
+    --data-urlencode 'grant_type=client_credentials' \
+    --data-urlencode "client_id=$KC_ADMIN_CLIENT_ID" \
+    --data-urlencode "client_secret=$KC_ADMIN_CLIENT_SECRET")"
+else
+  AUTH_MODE="compte $KC_ADMIN_USER"
+  AUTH_RESPONSE="$(curl -sS -X POST "$TOKEN_ENDPOINT" \
     -H 'Content-Type: application/x-www-form-urlencoded' \
     --data-urlencode 'grant_type=password' \
     --data-urlencode 'client_id=admin-cli' \
     --data-urlencode "username=$KC_ADMIN_USER" \
-    --data-urlencode "password=$KC_ADMIN_PASSWORD" \
-  | jq -re '.access_token // empty'
-)" || true
+    --data-urlencode "password=$KC_ADMIN_PASSWORD")"
+fi
+
+TOKEN="$(jq -re '.access_token // empty' <<<"$AUTH_RESPONSE" 2>/dev/null || true)"
 
 if [[ -z "$TOKEN" ]]; then
-  echo "echec de l'authentification admin sur $KC_URL/realms/$KC_ADMIN_REALM" >&2
+  echo "echec de l'authentification ($AUTH_MODE) sur $KC_URL/realms/$KC_ADMIN_REALM" >&2
+  echo "reponse : $(jq -rc '{error, error_description}' <<<"$AUTH_RESPONSE" 2>/dev/null || echo "$AUTH_RESPONSE")" >&2
+  if [[ -z "$KC_ADMIN_CLIENT_SECRET" ]]; then
+    echo "un compte protege par MFA ne peut pas passer par le direct grant : utiliser un service account" >&2
+  fi
   exit 1
 fi
-log "token admin obtenu"
+log "authentifie par $AUTH_MODE"
 
 # api <METHODE> <CHEMIN> [CORPS_JSON] : renseigne HTTP_CODE et RESP_BODY.
 # Volontairement sans sortie standard : une substitution de commande creerait
@@ -280,9 +316,18 @@ fi
 
 step "Client $API_CLIENT_ID"
 
+# Chaque URI reste exacte, sans caractere joker : un joker rendrait le client
+# complice de toute redirection sous le domaine.
+REDIRECT_URIS="$(jq -n \
+  --arg main "$API_BASE_URL/auth/callback" \
+  --arg extra "$EXTRA_REDIRECT_URIS" '
+    [$main] + ($extra | split(",") | map(select(length > 0)))
+    | unique')"
+log "redirect_uri : $(jq -r 'join(", ")' <<<"$REDIRECT_URIS")"
+
 CLIENT_CONFIG="$(jq -n \
   --arg id "$API_CLIENT_ID" \
-  --arg redirect "$API_BASE_URL/auth/callback" \
+  --argjson redirect "$REDIRECT_URIS" \
   --arg web "$WEB_BASE_URL" '{
   clientId: $id,
   name: "OdyssAI API",
@@ -299,8 +344,7 @@ CLIENT_CONFIG="$(jq -n \
   implicitFlowEnabled: false,
   serviceAccountsEnabled: false,
 
-  # URI de redirection exacte, aucun caractere joker.
-  redirectUris: [$redirect],
+  redirectUris: $redirect,
   webOrigins: [],
   rootUrl: "",
   baseUrl: "",
@@ -335,7 +379,6 @@ else
   CLIENT_UUID="$(jq -re '.[0].id' <<<"$RESP_BODY")"
   log "client cree"
 fi
-log "redirect_uri : $API_BASE_URL/auth/callback"
 
 # Sans ce mapper, l access token ne porte pas odyssai-api dans aud et la
 # verification d audience cote API rejette tous les jetons.
