@@ -40,6 +40,7 @@ Prévus, pas encore créés : `apps/worker` (BullMQ), `packages/engine`, `packag
 - Divergence connue à unifier : TypeScript 5.9 (web) / 6.0 (api) / 7.0 (schemas), héritée des scaffolds.
 - Pour les classes tailwind, toujours utiliser les classes natives à Tailwind (par exemple `h-3.5` au lieu de `h-[14px]`)
 - Respecte pour le frontend l'UI kit
+- Jamais de longs tirets : — . Remplacer soit par des parenthèses () soit par des deux points :
 
 ## Design
 
