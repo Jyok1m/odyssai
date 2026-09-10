@@ -134,6 +134,11 @@ REALM_CONFIG="$(jq -n \
   loginTheme: $theme,
   sslRequired: $ssl,
 
+  # Les pages de Keycloak suivent les locales de apps/web.
+  internationalizationEnabled: true,
+  supportedLocales: ["fr", "en"],
+  defaultLocale: "fr",
+
   passwordPolicy: "length(12) and notUsername(undefined) and notEmail(undefined) and passwordHistory(3)",
 
   bruteForceProtected: true,
@@ -200,6 +205,9 @@ USER_PROFILE="$(jq -n '{
       name: "email",
       displayName: "${email}",
       validations: { email: {}, length: { max: 255 } },
+      # Sans cette annotation le formulaire d inscription rend un input text :
+      # pas de clavier courriel sur mobile, pas de validation native.
+      annotations: { inputType: "email" },
       required: { roles: ["user"] },
       permissions: { view: ["admin", "user"], edit: ["admin", "user"] },
       multivalued: false
@@ -225,8 +233,10 @@ USER_PROFILE="$(jq -n '{
       displayHeader: "User metadata",
       displayDescription: "Attributes, which refer to user metadata"
     }
-  ],
-  unmanagedAttributePolicy: "DISABLED"
+  ]
+  # Pas de unmanagedAttributePolicy : son absence est deja la politique la
+  # plus stricte. L enumeration ne connait que ENABLED, ADMIN_VIEW et
+  # ADMIN_EDIT, toute autre valeur fait echouer la desserialisation.
 }')"
 
 api PUT "/admin/realms/$REALM/users/profile" "$USER_PROFILE"

@@ -44,6 +44,7 @@ Un realm Keycloak par environnement (`odyssai-dev`, `odyssai-prod`). `apps/api` 
 - Le realm est en rotation stricte du refresh token (`revokeRefreshToken`, `refreshTokenMaxReuse: 0`). Tout renouvellement passe par le verrou Redis de `SessionService` : deux renouvellements concurrents feraient invalider la session entière par Keycloak, qui lirait le second comme un rejeu.
 - L'identité (email, mot de passe, MFA) appartient à Keycloak. Le profil de jeu (pseudo, univers, progression) appartient à la base applicative et ne remonte jamais dans le realm.
 - `SessionGuard` protège les routes de jeu et dépose la session sur la requête.
+- Le thème `infra/keycloak/themes/odyssai` habille les pages du realm. Il hérite de `base` et ne surcharge que `template.ftl` et `login.ftl` : les autres pages suivent par les classes `kc*Class` de `theme.properties`. Son CSS redéclare les tokens de `globals.css`, Keycloak ne compilant pas Tailwind : reporter toute évolution du kit.
 
 ## Conventions
 
