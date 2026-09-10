@@ -1,7 +1,8 @@
 import { getTranslations } from "next-intl/server";
 
 import { routing } from "@/i18n/routing";
-import { SITE_NAME, SITE_URL } from "@/lib/site";
+import { SITE_URL } from "@/lib/seo";
+import { SITE_NAME } from "@/lib/site";
 
 type Locale = (typeof routing.locales)[number];
 

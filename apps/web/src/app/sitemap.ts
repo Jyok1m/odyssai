@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { routing } from "@/i18n/routing";
-import { SITE_URL } from "@/lib/site";
+import { SITE_URL } from "@/lib/seo";
 
 /**
  * Chemins publics, sans préfixe de locale. Chaque entrée est déclinée par

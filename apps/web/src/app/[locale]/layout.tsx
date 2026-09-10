@@ -6,13 +6,8 @@ import { getTranslations } from "next-intl/server";
 
 import { JsonLd } from "@/components/seo/json-ld";
 import { routing } from "@/i18n/routing";
-import {
-  BRAND_INK,
-  OG_LOCALE,
-  SITE_NAME,
-  SITE_URL,
-  alternatesFor,
-} from "@/lib/site";
+import { OG_LOCALE, SITE_URL, alternatesFor } from "@/lib/seo";
+import { BRAND_INK, SITE_NAME } from "@/lib/site";
 import "../globals.css";
 
 /** L'interface et le joueur. */
