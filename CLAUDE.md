@@ -39,6 +39,26 @@ Prévus, pas encore créés : `apps/worker` (BullMQ), `packages/engine`, `packag
 - `apps/web/AGENTS.md` et `apps/web/CLAUDE.md` sont regénérés par `next dev`. Ne pas les éditer à la main.
 - Divergence connue à unifier : TypeScript 5.9 (web) / 6.0 (api) / 7.0 (schemas), héritée des scaffolds.
 - Pour les classes tailwind, toujours utiliser les classes natives à Tailwind (par exemple `h-3.5` au lieu de `h-[14px]`)
+- Respecte pour le frontend l'UI kit
+
+## Design
+
+- L'autorité visuelle est `apps/web/odyssai-ui-kit.html`. Thème sombre unique : pas de variantes `dark:`, `colorScheme: "dark"` déclaré dans le viewport.
+- Les tokens du kit sont portés dans `apps/web/src/app/globals.css` sous `@theme` : couleurs (`ink`, `abyss`, `mist`, `line`, `vellum`, `vellum-2`, `vellum-3`, `verdigris`, `brass`, `ember`, `arcane`), échelle typo (`text-display`, `text-title`, `text-narration`, `text-ui`…), rayons et largeur `wrap`. Porter un nouveau besoin en token plutôt qu'en valeur arbitraire.
+- Deux fontes, deux rôles : `font-voice` (Literata) pour le narrateur et les titres, `font-ui` (Instrument Sans) pour l'interface et le joueur.
+- `--accent` est la couleur du monde courant, surchargée par `[data-world]`. Les utilitaires `accent` la suivent. Ne jamais figer le verdigris là où l'accent est attendu.
+- Logos dans `apps/web/public` : `odyssai-logo-dark.svg` (lockup, fond sombre), `odyssai-logo-light.svg` (sur vélin), `odyssai-mark.svg` (symbole seul), `odyssai-app-icon.svg`. Le wordmark ne s'utilise jamais sans le symbole ; en dessous de 120 px de large, symbole seul.
+- Attention à l'ordre des classes : deux utilitaires visant la même propriété sont arbitrés par la feuille CSS, pas par la chaîne `className`. Une variante doit poser sa propre valeur, pas compter sur un socle.
+
+## SEO
+
+À faire évoluer à chaque route ajoutée, pas seulement à la création.
+
+- `NEXT_PUBLIC_SITE_URL` conditionne canonical, hreflang, OpenGraph, sitemap et robots. Non définie, tout retombe sur localhost.
+- `src/lib/site.ts` centralise l'origine, les locales OpenGraph et `alternatesFor()` (canonical, hreflang, x-default).
+- Toute nouvelle route publique s'ajoute à `PATHS` dans `src/app/sitemap.ts`.
+- `x-default` pointe la racine, qui négocie la langue, pour concorder avec l'en-tête `Link` émis par le proxy next-intl.
+- JSON-LD dans `src/components/seo/json-ld.tsx`. N'y déclarer que du vérifiable : ni note agrégée, ni offre, ni date de sortie inventées.
 
 ## Façon de travailler
 
