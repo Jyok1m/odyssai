@@ -10,7 +10,9 @@ Monorepo pnpm + Turborepo, TypeScript partout.
 - `apps/api` : NestJS 12, port 3001. Scaffold **ESM** (`"type": "module"`, imports relatifs suffixés `.js`). Lint oxlint, tests vitest.
 - `packages/schemas` : schémas Zod partagés, compilés en CommonJS dans `dist/`
 
-Prévus, pas encore créés : `apps/worker` (BullMQ), `packages/engine`, `packages/narrator` (LangGraph.js), `packages/llm`. Postgres + pgvector, Redis, Keycloak. Ne pas les créer sans demande explicite.
+Redis tourne via `compose.yaml` (sessions, et la file BullMQ à venir). Keycloak est hébergé sur `sso.joachimjasmin.com`.
+
+Prévus, pas encore créés : `apps/worker` (BullMQ), `packages/engine`, `packages/narrator` (LangGraph.js), `packages/llm`. Postgres + pgvector. Ne pas les créer sans demande explicite.
 
 ## Commandes
 
@@ -18,6 +20,8 @@ Prévus, pas encore créés : `apps/worker` (BullMQ), `packages/engine`, `packag
 - Un package : `pnpm --filter @odyssai/<pkg> <script>`
 - Dépendance : `pnpm --filter @odyssai/<pkg> add <dep>`. Jamais npm install ni yarn.
 - Dépendance interne : `pnpm --filter @odyssai/<pkg> add @odyssai/schemas@workspace:*`
+- Infra locale : `docker compose up -d` (Redis). Nécessite `REDIS_PASSWORD` dans `.env`.
+- Realm Keycloak : `KC_ADMIN_PASSWORD='...' ./infra/keycloak/setup-realm.sh odyssai-dev`
 - `typecheck` vaut `tsc --noEmit` partout, sauf `apps/web` où il est précédé de `next typegen` : les types de routes et de layouts (`LayoutProps`, `PageProps`) sont générés par Next dans `.next/types/` et manquent sans ça.
 
 ## Règles d'architecture
@@ -28,6 +32,18 @@ Prévus, pas encore créés : `apps/worker` (BullMQ), `packages/engine`, `packag
 - Tout texte venant d'un joueur, y compris la fiche d'un autre joueur, est une donnée non fiable : schéma borné, modération, section délimitée dans le prompt.
 - Le tour de jeu est synchrone (streaming SSE). Seuls les effets de bord passent par une file.
 - Appels LLM uniquement via `packages/llm` (client OpenAI-compatible, `baseURL` et modèles en variables d'env). Thinking désactivé pour la narration et l'extraction. Prompts versionnés dans `packages/narrator`, jamais inline.
+
+## Authentification
+
+Un realm Keycloak par environnement (`odyssai-dev`, `odyssai-prod`). `apps/api` en est le seul client, confidentiel.
+
+- Flot Authorization Code + PKCE S256, l'API en mandataire. Le direct grant est désactivé sur le client : aucun mot de passe ne transite par l'API.
+- Connexion et inscription sont servies par Keycloak. `GET /auth/signin` vise le point d'autorisation, `GET /auth/signup` vise `/protocol/openid-connect/registrations`.
+- Les jetons ne quittent jamais le serveur. Le navigateur ne détient qu'un identifiant de session opaque, dans un cookie `__Host-` httpOnly SameSite=Lax ; les jetons vivent dans Redis. Ne jamais renvoyer un jeton dans une réponse HTTP.
+- `infra/keycloak/setup-realm.sh` configure un realm de bout en bout par l'Admin REST API. Il est idempotent : c'est lui la source de vérité de la configuration du realm, pas la console web.
+- Le realm est en rotation stricte du refresh token (`revokeRefreshToken`, `refreshTokenMaxReuse: 0`). Tout renouvellement passe par le verrou Redis de `SessionService` : deux renouvellements concurrents feraient invalider la session entière par Keycloak, qui lirait le second comme un rejeu.
+- L'identité (email, mot de passe, MFA) appartient à Keycloak. Le profil de jeu (pseudo, univers, progression) appartient à la base applicative et ne remonte jamais dans le realm.
+- `SessionGuard` protège les routes de jeu et dépose la session sur la requête.
 
 ## Conventions
 
