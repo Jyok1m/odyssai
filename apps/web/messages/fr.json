@@ -1,0 +1,31 @@
+{
+  "Metadata": {
+    "title": "OdyssAI — Le multivers narré par IA",
+    "description": "Jeu narratif multivers : ton propre univers, narré par une IA, relié à ceux des autres joueurs par un Lore Général commun."
+  },
+  "Nav": {
+    "home": "OdyssAI, retour à l’accueil",
+    "concept": "Concept",
+    "universes": "Univers",
+    "multiverse": "Multivers",
+    "lore": "Lore",
+    "login": "Se connecter",
+    "openMenu": "Ouvrir le menu principal",
+    "closeMenu": "Fermer le menu"
+  },
+  "Hero": {
+    "badge": "Alpha privée en préparation.",
+    "badgeCta": "En savoir plus",
+    "title": "Crée n'importe quel monde. Puis pars visiter ceux des autres.",
+    "description": "Chaque joueur façonne son propre monde, guidé par un narrateur IA. Les univers se croisent, échangent personnages et événements, et partagent un même Lore Général. L’IA raconte, le moteur décide.",
+    "primaryCta": "Créer mon univers",
+    "secondaryCta": "Découvrir le concept"
+  },
+  "LocaleSwitcher": {
+    "label": "Langue",
+    "current": "Langue actuelle : {language}"
+  },
+  "Seo": {
+    "genre": "Jeu de rôle narratif, multivers"
+  }
+}

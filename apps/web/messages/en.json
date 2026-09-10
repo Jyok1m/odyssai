@@ -1,0 +1,31 @@
+{
+  "Metadata": {
+    "title": "OdyssAI — The AI-narrated multiverse",
+    "description": "A multiverse narrative game: your own universe, narrated by an AI, linked to other players’ worlds through a shared General Lore."
+  },
+  "Nav": {
+    "home": "OdyssAI, back to home",
+    "concept": "Concept",
+    "universes": "Universes",
+    "multiverse": "Multiverse",
+    "lore": "Lore",
+    "login": "Log in",
+    "openMenu": "Open main menu",
+    "closeMenu": "Close menu"
+  },
+  "Hero": {
+    "badge": "Private alpha in the works.",
+    "badgeCta": "Learn more",
+    "title": "Build any world you want. Then go and visit everyone else's.",
+    "description": "Every player shapes their own world, guided by an AI narrator. Universes cross paths, trade characters and events, and share one common General Lore. The AI tells the story, the engine decides what is true.",
+    "primaryCta": "Create my universe",
+    "secondaryCta": "Discover the concept"
+  },
+  "LocaleSwitcher": {
+    "label": "Language",
+    "current": "Current language: {language}"
+  },
+  "Seo": {
+    "genre": "Narrative role-playing, multiverse"
+  }
+}
