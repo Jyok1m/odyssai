@@ -1,0 +1,1996 @@
+<!doctype html>
+<html lang="fr">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>OdyssAI, UI kit v0.1</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..600&display=swap"
+			rel="stylesheet"
+		/>
+		<style>
+			@property --accent {
+				syntax: "<color>";
+				inherits: true;
+				initial-value: #5fb8a5;
+			}
+			:root {
+				--ink: #12162b;
+				--abyss: #1a2041;
+				--mist: #252c56;
+				--line: #353d6e;
+				--vellum: #ede6d6;
+				--vellum-2: #bbb5cb;
+				--vellum-3: #8c88a6;
+				--verdigris: #5fb8a5;
+				--brass: #d4a84f;
+				--ember: #e2685a;
+				--arcane: #9d8cf2;
+				--accent: #5fb8a5;
+				--on-accent: #0f1b1d;
+				--font-voice: "Literata", Georgia, serif;
+				--font-ui: "Instrument Sans", system-ui, sans-serif;
+				--r-control: 6px;
+				--r-card: 12px;
+				--r-portal: 50% 50% 12px 12px / 88px 88px 12px 12px;
+				transition: --accent 0.6s ease;
+			}
+			@media (prefers-reduced-motion: reduce) {
+				:root {
+					transition: none;
+				}
+				.caret {
+					animation: none !important;
+				}
+			}
+			* {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+			}
+			html {
+				-webkit-font-smoothing: antialiased;
+				text-rendering: optimizeLegibility;
+			}
+			body {
+				background: var(--ink);
+				color: var(--vellum);
+				font: 400 16px/1.55 var(--font-ui);
+				padding-bottom: 120px;
+			}
+			h1,
+			h2,
+			h3,
+			h4,
+			.voice {
+				font-family: var(--font-voice);
+				font-weight: 500;
+				font-optical-sizing: auto;
+			}
+			button {
+				font: inherit;
+				color: inherit;
+				cursor: pointer;
+			}
+			:focus-visible {
+				outline: 2px solid var(--brass);
+				outline-offset: 2px;
+			}
+			.wrap {
+				max-width: 1120px;
+				margin: 0 auto;
+				padding: 0 32px;
+			}
+			section {
+				padding-top: 112px;
+			}
+			.sec-head {
+				margin-bottom: 40px;
+				max-width: 64ch;
+			}
+			.sec-head h2 {
+				font-size: 36px;
+				line-height: 1.15;
+				letter-spacing: -0.01em;
+			}
+			.sec-head p {
+				color: var(--vellum-2);
+				margin-top: 12px;
+			}
+			.sub {
+				font-size: 20px;
+				margin: 40px 0 16px;
+			}
+			.sub:first-child {
+				margin-top: 0;
+			}
+			.muted {
+				color: var(--vellum-3);
+				font-size: 14px;
+			}
+
+			.hero {
+				position: relative;
+				padding: 104px 0 24px;
+				min-height: 440px;
+			}
+			.hero .sky {
+				position: absolute;
+				right: 0;
+				top: 24px;
+				width: min(620px, 60%);
+				pointer-events: none;
+			}
+			.lockup {
+				position: relative;
+				display: flex;
+				align-items: center;
+				gap: 18px;
+				color: var(--vellum);
+			}
+			.lockup .m {
+				width: 124px;
+				height: 124px;
+				flex: none;
+			}
+			.lockup .w {
+				height: 101px;
+				width: auto;
+			}
+			.hero .tagline {
+				position: relative;
+				font: italic 400 28px/1.35 var(--font-voice);
+				color: var(--vellum-2);
+				margin-top: 36px;
+				max-width: none;
+			}
+			.hero .meta {
+				position: relative;
+				margin-top: 28px;
+				color: var(--vellum-3);
+				font-size: 14px;
+				max-width: 52ch;
+			}
+
+			.swatches {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+				gap: 16px;
+			}
+			.sw {
+				border: 1px solid var(--line);
+				border-radius: var(--r-card);
+				overflow: hidden;
+				background: var(--abyss);
+			}
+			.sw .chip {
+				height: 92px;
+				border-bottom: 1px solid var(--line);
+			}
+			.sw .info {
+				padding: 12px 14px 14px;
+			}
+			.sw b {
+				font-weight: 600;
+				display: block;
+			}
+			.sw code {
+				font: 500 13px var(--font-ui);
+				color: var(--vellum-2);
+				font-variant-numeric: tabular-nums;
+			}
+			.sw p {
+				font-size: 13px;
+				color: var(--vellum-3);
+				margin-top: 6px;
+				line-height: 1.45;
+			}
+			.rule {
+				margin-top: 20px;
+				padding: 16px 18px;
+				border: 1px solid var(--line);
+				border-radius: var(--r-card);
+				color: var(--vellum-2);
+				font-size: 15px;
+				max-width: 80ch;
+			}
+			.rule code {
+				font-family: var(--font-ui);
+				color: var(--vellum);
+				background: var(--mist);
+				padding: 1px 6px;
+				border-radius: 4px;
+				font-size: 14px;
+			}
+
+			.type-grid {
+				display: grid;
+				grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+				gap: 24px;
+			}
+			.type-card {
+				background: var(--abyss);
+				border: 1px solid var(--line);
+				border-radius: var(--r-card);
+				padding: 28px;
+			}
+			.type-card .big {
+				font-size: 64px;
+				line-height: 1;
+				letter-spacing: -0.02em;
+			}
+			.type-card .who {
+				color: var(--vellum-3);
+				font-size: 14px;
+				margin-top: 18px;
+			}
+			.type-card .sample {
+				font: 400 19px/1.75 var(--font-voice);
+				margin-top: 20px;
+				max-width: 52ch;
+			}
+			.type-card .ui-big {
+				font: 500 48px/1 var(--font-ui);
+				letter-spacing: -0.02em;
+			}
+			.type-card .ui-sample {
+				margin-top: 20px;
+				color: var(--vellum-2);
+			}
+			.scale {
+				margin-top: 24px;
+				border: 1px solid var(--line);
+				border-radius: var(--r-card);
+				overflow: hidden;
+			}
+			.scale > div {
+				display: grid;
+				grid-template-columns: 150px minmax(0, 1fr) 170px;
+				gap: 16px;
+				align-items: baseline;
+				padding: 14px 20px;
+				border-top: 1px solid var(--line);
+			}
+			.scale > div:first-child {
+				border-top: 0;
+			}
+			.scale .k {
+				color: var(--vellum-3);
+				font-size: 14px;
+			}
+			.scale .v {
+				color: var(--vellum-3);
+				font-size: 13px;
+				text-align: right;
+				font-variant-numeric: tabular-nums;
+			}
+			.scale .x {
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+
+			.screen {
+				border: 1px solid var(--line);
+				border-radius: 16px;
+				overflow: hidden;
+				background: var(--ink);
+			}
+			.topbar {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 16px;
+				padding: 10px 16px 10px 18px;
+				border-bottom: 1px solid var(--line);
+				background: var(--abyss);
+			}
+			.topbar .world {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				font: 500 18px var(--font-voice);
+			}
+			.topbar .world svg {
+				width: 30px;
+				height: 30px;
+			}
+			.topbar .world small {
+				font: 400 13px var(--font-ui);
+				color: var(--vellum-3);
+				margin-left: 4px;
+			}
+			.topbar nav {
+				display: flex;
+				gap: 2px;
+			}
+			.game {
+				display: grid;
+				grid-template-columns: minmax(0, 1fr) 296px;
+			}
+			.story {
+				padding: 40px 48px 36px;
+			}
+			.chapter {
+				font: italic 400 15px var(--font-voice);
+				color: var(--vellum-3);
+			}
+			.story h3 {
+				font-size: 30px;
+				line-height: 1.2;
+				margin: 6px 0 22px;
+			}
+			.narr p {
+				font: 400 19px/1.75 var(--font-voice);
+				max-width: 60ch;
+				margin-bottom: 0.9em;
+			}
+			.narr p.first::first-letter {
+				float: left;
+				font-size: 3.5em;
+				line-height: 0.85;
+				padding: 8px 10px 0 0;
+				color: var(--brass);
+				font-weight: 600;
+			}
+			.act {
+				border-left: 2px solid var(--accent);
+				border-radius: 0;
+				padding: 2px 0 2px 14px;
+				margin: 22px 0;
+			}
+			.act span {
+				display: block;
+				font-size: 13px;
+				color: var(--vellum-3);
+			}
+			.roll {
+				display: inline-flex;
+				align-items: center;
+				gap: 10px;
+				background: var(--abyss);
+				border: 1px solid var(--line);
+				border-radius: 999px;
+				padding: 5px 14px 5px 7px;
+				font-size: 14px;
+				font-variant-numeric: tabular-nums;
+				color: var(--vellum-2);
+			}
+			.roll svg {
+				width: 22px;
+				height: 22px;
+				flex: none;
+			}
+			.roll strong {
+				color: var(--vellum);
+				font-weight: 600;
+			}
+			.cross {
+				display: flex;
+				gap: 12px;
+				align-items: flex-start;
+				margin: 22px 0;
+				padding: 12px 14px;
+				border-radius: 10px;
+				border: 1px solid color-mix(in srgb, var(--arcane) 40%, transparent);
+				background: color-mix(in srgb, var(--arcane) 9%, transparent);
+				font-size: 15px;
+				max-width: 60ch;
+			}
+			.cross .dot {
+				width: 10px;
+				height: 10px;
+				border-radius: 50%;
+				background: #7fa7ff;
+				margin-top: 7px;
+				flex: none;
+			}
+			.cross em {
+				font-style: normal;
+				color: var(--vellum-3);
+				display: block;
+				font-size: 13px;
+			}
+			.writing {
+				font: italic 400 16px var(--font-voice);
+				color: var(--vellum-3);
+				margin-top: 6px;
+			}
+			.caret {
+				display: inline-block;
+				width: 2px;
+				height: 1em;
+				background: var(--accent);
+				vertical-align: -2px;
+				margin-left: 4px;
+				animation: blink 1.1s steps(1) infinite;
+			}
+			@keyframes blink {
+				50% {
+					opacity: 0;
+				}
+			}
+			.choices {
+				display: grid;
+				gap: 10px;
+				margin-top: 26px;
+				max-width: 640px;
+			}
+			.choice {
+				display: flex;
+				align-items: center;
+				gap: 14px;
+				width: 100%;
+				text-align: left;
+				background: var(--abyss);
+				border: 1px solid var(--line);
+				border-radius: 10px;
+				padding: 13px 14px;
+				transition:
+					border-color 0.15s,
+					background 0.15s;
+			}
+			.choice:hover {
+				border-color: var(--accent);
+				background: var(--mist);
+			}
+			.choice kbd {
+				width: 26px;
+				height: 26px;
+				flex: none;
+				display: grid;
+				place-items: center;
+				border: 1px solid var(--line);
+				border-radius: 6px;
+				font: 500 13px var(--font-ui);
+				color: var(--vellum-2);
+			}
+			.choice .tag {
+				margin-left: auto;
+				flex: none;
+			}
+			.composer {
+				margin-top: 18px;
+				max-width: 640px;
+				border: 1px solid var(--line);
+				border-radius: 12px;
+				background: var(--abyss);
+				padding: 12px 12px 10px 14px;
+				transition: border-color 0.15s;
+			}
+			.composer:focus-within {
+				border-color: var(--accent);
+			}
+			.composer textarea {
+				width: 100%;
+				background: transparent;
+				border: 0;
+				color: var(--vellum);
+				font: 400 16px/1.5 var(--font-ui);
+				resize: none;
+				outline: none;
+			}
+			.composer textarea::placeholder {
+				color: var(--vellum-3);
+			}
+			.composer .row {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				gap: 12px;
+				margin-top: 6px;
+			}
+			.side {
+				border-left: 1px solid var(--line);
+				background: var(--abyss);
+				padding: 28px 24px;
+			}
+			.hero-card {
+				display: flex;
+				gap: 16px;
+				align-items: center;
+			}
+			.portrait {
+				width: 76px;
+				height: 96px;
+				flex: none;
+				border-radius: 50% 50% 8px 8px / 38px 38px 8px 8px;
+				background: var(--mist);
+				border: 1px solid var(--line);
+				display: grid;
+				place-items: center;
+				padding-top: 18px;
+				font: 500 26px var(--font-voice);
+				color: var(--vellum-2);
+			}
+			.hero-card h4 {
+				font-size: 22px;
+				line-height: 1.2;
+			}
+			.hero-card p {
+				font-size: 14px;
+				color: var(--vellum-3);
+			}
+			.stats {
+				margin-top: 24px;
+				display: grid;
+				gap: 14px;
+			}
+			.stat .l {
+				display: flex;
+				justify-content: space-between;
+				font-size: 13px;
+				color: var(--vellum-2);
+				margin-bottom: 6px;
+				font-variant-numeric: tabular-nums;
+			}
+			.bar {
+				height: 6px;
+				background: var(--mist);
+				border-radius: 3px;
+				overflow: hidden;
+			}
+			.bar i {
+				display: block;
+				height: 100%;
+			}
+			.inv {
+				margin-top: 28px;
+			}
+			.inv h5 {
+				font: 500 15px var(--font-voice);
+				color: var(--vellum-2);
+				margin-bottom: 6px;
+			}
+			.inv li {
+				list-style: none;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				gap: 8px;
+				padding: 10px 0;
+				border-top: 1px solid var(--line);
+				font-size: 14px;
+			}
+
+			.tag {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				height: 24px;
+				padding: 0 9px;
+				border-radius: 999px;
+				font-size: 12.5px;
+				font-weight: 500;
+				border: 1px solid;
+				white-space: nowrap;
+			}
+			.tag-common {
+				color: var(--vellum-2);
+				border-color: var(--line);
+			}
+			.tag-rare {
+				color: var(--arcane);
+				border-color: color-mix(in srgb, var(--arcane) 45%, transparent);
+				background: color-mix(in srgb, var(--arcane) 10%, transparent);
+			}
+			.tag-legend {
+				color: var(--brass);
+				border-color: color-mix(in srgb, var(--brass) 45%, transparent);
+				background: color-mix(in srgb, var(--brass) 10%, transparent);
+			}
+			.tag-check {
+				color: var(--accent);
+				border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+				background: color-mix(in srgb, var(--accent) 10%, transparent);
+			}
+			.tag-danger {
+				color: var(--ember);
+				border-color: color-mix(in srgb, var(--ember) 45%, transparent);
+				background: color-mix(in srgb, var(--ember) 10%, transparent);
+			}
+
+			.btn {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				gap: 8px;
+				height: 40px;
+				padding: 0 18px;
+				border-radius: var(--r-control);
+				border: 1px solid transparent;
+				font: 500 15px var(--font-ui);
+				transition:
+					background 0.15s,
+					border-color 0.15s,
+					color 0.15s;
+				white-space: nowrap;
+			}
+			.btn-primary {
+				background: var(--accent);
+				color: var(--on-accent);
+			}
+			.btn-primary:hover {
+				background: color-mix(in oklab, var(--accent) 82%, white);
+			}
+			.btn-secondary {
+				background: transparent;
+				border-color: var(--line);
+				color: var(--vellum);
+			}
+			.btn-secondary:hover {
+				background: var(--mist);
+				border-color: var(--vellum-3);
+			}
+			.btn-ghost {
+				background: transparent;
+				color: var(--vellum-2);
+			}
+			.btn-ghost:hover {
+				background: var(--mist);
+				color: var(--vellum);
+			}
+			.btn-danger {
+				background: transparent;
+				border-color: color-mix(in srgb, var(--ember) 55%, transparent);
+				color: var(--ember);
+			}
+			.btn-danger:hover {
+				background: color-mix(in srgb, var(--ember) 12%, transparent);
+			}
+			.btn-sm {
+				height: 32px;
+				padding: 0 12px;
+				font-size: 14px;
+			}
+
+			.panels {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+				gap: 20px;
+			}
+			.panel {
+				background: var(--abyss);
+				border: 1px solid var(--line);
+				border-radius: var(--r-card);
+				padding: 24px;
+			}
+			.panel h3 {
+				font-size: 20px;
+				margin-bottom: 6px;
+			}
+			.panel > p {
+				font-size: 14px;
+				color: var(--vellum-3);
+				margin-bottom: 20px;
+				max-width: 48ch;
+			}
+			.row-wrap {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 10px;
+				align-items: center;
+			}
+			.field + .field {
+				margin-top: 18px;
+			}
+			.field label {
+				display: block;
+				font-size: 14px;
+				font-weight: 500;
+				margin-bottom: 6px;
+			}
+			.field input {
+				width: 100%;
+				height: 42px;
+				background: var(--ink);
+				border: 1px solid var(--line);
+				border-radius: var(--r-control);
+				color: var(--vellum);
+				padding: 0 12px;
+				font: 400 15px var(--font-ui);
+				transition:
+					border-color 0.15s,
+					box-shadow 0.15s;
+			}
+			.field input::placeholder {
+				color: var(--vellum-3);
+			}
+			.field input:focus {
+				outline: none;
+				border-color: var(--accent);
+				box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+			}
+			.field .help {
+				font-size: 13px;
+				color: var(--vellum-3);
+				margin-top: 6px;
+			}
+			.field.err input {
+				border-color: var(--ember);
+			}
+			.field.err .help {
+				color: var(--ember);
+			}
+			.toast {
+				display: flex;
+				gap: 12px;
+				align-items: flex-start;
+				background: var(--mist);
+				border: 1px solid var(--line);
+				border-radius: 10px;
+				padding: 12px 14px;
+			}
+			.toast + .toast {
+				margin-top: 10px;
+			}
+			.toast svg {
+				width: 20px;
+				height: 20px;
+				flex: none;
+				margin-top: 1px;
+			}
+			.toast b {
+				font-weight: 500;
+				display: block;
+			}
+			.toast span {
+				display: block;
+				font-size: 13px;
+				line-height: 1.45;
+				color: var(--vellum-2);
+				margin-top: 2px;
+			}
+			.toast .btn {
+				margin-left: auto;
+			}
+			.dice-out {
+				margin-top: 16px;
+				min-height: 34px;
+			}
+
+			.worlds {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+				gap: 20px;
+			}
+			.world-card {
+				display: flex;
+				flex-direction: column;
+				justify-content: flex-start;
+				text-align: left;
+				padding: 0;
+				background: var(--abyss);
+				border: 1px solid var(--line);
+				border-radius: var(--r-portal);
+				overflow: hidden;
+				transition:
+					border-color 0.2s,
+					box-shadow 0.2s;
+			}
+			.world-card:hover {
+				border-color: var(--w);
+			}
+			.world-card[aria-pressed="true"] {
+				border-color: var(--w);
+				box-shadow: 0 0 0 1px var(--w);
+			}
+			.world-card .sky {
+				height: 160px;
+				display: grid;
+				place-items: end center;
+				padding-bottom: 18px;
+				background: color-mix(in srgb, var(--w) 16%, var(--abyss));
+				border-bottom: 1px solid var(--line);
+			}
+			.world-card .sky svg {
+				width: 120px;
+				height: 90px;
+			}
+			.world-card .inf {
+				padding: 16px 18px 18px;
+			}
+			.world-card h3 {
+				font-size: 20px;
+				line-height: 1.2;
+			}
+			.world-card .genre {
+				color: var(--vellum-2);
+				font-size: 14px;
+				margin-top: 2px;
+			}
+			.world-card .pres {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				margin-top: 12px;
+				font-size: 13px;
+				color: var(--vellum-3);
+			}
+			.world-card .pres i {
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				background: var(--w);
+			}
+			.world-card .here {
+				display: none;
+				color: var(--w);
+			}
+			.world-card[aria-pressed="true"] .here {
+				display: inline;
+			}
+			.world-card.new {
+				background: transparent;
+				border-style: dashed;
+			}
+			.world-card.new .sky {
+				background: transparent;
+				place-items: center;
+				padding: 40px 0 0;
+				font: 300 56px var(--font-voice);
+				color: var(--vellum-3);
+			}
+
+			.logo-stage {
+				background: var(--abyss);
+				border: 1px solid var(--line);
+				border-radius: 16px;
+				padding: 64px 48px;
+				display: grid;
+				place-items: center;
+			}
+			.logo-stage .lockup .m {
+				width: 112px;
+				height: 112px;
+			}
+			.logo-stage .lockup .w {
+				height: 91px;
+			}
+			.variants {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+				gap: 16px;
+				margin-top: 16px;
+			}
+			.variant {
+				border: 1px solid var(--line);
+				border-radius: var(--r-card);
+				overflow: hidden;
+			}
+			.variant .v-stage {
+				height: 160px;
+				display: grid;
+				place-items: center;
+			}
+			.variant .v-stage > svg {
+				width: 88px;
+				height: 88px;
+			}
+			.variant .cap {
+				padding: 10px 14px;
+				font-size: 13px;
+				color: var(--vellum-3);
+				background: var(--abyss);
+				border-top: 1px solid var(--line);
+			}
+			.icons {
+				display: flex;
+				gap: 20px;
+				align-items: flex-end;
+			}
+			.appicon {
+				background: var(--ink);
+				border: 1px solid var(--line);
+				display: grid;
+				place-items: center;
+			}
+			.logo-notes {
+				margin-top: 24px;
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+				gap: 16px;
+			}
+			.logo-notes div {
+				padding: 16px 18px;
+				border: 1px solid var(--line);
+				border-radius: var(--r-card);
+				font-size: 15px;
+				color: var(--vellum-2);
+			}
+			.logo-notes h4 {
+				font-size: 17px;
+				color: var(--vellum);
+				margin-bottom: 6px;
+			}
+
+			.code {
+				position: relative;
+				background: #0d1022;
+				border: 1px solid var(--line);
+				border-radius: var(--r-card);
+				padding: 56px 24px 22px;
+				overflow: auto;
+			}
+			.code pre {
+				font:
+					400 13.5px/1.65 ui-monospace,
+					"SF Mono",
+					Menlo,
+					monospace;
+				color: var(--vellum-2);
+			}
+			.code .btn {
+				position: absolute;
+				top: 12px;
+				right: 12px;
+			}
+
+			@media (max-width: 900px) {
+				.game {
+					grid-template-columns: 1fr;
+				}
+				.side {
+					border-left: 0;
+					border-top: 1px solid var(--line);
+				}
+				.story {
+					padding: 28px 22px;
+				}
+				.type-grid {
+					grid-template-columns: 1fr;
+				}
+				.scale > div {
+					grid-template-columns: 110px minmax(0, 1fr);
+				}
+				.scale .v {
+					display: none;
+				}
+				.hero .sky {
+					opacity: 0.35;
+					width: 90%;
+				}
+				.lockup .m {
+					width: 84px;
+					height: 84px;
+				}
+				.lockup .w {
+					height: 68px;
+				}
+				.topbar nav .btn:not(:last-child) {
+					display: none;
+				}
+				.logo-stage {
+					padding: 40px 16px;
+				}
+				.logo-stage .lockup .m {
+					width: 72px;
+					height: 72px;
+				}
+				.logo-stage .lockup .w {
+					height: 58px;
+				}
+				.wrap {
+					padding: 0 20px;
+				}
+				.swatches {
+					grid-template-columns: repeat(2, minmax(0, 1fr));
+					gap: 12px;
+				}
+				.sw .chip {
+					height: 64px;
+				}
+				.type-card .big {
+					font-size: 44px;
+				}
+				.hero .tagline {
+					font-size: 24px;
+				}
+				.sec-head h2 {
+					font-size: 30px;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+			<symbol id="mark" viewBox="0 0 96 96">
+				<g
+					transform="rotate(-18 48 48)"
+					fill="none"
+					stroke="var(--m-orbit, var(--accent))"
+					stroke-width="3.5"
+					stroke-linecap="round"
+				>
+					<ellipse cx="48" cy="48" rx="44" ry="13" />
+				</g>
+				<polygon
+					points="48,22 70.5,35 70.5,61 48,74 25.5,61 25.5,35"
+					fill="var(--m-fill, var(--ink))"
+					stroke="var(--m-line, var(--vellum))"
+					stroke-width="3.5"
+					stroke-linejoin="round"
+				/>
+				<path
+					d="M48 34L60.1 55H35.9Z M48 34L25.5 35M48 34L48 22M48 34L70.5 35 M60.1 55L70.5 35M60.1 55L70.5 61M60.1 55L48 74 M35.9 55L48 74M35.9 55L25.5 61M35.9 55L25.5 35"
+					fill="none"
+					stroke="var(--m-line, var(--vellum))"
+					stroke-width="1.6"
+					stroke-linejoin="round"
+					stroke-linecap="round"
+					stroke-opacity=".55"
+				/>
+				<g transform="rotate(-18 48 48)">
+					<path
+						d="M4 48A44 13 0 0 0 92 48"
+						fill="none"
+						stroke="var(--m-orbit, var(--accent))"
+						stroke-width="3.5"
+						stroke-linecap="round"
+					/>
+					<path
+						transform="translate(82 56.4)"
+						d="M0-10C1.2-2.4 2.4-1.2 10 0 2.4 1.2 1.2 2.4 0 10-1.2 2.4-2.4 1.2-10 0-2.4-1.2-1.2-2.4 0-10Z"
+						fill="var(--m-star, var(--brass))"
+						stroke="var(--m-fill, var(--ink))"
+						stroke-width="3"
+						paint-order="stroke"
+					/>
+				</g>
+			</symbol>
+			<symbol id="wordmark" viewBox="2.0 -62.4 243.4 78.2">
+				<path
+					fill="currentColor"
+					d="M24.2815859375 0.896Q17.7791953125 0.896 12.976001953125 -1.9615996093749999Q8.17280859375 -4.81919921875 5.5808125 -10.076798828125Q2.9888164062500002 -15.3343984375 2.9888164062500002 -22.483199218750002Q2.9888164062500002 -30.50879296875 5.6512109375 -36.12159375Q8.31360546875 -41.734394531250004 13.260796875 -44.675197265625Q18.20798828125 -47.616 25.0111796875 -47.616Q31.31517578125 -47.616 35.99996875 -44.85759765625Q40.68476171875 -42.0991953125 43.273556640625 -36.956794921875Q45.8623515625 -31.814394531250002 45.8623515625 -24.512Q45.8623515625 -18.764796875000002 44.40315234375 -14.070396484375001Q42.943953125 -9.37599609375 40.14715625 -6.028796875Q37.350359375000004 -2.68159765625 33.337566406250005 -0.8927988281250001Q29.3247734375 0.896 24.2815859375 0.896ZM25.2543828125 -0.192Q28.1216015625 -0.192 30.208015625 -1.37600390625Q32.2944296875 -2.5600078125 33.6320390625 -5.2032109375Q34.9696484375 -7.8464140625 35.622453125 -12.208013671875Q36.2752578125 -16.56961328125 36.2752578125 -22.9888046875Q36.2752578125 -29.3759921875 35.472052734375 -33.894390625Q34.66884765625 -38.4127890625 33.107238281250005 -41.225591796875Q31.545628906250002 -44.03839453125 29.26721484375 -45.350398437500004Q26.98880078125 -46.66240234375 23.9743828125 -46.66240234375Q21.12636328125 -46.66240234375 18.975949218750003 -45.468798828125Q16.82553515625 -44.2751953125 15.359925781250002 -41.609591796875Q13.89431640625 -38.94398828125 13.167912109375 -34.627189453125Q12.4415078125 -30.310390625 12.4415078125 -24.0383984375Q12.4415078125 -17.6768125 13.318312500000001 -13.148814453125Q14.195117187500001 -8.62081640625 15.862326171875 -5.7408125000000005Q17.52953515625 -2.86080859375 19.90394921875 -1.526404296875Q22.27836328125 -0.192 25.2543828125 -0.192Z M64.27519921875 0.896Q60.07680078125 0.896 57.040005859375 -0.886400390625Q54.0032109375 -2.66880078125 52.361615234375 -6.326400390625Q50.72001953125 -9.984 50.72001953125 -15.51999609375Q50.72001953125 -21.260796875 52.643216796875 -25.37599609375Q54.5664140625 -29.4911953125 58.166408203125 -31.70559375Q61.76640234375 -33.9199921875 66.77759375 -33.9199921875Q68.9023984375 -33.9199921875 70.902404296875 -33.382390625Q72.90241015625 -32.8447890625 74.393609375 -31.94238671875V-44.31999609375Q74.393609375 -46.2848046875 73.904009765625 -46.979205078125005Q73.41441015625 -47.673605468750004 71.795203125 -47.7568046875L68.97278515625 -47.9488046875L69.03678515625 -48.627203125L82.41270703125 -49.081597656250004L82.86070703125 -48.704V-3.84Q82.86070703125 -2.3040000000000003 83.24790820312501 -1.6864003906250002Q83.635109375 -1.06880078125 84.87671093750001 -0.94080078125L87.57112890625001 -0.768V0.0L75.4559921875 0.5760000000000001L74.69440234375 -5.17759765625H74.52800390625Q73.58080078125 -3.1999921875 72.111998046875 -1.83679296875Q70.6431953125 -0.47359375000000004 68.700794921875 0.211203125Q66.75839453125 0.896 64.27519921875 0.896ZM67.2255546875 -1.9967734375000001Q69.28637499999999 -1.9967734375000001 70.88638671875 -2.8031796875Q72.4863984375 -3.6095859375 73.44000390625 -5.33759375Q74.393609375 -7.0656015625 74.393609375 -9.81120703125V-29.9391796875Q72.947203125 -31.1935859375 71.081591796875 -31.95519140625Q69.21598046875 -32.716796875 67.2511640625 -32.716796875Q64.62074609375 -32.716796875 62.93753515625 -31.1551953125Q61.25432421875 -29.59359375 60.46071875 -26.086390625Q59.667113281249996 -22.5791875 59.667113281249996 -16.703984375Q59.667113281249996 -11.3663828125 60.553517578124996 -8.12798046875Q61.439921874999996 -4.889578125 63.12953125 -3.44317578125Q64.819140625 -1.9967734375000001 67.2255546875 -1.9967734375000001Z M94.387171875 14.72Q91.13599218750001 14.72 89.32800195312501 13.174408203125001Q87.52001171875001 11.62881640625 87.52001171875001 9.164828125Q87.52001171875001 7.3984375 88.56000585937501 6.12484375Q89.60000000000001 4.85125 91.62239062500001 4.85125Q93.45278125 4.85125 94.51517578125001 5.7984453125Q95.5775703125 6.745640625 95.5775703125 8.2176328125Q95.5775703125 8.9344296875 95.36957226562501 10.06722265625Q95.16157421875 11.200015625 94.61117578125001 13.171203125Q96.115171875 13.235203125 97.628771484375 12.739201171875Q99.14237109375 12.24319921875 100.739173828125 10.438390625Q102.33597656250001 8.63358203125 103.92317968750001 4.7871640625000005L104.84478125000001 2.5855546875L91.93600390625001 -28.31999609375Q91.1488046875 -30.3231953125 90.608005859375 -30.959994140625Q90.06720703125 -31.59679296875 89.09441796875001 -31.846390625L87.2320078125 -32.34559375L87.32160937500001 -33.0239921875H105.04950000000001V-32.30079296875L102.24628906250001 -31.999992187500002Q100.93429296875001 -31.871992187500002 100.55669531250001 -31.158392578125003Q100.17909765625001 -30.44479296875 100.8766953125 -28.62719921875L108.94712890625001 -8.3711171875H109.13912890625001L116.69116015625 -28.47359765625Q117.414359375 -30.34239453125 116.9279609375 -31.05279296875Q116.4415625 -31.76319140625 115.01436328125001 -31.999992187500002L112.77436328125 -32.34559375L112.81916406250001 -33.0239921875H123.34075000000001V-32.30079296875L121.43994140625 -31.974390625Q120.26234765625 -31.718390625 119.61915039062501 -31.126392578125Q118.975953125 -30.53439453125 118.25275390625 -28.5311953125L107.03353906250001 1.28644921875Q105.52954296875001 5.337640625 104.12154296875 7.958431640624999Q102.71354296875 10.57922265625 101.276744140625 12.064015625Q99.8399453125 13.54880859375 98.15995117187501 14.134404296875001Q96.47995703125001 14.72 94.387171875 14.72Z M124.32000390625001 0.99199609375 123.39200781250001 -11.161578125 124.32640625000002 -11.2639765625Q125.34400390625001 -7.1679843750000005 126.88000390625001 -4.79358984375Q128.41600390625 -2.4191953125 130.47680078125 -1.391998046875Q132.53759765625 -0.36480078125 135.13598828125 -0.36480078125Q138.3423984375 -0.36480078125 140.24319921875002 -2.0800078125Q142.144 -3.79521484375 142.144 -6.85441796875Q142.144 -8.97922265625 141.06880078125 -10.15042578125Q139.9936015625 -11.32162890625 138.172798828125 -11.990431640625001Q136.35199609375002 -12.659234375 134.079984375 -13.30563671875Q132.02560546875003 -13.9264296875 130.15681250000003 -14.66882421875Q128.28801953125003 -15.41121875 126.83521875000002 -16.534416015625Q125.38241796875002 -17.65761328125 124.56321484375002 -19.4048125Q123.74401171875002 -21.15201171875 123.74401171875002 -23.73761328125Q123.74401171875002 -26.69440234375 125.13600585937502 -28.9983984375Q126.52800000000002 -31.302394531250002 129.14558984375003 -32.611193359375Q131.7631796875 -33.9199921875 135.44316796875 -33.9199921875Q138.21437500000002 -33.9199921875 140.18877148437502 -33.1711875Q142.16316796875003 -32.422382812500004 143.69915234375003 -31.3727890625L144.58235546875002 -33.9199921875H145.27995312500002L146.09914843750002 -23.45600390625L145.06235156250003 -23.539203125Q143.69275781250002 -28.159984375 141.49436132812502 -30.4511875Q139.29596484375003 -32.742390625 135.59676171875 -32.742390625Q132.6847578125 -32.742390625 131.01115429687502 -31.382384765624998Q129.33755078125 -30.02237890625 129.33755078125 -27.47516796875Q129.33755078125 -25.36316015625 130.45755078125 -24.169556640625Q131.57755078125 -22.975953125 133.411150390625 -22.303953125Q135.24475 -21.631953125 137.37594921875 -20.9535546875Q139.48153906250002 -20.326359375 141.34073632812502 -19.523162109375Q143.19993359375002 -18.71996484375 144.69753515625 -17.551966796875Q146.19513671875 -16.38396875 147.0335390625 -14.595169921875002Q147.87194140625002 -12.80637109375 147.87194140625002 -10.20797265625Q147.87194140625002 -6.73918359375 146.25914843750002 -4.259189453125Q144.64635546875002 -1.7791953125 141.77276562500003 -0.44159765624999997Q138.89917578125002 0.896 135.103984375 0.896Q132.61438671875 0.896 130.255994140625 0.19520117187500002Q127.89760156250001 -0.50559765625 125.95200000000001 -1.99040234375L125.12640234375002 0.99199609375Z M153.12000390625002 0.99199609375 152.19200781250004 -11.161578125 153.12640625000003 -11.2639765625Q154.14400390625002 -7.1679843750000005 155.68000390625002 -4.79358984375Q157.21600390625002 -2.4191953125 159.27680078125002 -1.391998046875Q161.33759765625 -0.36480078125 163.93598828125002 -0.36480078125Q167.14239843750002 -0.36480078125 169.04319921875003 -2.0800078125Q170.94400000000002 -3.79521484375 170.94400000000002 -6.85441796875Q170.94400000000002 -8.97922265625 169.86880078125 -10.15042578125Q168.79360156250002 -11.32162890625 166.972798828125 -11.990431640625001Q165.15199609375003 -12.659234375 162.87998437500002 -13.30563671875Q160.82560546875004 -13.9264296875 158.95681250000004 -14.66882421875Q157.08801953125004 -15.41121875 155.63521875000004 -16.534416015625Q154.18241796875003 -17.65761328125 153.36321484375003 -19.4048125Q152.54401171875003 -21.15201171875 152.54401171875003 -23.73761328125Q152.54401171875003 -26.69440234375 153.93600585937503 -28.9983984375Q155.32800000000003 -31.302394531250002 157.94558984375004 -32.611193359375Q160.56317968750002 -33.9199921875 164.24316796875002 -33.9199921875Q167.01437500000003 -33.9199921875 168.98877148437504 -33.1711875Q170.96316796875004 -32.422382812500004 172.49915234375004 -31.3727890625L173.38235546875003 -33.9199921875H174.07995312500003L174.89914843750003 -23.45600390625L173.86235156250004 -23.539203125Q172.49275781250003 -28.159984375 170.29436132812504 -30.4511875Q168.09596484375004 -32.742390625 164.39676171875 -32.742390625Q161.48475781250002 -32.742390625 159.81115429687503 -31.382384765624998Q158.13755078125 -30.02237890625 158.13755078125 -27.47516796875Q158.13755078125 -25.36316015625 159.25755078125002 -24.169556640625Q160.37755078125002 -22.975953125 162.21115039062502 -22.303953125Q164.04475000000002 -21.631953125 166.17594921875002 -20.9535546875Q168.28153906250003 -20.326359375 170.14073632812503 -19.523162109375Q171.99993359375003 -18.71996484375 173.49753515625002 -17.551966796875Q174.99513671875002 -16.38396875 175.83353906250002 -14.595169921875002Q176.67194140625003 -12.80637109375 176.67194140625003 -10.20797265625Q176.67194140625003 -6.73918359375 175.05914843750003 -4.259189453125Q173.44635546875003 -1.7791953125 170.57276562500005 -0.44159765624999997Q167.69917578125003 0.896 163.90398437500002 0.896Q161.41438671875002 0.896 159.05599414062505 0.19520117187500002Q156.69760156250004 -0.50559765625 154.75200000000004 -1.99040234375L153.92640234375003 0.99199609375Z M177.79200781250003 0.0V-0.768L180.10881250000003 -1.15840234375Q181.23521093750003 -1.395203125 181.93920703125002 -2.019205078125Q182.64320312500004 -2.6432070312500002 183.34080078125004 -4.71680078125L197.31199218750004 -46.72H203.44951953125005L217.51030468750002 -4.6591953125000005Q218.09910156250004 -2.88640234375 218.62709960937502 -2.21440234375Q219.15509765625004 -1.54240234375 220.57589453125004 -1.267203125L222.76469921875002 -0.8576015625V0.0H203.61600390625003V-0.768L206.68801953125003 -1.15840234375Q207.97441406250005 -1.3056015625 208.24961328125005 -2.019201171875Q208.52481250000005 -2.73280078125 208.01921484375004 -4.44159375L204.64641406250004 -15.872H188.67200000000003L185.08800000000005 -4.72959765625Q184.58240234375003 -3.0848046875 184.95359765625005 -2.18240234375Q185.32479296875005 -1.28 186.79039062500004 -1.13280078125L190.30400390625005 -0.72319921875V0.0ZM189.13919921875004 -17.024H204.21761328125004L196.87680468750003 -40.69763671875H196.72960546875004Z M224.98561718750003 0.0V-0.768L228.23683593750005 -0.9856015625Q229.45283593750003 -1.0944023437500001 229.83683593750004 -1.776001953125Q230.22083593750003 -2.4576015625 230.22083593750003 -4.34559765625V-42.84799609375Q230.22083593750003 -44.44799609375 229.80483593750003 -45.091197265625Q229.38883593750003 -45.7343984375 228.05123828125002 -45.7983984375L224.98561718750003 -45.952V-46.72H244.38394921875005V-45.952L241.10712890625004 -45.7983984375Q240.04473046875003 -45.7343984375 239.59673046875002 -45.052798828125Q239.14873046875005 -44.37119921875 239.14873046875005 -42.55359765625V-4.0895976562500005Q239.14873046875005 -2.37440234375 239.58392968750005 -1.744001953125Q240.01912890625005 -1.1136015625 241.23512890625003 -0.9856015625L244.38394921875005 -0.768V0.0Z"
+				/>
+			</symbol>
+			<symbol id="d20" viewBox="0 0 24 24">
+				<polygon
+					points="12,2 20.7,7 20.7,17 12,22 3.3,17 3.3,7"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linejoin="round"
+				/>
+				<path
+					d="M12 7l4.3 7.5H7.7Z M12 7L3.3 7M12 7L12 2M12 7L20.7 7M16.3 14.5L20.7 7M16.3 14.5L20.7 17M16.3 14.5L12 22M7.7 14.5L12 22M7.7 14.5L3.3 17M7.7 14.5L3.3 7"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1"
+					stroke-opacity=".6"
+					stroke-linejoin="round"
+				/>
+			</symbol>
+		</svg>
+
+		<div class="wrap">
+			<header class="hero">
+				<svg class="sky" viewBox="0 0 600 440" aria-hidden="true">
+					<g stroke="var(--line)" stroke-width="1" fill="none">
+						<path
+							d="M70 110L200 60L300 160L430 90L540 190L500 340L380 270L300 160M380 270L230 320L130 230L70 110M130 230L300 160"
+						/>
+					</g>
+					<g fill="var(--vellum-3)">
+						<circle cx="70" cy="110" r="2.5" />
+						<circle cx="200" cy="60" r="2.5" />
+						<circle cx="430" cy="90" r="2.5" />
+						<circle cx="230" cy="320" r="2.5" />
+						<circle cx="130" cy="230" r="2.5" />
+						<circle cx="500" cy="340" r="2.5" />
+						<circle cx="40" cy="300" r="1.2" />
+						<circle cx="330" cy="40" r="1.2" />
+						<circle cx="570" cy="60" r="1.2" />
+						<circle cx="450" cy="400" r="1.2" />
+						<circle cx="170" cy="400" r="1.2" />
+						<circle cx="260" cy="230" r="1.2" />
+						<circle cx="470" cy="240" r="1.2" />
+					</g>
+					<circle
+						cx="300"
+						cy="160"
+						r="8"
+						fill="var(--ink)"
+						stroke="var(--accent)"
+						stroke-width="2"
+					/>
+					<circle
+						cx="380"
+						cy="270"
+						r="7"
+						fill="var(--ink)"
+						stroke="#7FA7FF"
+						stroke-width="2"
+					/>
+					<circle
+						cx="540"
+						cy="190"
+						r="7"
+						fill="var(--ink)"
+						stroke="#EC7DB8"
+						stroke-width="2"
+					/>
+					<circle
+						cx="130"
+						cy="230"
+						r="6"
+						fill="var(--ink)"
+						stroke="#B7C46A"
+						stroke-width="2"
+					/>
+					<path
+						transform="translate(300 160) scale(.7)"
+						d="M0-10C1.2-2.4 2.4-1.2 10 0 2.4 1.2 1.2 2.4 0 10-1.2 2.4-2.4 1.2-10 0-2.4-1.2-1.2-2.4 0-10Z"
+						fill="var(--brass)"
+					/>
+				</svg>
+				<h1 class="lockup" aria-label="OdyssAI">
+					<svg class="m" aria-hidden="true"><use href="#mark" /></svg>
+					<svg class="w" viewBox="0 0 243.4 78.2" aria-hidden="true">
+						<use href="#wordmark" />
+					</svg>
+				</h1>
+				<p class="tagline">
+					Crée n'importe quel monde.<br />Puis pars visiter ceux des autres.
+				</p>
+				<p class="meta">
+					UI kit v0.1 : couleurs, typographie, composants de jeu, thèmes de
+					monde et logo. Les tokens CSS sont en bas de page.
+				</p>
+			</header>
+
+			<section id="couleurs">
+				<div class="sec-head">
+					<h2>La nuit entre les mondes</h2>
+					<p>
+						Un fond d'encre indigo plutôt qu'un noir, un texte couleur vélin
+						pour la lecture longue, et quatre signaux qui ont chacun un sens
+						précis dans le jeu. Aucune couleur n'est décorative.
+					</p>
+				</div>
+
+				<h3 class="sub">Fondations</h3>
+				<div class="swatches">
+					<div class="sw">
+						<div class="chip" style="background: #12162b"></div>
+						<div class="info">
+							<b>Encre</b><code>#12162B</code>
+							<p>Fond de l'application.</p>
+						</div>
+					</div>
+					<div class="sw">
+						<div class="chip" style="background: #1a2041"></div>
+						<div class="info">
+							<b>Abysse</b><code>#1A2041</code>
+							<p>Panneaux, cartes, fiche de personnage.</p>
+						</div>
+					</div>
+					<div class="sw">
+						<div class="chip" style="background: #252c56"></div>
+						<div class="info">
+							<b>Brume</b><code>#252C56</code>
+							<p>Survol, éléments surélevés, pistes de jauges.</p>
+						</div>
+					</div>
+					<div class="sw">
+						<div class="chip" style="background: #353d6e"></div>
+						<div class="info">
+							<b>Trait</b><code>#353D6E</code>
+							<p>Bordures et séparateurs.</p>
+						</div>
+					</div>
+				</div>
+
+				<h3 class="sub">Texte</h3>
+				<div class="swatches">
+					<div class="sw">
+						<div class="chip" style="background: #ede6d6"></div>
+						<div class="info">
+							<b>Vélin</b><code>#EDE6D6</code>
+							<p>Texte principal et narration. Contraste 14,4:1 sur Encre.</p>
+						</div>
+					</div>
+					<div class="sw">
+						<div class="chip" style="background: #bbb5cb"></div>
+						<div class="info">
+							<b>Vélin 2</b><code>#BBB5CB</code>
+							<p>Texte secondaire, actions du joueur.</p>
+						</div>
+					</div>
+					<div class="sw">
+						<div class="chip" style="background: #8c88a6"></div>
+						<div class="info">
+							<b>Vélin 3</b><code>#8C88A6</code>
+							<p>Légendes et placeholders. Contraste 5,3:1 sur Encre.</p>
+						</div>
+					</div>
+				</div>
+
+				<h3 class="sub">Signaux</h3>
+				<div class="swatches">
+					<div class="sw">
+						<div class="chip" style="background: #5fb8a5"></div>
+						<div class="info">
+							<b>Vert-de-gris</b><code>#5FB8A5</code>
+							<p>
+								Accent du monde par défaut : actions, focus de saisie, fil du
+								joueur.
+							</p>
+						</div>
+					</div>
+					<div class="sw">
+						<div class="chip" style="background: #d4a84f"></div>
+						<div class="info">
+							<b>Laiton</b><code>#D4A84F</code>
+							<p>
+								Lore général, XP, objets légendaires. Constant dans tous les
+								mondes.
+							</p>
+						</div>
+					</div>
+					<div class="sw">
+						<div class="chip" style="background: #e2685a"></div>
+						<div class="info">
+							<b>Braise</b><code>#E2685A</code>
+							<p>Points de vie, combat, actions destructives.</p>
+						</div>
+					</div>
+					<div class="sw">
+						<div class="chip" style="background: #9d8cf2"></div>
+						<div class="info">
+							<b>Arcane</b><code>#9D8CF2</code>
+							<p>
+								Mana, magie, et tout ce qui traverse d'un univers à l'autre.
+							</p>
+						</div>
+					</div>
+				</div>
+
+				<div class="rule">
+					Chaque monde créé reçoit son propre accent, qui remplace le
+					vert-de-gris. Pour que le texte Encre reste lisible dessus, génère-le
+					en OKLCH à clarté et chroma fixes, seule la teinte varie :
+					<code>oklch(0.75 0.11 H)</code>. Le narrateur choisit
+					<code>H</code> selon l'ambiance du monde, le design system garantit le
+					contraste.
+				</div>
+			</section>
+
+			<section id="typo">
+				<div class="sec-head">
+					<h2>Deux voix</h2>
+					<p>
+						Le serif, c'est le narrateur : la prose, les titres de chapitre, les
+						noms propres du monde. Le sans, c'est l'interface et le joueur. On
+						sait qui parle avant d'avoir lu un mot.
+					</p>
+				</div>
+				<div class="type-grid">
+					<div class="type-card">
+						<div class="big voice">Le phare sans gardien</div>
+						<p class="who">
+							Literata, variable avec axe optique. Pensée pour la lecture sur
+							écran.
+						</p>
+						<p class="sample">
+							La marée monte plus vite que prévu. Au sommet du phare, une lampe
+							s'allume toute seule, et tu sais que personne n'est censé vivre
+							ici depuis trente ans.
+						</p>
+					</div>
+					<div class="type-card">
+						<div class="ui-big">Agir, voyager.</div>
+						<p class="who">Instrument Sans, 400 à 600.</p>
+						<p class="ui-sample">
+							Boutons, fiches, inventaire, paramètres, chiffres des jets de dés.
+							Chiffres tabulaires activés partout où ça se compare.
+						</p>
+					</div>
+				</div>
+				<div class="scale" aria-label="Échelle typographique">
+					<div>
+						<span class="k">Display</span
+						><span
+							class="x voice"
+							style="
+								font-size: 56px;
+								line-height: 1.05;
+								letter-spacing: -0.02em;
+							"
+							>Station Hélione</span
+						><span class="v">Literata 500, 56/1.05</span>
+					</div>
+					<div>
+						<span class="k">Titre</span
+						><span class="x voice" style="font-size: 36px; line-height: 1.15"
+							>Chapitre et section</span
+						><span class="v">Literata 500, 36/1.15</span>
+					</div>
+					<div>
+						<span class="k">Sous-titre</span
+						><span class="x voice" style="font-size: 24px; line-height: 1.3"
+							>Nom de lieu, de personnage</span
+						><span class="v">Literata 500, 24/1.3</span>
+					</div>
+					<div>
+						<span class="k">Narration</span
+						><span class="x voice" style="font-size: 19px; line-height: 1.75"
+							>Le vent tourne, et avec lui l'odeur du sel.</span
+						><span class="v">Literata 400, 19/1.75</span>
+					</div>
+					<div>
+						<span class="k">Interface</span
+						><span class="x" style="font-size: 16px"
+							>Rejoindre la session de Kaelis</span
+						><span class="v">Instrument 400, 16/1.5</span>
+					</div>
+					<div>
+						<span class="k">Secondaire</span
+						><span class="x" style="font-size: 14px; color: var(--vellum-2)"
+							>3 voyageurs présents dans ce monde</span
+						><span class="v">Instrument 400, 14/1.5</span>
+					</div>
+					<div>
+						<span class="k">Légende</span
+						><span class="x" style="font-size: 13px; color: var(--vellum-3)"
+							>Sauvegardé il y a 2 min</span
+						><span class="v">Instrument 400, 13/1.45</span>
+					</div>
+				</div>
+			</section>
+
+			<section id="ecran">
+				<div class="sec-head">
+					<h2>L'écran de jeu</h2>
+					<p>
+						Tous les composants en situation. La colonne de lecture reste sous
+						65 caractères, la fiche de personnage vit à droite, et un joueur
+						venu d'un autre monde apparaît dans le fil comme un événement, pas
+						comme un message de chat.
+					</p>
+				</div>
+				<div class="screen">
+					<div class="topbar">
+						<div class="world">
+							<svg aria-hidden="true"><use href="#mark" /></svg
+							><span id="world-name">Les Terres de Vasse</span
+							><small>Session 12</small>
+						</div>
+						<nav>
+							<button class="btn btn-ghost btn-sm">Carte</button
+							><button class="btn btn-ghost btn-sm">Lore</button
+							><button class="btn btn-ghost btn-sm">Journal</button
+							><button class="btn btn-secondary btn-sm">Quitter</button>
+						</nav>
+					</div>
+					<div class="game">
+						<div class="story">
+							<p class="chapter">Chapitre 3</p>
+							<h3>Le phare sans gardien</h3>
+							<div class="narr">
+								<p class="first">
+									La porte cède dans un grincement de fer rouillé. À
+									l'intérieur, l'odeur de sel se mêle à celle d'une lampe à
+									huile éteinte depuis peu. Quelqu'un était ici il y a moins
+									d'une heure.
+								</p>
+								<p>
+									Sur le bureau, un registre est resté ouvert. La dernière ligne
+									s'arrête au milieu d'un mot, comme si la main qui l'écrivait
+									avait été interrompue.
+								</p>
+							</div>
+							<div class="act">
+								<span>Ilse</span>Je lis le registre à voix basse.
+							</div>
+							<div class="roll">
+								<svg style="color: var(--accent)" aria-hidden="true">
+									<use href="#d20" /></svg
+								>Investigation <strong>14 + 3 = 17</strong
+								><span class="tag tag-check">Réussite</span>
+							</div>
+							<div class="narr" style="margin-top: 20px">
+								<p>
+									Les noms des gardiens se succèdent sur quarante ans. Le
+									dernier, c'est le tien.
+								</p>
+							</div>
+							<div class="cross">
+								<span class="dot" aria-hidden="true"></span>
+								<div>
+									Kaelis arrive par la faille du phare.<em
+										>Venu de Station Hélione. Il garde le contrôle de son
+										personnage, le narrateur gère la rencontre.</em
+									>
+								</div>
+							</div>
+							<p class="writing">
+								Le narrateur écrit<span class="caret" aria-hidden="true"></span>
+							</p>
+							<div class="choices" role="group" aria-label="Choix">
+								<button class="choice">
+									<kbd>1</kbd>Suivre les traces de pas vers l'escalier<span
+										class="tag tag-check"
+										>Discrétion DD 12</span
+									>
+								</button>
+								<button class="choice">
+									<kbd>2</kbd>Arracher la page et la cacher sur toi
+								</button>
+								<button class="choice">
+									<kbd>3</kbd>Interpeller Kaelis<span class="tag tag-rare"
+										>Autre monde</span
+									>
+								</button>
+							</div>
+							<div class="composer">
+								<label
+									for="act"
+									class="muted"
+									style="display: block; margin-bottom: 4px"
+									>Ou décris ton action</label
+								>
+								<textarea
+									id="act"
+									rows="2"
+									placeholder="Je fouille le tiroir du bureau"
+								></textarea>
+								<div class="row">
+									<span class="muted" style="font-size: 13px"
+										>Entrée pour agir, Maj+Entrée pour un saut de ligne</span
+									><button class="btn btn-primary btn-sm">Agir</button>
+								</div>
+							</div>
+						</div>
+						<aside class="side" aria-label="Fiche de personnage">
+							<div class="hero-card">
+								<div class="portrait">IV</div>
+								<div>
+									<h4>Ilse Varn</h4>
+									<p>Cartographe, niveau 4</p>
+								</div>
+							</div>
+							<div class="stats">
+								<div class="stat">
+									<div class="l">
+										<span>Points de vie</span><span>18 / 26</span>
+									</div>
+									<div class="bar">
+										<i style="width: 69%; background: var(--ember)"></i>
+									</div>
+								</div>
+								<div class="stat">
+									<div class="l"><span>Mana</span><span>7 / 12</span></div>
+									<div class="bar">
+										<i style="width: 58%; background: var(--arcane)"></i>
+									</div>
+								</div>
+								<div class="stat">
+									<div class="l">
+										<span>Expérience</span><span>340 / 500</span>
+									</div>
+									<div class="bar">
+										<i style="width: 68%; background: var(--brass)"></i>
+									</div>
+								</div>
+							</div>
+							<div class="inv">
+								<h5>Inventaire</h5>
+								<ul>
+									<li>
+										Clé du phare<span class="tag tag-legend">Légendaire</span>
+									</li>
+									<li>Boussole fêlée<span class="tag tag-rare">Rare</span></li>
+									<li>
+										Lettre scellée<span class="tag tag-common">Commun</span>
+									</li>
+									<li>Corde, 15 m<span class="tag tag-common">Commun</span></li>
+								</ul>
+							</div>
+						</aside>
+					</div>
+				</div>
+			</section>
+
+			<section id="composants">
+				<div class="sec-head">
+					<h2>Composants</h2>
+					<p>
+						Un seul bouton plein par vue. Le focus clavier est toujours en
+						laiton, pour rester visible quel que soit l'accent du monde.
+					</p>
+				</div>
+				<div class="panels">
+					<div class="panel">
+						<h3>Boutons</h3>
+						<p>
+							Plein pour l'action principale, contour pour les secondaires,
+							fantôme dans les barres d'outils, braise pour ce qui détruit.
+						</p>
+						<div class="row-wrap">
+							<button class="btn btn-primary">Agir</button
+							><button class="btn btn-secondary">Voyager</button
+							><button class="btn btn-ghost">Annuler</button
+							><button class="btn btn-danger">Effacer le monde</button>
+						</div>
+						<div class="row-wrap" style="margin-top: 12px">
+							<button class="btn btn-primary btn-sm">Agir</button
+							><button class="btn btn-secondary btn-sm">Voyager</button
+							><button class="btn btn-ghost btn-sm">Annuler</button>
+						</div>
+					</div>
+					<div class="panel">
+						<h3>Champs</h3>
+						<p>Les erreurs disent ce qui bloque et comment s'en sortir.</p>
+						<div class="field">
+							<label for="f1">Nom du monde</label
+							><input id="f1" placeholder="Les Îles Cendrées" />
+							<div class="help">
+								Visible par les voyageurs qui croisent ton monde.
+							</div>
+						</div>
+						<div class="field err">
+							<label for="f2">Nom du monde</label
+							><input
+								id="f2"
+								value="Station Hélione"
+								aria-invalid="true"
+								aria-describedby="f2h"
+							/>
+							<div class="help" id="f2h">
+								Ce nom existe déjà dans le Lore général. Essaie une variante.
+							</div>
+						</div>
+					</div>
+					<div class="panel">
+						<h3>Étiquettes</h3>
+						<p>
+							Rareté, tests de compétence, danger, origine d'un autre monde.
+						</p>
+						<div class="row-wrap">
+							<span class="tag tag-common">Commun</span
+							><span class="tag tag-rare">Rare</span
+							><span class="tag tag-legend">Légendaire</span
+							><span class="tag tag-check">Force DD 15</span
+							><span class="tag tag-danger">Blessé</span
+							><span class="tag tag-rare">Autre monde</span>
+						</div>
+					</div>
+					<div class="panel">
+						<h3>Jets de dés</h3>
+						<p>
+							Le résultat reste lisible en un coup d'œil : total en gras, issue
+							en étiquette. 20 naturel en laiton, 1 naturel en braise.
+						</p>
+						<button class="btn btn-secondary" id="roll-btn">
+							<svg width="18" height="18" aria-hidden="true">
+								<use href="#d20" /></svg
+							>Lancer un d20
+						</button>
+						<div class="dice-out" id="dice-out" aria-live="polite"></div>
+					</div>
+					<div class="panel">
+						<h3>Notifications</h3>
+						<p>Au passé, sans point d'exclamation. Une action au plus.</p>
+						<div class="toast">
+							<svg viewBox="0 0 20 20" aria-hidden="true">
+								<circle
+									cx="10"
+									cy="10"
+									r="8.5"
+									fill="none"
+									stroke="var(--accent)"
+									stroke-width="1.5"
+								/>
+								<path
+									d="M6.5 10.2l2.3 2.3 4.7-4.9"
+									fill="none"
+									stroke="var(--accent)"
+									stroke-width="1.6"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								/>
+							</svg>
+							<div>
+								<b>Monde sauvegardé</b
+								><span>3 nouveaux lieux ajoutés au Lore général.</span>
+							</div>
+							<button class="btn btn-ghost btn-sm">Voir</button>
+						</div>
+						<div class="toast">
+							<svg viewBox="0 0 20 20" aria-hidden="true">
+								<circle
+									cx="10"
+									cy="10"
+									r="8.5"
+									fill="none"
+									stroke="var(--ember)"
+									stroke-width="1.5"
+								/>
+								<path
+									d="M10 5.8v5M10 13.8v.4"
+									stroke="var(--ember)"
+									stroke-width="1.6"
+									stroke-linecap="round"
+								/>
+							</svg>
+							<div>
+								<b>Le narrateur ne répond pas</b
+								><span
+									>Ta dernière action est gardée. Relance-la dans un
+									instant.</span
+								>
+							</div>
+							<button class="btn btn-ghost btn-sm">Relancer</button>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section id="mondes">
+				<div class="sec-head">
+					<h2>Un accent par monde</h2>
+					<p>
+						La carte de monde a la forme d'une arche, une porte vers ailleurs.
+						C'est le seul motif ornemental du système. Clique sur un monde :
+						l'accent de toute l'interface bascule, logo compris.
+					</p>
+				</div>
+				<div class="worlds" id="worlds">
+					<button
+						class="world-card"
+						style="--w: #5fb8a5"
+						data-w="#5FB8A5"
+						data-name="Les Terres de Vasse"
+						aria-pressed="true"
+					>
+						<div class="sky">
+							<svg viewBox="0 0 120 90" aria-hidden="true">
+								<path
+									d="M10 70L40 40L62 58L90 22L110 44"
+									fill="none"
+									stroke="var(--w)"
+									stroke-width="1.2"
+								/>
+								<g fill="var(--w)">
+									<circle cx="10" cy="70" r="2.5" />
+									<circle cx="40" cy="40" r="2.5" />
+									<circle cx="62" cy="58" r="2.5" />
+									<circle cx="90" cy="22" r="3.5" />
+									<circle cx="110" cy="44" r="2.5" />
+								</g>
+							</svg>
+						</div>
+						<div class="inf">
+							<h3>Les Terres de Vasse</h3>
+							<p class="genre">Fantaisie maritime</p>
+							<p class="pres">
+								<i></i
+								><span
+									>4 voyageurs<span class="here">, monde actuel</span></span
+								>
+							</p>
+						</div>
+					</button>
+					<button
+						class="world-card"
+						style="--w: #7fa7ff"
+						data-w="#7FA7FF"
+						data-name="Station Hélione"
+						aria-pressed="false"
+					>
+						<div class="sky">
+							<svg viewBox="0 0 120 90" aria-hidden="true">
+								<path
+									d="M60 10L60 45M20 60L60 45L100 60M60 45L60 80"
+									fill="none"
+									stroke="var(--w)"
+									stroke-width="1.2"
+								/>
+								<g fill="var(--w)">
+									<circle cx="60" cy="10" r="2.5" />
+									<circle cx="60" cy="45" r="3.5" />
+									<circle cx="20" cy="60" r="2.5" />
+									<circle cx="100" cy="60" r="2.5" />
+									<circle cx="60" cy="80" r="2.5" />
+								</g>
+							</svg>
+						</div>
+						<div class="inf">
+							<h3>Station Hélione</h3>
+							<p class="genre">Space opera</p>
+							<p class="pres">
+								<i></i
+								><span
+									>2 voyageurs<span class="here">, monde actuel</span></span
+								>
+							</p>
+						</div>
+					</button>
+					<button
+						class="world-card"
+						style="--w: #ec7db8"
+						data-w="#EC7DB8"
+						data-name="Ville-Basse 2099"
+						aria-pressed="false"
+					>
+						<div class="sky">
+							<svg viewBox="0 0 120 90" aria-hidden="true">
+								<path
+									d="M15 75L15 30L50 30L50 60L85 60L85 15L108 15"
+									fill="none"
+									stroke="var(--w)"
+									stroke-width="1.2"
+								/>
+								<g fill="var(--w)">
+									<circle cx="15" cy="75" r="2.5" />
+									<circle cx="15" cy="30" r="2.5" />
+									<circle cx="50" cy="30" r="2.5" />
+									<circle cx="50" cy="60" r="3.5" />
+									<circle cx="85" cy="60" r="2.5" />
+									<circle cx="85" cy="15" r="2.5" />
+									<circle cx="108" cy="15" r="2.5" />
+								</g>
+							</svg>
+						</div>
+						<div class="inf">
+							<h3>Ville-Basse 2099</h3>
+							<p class="genre">Cyberpunk</p>
+							<p class="pres">
+								<i></i
+								><span
+									>7 voyageurs<span class="here">, monde actuel</span></span
+								>
+							</p>
+						</div>
+					</button>
+					<button
+						class="world-card"
+						style="--w: #b7c46a"
+						data-w="#B7C46A"
+						data-name="Marais d'Ossian"
+						aria-pressed="false"
+					>
+						<div class="sky">
+							<svg viewBox="0 0 120 90" aria-hidden="true">
+								<path
+									d="M20 30Q45 70 60 45T100 60M60 45L72 14"
+									fill="none"
+									stroke="var(--w)"
+									stroke-width="1.2"
+								/>
+								<g fill="var(--w)">
+									<circle cx="20" cy="30" r="2.5" />
+									<circle cx="60" cy="45" r="3.5" />
+									<circle cx="100" cy="60" r="2.5" />
+									<circle cx="72" cy="14" r="2.5" />
+								</g>
+							</svg>
+						</div>
+						<div class="inf">
+							<h3>Marais d'Ossian</h3>
+							<p class="genre">Horreur gothique</p>
+							<p class="pres">
+								<i></i
+								><span>1 voyageur<span class="here">, monde actuel</span></span>
+							</p>
+						</div>
+					</button>
+					<button class="world-card new" style="--w: var(--vellum-3)">
+						<div class="sky" aria-hidden="true">+</div>
+						<div class="inf">
+							<h3>Créer un monde</h3>
+							<p class="genre">
+								Décris un lieu, une époque, une règle. Le narrateur fait le
+								reste.
+							</p>
+						</div>
+					</button>
+				</div>
+			</section>
+
+			<section id="logo">
+				<div class="sec-head">
+					<h2>Le logo</h2>
+					<p>
+						Un d20 en orbite. Le dé, c'est le jeu de rôle et le hasard qui fait
+						les histoires. L'orbite, c'est le voyage d'un monde à l'autre.
+						L'étoile, c'est le Lore général, le point fixe que tous les univers
+						partagent.
+					</p>
+				</div>
+				<div class="logo-stage">
+					<div class="lockup" aria-label="OdyssAI">
+						<svg class="m" aria-hidden="true"><use href="#mark" /></svg>
+						<svg class="w" viewBox="0 0 243.4 78.2" aria-hidden="true">
+							<use href="#wordmark" />
+						</svg>
+					</div>
+				</div>
+				<div class="variants">
+					<div class="variant">
+						<div class="v-stage" style="background: var(--ink)">
+							<svg aria-hidden="true"><use href="#mark" /></svg>
+						</div>
+						<div class="cap">Sur fond sombre, version principale</div>
+					</div>
+					<div class="variant">
+						<div
+							class="v-stage"
+							style="
+								background: #ede6d6;
+								--m-fill: #ede6d6;
+								--m-line: #12162b;
+								--m-orbit: #2e7d6d;
+								--m-star: #a8781e;
+							"
+						>
+							<svg aria-hidden="true"><use href="#mark" /></svg>
+						</div>
+						<div class="cap">Sur vélin, accents assombris</div>
+					</div>
+					<div class="variant">
+						<div
+							class="v-stage"
+							style="
+								background: var(--mist);
+								--m-fill: var(--mist);
+								--m-line: var(--vellum);
+								--m-orbit: var(--vellum);
+								--m-star: var(--vellum);
+							"
+						>
+							<svg aria-hidden="true"><use href="#mark" /></svg>
+						</div>
+						<div class="cap">Monochrome</div>
+					</div>
+					<div class="variant">
+						<div class="v-stage" style="background: var(--abyss)">
+							<div class="icons">
+								<div
+									class="appicon"
+									style="width: 88px; height: 88px; border-radius: 20px"
+								>
+									<svg width="62" height="62" aria-hidden="true">
+										<use href="#mark" />
+									</svg>
+								</div>
+								<div
+									class="appicon"
+									style="width: 40px; height: 40px; border-radius: 9px"
+								>
+									<svg width="30" height="30" aria-hidden="true">
+										<use href="#mark" />
+									</svg>
+								</div>
+								<div
+									class="appicon"
+									style="
+										width: 20px;
+										height: 20px;
+										border-radius: 5px;
+										border: 0;
+									"
+								>
+									<svg width="17" height="17" aria-hidden="true">
+										<use href="#mark" />
+									</svg>
+								</div>
+							</div>
+						</div>
+						<div class="cap">Icône d'app et favicon</div>
+					</div>
+				</div>
+				<div class="logo-notes">
+					<div>
+						<h4>L'orbite suit le monde</h4>
+						Dans l'app, l'orbite prend l'accent du monde courant. L'étoile reste
+						toujours en laiton. Hors de l'app (site, réseaux), orbite en
+						vert-de-gris.
+					</div>
+					<div>
+						<h4>Espace et taille</h4>
+						Zone de protection autour du logo : la largeur de l'étoile. Symbole
+						seul à partir de 16 px, logo complet à partir de 120 px de large.
+					</div>
+					<div>
+						<h4>Ce qu'on ne fait pas</h4>
+						Pas d'ombre, pas de dégradé, pas de rotation du dé. Le wordmark ne
+						s'utilise jamais sans le symbole.
+					</div>
+				</div>
+			</section>
+
+			<section id="tokens">
+				<div class="sec-head">
+					<h2>Tokens</h2>
+					<p>
+						À coller dans ton
+						<code style="font-family: var(--font-ui)">globals.css</code> côté
+						Next.js. Les noms sont ceux utilisés dans ce kit.
+					</p>
+				</div>
+				<div class="code">
+					<button class="btn btn-secondary btn-sm" id="copy">Copier</button>
+					<pre id="tokens-src">
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&amp;family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..600&amp;display=swap");
+
+@property --accent { syntax: "&lt;color&gt;"; inherits: true; initial-value: #5FB8A5; }
+
+:root {
+  /* fondations */
+  --ink: #12162B;  --abyss: #1A2041;  --mist: #252C56;  --line: #353D6E;
+  /* texte */
+  --vellum: #EDE6D6;  --vellum-2: #BBB5CB;  --vellum-3: #8C88A6;
+  /* signaux */
+  --verdigris: #5FB8A5;  --brass: #D4A84F;  --ember: #E2685A;  --arcane: #9D8CF2;
+  /* accent du monde courant, surchargé par monde */
+  --accent: var(--verdigris);  --on-accent: #0F1B1D;
+
+  --font-voice: "Literata", Georgia, serif;
+  --font-ui: "Instrument Sans", system-ui, sans-serif;
+
+  --r-control: 6px;  --r-card: 12px;  --r-portal: 50% 50% 12px 12px / 88px 88px 12px 12px;
+  --focus: 2px solid var(--brass);
+
+  transition: --accent .6s ease;
+}
+
+/* &lt;body data-world style="--world-hue: 250"&gt; : seule la teinte change */
+[data-world] { --accent: oklch(0.75 0.11 var(--world-hue)); }
+
+@media (prefers-reduced-motion: reduce) { :root { transition: none; } }</pre
+					>
+				</div>
+			</section>
+		</div>
+
+		<script>
+			const root = document.documentElement;
+			document.querySelectorAll(".world-card[data-w]").forEach((card) => {
+				card.addEventListener("click", () => {
+					document
+						.querySelectorAll(".world-card[data-w]")
+						.forEach((c) => c.setAttribute("aria-pressed", "false"));
+					card.setAttribute("aria-pressed", "true");
+					root.style.setProperty("--accent", card.dataset.w);
+					document.getElementById("world-name").textContent = card.dataset.name;
+				});
+			});
+
+			const out = document.getElementById("dice-out");
+			document.getElementById("roll-btn").addEventListener("click", () => {
+				const n = 1 + Math.floor(Math.random() * 20),
+					mod = 3,
+					total = n + mod;
+				let tag =
+					total >= 15
+						? '<span class="tag tag-check">Réussite</span>'
+						: '<span class="tag tag-common">Échec</span>';
+				let color = "var(--accent)";
+				if (n === 20) {
+					tag = '<span class="tag tag-legend">Réussite critique</span>';
+					color = "var(--brass)";
+				}
+				if (n === 1) {
+					tag = '<span class="tag tag-danger">Échec critique</span>';
+					color = "var(--ember)";
+				}
+				out.innerHTML = `<div class="roll"><svg style="color:${color}" aria-hidden="true"><use href="#d20"/></svg>Perception DD 15 <strong>${n} + ${mod} = ${total}</strong>${tag}</div>`;
+			});
+
+			document.getElementById("copy").addEventListener("click", async (e) => {
+				const txt = document.getElementById("tokens-src").textContent;
+				try {
+					await navigator.clipboard.writeText(txt);
+					e.target.textContent = "Copié";
+				} catch {
+					e.target.textContent = "Sélectionne le bloc";
+				}
+				setTimeout(() => (e.target.textContent = "Copier"), 1800);
+			});
+		</script>
+	</body>
+</html>
