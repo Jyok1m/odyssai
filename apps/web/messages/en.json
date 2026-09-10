@@ -11,7 +11,8 @@
     "lore": "Lore",
     "login": "Log in",
     "openMenu": "Open main menu",
-    "closeMenu": "Close menu"
+    "closeMenu": "Close menu",
+    "glossary": "Glossary"
   },
   "Hero": {
     "badge": "Private alpha in the works.",
@@ -27,5 +28,232 @@
   },
   "Seo": {
     "genre": "Narrative role-playing, multiverse"
+  },
+  "Alpha": {
+    "closed": "The private alpha is not open yet. Come back soon."
+  },
+  "Concept": {
+    "metaTitle": "Concept",
+    "metaDescription": "An online narrative role-playing game led by an AI narrator that remembers everything. Your choices have consequences that last.",
+    "lead": "You invent a world. You live your story in it. Then you go and live everyone else's.",
+    "intro": [
+      "OdyssAI is a narrative role-playing game you play online. The game master is an AI narrator: it describes places, speaks for the characters, adjudicates your actions and remembers everything that happened. No need to gather a group on a Friday night, or to find someone willing to run the session. The narrator is always there, and it knows your story."
+    ],
+    "sections": [
+      {
+        "title": "You are the hero",
+        "body": [
+          "The narrator offers you choices, but you are never bound by them. You can write what your character does, in your own words, and the world reacts. When the outcome is uncertain, you roll a d20. Chance stays part of the game, just as it does around a real table.",
+          "Your decisions have consequences that last. A character you betrayed will remember it three sessions later. A door you left open stays open."
+        ]
+      },
+      {
+        "title": "You build your world",
+        "body": [
+          "Fantasy, space opera, cyberpunk, horror, or something that has no name yet. One sentence is enough to start: a place, an era, one strange rule. The narrator builds the rest with you, and you keep the final say on everything."
+        ]
+      },
+      {
+        "title": "You travel",
+        "body": [
+          "Every world created on OdyssAI belongs to the same multiverse. Your character can cross the rifts that link them and go live an adventure in another player's world. They remain themselves, with their temperament and their memories, but they find a role there that makes sense."
+        ]
+      },
+      {
+        "title": "Nothing stands alone",
+        "body": [
+          "Worlds intersect. You may come across the traces of another traveller: a letter, a rumour, a place they changed before you passed through. You can also meet them. And what truly matters eventually joins the General Lore, the history shared by every world."
+        ]
+      },
+      {
+        "title": "Who it is for",
+        "body": [
+          "For roleplayers who do not always have a table. For those who have carried a world in their head for years and want to finally see it live. For the curious who want a story where their choices count."
+        ]
+      }
+    ]
+  },
+  "Universes": {
+    "metaTitle": "Universes",
+    "metaDescription": "Create your world, its charter and its laws. You remain its creator: the narrator plays in it, it never decides in your stead what is true.",
+    "lead": "Your world, your rules.",
+    "intro": [
+      "On OdyssAI, every player can create their own universe: a world with its places, its peoples, its history and its laws. You are its creator and its keeper. The narrator plays in it, brings it to life and expands it with you, but it never decides in your stead what is true in your world."
+    ],
+    "sections": [
+      {
+        "title": "Start with one sentence",
+        "body": [
+          "“An archipelago where the tide never goes back out.” “A space station whose owner nobody knows.” You start from there, and the narrator offers you a geography, factions, tensions, secrets. You keep, you change, you discard. You can define everything in detail before playing, or let the world reveal itself session after session."
+        ]
+      },
+      {
+        "title": "The world charter",
+        "body": [
+          "Every universe has a charter. It is its DNA: what exists and what does not — magic, technology, gods — the tone, the rules that are not up for debate, what is off limits, the content rating. Is death permanent? Can machines dream? You decide. The narrator upholds the charter in all circumstances, including when facing travellers from elsewhere."
+        ]
+      },
+      {
+        "title": "A world that remembers",
+        "body": [
+          "Every character met, every place visited, every notable event is written into your world's canon. Its inhabitants remember what happened. The more you play, the denser, the more coherent and the more inhabited your world becomes."
+        ]
+      },
+      {
+        "title": "Opening your doors",
+        "body": [
+          "Your world can stay closed, open by invitation, or welcome every traveller in the multiverse. You choose how they arrive: as inhabitants who have always lived there, as strangers fallen through a rift, or as mere passing echoes. You also set how far they are allowed to change things.",
+          "After each visit you receive the travellers' chronicle: what they did, who they met, what moved. You decide what becomes canon. Your world stays yours."
+        ]
+      },
+      {
+        "title": "An identity",
+        "body": [
+          "Every world has its colour, which tints the whole interface once you step inside, and its constellation on the map of the multiverse. You know where you are at first glance."
+        ]
+      }
+    ]
+  },
+  "Multiverse": {
+    "metaTitle": "Multiverse",
+    "metaDescription": "Your character crosses the rifts and keeps their essence. You choose what they do, the world's creator decides what it changes.",
+    "lead": "Your character travels. They remain themselves.",
+    "intro": [
+      "Every world on OdyssAI forms a single multiverse. Rifts open between them, and your character can cross.",
+      "One rule holds all the rest together: you choose what your character does, the world's creator decides what it changes. Nobody takes control of another player's world, or of another player's character."
+    ],
+    "sections": [
+      {
+        "title": "What crosses over, what stays behind",
+        "body": [
+          "Your character carries their essence: their name, their temperament, what drives them forward, their flaw, their memories. Everything else belongs to the world they leave behind: their trade, their appearance, their skills, their belongings, their reputation.",
+          "On arrival, the narrator translates that essence into the reality of the new world. You see the proposal before you enter, and you can adjust it."
+        ]
+      },
+      {
+        "title": "The same, differently",
+        "body": [
+          "Ilse is a cartographer in les Terres de Vasse, obsessed with places that appear on no map. Crossing the rift to Station Hélione, she becomes a navigator and plots routes away from the official beacons. In Ville-Basse 2099, she maps the underground networks for whoever pays her. In le Marais d'Ossian, she draws paths that shift at night.",
+          "Four roles with nothing in common. And yet it is her every time."
+        ]
+      },
+      {
+        "title": "Three ways to arrive",
+        "body": [
+          "Depending on what the world accepts, you enter as a native, a traveller or an echo.",
+          "As a native, the world absorbs you: you have always lived there, and only a few blurred memories betray your origin. As a traveller, you arrive a stranger, aware of where you come from, and the inhabitants can feel it. As an echo, you are only a passing projection: you cannot die, but your influence stays light."
+        ]
+      },
+      {
+        "title": "Crossing paths with others",
+        "body": [
+          "Encounters often begin with traces. A letter signed with an unknown name, an innkeeper who mentions a stranger carrying odd maps, a place another traveller transformed before you. Then comes the day you are both in the same scene. Each of you keeps control of your own character; the narrator plays the world and adjudicates what happens between you."
+        ]
+      },
+      {
+        "title": "What you bring back",
+        "body": [
+          "You do not come back with a sword from another world. You come back with memories, and sometimes a mark: a scar, a new fear, a conviction. What you live elsewhere changes who your character is, not what they own. That is how each world stays balanced, and how every journey counts."
+        ]
+      }
+    ]
+  },
+  "Lore": {
+    "metaTitle": "Lore",
+    "metaDescription": "The Fixed Star, the rifts, the great arcs: the truths shared by every world in OdyssAI.",
+    "lead": "What every world has in common.",
+    "intro": [
+      "Every world has its own history. The General Lore is the one that links them: the few truths that hold everywhere, and the events large enough to have marked several worlds at once."
+    ],
+    "sections": [
+      {
+        "title": "The Fixed Star",
+        "body": [
+          "In every world, whatever its nature, one star shines in the same place in the sky. The sailors of Vasse use it to find their way back to port. The pilots of Hélione long mistook it for a beacon. In Ville-Basse it is only visible on blackout nights, and on those nights people come out into the street to look at it.",
+          "Nobody knows what it is. All anyone knows is that it is the same everywhere."
+        ]
+      },
+      {
+        "title": "The rifts",
+        "body": [
+          "Where the veil between two worlds wears thin, a rift opens. Some are stable and known, guarded, sometimes worshipped. Others open one night and close again the next day. Nobody knows who opened them the first time, or whether anyone controls them."
+        ]
+      },
+      {
+        "title": "The travellers",
+        "body": [
+          "Those who pass from one world to another carry different names depending on where they land. In some worlds they are welcomed as messengers. In others they are feared, or hunted. Each creator decides how their world looks upon travellers."
+        ]
+      },
+      {
+        "title": "How a story becomes legend",
+        "body": [
+          "It all starts in one world. What happens there becomes canon when its creator validates it. When an event touches several worlds, when it has been lived by several travellers or when it changes the nature of the rifts, it can enter the General Lore. It then becomes a truth for the whole multiverse, and each world interprets it its own way.",
+          "Your world can become a legend elsewhere. One day, in a world you have never visited, someone will speak of the archipelago where the tide never goes back out."
+        ]
+      },
+      {
+        "title": "The great arcs",
+        "body": [
+          "Every now and then, something happens to all the worlds at once. The Star wavers. The rifts multiply. Each world lives the event according to its own logic, and every player can influence its outcome. These are the great arcs of the multiverse, and they are what writes the General Lore."
+        ]
+      }
+    ],
+    "glossaryCta": "See the glossary"
+  },
+  "Glossary": {
+    "metaTitle": "Glossary",
+    "metaDescription": "World, charter, essence, incarnation, rift, General Lore: the terms of OdyssAI and what they mean.",
+    "lead": "The terms specific to OdyssAI, and what they point to.",
+    "entries": [
+      {
+        "term": "World, universe",
+        "meaning": "A world created by a player, with its places, its inhabitants and its charter."
+      },
+      {
+        "term": "Creator",
+        "meaning": "The player who created a world and retains authority over it."
+      },
+      {
+        "term": "Charter",
+        "meaning": "A world's founding rules: what exists, the tone, what is off limits, how travellers are received."
+      },
+      {
+        "term": "Canon",
+        "meaning": "What is officially true in a world, validated by its creator."
+      },
+      {
+        "term": "Essence",
+        "meaning": "What a character carries everywhere: name, temperament, drive, flaw, memories."
+      },
+      {
+        "term": "Incarnation",
+        "meaning": "The form a character takes in a given world: role, appearance, skills, belongings."
+      },
+      {
+        "term": "Native, traveller, echo",
+        "meaning": "The three ways to enter someone else's world."
+      },
+      {
+        "term": "Rift",
+        "meaning": "A passage between two worlds."
+      },
+      {
+        "term": "Travellers' chronicle",
+        "meaning": "The account of visits received, sent to the creator for validation."
+      },
+      {
+        "term": "General Lore",
+        "meaning": "The history shared by the whole multiverse."
+      },
+      {
+        "term": "Fixed Star",
+        "meaning": "The only thing visible from every world."
+      },
+      {
+        "term": "Great arc",
+        "meaning": "An event that touches every world at the same time."
+      }
+    ]
   }
 }
