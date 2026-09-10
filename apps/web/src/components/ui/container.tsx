@@ -9,7 +9,8 @@ type ContainerProps<T extends ElementType> = {
 
 /**
  * Container global : borne la largeur du contenu et gère les gouttières
- * responsives. N'apporte aucun style au-delà de ça.
+ * responsives. Reprend le `.wrap` du kit (1120 px). N'apporte aucun style
+ * au-delà de ça.
  */
 export function Container<T extends ElementType = "div">({
 	as,
@@ -20,7 +21,7 @@ export function Container<T extends ElementType = "div">({
 
 	return (
 		<Component
-			className={["mx-auto max-w-7xl px-4 sm:px-6 lg:px-8", className]
+			className={["mx-auto max-w-wrap px-6 lg:px-8", className]
 				.filter(Boolean)
 				.join(" ")}
 			{...props}
