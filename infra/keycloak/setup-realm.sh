@@ -91,6 +91,11 @@ step "Authentification sur $KC_URL (realm $KC_ADMIN_REALM)"
 
 TOKEN_ENDPOINT="$KC_URL/realms/$KC_ADMIN_REALM/protocol/openid-connect/token"
 
+# Appelee au demarrage, puis rappelee apres la creation d'un realm : Keycloak
+# publie alors un client <realm>-realm portant les droits d'administration de
+# ce realm, et les ajoute au role composite de l'appelant. Un jeton emis avant
+# ne les porte pas, et tout ce qui suit repondrait 403.
+authenticate() {
 if [[ -n "$KC_ADMIN_CLIENT_SECRET" ]]; then
   AUTH_MODE="service account $KC_ADMIN_CLIENT_ID"
   AUTH_RESPONSE="$(curl -sS -X POST "$TOKEN_ENDPOINT" \
@@ -118,6 +123,9 @@ if [[ -z "$TOKEN" ]]; then
   fi
   exit 1
 fi
+}
+
+authenticate
 log "authentifie par $AUTH_MODE"
 
 # api <METHODE> <CHEMIN> [CORPS_JSON] : renseigne HTTP_CODE et RESP_BODY.
@@ -219,6 +227,8 @@ else
   api POST "/admin/realms" "$REALM_CONFIG"
   expect "201"
   log "realm cree"
+  authenticate
+  log "jeton renouvele pour prendre les droits sur le nouveau realm"
 fi
 
 # --------------------------------------------------------------- user profile
