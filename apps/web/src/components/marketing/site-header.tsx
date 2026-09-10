@@ -5,19 +5,25 @@ import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { AlphaCta } from "@/components/alpha/alpha-cta";
 import { OdyssaiLogo } from "@/components/brand/odyssai-logo";
-import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 
 import { LocaleSwitcher } from "./locale-switcher";
 
-/** Ancres de section : les sections correspondantes restent à construire. */
+/** Chemins internes ; next-intl les traduit en URLs localisées. */
 const NAV_ITEMS = [
-  { key: "concept", href: "#concept" },
-  { key: "universes", href: "#universes" },
-  { key: "multiverse", href: "#multiverse" },
-  { key: "lore", href: "#lore" },
+  { key: "concept", href: "/concept" },
+  { key: "universes", href: "/univers" },
+  { key: "multiverse", href: "/multivers" },
+  { key: "lore", href: "/lore" },
 ] as const;
+
+/**
+ * Destination une fois l'alpha ouverte. La route n'existe pas encore : tant
+ * que NEXT_PUBLIC_ALPHA_OPEN est faux, le clic n'ouvre qu'un toast.
+ */
+const LOGIN_HREF = "/login";
 
 export function SiteHeader() {
   const t = useTranslations("Nav");
@@ -48,21 +54,21 @@ export function SiteHeader() {
 
         <div className="hidden lg:flex lg:gap-x-10">
           {NAV_ITEMS.map((item) => (
-            <a
+            <Link
               key={item.key}
               href={item.href}
               className="text-ui-sm font-medium text-vellum-2 transition-colors hover:text-vellum"
             >
               {t(item.key)}
-            </a>
+            </Link>
           ))}
         </div>
 
         <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:gap-x-4">
           <LocaleSwitcher />
-          <Button as="a" href="#login" variant="secondary" size="sm">
+          <AlphaCta href={LOGIN_HREF} variant="secondary" size="sm">
             {t("login")}
-          </Button>
+          </AlphaCta>
         </div>
       </nav>
 
@@ -96,26 +102,24 @@ export function SiteHeader() {
             <div className="-my-6 divide-y divide-line">
               <div className="space-y-1 py-6">
                 {NAV_ITEMS.map((item) => (
-                  <a
+                  <Link
                     key={item.key}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
                     className="-mx-3 block rounded-control px-3 py-2 text-narration font-medium text-vellum transition-colors hover:bg-mist"
                   >
                     {t(item.key)}
-                  </a>
+                  </Link>
                 ))}
               </div>
               <div className="py-6">
-                <Button
-                  as="a"
-                  href="#login"
+                <AlphaCta
+                  href={LOGIN_HREF}
                   variant="secondary"
-                  onClick={() => setMobileMenuOpen(false)}
                   className="w-full"
                 >
                   {t("login")}
-                </Button>
+                </AlphaCta>
               </div>
               <div className="py-6">
                 <LocaleSwitcher

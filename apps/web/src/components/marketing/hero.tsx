@@ -1,8 +1,15 @@
 import { useTranslations } from "next-intl";
 
-import { Button } from "@/components/ui/button";
+import { AlphaCta } from "@/components/alpha/alpha-cta";
+import { Link } from "@/i18n/navigation";
 
 import { Constellation } from "./constellation";
+
+/**
+ * Destination une fois l'alpha ouverte. La route n'existe pas encore : tant
+ * que NEXT_PUBLIC_ALPHA_OPEN est faux, le clic n'ouvre qu'un toast.
+ */
+const SIGNUP_HREF = "/signup";
 
 export function Hero() {
   const t = useTranslations("Hero");
@@ -17,10 +24,10 @@ export function Hero() {
         <div className="max-w-3xl py-32 sm:py-40">
           <p className="relative inline-flex items-center rounded-full border border-line px-2.5 py-1 text-tag font-medium text-vellum-2 transition-colors hover:border-vellum-3">
             {t("badge")}{" "}
-            <a href="#concept" className="ml-1.5 font-semibold text-accent">
+            <Link href="/concept" className="ml-1.5 font-semibold text-accent">
               <span aria-hidden="true" className="absolute inset-0" />
               {t("badgeCta")} <span aria-hidden="true">&rarr;</span>
-            </a>
+            </Link>
           </p>
 
           <h1 className="mt-8 font-voice text-display-compact text-balance text-vellum sm:text-display">
@@ -32,17 +39,15 @@ export function Hero() {
           </p>
 
           <div className="mt-10 flex flex-wrap items-center gap-4">
-            <Button as="a" href="#login">
-              {t("primaryCta")}
-            </Button>
+            <AlphaCta href={SIGNUP_HREF}>{t("primaryCta")}</AlphaCta>
             {/* Lien simple et non bouton : sans padding horizontal, il
                 reste aligné sur le bouton primaire quand la ligne passe. */}
-            <a
-              href="#concept"
+            <Link
+              href="/concept"
               className="inline-flex items-center gap-2 text-control font-medium text-vellum transition-colors hover:text-accent"
             >
               {t("secondaryCta")} <span aria-hidden="true">&rarr;</span>
-            </a>
+            </Link>
           </div>
         </div>
       </div>
