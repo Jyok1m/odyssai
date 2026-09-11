@@ -94,16 +94,29 @@ pipeline {
                     string(credentialsId: 'host-ssh-port', variable: 'HOST_PORT'),
                     usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')
                 ]) {
-                    sh '''
-                        ssh -i "$SSH_KEY" -p "$HOST_PORT" \
-                            -o StrictHostKeyChecking=no \
-                            "$SSH_USER@$SSH_HOST" \
-                            "set -e && \
-                            echo '$DOCKER_PASS' | docker login -u '$DOCKER_USER' --password-stdin && \
-                            docker compose -f /opt/odyssai/docker-compose.yml pull odyssai && \
-                            docker compose -f /opt/odyssai/docker-compose.yml up odyssai -d && \
-                            docker logout"
-                    '''
+                    if(env.BRANCH_NAME == 'dev') {
+                        sh '''
+                            ssh -i "$SSH_KEY" -p "$HOST_PORT" \
+                                -o StrictHostKeyChecking=no \
+                                "$SSH_USER@$SSH_HOST" \
+                                "set -e && \
+                                echo '$DOCKER_PASS' | docker login -u '$DOCKER_USER' --password-stdin && \
+                                docker compose -f /opt/odyssai/docker-compose.yml pull api-dev web-dev && \
+                                docker compose -f /opt/odyssai/docker-compose.yml up api-dev web-dev -d && \
+                                docker logout"
+                        '''
+                    } else {
+                        sh '''
+                            ssh -i "$SSH_KEY" -p "$HOST_PORT" \
+                                -o StrictHostKeyChecking=no \
+                                "$SSH_USER@$SSH_HOST" \
+                                "set -e && \
+                                echo '$DOCKER_PASS' | docker login -u '$DOCKER_USER' --password-stdin && \
+                                docker compose -f /opt/odyssai/docker-compose.yml pull api web && \
+                                docker compose -f /opt/odyssai/docker-compose.yml up api web -d && \
+                                docker logout"
+                        '''
+                    }
                 }
             }
         }
