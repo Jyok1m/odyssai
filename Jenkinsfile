@@ -88,35 +88,26 @@ pipeline {
                     branch 'main'
                 }
             }
+            environment {
+                SERVICES = "${env.BRANCH_NAME == 'main' ? 'api web' : 'api-dev web-dev'}"
+            }
             steps {
                 withCredentials([
                     sshUserPrivateKey(credentialsId: 'host-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER'),
                     string(credentialsId: 'host-ssh-port', variable: 'HOST_PORT'),
+                    file(credentialsId: 'host-known-hosts', variable: 'KNOWN_HOSTS'),
                     usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')
                 ]) {
-                    if(env.BRANCH_NAME == 'dev') {
-                        sh '''
-                            ssh -i "$SSH_KEY" -p "$HOST_PORT" \
-                                -o StrictHostKeyChecking=no \
-                                "$SSH_USER@$SSH_HOST" \
-                                "set -e && \
-                                echo '$DOCKER_PASS' | docker login -u '$DOCKER_USER' --password-stdin && \
-                                docker compose -f /opt/odyssai/docker-compose.yml pull api-dev web-dev && \
-                                docker compose -f /opt/odyssai/docker-compose.yml up api-dev web-dev -d && \
-                                docker logout"
-                        '''
-                    } else {
-                        sh '''
-                            ssh -i "$SSH_KEY" -p "$HOST_PORT" \
-                                -o StrictHostKeyChecking=no \
-                                "$SSH_USER@$SSH_HOST" \
-                                "set -e && \
-                                echo '$DOCKER_PASS' | docker login -u '$DOCKER_USER' --password-stdin && \
-                                docker compose -f /opt/odyssai/docker-compose.yml pull api web && \
-                                docker compose -f /opt/odyssai/docker-compose.yml up api web -d && \
-                                docker logout"
-                        '''
-                    }
+                    sh '''
+                        printf '%s' "$DOCKER_PASS" | ssh -i "$SSH_KEY" -p "$HOST_PORT" \
+                            -o StrictHostKeyChecking=yes \
+                            -o UserKnownHostsFile="$KNOWN_HOSTS" \
+                            "$SSH_USER@$SSH_HOST" \
+                            "trap 'docker logout >/dev/null 2>&1' EXIT; \
+                            docker login -u '$DOCKER_USER' --password-stdin && \
+                            docker compose -f /opt/odyssai/docker-compose.yml pull $SERVICES && \
+                            docker compose -f /opt/odyssai/docker-compose.yml up -d $SERVICES"
+                    '''
                 }
             }
         }
