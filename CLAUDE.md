@@ -10,7 +10,7 @@ Monorepo pnpm + Turborepo, TypeScript partout.
 - `apps/api` : NestJS 12, port 3001. Scaffold **ESM** (`"type": "module"`, imports relatifs suffixés `.js`). Lint oxlint, tests vitest.
 - `packages/schemas` : schémas Zod partagés, compilés en CommonJS dans `dist/`
 
-Redis tourne via `compose.yaml` (sessions, et la file BullMQ à venir). Keycloak est hébergé sur `sso.joachimjasmin.com`.
+Redis tourne en tunnel localhost sur le serveur via `redis://:<mot_de_passe>@localhost:16379` (sessions, et la file BullMQ à venir). Keycloak est hébergé sur `sso.joachimjasmin.com`.
 
 Prévus, pas encore créés : `apps/worker` (BullMQ), `packages/engine`, `packages/narrator` (LangGraph.js), `packages/llm`. Postgres + pgvector. Ne pas les créer sans demande explicite.
 
