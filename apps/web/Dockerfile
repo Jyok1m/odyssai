@@ -33,6 +33,14 @@ COPY apps/web apps/web
 ARG SITE_URL=http://localhost:3000
 ENV SITE_URL=$SITE_URL
 
+# Les variables NEXT_PUBLIC_ sont inscrites en dur dans le bundle navigateur
+# au moment du build : les fournir au runtime n'aurait aucun effet. L'image
+# est donc liée à son environnement, comme pour SITE_URL.
+ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+ARG NEXT_PUBLIC_ALPHA_OPEN=false
+ENV NEXT_PUBLIC_ALPHA_OPEN=$NEXT_PUBLIC_ALPHA_OPEN
+
 # turbo n'est pas installé par l'install filtrée : on ordonne à la main.
 RUN pnpm --filter @odyssai/schemas build \
  && pnpm --filter @odyssai/web build

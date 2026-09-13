@@ -18,7 +18,8 @@ type ButtonStyling = Pick<
  * de naviguer.
  *
  * `href` reste une chaîne libre et non un chemin typé par next-intl : les
- * destinations d'authentification n'existent pas encore.
+ * destinations d'authentification sont des URLs absolues vers l'API, hors du
+ * routage du site.
  */
 export function AlphaCta({
   href,

@@ -32,6 +32,17 @@
 	"Alpha": {
 		"closed": "L'alpha privée n'est pas encore ouverte. Reviens bientôt."
 	},
+	"Auth": {
+		"signOut": "Se déconnecter",
+		"signOutFailed": "La déconnexion a échoué. Réessaie dans un instant.",
+		"errors": {
+			"access_denied": "Connexion annulée.",
+			"invalid_request": "La connexion n'a pas pu aboutir. Réessaie depuis l'accueil.",
+			"provider_error": "Le service d'identité a refusé la connexion. Réessaie dans un instant.",
+			"session_failed": "La session n'a pas pu être ouverte. Réessaie dans un instant.",
+			"unknown": "La connexion a échoué. Réessaie."
+		}
+	},
 	"Concept": {
 		"metaTitle": "Concept",
 		"metaDescription": "Un jeu de rôle narratif en ligne, mené par un narrateur IA qui se souvient de tout. Tes choix ont des conséquences qui durent.",

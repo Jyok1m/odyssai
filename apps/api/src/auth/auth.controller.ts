@@ -11,7 +11,12 @@ import {
   Req,
   Res,
 } from '@nestjs/common';
-import { InternalPath, type AuthErrorCode, type SessionState } from '@odyssai/schemas';
+import {
+  InternalPath,
+  type AuthErrorCode,
+  type SessionState,
+  type SignOutResult,
+} from '@odyssai/schemas';
 import type { CookieOptions, Request, Response } from 'express';
 import { z } from 'zod';
 import { AppConfig } from '../config/app-config.js';
@@ -162,7 +167,7 @@ export class AuthController {
   async signOut(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{ logoutUrl: string }> {
+  ): Promise<SignOutResult> {
     const sessionId = this.readCookie(req, this.config.cookies.session);
     let logoutUrl = this.config.webBaseUrl.toString();
 

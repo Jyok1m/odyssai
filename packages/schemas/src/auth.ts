@@ -58,3 +58,13 @@ export const AuthErrorCode = z.enum([
 ]);
 
 export type AuthErrorCode = z.infer<typeof AuthErrorCode>;
+
+/**
+ * Reponse de POST /auth/signout. L'URL pointe la fin de session du realm,
+ * que le navigateur doit suivre pour fermer aussi sa session SSO.
+ */
+export const SignOutResult = z.object({
+  logoutUrl: z.url(),
+});
+
+export type SignOutResult = z.infer<typeof SignOutResult>;
