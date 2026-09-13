@@ -5,7 +5,7 @@ import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { AlphaCta } from "@/components/alpha/alpha-cta";
+import { AuthMenu } from "@/components/auth/auth-menu";
 import { OdyssaiLogo } from "@/components/brand/odyssai-logo";
 import { Link } from "@/i18n/navigation";
 
@@ -18,12 +18,6 @@ const NAV_ITEMS = [
   { key: "multiverse", href: "/multivers" },
   { key: "lore", href: "/lore" },
 ] as const;
-
-/**
- * Destination une fois l'alpha ouverte. La route n'existe pas encore : tant
- * que NEXT_PUBLIC_ALPHA_OPEN est faux, le clic n'ouvre qu'un toast.
- */
-const LOGIN_HREF = "/login";
 
 export function SiteHeader() {
   const t = useTranslations("Nav");
@@ -66,9 +60,7 @@ export function SiteHeader() {
 
         <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:gap-x-4">
           <LocaleSwitcher />
-          <AlphaCta href={LOGIN_HREF} variant="secondary" size="sm">
-            {t("login")}
-          </AlphaCta>
+          <AuthMenu />
         </div>
       </nav>
 
@@ -113,13 +105,7 @@ export function SiteHeader() {
                 ))}
               </div>
               <div className="py-6">
-                <AlphaCta
-                  href={LOGIN_HREF}
-                  variant="secondary"
-                  className="w-full"
-                >
-                  {t("login")}
-                </AlphaCta>
+                <AuthMenu size="md" stacked />
               </div>
               <div className="py-6">
                 <LocaleSwitcher

@@ -32,6 +32,17 @@
 	"Alpha": {
 		"closed": "The private alpha is not open yet. Come back soon."
 	},
+	"Auth": {
+		"signOut": "Log out",
+		"signOutFailed": "Logging out failed. Try again in a moment.",
+		"errors": {
+			"access_denied": "Login cancelled.",
+			"invalid_request": "The login could not complete. Try again from the home page.",
+			"provider_error": "The identity service refused the login. Try again in a moment.",
+			"session_failed": "The session could not be opened. Try again in a moment.",
+			"unknown": "The login failed. Try again."
+		}
+	},
 	"Concept": {
 		"metaTitle": "Concept",
 		"metaDescription": "An online narrative role-playing game led by an AI narrator that remembers everything. Your choices have consequences that last.",
