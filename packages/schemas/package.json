@@ -2,6 +2,8 @@
   "name": "@odyssai/schemas",
   "version": "0.0.0",
   "private": true,
+  "license": "UNLICENSED",
+  "author": "Joachim Alexandre Jasmin",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {

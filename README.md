@@ -41,6 +41,17 @@ The marketing site (French and English) and Keycloak authentication work end to
 end. The game engine, the narrator and the application database are not written
 yet.
 
+## Why this repository is public
+
+So the work can be read. The source is here to be studied and reviewed, not to
+be reused: OdyssAI is a personal project, and the code stays proprietary. See
+`LICENSE`. The instructions below exist so that the code can be run and
+understood by whoever is reading it, not as an invitation to operate a copy.
+
+Pull requests are not expected. Anything merged from an outside contributor
+would keep its author's copyright, which is exactly what this arrangement is
+meant to avoid.
+
 ## Getting started
 
 You need Node 24.11 (`.nvmrc`) and pnpm 11, which corepack provides.

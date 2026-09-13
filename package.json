@@ -1,6 +1,8 @@
 {
   "name": "odyssai",
   "private": true,
+  "license": "UNLICENSED",
+  "author": "Joachim Alexandre Jasmin",
   "packageManager": "pnpm@11.22.0",
   "scripts": {
     "dev": "turbo run dev",
