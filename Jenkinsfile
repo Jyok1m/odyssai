@@ -6,6 +6,7 @@ pipeline {
         WEB_IMAGE  = "${DOCKER_NS}/odyssai-web"
         API_IMAGE  = "${DOCKER_NS}/odyssai-api"
         DOCKER_TAG = "${env.BRANCH_NAME}"
+        SSH_HOST = "host.docker.internal"
 
         // Les images sont publiées pour amd64. Sur un agent arm, docker a
         // besoin de binfmt/QEMU pour cette plateforme.
