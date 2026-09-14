@@ -1,6 +1,9 @@
 # Raccourcis du monorepo. Rien d'indispensable ici : tout reste faisable a la
-# main avec pnpm et les scripts de infra/. Ce fichier evite surtout de retaper
-# les invocations longues et de se tromper de realm.
+# main avec pnpm. Ce fichier evite surtout de retaper les invocations longues.
+#
+# La configuration de Keycloak n'est plus ici : elle vit dans le role ansible
+# odyssai du depot iac-journey, seule source de verite depuis la suppression
+# de infra/.
 #
 # Les recettes tournent chacune dans son propre shell, d'ou les && et les \
 # plutot que des lignes successives quand une etape depend de la precedente.
@@ -11,9 +14,6 @@ SHELL := /bin/bash
 # Secrets et coordonnees du serveur. Ignore par git, voir .env.local.example.
 ENV_LOCAL := .env.local
 
-# Realm vise par les cibles realm-*. Surchargeable :
-#   make realm REALM=odyssai-prod
-REALM ?= odyssai-dev
 
 # Le fichier est source par le shell et non `include`e par make. Make traite #
 # comme un debut de commentaire et developpe lui-meme les $, ce qui mutile
@@ -30,7 +30,7 @@ REQUIRE_ENV = if [ ! -f $(ENV_LOCAL) ]; then \
 # tard et beaucoup moins bien.
 LOAD_ENV = set -ae && . ./$(ENV_LOCAL) && set +ae
 
-.PHONY: help install dev build lint typecheck check realm realm-prod tunnel redis-ping
+.PHONY: help install dev build lint typecheck check tunnel redis-ping
 
 help: ## Liste les cibles
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -53,45 +53,6 @@ typecheck: ## Verifie les types partout
 
 check: typecheck lint build ## Le passage complet avant de commiter
 
-# Le script est idempotent : le rejouer met le realm a jour sans le recreer.
-#
-# Deux facons de s'authentifier, et setup-realm.sh les distingue par les noms
-# de variables. KC_SA_KIND dit laquelle KC_SA_* designe :
-#
-#   user   (defaut) un compte du realm d'administration, par direct grant.
-#   client un service account, soit l'identifiant d'un client confidentiel et
-#          son secret.
-#
-# Le defaut est `user` parce que le compte en place n'existe pas comme client
-# dans master. Un service account reste preferable le jour ou il sera cree : il
-# est insensible au MFA, que le direct grant ne sait pas presenter.
-realm: ## Configure le realm Keycloak (REALM=odyssai-dev par defaut)
-	@$(REQUIRE_ENV); $(LOAD_ENV); \
-	if [ -z "$$KC_SA_USERNAME" ] || [ -z "$$KC_SA_PASSWORD" ]; then \
-		echo "KC_SA_USERNAME et KC_SA_PASSWORD doivent etre renseignes dans $(ENV_LOCAL)." >&2; \
-		exit 1; \
-	fi; \
-	if [ "$${KC_SA_KIND:-user}" = "client" ]; then \
-		KC_ADMIN_CLIENT_ID="$$KC_SA_USERNAME" \
-		KC_ADMIN_CLIENT_SECRET="$$KC_SA_PASSWORD" \
-		./infra/keycloak/setup-realm.sh $(REALM); \
-	else \
-		KC_ADMIN_USER="$$KC_SA_USERNAME" \
-		KC_ADMIN_PASSWORD="$$KC_SA_PASSWORD" \
-		./infra/keycloak/setup-realm.sh $(REALM); \
-	fi
-
-# Le realm de production vise les origines deployees : sans ces deux variables
-# le script retombe sur localhost et inscrit une redirect_uri inutilisable.
-realm-prod: ## Configure odyssai-prod avec les origines deployees
-	$(MAKE) realm REALM=odyssai-prod \
-		API_BASE_URL=https://api.odyssai.app \
-		WEB_BASE_URL=https://odyssai.app
-
-# -N n'ouvre aucun shell distant, le processus ne sert qu'a porter la
-# redirection. Il reste au premier plan : Ctrl+C ferme donc vraiment le tunnel,
-# ce qu'un tunnel tenu par une application tierce ne fait pas.
-#
 # Le serveur ne publie le Redis de dev que sur sa boucle locale, d'ou le
 # 127.0.0.1 cote distant.
 tunnel: ## Ouvre le tunnel SSH vers le Redis de dev
