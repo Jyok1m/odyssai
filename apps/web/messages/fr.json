@@ -17,7 +17,8 @@
 		"privacy": "Confidentialité",
 		"cookies": "Cookies",
 		"footerLegal": "Informations légales",
-		"rights": "Tous droits réservés."
+		"rights": "Tous droits réservés.",
+		"manageCookies": "Gérer les cookies"
 	},
 	"Hero": {
 		"badge": "Alpha privée en préparation.",
@@ -382,11 +383,26 @@
 				]
 			},
 			{
+				"title": "Ton choix",
+				"body": [
+					"Un bandeau te demande ton choix à la première visite. Aucun cookie de mesure n'est déposé avant ta réponse, et refuser n'entraîne aucune perte de fonctionnalité.",
+					"Ton choix est conservé six mois dans un cookie, puis redemandé. Tu peux le changer à tout moment par le lien « Gérer les cookies » en bas de page.",
+					"Les cookies techniques listés plus haut, eux, ne sont pas soumis à ce choix : l'article 82 de la loi Informatique et Libertés en dispense ceux qui sont strictement nécessaires au service demandé. Les refuser se fait dans les réglages du navigateur."
+				]
+			},
+			{
 				"title": "Les refuser quand même",
 				"body": [
 					"Ton navigateur permet de bloquer ou d'effacer les cookies site par site. Bloquer ceux-ci empêchera la connexion de fonctionner et fera oublier ta langue, mais le reste du site restera consultable."
 				]
 			}
 		]
+	},
+	"CookieBanner": {
+		"body": "OdyssAI ne dépose que des cookies techniques, indispensables à la connexion et à ta langue. Tu peux refuser toute mesure d'audience future, dès maintenant.",
+		"learnMore": "Lire la page Cookies",
+		"accept": "Tout accepter",
+		"decline": "Refuser",
+		"manage": "Gérer les cookies"
 	}
 }

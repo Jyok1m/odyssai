@@ -2,6 +2,7 @@ import { useTranslations } from "next-intl";
 import type { ComponentType, SVGProps } from "react";
 
 import { GitHubIcon } from "@/components/brand/social-icons";
+import { CookieSettingsButton } from "@/components/legal/cookie-settings-button";
 import { Link } from "@/i18n/navigation";
 import { SITE_NAME } from "@/lib/site";
 
@@ -59,6 +60,7 @@ export function SiteFooter() {
               {t(item.key)}
             </Link>
           ))}
+          <CookieSettingsButton />
         </nav>
 
         {SOCIAL_ITEMS.length > 0 && (

@@ -5,6 +5,7 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations } from "next-intl/server";
 
 import { AuthErrorToast } from "@/components/auth/auth-error-toast";
+import { CookieBanner } from "@/components/legal/cookie-banner";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Toaster } from "@/components/ui/toaster";
@@ -135,6 +136,7 @@ export default async function LocaleLayout({
         <NextIntlClientProvider>
           <SessionProvider>{children}</SessionProvider>
           <AuthErrorToast />
+          <CookieBanner />
         </NextIntlClientProvider>
         <Toaster />
         <JsonLd locale={locale} />

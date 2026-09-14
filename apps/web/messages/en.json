@@ -17,7 +17,8 @@
 		"privacy": "Privacy",
 		"cookies": "Cookies",
 		"footerLegal": "Legal information",
-		"rights": "All rights reserved."
+		"rights": "All rights reserved.",
+		"manageCookies": "Manage cookies"
 	},
 	"Hero": {
 		"badge": "Private alpha in the works.",
@@ -382,11 +383,26 @@
 				]
 			},
 			{
+				"title": "Your choice",
+				"body": [
+					"A banner asks for your choice on your first visit. No analytics cookie is set before you answer, and declining costs you nothing.",
+					"Your choice is kept for six months in a cookie, then asked again. You can change it at any time through the “Manage cookies” link at the foot of every page.",
+					"The technical cookies listed above are not covered by that choice: article 82 of the French Data Protection Act exempts those strictly necessary to the requested service. Refusing them is done in your browser settings."
+				]
+			},
+			{
 				"title": "Refusing them anyway",
 				"body": [
 					"Your browser lets you block or clear cookies site by site. Blocking these will stop sign-in from working and make the site forget your language, but the rest stays readable."
 				]
 			}
 		]
+	},
+	"CookieBanner": {
+		"body": "OdyssAI only sets technical cookies, needed for sign-in and for your language. You can refuse any future analytics right now.",
+		"learnMore": "Read the Cookies page",
+		"accept": "Accept all",
+		"decline": "Decline",
+		"manage": "Manage cookies"
 	}
 }
