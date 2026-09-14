@@ -30,7 +30,9 @@
 		"genre": "Narrative role-playing, multiverse"
 	},
 	"Alpha": {
-		"closed": "The private alpha is not open yet. Come back soon."
+		"closed": "The private alpha is not open yet. Come back soon.",
+		"preRegister": "The alpha is not open yet. Creating an account puts you on the first-players list: you will get the invitation and news from the multiverse, nothing else.",
+		"preRegisterShort": "Join the first-players list"
 	},
 	"Auth": {
 		"signOut": "Log out",

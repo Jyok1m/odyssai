@@ -1,14 +1,13 @@
 "use client";
 
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-import { AlphaCta } from "@/components/alpha/alpha-cta";
+import { useAuthLinks } from "@/components/auth/auth-links";
 import { useSession } from "@/components/auth/session-provider";
 import { Button } from "@/components/ui/button";
-import { getPathname, usePathname } from "@/i18n/navigation";
-import { requestSignOut, signInUrl } from "@/lib/api";
+import { requestSignOut } from "@/lib/api";
 
 /**
  * Bloc d'authentification du header, en trois états : inconnu pendant la
@@ -26,9 +25,8 @@ export function AuthMenu({
 }) {
   const t = useTranslations("Auth");
   const tNav = useTranslations("Nav");
-  const locale = useLocale();
-  const pathname = usePathname();
   const session = useSession();
+  const { signIn } = useAuthLinks();
   const [leaving, setLeaving] = useState(false);
 
   if (session.status === "loading") {
@@ -49,20 +47,18 @@ export function AuthMenu({
   }
 
   if (session.status === "anonymous") {
-    // `pathname` est dépouillé du préfixe de locale par next-intl, et les
-    // segments sont les chemins internes : getPathname reconstruit le chemin
-    // public, celui sur lequel Keycloak devra nous ramener.
-    const redirectTo = getPathname({ locale, href: pathname });
-
+    // Plus de garde par le drapeau d'alpha : ouvrir un compte est possible
+    // maintenant. Le drapeau ne retient plus que l'entree dans le jeu.
     return (
-      <AlphaCta
-        href={signInUrl(redirectTo)}
+      <Button
+        as="a"
+        href={signIn}
         variant="secondary"
         size={size}
         className={stacked ? "w-full" : undefined}
       >
         {tNav("login")}
-      </AlphaCta>
+      </Button>
     );
   }
 
@@ -79,6 +75,12 @@ export function AuthMenu({
     }
   };
 
+  // Dans la barre, l'adresse complete poussait la navigation contre le
+  // selecteur de langue. Seule la partie locale y tient, et elle suffit a
+  // reconnaitre son compte ; l'adresse entiere reste dans l'attribut title et
+  // dans le panneau mobile, ou la largeur ne manque pas.
+  const shortName = session.user.email.split("@")[0];
+
   return (
     <div
       className={
@@ -88,13 +90,13 @@ export function AuthMenu({
       <span
         title={session.user.email}
         className={[
-          "block truncate text-ui-sm text-vellum-2",
-          stacked ? "" : "max-w-56",
-        ]
-          .filter(Boolean)
-          .join(" ")}
+          "truncate text-ui-sm text-vellum-2",
+          // En dessous de xl, le bouton de deconnexion porte a lui seul
+          // l'information « tu es connecte ».
+          stacked ? "block" : "hidden max-w-32 xl:block",
+        ].join(" ")}
       >
-        {session.user.email}
+        {stacked ? session.user.email : shortName}
       </span>
       <Button
         type="button"

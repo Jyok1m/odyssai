@@ -30,7 +30,9 @@
 		"genre": "Jeu de rôle narratif, multivers"
 	},
 	"Alpha": {
-		"closed": "L'alpha privée n'est pas encore ouverte. Reviens bientôt."
+		"closed": "L'alpha privée n'est pas encore ouverte. Reviens bientôt.",
+		"preRegister": "L'alpha n'est pas ouverte. Créer un compte te place sur la liste des premiers joueurs : tu recevras l'invitation et les nouvelles du multivers, rien d'autre.",
+		"preRegisterShort": "Rejoindre la liste des premiers joueurs"
 	},
 	"Auth": {
 		"signOut": "Se déconnecter",

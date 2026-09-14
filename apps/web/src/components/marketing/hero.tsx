@@ -1,18 +1,13 @@
 import { useTranslations } from "next-intl";
 
-import { AlphaCta } from "@/components/alpha/alpha-cta";
+import { SignupCta } from "@/components/auth/signup-cta";
 import { Link } from "@/i18n/navigation";
 
 import { Constellation } from "./constellation";
 
-/**
- * Destination une fois l'alpha ouverte. La route n'existe pas encore : tant
- * que NEXT_PUBLIC_ALPHA_OPEN est faux, le clic n'ouvre qu'un toast.
- */
-const SIGNUP_HREF = "/signup";
-
 export function Hero() {
   const t = useTranslations("Hero");
+  const tAlpha = useTranslations("Alpha");
 
   return (
     <div className="relative isolate overflow-hidden">
@@ -38,8 +33,14 @@ export function Hero() {
             {t("description")}
           </p>
 
-          <div className="mt-10 flex flex-wrap items-center gap-4">
-            <AlphaCta href={SIGNUP_HREF}>{t("primaryCta")}</AlphaCta>
+          {/* Dire à quoi mène le bouton avant qu'on l'ait cliqué : ce n'est
+              pas une entrée dans le jeu, c'est une place sur la liste. */}
+          <p className="mt-8 max-w-measure text-ui-sm text-vellum-3">
+            {tAlpha("preRegister")}
+          </p>
+
+          <div className="mt-8 flex flex-wrap items-center gap-4">
+            <SignupCta>{t("primaryCta")}</SignupCta>
             {/* Lien simple et non bouton : sans padding horizontal, il
                 reste aligné sur le bouton primaire quand la ligne passe. */}
             <Link
