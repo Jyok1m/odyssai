@@ -111,3 +111,21 @@ h4 {
   outline: 2px solid var(--color-brass);
   outline-offset: 2px;
 }
+
+/* Tailwind 4 aligne le curseur des boutons sur le défaut du navigateur, soit
+   la flèche. Le kit les dessine comme des contrôles cliquables : le curseur
+   doit le dire aussi. Posé une fois ici plutôt qu'en classe sur chaque
+   bouton, où il finirait par manquer quelque part.
+   `label[for]` et `summary` sont dans le lot pour la même raison : ils
+   déclenchent une action au clic sans être des boutons. */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+label[for],
+summary {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}

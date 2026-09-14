@@ -106,10 +106,7 @@ export function AuthMenu({
         size={size}
         onClick={signOut}
         disabled={leaving}
-        className={[
-          "disabled:cursor-not-allowed disabled:opacity-60",
-          stacked ? "w-full" : "",
-        ]
+        className={["disabled:opacity-60", stacked ? "w-full" : ""]
           .filter(Boolean)
           .join(" ")}
       >
