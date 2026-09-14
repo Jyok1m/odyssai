@@ -34,6 +34,7 @@ export default function MultiversePage() {
 
   return (
     <ProsePage
+      href={HREF}
       title={t("metaTitle")}
       lead={t("lead")}
       intro={t.raw("intro") as string[]}

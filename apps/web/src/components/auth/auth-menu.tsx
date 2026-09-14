@@ -12,9 +12,7 @@ import { requestSignOut } from "@/lib/api";
 /**
  * Bloc d'authentification du header, en trois états : inconnu pendant la
  * lecture de la session, invitation à se connecter, puis identité du joueur.
- *
- * `stacked` sert au panneau mobile, où les deux lignes s'empilent sur toute
- * la largeur au lieu de s'aligner dans la barre.
+ * `stacked` est la forme du panneau mobile.
  */
 export function AuthMenu({
   size = "sm",
@@ -30,10 +28,10 @@ export function AuthMenu({
   const [leaving, setLeaving] = useState(false);
 
   if (session.status === "loading") {
-    // Réserve la place du bouton : sans ça le header se réagence sous le
+    // Réserve la place du bouton, sans quoi le header se réagence sous le
     // curseur dès que l'API répond. Une seule classe de largeur : deux
-    // utilitaires visant la même propriété seraient arbitrés par la feuille
-    // CSS et non par l'ordre dans className.
+    // utilitaires sur la même propriété seraient arbitrés par la feuille CSS
+    // et non par l'ordre dans className.
     return (
       <div
         aria-hidden="true"
@@ -47,8 +45,8 @@ export function AuthMenu({
   }
 
   if (session.status === "anonymous") {
-    // Plus de garde par le drapeau d'alpha : ouvrir un compte est possible
-    // maintenant. Le drapeau ne retient plus que l'entree dans le jeu.
+    // Sans garde par le drapeau d'alpha : ouvrir un compte est deja possible,
+    // le drapeau ne retient plus que l'entree dans le jeu.
     return (
       <Button
         as="a"
@@ -65,8 +63,7 @@ export function AuthMenu({
   const signOut = async () => {
     setLeaving(true);
     try {
-      // Navigation en dur et non router.push : la fin de session est une page
-      // de Keycloak, hors du site.
+      // Et non router.push : la fin de session est une page de Keycloak.
       window.location.assign(await requestSignOut());
     } catch (error: unknown) {
       console.error("déconnexion impossible", error);
@@ -75,10 +72,9 @@ export function AuthMenu({
     }
   };
 
-  // Dans la barre, l'adresse complete poussait la navigation contre le
-  // selecteur de langue. Seule la partie locale y tient, et elle suffit a
-  // reconnaitre son compte ; l'adresse entiere reste dans l'attribut title et
-  // dans le panneau mobile, ou la largeur ne manque pas.
+  // Dans la barre, l'adresse complete pousse la navigation contre le selecteur
+  // de langue. La partie locale suffit a reconnaitre son compte ; l'adresse
+  // entiere reste dans title et dans le panneau mobile.
   const shortName = session.user.email.split("@")[0];
 
   return (
@@ -91,8 +87,7 @@ export function AuthMenu({
         title={session.user.email}
         className={[
           "truncate text-ui-sm text-vellum-2",
-          // En dessous de xl, le bouton de deconnexion porte a lui seul
-          // l'information « tu es connecte ».
+          // Sous xl, le bouton de deconnexion porte seul l'information.
           stacked ? "block" : "hidden max-w-32 xl:block",
         ].join(" ")}
       >
@@ -100,8 +95,8 @@ export function AuthMenu({
       </span>
       <Button
         type="button"
-        // Bordé dans le panneau mobile : sur toute la largeur, un bouton
-        // fantôme ne se distingue plus d'une ligne de texte centrée.
+        // Bordé sur toute la largeur : un bouton fantôme y passerait pour du
+        // texte centré.
         variant={stacked ? "secondary" : "ghost"}
         size={size}
         onClick={signOut}

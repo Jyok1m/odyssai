@@ -2,10 +2,8 @@ import { getPathname } from "@/i18n/navigation";
 import { routing, type Locale, type Pathname } from "@/i18n/routing";
 
 /**
- * À n'importer que depuis du code serveur. `SITE_URL` n'a pas le préfixe
- * NEXT_PUBLIC_, donc elle vaudrait le repli localhost dans un bundle
- * navigateur. Elle ne sert qu'aux métadonnées, au sitemap, à robots.txt et au
- * JSON-LD, tous rendus côté serveur.
+ * À n'importer que depuis du code serveur : sans préfixe NEXT_PUBLIC_, cette
+ * variable vaudrait le repli localhost dans un bundle navigateur.
  */
 export const SITE_URL = (
   process.env.SITE_URL ?? "http://localhost:3000"
@@ -23,14 +21,14 @@ export function urlFor(locale: Locale, href: Pathname = "/") {
 }
 
 /**
- * Canonical + hreflang. `href` est le chemin **interne**, celui du dossier
- * sous app/[locale] ; la traduction en chemin public est faite par next-intl.
+ * Canonical et hreflang. `href` est le chemin interne, celui du dossier sous
+ * app/[locale] ; next-intl le traduit en chemin public.
  *
- * hreflang reste en code de langue seul : le site ne cible pas de région, et
- * un `fr-FR` inutile exclurait les francophones hors de France.
+ * hreflang reste en code de langue seul : le site ne cible pas de région, et un
+ * `fr-FR` inutile exclurait les francophones hors de France.
  */
 export function alternatesFor(locale: Locale, href: Pathname = "/") {
-  // Chemin public sans préfixe : c'est ce que le proxy next-intl annonce en
+  // Sans préfixe de locale : c'est ce que le proxy next-intl annonce en
   // x-default dans son en-tête Link, et les deux doivent concorder.
   const unprefixed =
     getPathname({ locale: routing.defaultLocale, href }).replace(

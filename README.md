@@ -61,31 +61,36 @@ corepack enable
 pnpm install
 ```
 
-**Two environment files, in two different places.** This is the first trap.
-`apps/api` walks up the tree looking for a `.env`, so the one at the root
-covers it. Next only ever reads its own application directory.
+**Three environment files, in three different places.** This is the first
+trap. `apps/api` walks up the tree looking for a `.env`, so the one at the root
+covers it. Next only ever reads its own application directory. The third one is
+for the Makefile alone and never reaches an application.
 
 ```bash
 cp .env.example .env                    # origins, Keycloak, Redis
 cp apps/web/.env.example apps/web/.env  # SITE_URL and the NEXT_PUBLIC_ flags
+cp .env.local.example .env.local        # the dev server's SSH coordinates
 ```
 
-**Redis** is the session store. In development it runs on the server, reached
-through an SSH tunnel from local port 16379 to remote 6379, which is why
-`REDIS_URL` points at `localhost:16379`. A port accepting connections proves
-nothing: the SSH client keeps the port bound even after the session behind it
-has died. Check with a real `PING`, not with a port probe.
-
-**Keycloak** is configured by a single idempotent script that goes exclusively
-through the Admin REST API. That script is the source of truth for the realm's
-configuration, not the web console.
+**Redis** is the session store. In development it runs on the server, which
+publishes it on its loopback only, so it is reached through an SSH tunnel:
 
 ```bash
-KC_ADMIN_PASSWORD='...' ./infra/keycloak/setup-realm.sh odyssai-dev
+make tunnel      # stays in the foreground
+make redis-ping  # from another shell
 ```
 
-It prints `KEYCLOAK_ISSUER`, `KEYCLOAK_CLIENT_ID` and
-`KEYCLOAK_CLIENT_SECRET`, which go into the root `.env`.
+A port accepting connections proves nothing: the SSH client keeps it bound even
+after the session behind it has died. Only a real `PING` settles it, which is
+what `make redis-ping` sends, over the very `REDIS_URL` the API reads.
+
+**Keycloak is not configured from here.** The realms, their clients and the
+login theme live in the `keycloak` role of a separate infrastructure
+repository, which applies them through the Admin REST API. That role is the
+source of truth, not the web console. A workstation gets a client of its own,
+`odyssai-api-local`: a client carries a single baseUrl, and sharing one with the
+deployed copy sent every sign-in back to the other. Its secret is what goes into
+`KEYCLOAK_CLIENT_SECRET` in the root `.env`.
 
 Then:
 
@@ -104,6 +109,14 @@ pnpm lint
 pnpm typecheck
 pnpm --filter @odyssai/<pkg> <script>    # a single package
 pnpm --filter @odyssai/<pkg> add <dep>   # never npm, never yarn
+```
+
+The Makefile wraps the long invocations. Nothing in it is required, and
+`make help` lists the rest.
+
+```bash
+make check    # typecheck, lint and build, the full pass before committing
+make tunnel   # the SSH tunnel to the dev Redis
 ```
 
 After touching `packages/schemas` outside of `pnpm dev`, rebuild it:

@@ -13,17 +13,12 @@ import {
 } from "@/lib/consent";
 
 /**
- * Bandeau de choix sur les cookies.
+ * Bandeau de choix sur les cookies. Il ne s'affiche qu'après montage : le choix
+ * vit dans un cookie lisible côté navigateur, et le rendre au prérendu figerait
+ * un bandeau visible dans des pages statiques servies à tout le monde.
  *
- * Il ne s'affiche qu'après montage : le choix vit dans un cookie lisible côté
- * navigateur, et le rendre au prérendu figerait un bandeau visible dans des
- * pages statiques servies à tout le monde, y compris à qui a déjà répondu.
- *
- * Les deux réponses ont le même poids visuel. Un refus grisé ou relégué en
+ * Les deux réponses ont le même poids visuel : un refus grisé ou relégué en
  * lien discret vicie le consentement, et la CNIL le sanctionne comme tel.
- *
- * Rien n'est déposé avant la réponse, et aucun outil de mesure n'est branché
- * aujourd'hui : le choix est enregistré pour le jour où il y en aura un.
  */
 export function CookieBanner() {
   const t = useTranslations("CookieBanner");
@@ -55,9 +50,8 @@ export function CookieBanner() {
           </Link>
         </div>
 
-        {/* Ordre inversé au clavier et à l'écran : « accepter » est l'action
-            positive, elle reste à droite, mais les deux gardent la même taille
-            et le même contraste. */}
+        {/* « Accepter » reste à droite, mais les deux boutons gardent la même
+            taille et le même contraste. */}
         <div className="flex shrink-0 gap-3">
           <Button
             type="button"
