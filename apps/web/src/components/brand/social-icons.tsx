@@ -1,11 +1,9 @@
 import type { SVGProps } from "react";
 
 /**
- * Logos des réseaux, en SVG inline plutôt qu'en police d'icônes ou en images :
- * ils prennent `currentColor`, donc l'état de survol du lien, sans requête
- * supplémentaire ni seconde couleur à tenir.
- *
- * `viewBox` à 24 pour tous, la taille est décidée par la classe du parent.
+ * Logos des réseaux en SVG inline : ils prennent `currentColor`, donc l'état de
+ * survol du lien, sans requête supplémentaire. `viewBox` à 24 pour tous, la
+ * taille est décidée par la classe du parent.
  */
 type IconProps = SVGProps<SVGSVGElement>;
 

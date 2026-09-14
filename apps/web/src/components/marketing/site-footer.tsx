@@ -23,9 +23,8 @@ const NAV_ITEMS = [
 ] as const;
 
 /**
- * Réseaux. Seul celui qui existe vraiment figure ici : un lien social mort
- * coûte plus qu'il ne rapporte. Les autres logos attendent dans
- * `social-icons.tsx`, il suffit d'ajouter une entrée.
+ * Réseaux. Seul celui qui existe vraiment figure ici ; les autres logos
+ * attendent dans `social-icons.tsx`.
  */
 const SOCIAL_ITEMS: {
   name: string;
