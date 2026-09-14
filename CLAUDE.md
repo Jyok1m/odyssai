@@ -20,8 +20,8 @@ Prévus, pas encore créés : `apps/worker` (BullMQ), `packages/engine`, `packag
 - Un package : `pnpm --filter @odyssai/<pkg> <script>`
 - Dépendance : `pnpm --filter @odyssai/<pkg> add <dep>`. Jamais npm install ni yarn.
 - Dépendance interne : `pnpm --filter @odyssai/<pkg> add @odyssai/schemas@workspace:*`
-- Infra locale : `docker compose up -d` (Redis). Nécessite `REDIS_PASSWORD` dans `.env`.
-- Realm Keycloak : `KC_ADMIN_PASSWORD='...' ./infra/keycloak/setup-realm.sh odyssai-dev`
+- Redis de dev : `make tunnel` ouvre le tunnel SSH, `make redis-ping` vérifie qu'il répond vraiment. Coordonnées du serveur dans `.env.local`.
+- `make check` vaut `pnpm typecheck && pnpm lint && pnpm build`.
 - `typecheck` vaut `tsc --noEmit` partout, sauf `apps/web` où il est précédé de `next typegen` : les types de routes et de layouts (`LayoutProps`, `PageProps`) sont générés par Next dans `.next/types/` et manquent sans ça.
 
 ## Règles d'architecture
@@ -40,18 +40,18 @@ Un realm Keycloak par environnement (`odyssai-dev`, `odyssai-prod`). `apps/api` 
 - Flot Authorization Code + PKCE S256, l'API en mandataire. Le direct grant est désactivé sur le client : aucun mot de passe ne transite par l'API.
 - Connexion et inscription sont servies par Keycloak. `GET /auth/signin` vise le point d'autorisation, `GET /auth/signup` vise `/protocol/openid-connect/registrations`.
 - Les jetons ne quittent jamais le serveur. Le navigateur ne détient qu'un identifiant de session opaque, dans un cookie `__Host-` httpOnly SameSite=Lax ; les jetons vivent dans Redis. Ne jamais renvoyer un jeton dans une réponse HTTP.
-- `infra/keycloak/setup-realm.sh` configure un realm de bout en bout par l'Admin REST API. Il est idempotent : c'est lui la source de vérité de la configuration du realm, pas la console web.
+- Le realm n'est pas configuré depuis ce dépôt : le rôle ansible `keycloak` du dépôt d'infrastructure le décrit de bout en bout par l'Admin REST API, et c'est lui la source de vérité, pas la console web.
 - Le realm est en rotation stricte du refresh token (`revokeRefreshToken`, `refreshTokenMaxReuse: 0`). Tout renouvellement passe par le verrou Redis de `SessionService` : deux renouvellements concurrents feraient invalider la session entière par Keycloak, qui lirait le second comme un rejeu.
 - L'identité (email, mot de passe, MFA) appartient à Keycloak. Le profil de jeu (pseudo, univers, progression) appartient à la base applicative et ne remonte jamais dans le realm.
 - `SessionGuard` protège les routes de jeu et dépose la session sur la requête.
-- Le thème `infra/keycloak/themes/odyssai` habille les pages du realm. Il hérite de `base` et ne surcharge que `template.ftl` et `login.ftl` : les autres pages suivent par les classes `kc*Class` de `theme.properties`. Son CSS redéclare les tokens de `globals.css`, Keycloak ne compilant pas Tailwind : reporter toute évolution du kit.
+- Le thème `odyssai` habille les pages du realm et vit dans le même rôle ansible. Son CSS redéclare les tokens de `globals.css`, Keycloak ne compilant pas Tailwind : reporter toute évolution du kit.
 
 ## Conventions
 
 - Les schémas Zod sont la source de vérité ; les types en dérivent via `z.infer`.
 - `packages/schemas` reste en CommonJS : `module` et `moduleResolution` en `nodenext` **sans** `"type": "module"`. Ce n'est plus imposé par Nest (son scaffold est passé en ESM) mais c'est le format consommable à la fois depuis l'ESM de l'api et depuis un `require()`. Ne pas ajouter `"type": "module"`.
 - Après modification de `packages/schemas` hors `pnpm dev` : `pnpm --filter @odyssai/schemas build`.
-- Secrets uniquement dans `.env` (ignoré par git), `.env.example` tenu à jour. Aucune clé en dur.
+- Secrets uniquement dans les fichiers ignorés par git, leurs `.example` tenus à jour. Trois paires : `.env` pour apps/api, `apps/web/.env` pour Next, `.env.local` pour le Makefile seul. Aucune clé en dur.
 - pnpm 11 refuse par défaut les scripts d'install des dépendances. Statuer dans `allowBuilds`, à la racine de `pnpm-workspace.yaml` ; ne pas lancer `pnpm approve-builds`, qui est interactif.
 - `apps/web/AGENTS.md` et `apps/web/CLAUDE.md` sont regénérés par `next dev`. Ne pas les éditer à la main.
 - Divergence connue à unifier : TypeScript 5.9 (web) / 6.0 (api) / 7.0 (schemas), héritée des scaffolds.
@@ -72,11 +72,11 @@ Un realm Keycloak par environnement (`odyssai-dev`, `odyssai-prod`). `apps/api` 
 
 À faire évoluer à chaque route ajoutée, pas seulement à la création.
 
-- `NEXT_PUBLIC_SITE_URL` conditionne canonical, hreflang, OpenGraph, sitemap et robots. Non définie, tout retombe sur localhost.
-- `src/lib/site.ts` centralise l'origine, les locales OpenGraph et `alternatesFor()` (canonical, hreflang, x-default).
+- `SITE_URL` conditionne canonical, hreflang, OpenGraph, sitemap et robots. Sans préfixe `NEXT_PUBLIC_` : elle n'est lue que côté serveur. Non définie, tout retombe sur localhost.
+- `src/lib/seo.ts` centralise l'origine, les locales OpenGraph, `urlFor()` et `alternatesFor()` (canonical, hreflang, x-default). `src/lib/page-metadata.ts` en dérive les métadonnées d'une page de contenu.
 - Toute nouvelle route publique s'ajoute à `PATHS` dans `src/app/sitemap.ts`.
 - `x-default` pointe la racine, qui négocie la langue, pour concorder avec l'en-tête `Link` émis par le proxy next-intl.
-- JSON-LD dans `src/components/seo/json-ld.tsx`. N'y déclarer que du vérifiable : ni note agrégée, ni offre, ni date de sortie inventées.
+- JSON-LD dans `src/components/seo/json-ld.tsx` : le graphe du site dans le layout, le fil d'Ariane porté par `ProsePage` via sa prop `href`. N'y déclarer que du vérifiable : ni note agrégée, ni offre, ni date de sortie inventées.
 
 ## Façon de travailler
 
