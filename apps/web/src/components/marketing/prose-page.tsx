@@ -1,4 +1,8 @@
+import { useLocale } from "next-intl";
 import type { ReactNode } from "react";
+
+import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import type { Locale, Pathname } from "@/i18n/routing";
 
 export type ProseSection = {
   title: string;
@@ -6,28 +10,32 @@ export type ProseSection = {
 };
 
 /**
- * Gabarit des pages de contenu. Purement présentationnel : chaque page lit
- * ses propres messages et passe le texte résolu, ce qui évite un namespace
- * dynamique et garde le typage des clés.
- *
- * La prose est en Literata : c'est la voix du narrateur, et l'axe optique du
- * kit est pensé pour la lecture à l'écran.
+ * Gabarit des pages de contenu. Chaque page lit ses propres messages et passe
+ * le texte résolu, ce qui évite un namespace dynamique et garde le typage des
+ * clés. `href` est le chemin interne, celui du dossier sous app/[locale] : il
+ * ne sert qu'au fil d'Ariane, que toutes ces pages doivent porter.
  */
 export function ProsePage({
+  href,
   title,
   lead,
   intro,
   sections,
   footer,
 }: {
+  href: Pathname;
   title: string;
   lead: string;
   intro: string[];
   sections: ProseSection[];
   footer?: ReactNode;
 }) {
+  const locale = useLocale() as Locale;
+
   return (
     <article className="mx-auto max-w-wrap px-6 pt-32 pb-24 sm:pt-40 lg:px-8">
+      <BreadcrumbJsonLd locale={locale} href={href} name={title} />
+
       <header className="max-w-headline">
         <h1 className="font-voice text-display-compact text-balance text-vellum sm:text-display">
           {title}

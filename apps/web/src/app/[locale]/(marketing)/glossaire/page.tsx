@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { hasLocale, useTranslations } from "next-intl";
+import { hasLocale, useLocale, useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
 
 import {
   GlossaryList,
   type GlossaryEntry,
 } from "@/components/marketing/glossary-list";
-import { routing } from "@/i18n/routing";
+import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { routing, type Locale } from "@/i18n/routing";
 import { pageMetadata } from "@/lib/page-metadata";
 
 const HREF = "/glossaire" as const;
@@ -31,9 +32,12 @@ export async function generateMetadata({
 
 export default function GlossaryPage() {
   const t = useTranslations("Glossary");
+  const locale = useLocale() as Locale;
 
   return (
     <article className="mx-auto max-w-wrap px-6 pt-32 pb-24 sm:pt-40 lg:px-8">
+      <BreadcrumbJsonLd locale={locale} href={HREF} name={t("metaTitle")} />
+
       <header className="max-w-headline">
         <h1 className="font-voice text-display-compact text-balance text-vellum sm:text-display">
           {t("metaTitle")}
