@@ -16,6 +16,7 @@ import {
   type AuthErrorCode,
   type SessionState,
   type SignOutResult,
+  UiLocale,
 } from '@odyssai/schemas';
 import type { CookieOptions, Request, Response } from 'express';
 import { z } from 'zod';
@@ -58,18 +59,20 @@ export class AuthController {
   @Redirect()
   async signIn(
     @Query('redirect') redirect: string | undefined,
+    @Query('locale') locale: string | undefined,
     @Res({ passthrough: true }) res: Response,
   ): Promise<Redirection> {
-    return this.beginFlow('signin', redirect, res);
+    return this.beginFlow('signin', redirect, locale, res);
   }
 
   @Get('signup')
   @Redirect()
   async signUp(
     @Query('redirect') redirect: string | undefined,
+    @Query('locale') locale: string | undefined,
     @Res({ passthrough: true }) res: Response,
   ): Promise<Redirection> {
-    return this.beginFlow('signup', redirect, res);
+    return this.beginFlow('signup', redirect, locale, res);
   }
 
   @Get('callback')
@@ -192,9 +195,13 @@ export class AuthController {
   private async beginFlow(
     kind: 'signin' | 'signup',
     rawRedirect: string | undefined,
+    rawLocale: string | undefined,
     res: Response,
   ): Promise<Redirection> {
     const redirectTo = this.parseRedirect(rawRedirect);
+    // Une langue inconnue est ignoree plutot que refusee : elle n'est qu'un
+    // confort d'affichage, et Keycloak sert alors la langue du realm.
+    const uiLocale = UiLocale.safeParse(rawLocale).data;
     const { state, nonce, codeChallenge } = await this.sessions.startTransaction(redirectTo);
 
     // Lie la transaction a ce navigateur. SameSite=Lax et non Strict : en
@@ -205,7 +212,7 @@ export class AuthController {
       maxAge: 600_000,
     });
 
-    const params = { state, nonce, codeChallenge };
+    const params = { state, nonce, codeChallenge, uiLocale };
     const url =
       kind === 'signin'
         ? await this.oidc.authorizationUrl(params)

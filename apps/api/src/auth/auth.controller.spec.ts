@@ -75,7 +75,7 @@ describe('AuthController', () => {
     it('redirige vers la page de connexion et lie la transaction au navigateur', async () => {
       const res = makeResponse();
 
-      const result = await controller.signIn(undefined, res.response);
+      const result = await controller.signIn(undefined, undefined, res.response);
 
       expect(result).toEqual({ url: 'https://sso.example.test/auth?x=1', statusCode: 302 });
       const cookie = res.cookies.get(config.cookies.transaction);
@@ -86,16 +86,36 @@ describe('AuthController', () => {
     it('vise la page d inscription pour signup', async () => {
       const res = makeResponse();
 
-      const result = await controller.signUp('/jouer', res.response);
+      const result = await controller.signUp('/jouer', undefined, res.response);
 
       expect(result.url).toBe('https://sso.example.test/registrations?x=1');
       expect(sessions.startTransaction).toHaveBeenCalledWith('/jouer');
     });
 
+    it('transmet la langue demandee aux pages de Keycloak', async () => {
+      const res = makeResponse();
+
+      await controller.signIn('/', 'en', res.response);
+
+      expect(oidc.authorizationUrl).toHaveBeenCalledWith(
+        expect.objectContaining({ uiLocale: 'en' }),
+      );
+    });
+
+    it('ignore une langue inconnue plutot que de refuser la connexion', async () => {
+      const res = makeResponse();
+
+      await controller.signIn('/', 'kl', res.response);
+
+      expect(oidc.authorizationUrl).toHaveBeenCalledWith(
+        expect.objectContaining({ uiLocale: undefined }),
+      );
+    });
+
     it('refuse une cible de redirection externe', async () => {
       const res = makeResponse();
 
-      await expect(controller.signIn('https://evil.test', res.response)).rejects.toBeInstanceOf(
+      await expect(controller.signIn('https://evil.test', undefined, res.response)).rejects.toBeInstanceOf(
         BadRequestException,
       );
       expect(sessions.startTransaction).not.toHaveBeenCalled();
