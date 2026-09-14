@@ -1,4 +1,4 @@
-import { SessionState, SignOutResult } from "@odyssai/schemas";
+import { SessionState, SignOutResult, type UiLocale } from "@odyssai/schemas";
 
 /**
  * Accès à l'API depuis le navigateur.
@@ -25,18 +25,28 @@ export const API_BASE_URL = (
  * `redirectTo` est un chemin interne du site, revalidé côté API : une URL
  * absolue ferait de /auth/signin un redirecteur ouvert.
  */
-export function signInUrl(redirectTo: string): string {
-  return authUrl("signin", redirectTo);
+export function signInUrl(redirectTo: string, locale: UiLocale): string {
+  return authUrl("signin", redirectTo, locale);
 }
 
 /** Même flot, sur la page d'inscription du realm. */
-export function signUpUrl(redirectTo: string): string {
-  return authUrl("signup", redirectTo);
+export function signUpUrl(redirectTo: string, locale: UiLocale): string {
+  return authUrl("signup", redirectTo, locale);
 }
 
-function authUrl(kind: "signin" | "signup", redirectTo: string): string {
+/**
+ * `locale` repart en ui_locales sur le point d'autorisation : sans elle,
+ * Keycloak sert la langue par défaut du realm et le joueur changerait de
+ * langue en passant par la connexion.
+ */
+function authUrl(
+  kind: "signin" | "signup",
+  redirectTo: string,
+  locale: UiLocale,
+): string {
   const url = new URL(`/auth/${kind}`, API_BASE_URL);
   url.searchParams.set("redirect", redirectTo);
+  url.searchParams.set("locale", locale);
   return url.toString();
 }
 

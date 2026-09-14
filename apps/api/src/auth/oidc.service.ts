@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose';
 import { z } from 'zod';
+import type { UiLocale } from '@odyssai/schemas';
 import { AppConfig } from '../config/app-config.js';
 
 const HTTP_TIMEOUT_MS = 10_000;
@@ -134,7 +135,7 @@ export class OidcService {
     params: AuthorizationParams,
   ): string {
     const url = new URL(endpoint);
-    url.search = new URLSearchParams({
+    const query = new URLSearchParams({
       response_type: 'code',
       client_id: this.config.keycloak.clientId,
       redirect_uri: this.config.keycloak.redirectUri,
@@ -143,7 +144,14 @@ export class OidcService {
       nonce: params.nonce,
       code_challenge: params.codeChallenge,
       code_challenge_method: 'S256',
-    }).toString();
+    });
+
+    // ui_locales est le parametre OpenID Connect prevu pour ca. Keycloak le lit
+    // et sert la page dans cette langue, sans quoi il retombe sur la langue du
+    // realm et le joueur change de langue en passant par la connexion.
+    if (params.uiLocale) query.set('ui_locales', params.uiLocale);
+
+    url.search = query.toString();
     return url.toString();
   }
 
@@ -299,4 +307,6 @@ export interface AuthorizationParams {
   state: string;
   nonce: string;
   codeChallenge: string;
+  /** Langue des pages de Keycloak. Absente, le realm sert sa langue par defaut. */
+  uiLocale?: UiLocale;
 }

@@ -11,6 +11,10 @@ export const routing = defineRouting({
   // Préfixe toujours explicite : /fr et /en. `/` est redirigé par le
   // proxy selon le cookie puis l'en-tête Accept-Language.
   localePrefix: "always",
+  // Explicite bien que ce soit le défaut : le français est la langue du jeu,
+  // et seul un navigateur qui demande l'anglais obtient /en. Tout le reste,
+  // y compris une langue non gérée, retombe sur defaultLocale.
+  localeDetection: true,
   pathnames: {
     "/": "/",
     "/concept": { fr: "/concept", en: "/concept" },
@@ -18,6 +22,9 @@ export const routing = defineRouting({
     "/multivers": { fr: "/multivers", en: "/multiverse" },
     "/lore": { fr: "/lore", en: "/lore" },
     "/glossaire": { fr: "/glossaire", en: "/glossary" },
+    "/mentions-legales": { fr: "/mentions-legales", en: "/legal-notice" },
+    "/confidentialite": { fr: "/confidentialite", en: "/privacy" },
+    "/cookies": { fr: "/cookies", en: "/cookies" },
   },
 });
 

@@ -12,7 +12,13 @@
 		"login": "Log in",
 		"openMenu": "Open main menu",
 		"closeMenu": "Close menu",
-		"glossary": "Glossary"
+		"glossary": "Glossary",
+		"legal": "Legal notice",
+		"privacy": "Privacy",
+		"cookies": "Cookies",
+		"footerLegal": "Legal information",
+		"rights": "All rights reserved.",
+		"manageCookies": "Manage cookies"
 	},
 	"Hero": {
 		"badge": "Private alpha in the works.",
@@ -30,7 +36,9 @@
 		"genre": "Narrative role-playing, multiverse"
 	},
 	"Alpha": {
-		"closed": "The private alpha is not open yet. Come back soon."
+		"closed": "The private alpha is not open yet. Come back soon.",
+		"preRegister": "The alpha is not open yet. Creating an account puts you on the first-players list: you will get the invitation and news from the multiverse, nothing else.",
+		"preRegisterShort": "Join the first-players list"
 	},
 	"Auth": {
 		"signOut": "Log out",
@@ -266,5 +274,135 @@
 				"meaning": "An event that touches every world at the same time."
 			}
 		]
+	},
+	"LegalNotice": {
+		"metaTitle": "Legal notice",
+		"metaDescription": "Publisher, publication director and hosting of the OdyssAI site.",
+		"lead": "Who publishes this site, who hosts it, and how to reach us.",
+		"intro": [
+			"Published under article 6 III of the French law of 21 June 2004 on confidence in the digital economy."
+		],
+		"sections": [
+			{
+				"title": "Publisher",
+				"body": [
+					"OdyssAI is published by Joachim Alexandre Jasmin, sole trader.",
+					"Company number: 949930366. VAT number: FR77949930366.",
+					"Address: 52 rue du Général Leclerc, 94220 Charenton-le-Pont, France. Contact: joachim.jasmin-dev@proton.me."
+				]
+			},
+			{
+				"title": "Publication director",
+				"body": [
+					"The publication director is Joachim Alexandre Jasmin."
+				]
+			},
+			{
+				"title": "Hosting",
+				"body": [
+					"The site and its services run on a server rented from OVH SAS, 2 rue Kellermann, 59100 Roubaix, France.",
+					"Delivery goes through Cloudflare, Inc., 101 Townsend Street, San Francisco, CA 94107, United States, which provides caching and network protection."
+				]
+			},
+			{
+				"title": "Intellectual property",
+				"body": [
+					"The code, texts, visual identity and universes published here are protected by copyright. Publishing the code openly grants no rights: see the repository's LICENSE file.",
+					"Worlds created by players remain the property of their authors. Publishing them on OdyssAI grants only a licence limited to running the service."
+				]
+			}
+		]
+	},
+	"Privacy": {
+		"metaTitle": "Privacy policy",
+		"metaDescription": "What OdyssAI collects, why, for how long, and how to exercise your rights.",
+		"lead": "What we know about you, why, and how to take it back.",
+		"intro": [
+			"OdyssAI collects the bare minimum needed to open an account and to tell you when the alpha opens. Nothing is sold, nothing is passed on for advertising."
+		],
+		"sections": [
+			{
+				"title": "Data controller",
+				"body": [
+					"Joachim Alexandre Jasmin, details in the legal notice. For any request: joachim.jasmin-dev@proton.me."
+				]
+			},
+			{
+				"title": "What is collected",
+				"body": [
+					"When you create an account: your email address and the password you choose. The password is never readable, our identity server keeps only a hash of it, and it never passes through the application.",
+					"While using the service: an account identifier, the creation date and sign-in dates.",
+					"When the game opens: your universes, characters and progress. This policy will be extended before then."
+				]
+			},
+			{
+				"title": "Why, and on what basis",
+				"body": [
+					"To create and secure your account, and to sign you in. Legal basis: performing the pre-contractual steps you ask for by opening an account.",
+					"To tell you when the alpha opens and send news about the project. Legal basis: your consent, withdrawable at any time, every message carrying an unsubscribe link.",
+					"No advertising, no profiling, no resale."
+				]
+			},
+			{
+				"title": "How long",
+				"body": [
+					"Account data is kept for as long as the account exists, then erased within thirty days of its deletion.",
+					"Server technical logs are kept for at most twelve months."
+				]
+			},
+			{
+				"title": "Who has access",
+				"body": [
+					"Nobody but the publisher. The technical services are self-hosted on the project's server: the identity server, the mail server and the database.",
+					"Two providers are involved in the infrastructure: OVH SAS for hosting, in France, and Cloudflare, Inc. for delivery and network protection. Cloudflare is a US company; any transfers are covered by the European Commission's standard contractual clauses."
+				]
+			},
+			{
+				"title": "Your rights",
+				"body": [
+					"You have rights of access, rectification, erasure, restriction, objection and portability. Write to the contact address; you will get an answer within one month.",
+					"If it does not satisfy you, you may lodge a complaint with the French authority CNIL, 3 place de Fontenoy, 75007 Paris, at cnil.fr."
+				]
+			}
+		]
+	},
+	"Cookies": {
+		"metaTitle": "Cookies",
+		"metaDescription": "The cookies OdyssAI sets, what they do, and why no consent is asked for today.",
+		"lead": "Technical cookies, no trackers.",
+		"intro": [
+			"OdyssAI currently sets only strictly necessary cookies. No analytics, no ad network, no social button."
+		],
+		"sections": [
+			{
+				"title": "What is set",
+				"body": [
+					"A language preference, remembering your choice between French and English. Kept for one year.",
+					"A session identifier, set when you sign in. It is opaque: it holds no data about you, only a reference the server knows how to read. It disappears when you sign out.",
+					"Our identity server's cookies, on the sso subdomain, for the duration of the sign-in and the session."
+				]
+			},
+			{
+				"title": "Your choice",
+				"body": [
+					"A banner asks for your choice on your first visit. No analytics cookie is set before you answer, and declining costs you nothing.",
+					"Your choice is kept for six months in a cookie, then asked again. You can change it at any time through the “Manage cookies” link at the foot of every page.",
+					"The technical cookies listed above are not covered by that choice: article 82 of the French Data Protection Act exempts those strictly necessary to the requested service. Refusing them is done in your browser settings."
+				]
+			},
+			{
+				"title": "Refusing them anyway",
+				"body": [
+					"Your browser lets you block or clear cookies site by site. Blocking these will stop sign-in from working and make the site forget your language, but the rest stays readable."
+				]
+			}
+		]
+	},
+	"CookieBanner": {
+		"body": "OdyssAI only sets technical cookies, needed for sign-in and for your language. You can refuse any future analytics right now.",
+		"learnMore": "Read the Cookies page",
+		"accept": "Accept all",
+		"decline": "Decline",
+		"manage": "Manage cookies"
 	}
 }

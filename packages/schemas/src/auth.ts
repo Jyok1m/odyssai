@@ -68,3 +68,12 @@ export const SignOutResult = z.object({
 });
 
 export type SignOutResult = z.infer<typeof SignOutResult>;
+
+/**
+ * Langue demandee aux pages de Keycloak, passee en ui_locales sur le point
+ * d'autorisation. Bornee a ce que le realm declare : une valeur libre
+ * partirait telle quelle dans une URL construite par l'API.
+ */
+export const UiLocale = z.enum(['fr', 'en']);
+
+export type UiLocale = z.infer<typeof UiLocale>;
