@@ -11,7 +11,9 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
-# Secrets et coordonnees du serveur. Ignore par git, voir .env.local.example.
+# Coordonnees du serveur de developpement. Ignore par git, voir
+# .env.local.example. Rien de ce que lisent les applications n'est ici : elles
+# prennent .env a la racine et apps/web/.env.
 ENV_LOCAL := .env.local
 
 
@@ -54,7 +56,8 @@ typecheck: ## Verifie les types partout
 check: typecheck lint build ## Le passage complet avant de commiter
 
 # Le serveur ne publie le Redis de dev que sur sa boucle locale, d'ou le
-# 127.0.0.1 cote distant.
+# 127.0.0.1 cote distant. Le port distant est celui qu'il publie (16379) et
+# non celui du conteneur, que docker a deja redirige.
 tunnel: ## Ouvre le tunnel SSH vers le Redis de dev
 	@$(REQUIRE_ENV); $(LOAD_ENV); \
 	if [ -z "$$SSH_HOST" ]; then \
@@ -67,7 +70,7 @@ tunnel: ## Ouvre le tunnel SSH vers le Redis de dev
 		-p "$${SSH_PORT:-22}" \
 		-o ExitOnForwardFailure=yes \
 		-o ServerAliveInterval=30 \
-		-L "$${REDIS_LOCAL_PORT:-16379}:127.0.0.1:$${REDIS_REMOTE_PORT:-6379}" \
+		-L "$${REDIS_LOCAL_PORT:-16379}:127.0.0.1:$${REDIS_REMOTE_PORT:-16379}" \
 		"debian@$$SSH_HOST"
 
 # Un port qui accepte la connexion ne prouve rien : un client SSH garde le port
