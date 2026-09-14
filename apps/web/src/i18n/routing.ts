@@ -22,6 +22,9 @@ export const routing = defineRouting({
     "/multivers": { fr: "/multivers", en: "/multiverse" },
     "/lore": { fr: "/lore", en: "/lore" },
     "/glossaire": { fr: "/glossaire", en: "/glossary" },
+    "/mentions-legales": { fr: "/mentions-legales", en: "/legal-notice" },
+    "/confidentialite": { fr: "/confidentialite", en: "/privacy" },
+    "/cookies": { fr: "/cookies", en: "/cookies" },
   },
 });
 

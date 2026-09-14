@@ -12,7 +12,12 @@
 		"login": "Se connecter",
 		"openMenu": "Ouvrir le menu principal",
 		"closeMenu": "Fermer le menu",
-		"glossary": "Glossaire"
+		"glossary": "Glossaire",
+		"legal": "Mentions légales",
+		"privacy": "Confidentialité",
+		"cookies": "Cookies",
+		"footerLegal": "Informations légales",
+		"rights": "Tous droits réservés."
 	},
 	"Hero": {
 		"badge": "Alpha privée en préparation.",
@@ -266,6 +271,121 @@
 			{
 				"term": "Grand arc",
 				"meaning": "Un événement qui touche tous les mondes en même temps."
+			}
+		]
+	},
+	"LegalNotice": {
+		"metaTitle": "Mentions légales",
+		"metaDescription": "Éditeur, direction de la publication et hébergement du site OdyssAI.",
+		"lead": "Qui édite ce site, qui l'héberge, et comment nous joindre.",
+		"intro": [
+			"Publiées en application de l'article 6 III de la loi du 21 juin 2004 pour la confiance dans l'économie numérique."
+		],
+		"sections": [
+			{
+				"title": "Éditeur",
+				"body": [
+					"OdyssAI est édité par Joachim Alexandre Jasmin, entrepreneur individuel.",
+					"SIREN : 949930366. TVA intracommunautaire : FR77949930366.",
+					"Adresse : 52 rue du Général Leclerc, 94220 Charenton-le-Pont, France. Contact : joachim.jasmin-dev@proton.me"
+				]
+			},
+			{
+				"title": "Direction de la publication",
+				"body": [
+					"Le directeur de la publication est Joachim Alexandre Jasmin."
+				]
+			},
+			{
+				"title": "Hébergement",
+				"body": [
+					"Le site et ses services tournent sur un serveur loué auprès d'OVH SAS, 2 rue Kellermann, 59100 Roubaix, France.",
+					"La distribution passe par Cloudflare, Inc., 101 Townsend Street, San Francisco, CA 94107, États-Unis, qui assure la mise en cache et la protection réseau."
+				]
+			},
+			{
+				"title": "Propriété intellectuelle",
+				"body": [
+					"Le code, les textes, l'identité visuelle et les univers publiés ici sont protégés par le droit d'auteur. La publication ouverte du code n'emporte aucune cession : voir le fichier LICENSE du dépôt.",
+					"Les mondes créés par les joueurs restent la propriété de leurs auteurs. Les publier sur OdyssAI n'accorde qu'une licence limitée au fonctionnement du service."
+				]
+			}
+		]
+	},
+	"Privacy": {
+		"metaTitle": "Politique de confidentialité",
+		"metaDescription": "Quelles données OdyssAI collecte, pourquoi, combien de temps, et comment exercer tes droits.",
+		"lead": "Ce que nous savons de toi, pourquoi, et comment le reprendre.",
+		"intro": [
+			"OdyssAI collecte le strict nécessaire pour ouvrir un compte et prévenir de l'ouverture de l'alpha. Rien n'est vendu, rien n'est cédé à des fins publicitaires."
+		],
+		"sections": [
+			{
+				"title": "Responsable du traitement",
+				"body": [
+					"Joachim Alexandre Jasmin, coordonnées dans les mentions légales. Pour toute demande : joachim.jasmin-dev@proton.me."
+				]
+			},
+			{
+				"title": "Données collectées",
+				"body": [
+					"À la création du compte : ton adresse e-mail et le mot de passe que tu choisis. Le mot de passe n'est jamais lisible, notre serveur d'identité n'en conserve qu'une empreinte, et il ne transite jamais par l'application.",
+					"À l'usage : un identifiant de compte, la date de création et les dates de connexion.",
+					"Quand le jeu ouvrira : tes univers, tes personnages et ta progression. Cette politique sera complétée avant cette ouverture."
+				]
+			},
+			{
+				"title": "Pourquoi, et sur quelle base",
+				"body": [
+					"Créer et sécuriser ton compte, et te connecter. Base légale : l'exécution des mesures précontractuelles que tu demandes en ouvrant un compte.",
+					"T'avertir de l'ouverture de l'alpha et t'envoyer des nouvelles du projet. Base légale : ton consentement, retirable à tout moment, chaque message portant un lien de désinscription.",
+					"Aucune publicité, aucun profilage, aucune revente."
+				]
+			},
+			{
+				"title": "Durée de conservation",
+				"body": [
+					"Les données de compte sont conservées tant que le compte existe, puis effacées dans les trente jours suivant sa suppression.",
+					"Les journaux techniques du serveur sont conservés douze mois au plus."
+				]
+			},
+			{
+				"title": "Qui y a accès",
+				"body": [
+					"Personne d'autre que l'éditeur. Les services techniques sont auto-hébergés sur le serveur du projet : le serveur d'identité, le serveur de courriel et la base de données.",
+					"Deux prestataires interviennent sur l'infrastructure : OVH SAS pour l'hébergement, en France, et Cloudflare, Inc. pour la distribution et la protection réseau. Cloudflare est une société américaine ; les transferts éventuels sont encadrés par les clauses contractuelles types de la Commission européenne."
+				]
+			},
+			{
+				"title": "Tes droits",
+				"body": [
+					"Tu disposes des droits d'accès, de rectification, d'effacement, de limitation, d'opposition et de portabilité. Écris à l'adresse de contact, la réponse intervient sous un mois.",
+					"Si elle ne te convient pas, tu peux saisir la CNIL, 3 place de Fontenoy, 75007 Paris, sur cnil.fr."
+				]
+			}
+		]
+	},
+	"Cookies": {
+		"metaTitle": "Cookies",
+		"metaDescription": "Les cookies déposés par OdyssAI, à quoi ils servent, et pourquoi aucun consentement n'est demandé aujourd'hui.",
+		"lead": "Des cookies techniques, aucun traceur.",
+		"intro": [
+			"OdyssAI ne dépose aujourd'hui que des cookies strictement nécessaires. Ni mesure d'audience, ni régie publicitaire, ni bouton de réseau social."
+		],
+		"sections": [
+			{
+				"title": "Ce qui est déposé",
+				"body": [
+					"Une préférence de langue, qui retient ton choix entre français et anglais. Conservée un an.",
+					"Un identifiant de session, déposé à la connexion. Il est opaque : aucune donnée te concernant n'y figure, seulement une référence que le serveur sait relire. Il disparaît à la déconnexion.",
+					"Les cookies de notre serveur d'identité, sur le sous-domaine sso, le temps de la connexion et de la session."
+				]
+			},
+			{
+				"title": "Les refuser quand même",
+				"body": [
+					"Ton navigateur permet de bloquer ou d'effacer les cookies site par site. Bloquer ceux-ci empêchera la connexion de fonctionner et fera oublier ta langue, mais le reste du site restera consultable."
+				]
 			}
 		]
 	}

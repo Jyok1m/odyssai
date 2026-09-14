@@ -20,6 +20,11 @@ const PATHS: { href: Pathname; priority: number }[] = [
   { href: "/multivers", priority: 0.8 },
   { href: "/lore", priority: 0.8 },
   { href: "/glossaire", priority: 0.5 },
+  // Faible priorite, mais presentes : un crawler qui ne les trouve pas les
+  // cherche ailleurs, et elles sont obligatoires.
+  { href: "/mentions-legales", priority: 0.2 },
+  { href: "/confidentialite", priority: 0.2 },
+  { href: "/cookies", priority: 0.2 },
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
