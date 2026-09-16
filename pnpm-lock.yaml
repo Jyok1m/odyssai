@@ -168,6 +168,25 @@ importers:
         specifier: ^6.0.2
         version: 6.0.3
 
+  packages/narrator:
+    dependencies:
+      '@odyssai/llm':
+        specifier: workspace:*
+        version: link:../llm
+      '@odyssai/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+      zod:
+        specifier: ^4.5.4
+        version: 4.5.4
+    devDependencies:
+      '@types/node':
+        specifier: ^24.13.3
+        version: 24.13.3
+      typescript:
+        specifier: ^6.0.2
+        version: 6.0.3
+
   packages/schemas:
     dependencies:
       zod:

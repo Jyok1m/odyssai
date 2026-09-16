@@ -1,0 +1,68 @@
+[
+  {
+    "id": "quest-ce-que-odyssai",
+    "questions": [
+      "C'est quoi OdyssAI ?",
+      "Qu'est-ce qu'OdyssAI ?",
+      "OdyssAI, c'est quoi exactement ?"
+    ],
+    "answer": "OdyssAI est un jeu de role narratif qui se joue en ligne. Le maitre du jeu est un narrateur IA : il decrit les lieux, fait parler les personnages, arbitre tes actions et se souvient de tout ce qui s'est passe. Tu inventes ton monde, tu y vis ton histoire, puis tu pars vivre celle des autres joueurs.",
+    "suggested": true,
+    "validated": false
+  },
+  {
+    "id": "charte-du-monde",
+    "questions": [
+      "C'est quoi la charte d'un monde ?",
+      "A quoi sert la charte ?",
+      "Comment fonctionne la charte d'un univers ?"
+    ],
+    "answer": "La charte est l'ADN de ton univers : ce qui existe ou non (la magie, la technologie, les dieux), le ton, les regles qui ne se discutent pas, ce qui est interdit et le niveau de contenu. La mort est-elle definitive ? Les machines peuvent-elles rever ? C'est toi qui decides, et le narrateur respecte la charte en toutes circonstances, y compris face aux voyageurs venus d'ailleurs.",
+    "suggested": true,
+    "validated": false
+  },
+  {
+    "id": "croisement-des-univers",
+    "questions": [
+      "Que se passe-t-il quand deux univers se croisent ?",
+      "Comment mon personnage voyage dans un autre monde ?",
+      "Comment fonctionnent les rencontres entre mondes ?"
+    ],
+    "answer": "Ton personnage franchit une faille et arrive dans le monde d'un autre joueur. Il emporte son essence, c'est-a-dire son nom, son caractere, ce qui le pousse a avancer, sa faille et ses souvenirs ; le narrateur la traduit dans la realite du nouveau monde, et tu vois la proposition avant d'entrer. Une regle tient tout le reste : tu choisis ce que fait ton personnage, le createur du monde decide de ce que cela change.",
+    "suggested": true,
+    "validated": false
+  },
+  {
+    "id": "natif-voyageur-echo",
+    "questions": [
+      "C'est quoi un natif, un voyageur et un echo ?",
+      "Quelles sont les trois facons d'arriver dans un monde ?",
+      "Quelle difference entre natif, voyageur et echo ?"
+    ],
+    "answer": "Ce sont les trois facons d'entrer dans le monde d'un autre joueur. Natif, le monde t'absorbe : tu y as toujours vecu, seuls quelques souvenirs flous trahissent ton origine. Voyageur, tu arrives en etranger, conscient d'ou tu viens, et les habitants le sentent. Echo, tu n'es qu'une projection de passage : tu ne peux pas mourir, mais ton influence reste legere. C'est le monde d'accueil qui decide de ce qu'il accepte.",
+    "suggested": true,
+    "validated": false
+  },
+  {
+    "id": "lore-general",
+    "questions": [
+      "C'est quoi le Lore General ?",
+      "A quoi sert le Lore General ?",
+      "Qu'est-ce qui relie tous les mondes ?"
+    ],
+    "answer": "Le Lore General est l'histoire commune a tout le multivers : les quelques verites valables partout, comme l'Etoile fixe et les failles, et les evenements assez grands pour avoir marque plusieurs mondes a la fois. Ce qui se passe chez toi devient canon quand tu le valides ; quand un evenement touche plusieurs mondes ou change la nature des failles, il peut entrer dans le Lore General, et chaque monde l'interprete ensuite a sa maniere.",
+    "suggested": true,
+    "validated": false
+  },
+  {
+    "id": "quand-puis-je-jouer",
+    "questions": [
+      "Je peux jouer maintenant ?",
+      "Quand est-ce que le jeu sort ?",
+      "Comment je m'inscris pour jouer ?"
+    ],
+    "answer": "OdyssAI est encore en developpement : le jeu n'est pas jouable pour l'instant, et aucune date n'est annoncee. En attendant, les pages Concept, Univers, Multivers et Lore racontent en detail comment il fonctionnera.",
+    "suggested": true,
+    "validated": false
+  }
+]

@@ -1,0 +1,68 @@
+[
+  {
+    "id": "quest-ce-que-odyssai",
+    "questions": [
+      "What is OdyssAI?",
+      "What exactly is OdyssAI?",
+      "Tell me about OdyssAI"
+    ],
+    "answer": "OdyssAI is a narrative role-playing game played online. The game master is an AI narrator: it describes places, voices the characters, arbitrates your actions and remembers everything that happened. You invent your own world, you live your story in it, then you go and live the stories of other players.",
+    "suggested": true,
+    "validated": false
+  },
+  {
+    "id": "charte-du-monde",
+    "questions": [
+      "What is a world charter?",
+      "What is the charter for?",
+      "How does a world charter work?"
+    ],
+    "answer": "The charter is the DNA of your universe: what exists or not (magic, technology, gods), the tone, the rules that are not up for discussion, what is forbidden and the content level. Is death permanent? Can machines dream? You decide, and the narrator respects the charter in all circumstances, including when travellers from elsewhere arrive.",
+    "suggested": true,
+    "validated": false
+  },
+  {
+    "id": "croisement-des-univers",
+    "questions": [
+      "What happens when two universes cross?",
+      "How does my character travel to another world?",
+      "How do encounters between worlds work?"
+    ],
+    "answer": "Your character crosses a rift and arrives in another player's world. They carry their essence, meaning their name, their character, what drives them, their flaw and their memories; the narrator translates it into the reality of the new world, and you see the proposal before entering. One rule holds everything together: you choose what your character does, the world's creator decides what it changes.",
+    "suggested": true,
+    "validated": false
+  },
+  {
+    "id": "natif-voyageur-echo",
+    "questions": [
+      "What are a native, a traveller and an echo?",
+      "What are the three ways to arrive in a world?",
+      "What is the difference between native, traveller and echo?"
+    ],
+    "answer": "They are the three ways of entering another player's world. As a native, the world absorbs you: you have always lived there, and only a few blurry memories betray your origin. As a traveller, you arrive as a stranger, aware of where you come from, and the inhabitants can feel it. As an echo, you are only a passing projection: you cannot die, but your influence stays light. The host world decides what it accepts.",
+    "suggested": true,
+    "validated": false
+  },
+  {
+    "id": "lore-general",
+    "questions": [
+      "What is the General Lore?",
+      "What is the General Lore for?",
+      "What connects all the worlds?"
+    ],
+    "answer": "The General Lore is the story shared by the whole multiverse: the few truths that hold everywhere, such as the fixed Star and the rifts, and the events large enough to have marked several worlds at once. What happens in your world becomes canon when you validate it; when an event touches several worlds or changes the nature of the rifts, it can enter the General Lore, and each world then interprets it in its own way.",
+    "suggested": true,
+    "validated": false
+  },
+  {
+    "id": "quand-puis-je-jouer",
+    "questions": [
+      "Can I play now?",
+      "When does the game come out?",
+      "How do I sign up to play?"
+    ],
+    "answer": "OdyssAI is still in development: the game is not playable yet, and no date has been announced. In the meantime, the Concept, Universes, Multiverse and Lore pages describe in detail how it will work.",
+    "suggested": true,
+    "validated": false
+  }
+]

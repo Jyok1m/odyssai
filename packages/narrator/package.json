@@ -1,0 +1,36 @@
+{
+  "name": "@odyssai/narrator",
+  "version": "0.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "author": "Joachim Alexandre Jasmin",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "faq",
+    "evals"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
+    "typecheck": "tsc --noEmit",
+    "corpus:build": "node scripts/build-guide-corpus.mts",
+    "corpus:check": "node scripts/build-guide-corpus.mts --check"
+  },
+  "dependencies": {
+    "@odyssai/llm": "workspace:*",
+    "@odyssai/schemas": "workspace:*",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "typescript": "^6.0.2"
+  }
+}
