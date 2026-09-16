@@ -28,6 +28,30 @@
 		"primaryCta": "Créer mon univers",
 		"secondaryCta": "Découvrir le concept"
 	},
+	"Guide": {
+		"title": "Pose une question au guide",
+		"intro": "Le guide répond à partir des pages de ce site. Il ne sait rien de plus, et il ne devine pas.",
+		"suggestionsLabel": "Par exemple",
+		"inputLabel": "Ta question",
+		"placeholder": "Que se passe-t-il quand deux univers se croisent ?",
+		"hint": "Entrée pour envoyer, Maj+Entrée pour un saut de ligne",
+		"send": "Envoyer",
+		"stop": "Arrêter",
+		"separate": "Chaque question est traitée séparément.",
+		"you": "Toi",
+		"guide": "Le guide",
+		"thinking": "Le guide cherche dans les pages du site",
+		"answerReady": "Réponse du guide",
+		"errorRateLimited": "Tu as atteint la limite de questions. Réessaie dans {minutes} minutes.",
+		"errorBusy": "Le guide répond à plusieurs personnes en ce moment. Réessaie dans quelques secondes.",
+		"errorUpstream": "Le guide n'a pas pu terminer sa réponse.",
+		"errorNetwork": "Le guide est injoignable pour le moment.",
+		"partial": "Réponse interrompue.",
+		"degradedLinks": "À lire en attendant :",
+		"linkConcept": "Concept",
+		"linkUniverses": "Univers",
+		"linkLore": "Lore"
+	},
 	"LocaleSwitcher": {
 		"label": "Langue",
 		"current": "Langue actuelle : {language}"

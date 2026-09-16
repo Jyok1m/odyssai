@@ -28,6 +28,30 @@
 		"primaryCta": "Create my universe",
 		"secondaryCta": "Discover the concept"
 	},
+	"Guide": {
+		"title": "Ask the guide",
+		"intro": "The guide answers from the pages of this site. It knows nothing more, and it does not guess.",
+		"suggestionsLabel": "For example",
+		"inputLabel": "Your question",
+		"placeholder": "What happens when two universes cross?",
+		"hint": "Enter to send, Shift+Enter for a line break",
+		"send": "Send",
+		"stop": "Stop",
+		"separate": "Each question is handled separately.",
+		"you": "You",
+		"guide": "The guide",
+		"thinking": "The guide is searching the pages of the site",
+		"answerReady": "Guide answer",
+		"errorRateLimited": "You have reached the question limit. Try again in {minutes} minutes.",
+		"errorBusy": "The guide is answering several people right now. Try again in a few seconds.",
+		"errorUpstream": "The guide could not finish its answer.",
+		"errorNetwork": "The guide cannot be reached right now.",
+		"partial": "Answer interrupted.",
+		"degradedLinks": "Worth reading in the meantime:",
+		"linkConcept": "Concept",
+		"linkUniverses": "Universes",
+		"linkLore": "Lore"
+	},
 	"LocaleSwitcher": {
 		"label": "Language",
 		"current": "Current language: {language}"
