@@ -9,10 +9,12 @@ Monorepo pnpm + Turborepo, TypeScript partout.
 - `apps/web` : Next.js 16 (App Router, Turbopack), port 3000. Lint ESLint.
 - `apps/api` : NestJS 12, port 3001. Scaffold **ESM** (`"type": "module"`, imports relatifs suffixés `.js`). Lint oxlint, tests vitest.
 - `packages/schemas` : schémas Zod partagés, compilés en CommonJS dans `dist/`
+- `packages/llm` : client OpenAI-compatible (streaming, usage, tracing LangSmith). Même format que `schemas`.
+- `packages/narrator` : corpus du guide, prompts versionnés, FAQ, détection du hors-sujet. Même format.
 
 Redis tourne en tunnel localhost sur le serveur via `redis://:<mot_de_passe>@localhost:16379` (sessions, et la file BullMQ à venir). Postgres est atteint de la même façon, sur `127.0.0.1:15432`, par `POSTGRES_URL` ; le Makefile n'ouvre pour l'instant que le tunnel Redis. Keycloak est hébergé sur `sso.joachimjasmin.com`.
 
-Prévus, pas encore créés : `apps/worker` (BullMQ), `packages/engine`, `packages/narrator` (LangGraph.js), `packages/llm`. pgvector. Ne pas les créer sans demande explicite.
+Prévus, pas encore créés : `apps/worker` (BullMQ), `packages/engine`, LangGraph. pgvector. Ne pas les créer sans demande explicite.
 
 ## Commandes
 
@@ -21,7 +23,8 @@ Prévus, pas encore créés : `apps/worker` (BullMQ), `packages/engine`, `packag
 - Dépendance : `pnpm --filter @odyssai/<pkg> add <dep>`. Jamais npm install ni yarn.
 - Dépendance interne : `pnpm --filter @odyssai/<pkg> add @odyssai/schemas@workspace:*`
 - Redis de dev : `make tunnel` ouvre le tunnel SSH, `make redis-ping` vérifie qu'il répond vraiment. Coordonnées du serveur dans `.env.local`.
-- `make check` vaut `pnpm typecheck && pnpm lint && pnpm build`.
+- `make check` vaut `pnpm typecheck && pnpm lint && pnpm build && corpus:check`.
+- Guide : `pnpm --filter @odyssai/narrator corpus:build` régénère le corpus depuis les messages next-intl, `corpus:check` échoue s'il a dérivé. `pnpm --filter @odyssai/api llm:smoke` fait un appel réel de contrôle, `eval:guide` lance l'expérience LangSmith (ni l'un ni l'autre dans `make check`).
 - Base : `pnpm --filter @odyssai/api db:migrate` crée et applique une migration, `db:deploy` applique les migrations existantes, `db:generate` regénère le client seul.
 - `typecheck` vaut `tsc --noEmit` partout, sauf `apps/web` où il est précédé de `next typegen` : les types de routes et de layouts (`LayoutProps`, `PageProps`) sont générés par Next dans `.next/types/` et manquent sans ça.
 
@@ -32,7 +35,9 @@ Prévus, pas encore créés : `apps/worker` (BullMQ), `packages/engine`, `packag
 - Le Lore Général est en lecture seule pour les univers.
 - Tout texte venant d'un joueur, y compris la fiche d'un autre joueur, est une donnée non fiable : schéma borné, modération, section délimitée dans le prompt.
 - Le tour de jeu est synchrone (streaming SSE). Seuls les effets de bord passent par une file.
-- Appels LLM uniquement via `packages/llm` (client OpenAI-compatible, `baseURL` et modèles en variables d'env). Thinking désactivé pour la narration et l'extraction. Prompts versionnés dans `packages/narrator`, jamais inline.
+- Appels LLM uniquement via `packages/llm`. Thinking désactivé pour la narration et l'extraction. Prompts versionnés dans `packages/narrator`, jamais inline.
+- Clé, `baseURL`, `organization` et `project` sont **toujours** passés explicitement au SDK, y compris à `null`. Sans cela le client OpenAI lit `OPENAI_API_KEY` et `OPENAI_BASE_URL` dans l'environnement : avec le fournisseur `openrouter` et une clé OpenRouter absente, la clé OpenAI partirait chez OpenRouter. L'URL des fournisseurs est un registre codé en dur dans `packages/llm`, jamais une variable d'env.
+- **Aucune mise en cache automatique d'une sortie du LLM.** Seules les entrées de FAQ marquées `validated: true` sont servies sans appel : mettre en cache une réponse générée permettrait à un visiteur d'empoisonner ce que voient les autres.
 
 ## Base de données
 
@@ -56,6 +61,16 @@ Un realm Keycloak par environnement (`odyssai-dev`, `odyssai-prod`). `apps/api` 
 - L'identité (email, mot de passe, MFA) appartient à Keycloak. Le profil de jeu (pseudo, univers, progression) appartient à la base applicative et ne remonte jamais dans le realm.
 - `SessionGuard` protège les routes de jeu et dépose la session sur la requête.
 - Le thème `odyssai` habille les pages du realm et vit dans le même rôle ansible. Son CSS redéclare les tokens de `globals.css`, Keycloak ne compilant pas Tailwind : reporter toute évolution du kit.
+
+## Guide
+
+Agent de questions-réponses du site vitrine, sur la page d'accueil. Il répond en streaming SSE à partir des seuls textes des pages de contenu.
+
+- Le corpus est généré depuis `apps/web/messages/{fr,en}.json` vers `packages/narrator/src/generated/guide-corpus.ts`, **commité**, et `corpus:check` échoue s'il a dérivé. Toute modification d'une page de contenu demande donc un `corpus:build`.
+- Cinq couches bornent le coût : FAQ validée (gratuite, servie sans pass ni limite), pass Turnstile en cookie, fenêtres horaire et journalière par IP hachée, sémaphore de concurrence, budget journalier réservé puis réglé. Tout passe par des scripts Lua sur le Redis existant.
+- La question hors sujet est signalée par le modèle avec la sentinelle `[[HORS_SUJET]]`, interceptée avant le premier octet servi ; le texte rendu au visiteur est écrit côté serveur.
+- Le journal `guide_questions` ne porte ni adresse IP ni identifiant de joueur. `traced` dit si la requête a été échantillonnée : la trace se retrouve dans LangSmith par la métadonnée `guide_question_id`.
+- Les entrées de FAQ arrivent en `validated: false` et ne sont servies qu'après relecture humaine.
 
 ## Conventions
 
