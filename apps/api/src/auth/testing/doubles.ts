@@ -61,14 +61,14 @@ interface Entry {
 
 /** Redis reduit aux commandes employees par SessionService. */
 export class FakeRedis {
-  private readonly store = new Map<string, Entry>();
+  protected readonly store = new Map<string, Entry>();
 
   /**
    * Synchrone pour que les commandes publiques restent atomiques : un await
    * entre le test de presence et l'ecriture laisserait deux appels concurrents
    * obtenir le meme verrou NX.
    */
-  private live(key: string): string | null {
+  protected live(key: string): string | null {
     const entry = this.store.get(key);
     if (!entry) return null;
     if (entry.expiresAt <= Date.now()) {
@@ -116,10 +116,10 @@ export class FakeRedis {
   async eval(
     _script: string,
     _numKeys: number,
-    key: string,
-    owner: string,
-  ): Promise<number> {
-    if (this.live(key) !== owner) return 0;
+    ...args: unknown[]
+  ): Promise<unknown> {
+    const [key, owner] = args.map(String);
+    if (!key || this.live(key) !== owner) return 0;
     this.store.delete(key);
     return 1;
   }

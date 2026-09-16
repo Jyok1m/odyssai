@@ -53,7 +53,10 @@ lint: ## Lint tous les paquets
 typecheck: ## Verifie les types partout
 	pnpm typecheck
 
-check: typecheck lint build ## Le passage complet avant de commiter
+corpus-check: ## Verifie que le corpus du guide colle aux messages next-intl
+	pnpm --filter @odyssai/narrator corpus:check
+
+check: typecheck lint build corpus-check ## Le passage complet avant de commiter
 
 # Le serveur ne publie le Redis de dev que sur sa boucle locale, d'ou le
 # 127.0.0.1 cote distant. Le port distant est celui qu'il publie (16379) et

@@ -1,0 +1,16 @@
+[
+  {
+    "id": "premiere",
+    "questions": ["Comment ça marche ?"],
+    "answer": "Premiere reponse.",
+    "suggested": true,
+    "validated": true
+  },
+  {
+    "id": "seconde",
+    "questions": ["comment ca marche"],
+    "answer": "Seconde reponse.",
+    "suggested": true,
+    "validated": true
+  }
+]

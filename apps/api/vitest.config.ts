@@ -8,5 +8,8 @@ export default defineConfig({
     globals: true,
     root: './',
     include: ['**/*.spec.ts'],
+    // Charge avant tout import applicatif : le tracing doit etre coupe avant
+    // qu'un module ne lise l'environnement.
+    setupFiles: ['./test/setup-unit.ts'],
   },
 });

@@ -16,6 +16,8 @@ export interface CreateLlmClientOptions {
   provider: LlmProvider;
   apiKey: string;
   tracing?: LlmTracing;
+  /** Injecte par les tests, pour qu'aucun appel ne sorte vraiment. */
+  fetch?: typeof globalThis.fetch;
 }
 
 export interface LlmTrace {
@@ -83,6 +85,7 @@ export function createLlmClient(options: CreateLlmClientOptions): LlmClient {
     baseURL: spec.baseUrl,
     organization: null,
     project: null,
+    ...(options.fetch ? { fetch: options.fetch } : {}),
   });
 
   // L'instance tracee n'existe que si l'api a decide d'activer le tracing.

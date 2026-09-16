@@ -1,0 +1,23 @@
+[
+  {
+    "id": "validee",
+    "questions": ["Comment ça marche ?", "Comment ca marche"],
+    "answer": "Une reponse validee.",
+    "suggested": true,
+    "validated": true
+  },
+  {
+    "id": "en-attente",
+    "questions": ["Une question pas encore relue ?"],
+    "answer": "Une reponse pas encore relue.",
+    "suggested": true,
+    "validated": false
+  },
+  {
+    "id": "validee-non-suggeree",
+    "questions": ["Une question validee mais discrete ?"],
+    "answer": "Une reponse validee.",
+    "suggested": false,
+    "validated": true
+  }
+]

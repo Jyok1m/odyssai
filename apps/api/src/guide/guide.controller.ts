@@ -203,9 +203,11 @@ export class GuideController {
     const ping = setInterval(() => res.write(': ping\n\n'), PING_INTERVAL_MS);
 
     // 11. Le depart du visiteur coupe la generation amont.
+    // Sur la reponse et non sur la requete : `req` se ferme des que le corps
+    // est entierement lu, donc bien avant le depart du visiteur.
     const controller = new AbortController();
     const onClose = () => controller.abort();
-    req.on('close', onClose);
+    res.on('close', onClose);
 
     let usage: GuideUsage | undefined;
     let traced = false;
@@ -256,7 +258,7 @@ export class GuideController {
     } finally {
       // 13. Regler, liberer, journaliser, terminer. Dans cet ordre.
       clearInterval(ping);
-      req.off('close', onClose);
+      res.off('close', onClose);
 
       await this.budget.settle(questionId, usage);
       await this.limits.releaseSlot(questionId);
@@ -280,6 +282,8 @@ export class GuideController {
   }
 
   private openStream(res: Response): void {
+    // Nest repondrait 201 sur un POST : un flux n'est pas une creation.
+    res.status(HttpStatus.OK);
     res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
