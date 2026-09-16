@@ -24,9 +24,9 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   await app.listen(config.port);
+  new Logger('Bootstrap KC').log(`Realm KC up : ${config.keycloak.issuer}`);
   new Logger('Bootstrap API').log(`API sur ${config.apiBaseUrl.origin}`);
   new Logger('Bootstrap Web').log(`Web sur ${config.webBaseUrl.origin}`);
-  new Logger('Bootstrap KC').log(`Realm KC up : ${config.keycloak.issuer}`);
 }
 
 await bootstrap();
