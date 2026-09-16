@@ -21,6 +21,7 @@ import {
 import type { CookieOptions, Request, Response } from 'express';
 import { z } from 'zod';
 import { AppConfig } from '../config/app-config.js';
+import { UsersService } from '../users/users.service.js';
 import { OidcService } from './oidc.service.js';
 import { SessionService, refreshLifetimeSeconds, safeCompare } from './session.service.js';
 
@@ -48,6 +49,7 @@ export class AuthController {
     private readonly config: AppConfig,
     private readonly oidc: OidcService,
     private readonly sessions: SessionService,
+    private readonly users: UsersService,
   ) {}
 
   @Get('signin')
@@ -107,7 +109,14 @@ export class AuthController {
     try {
       const tokens = await this.oidc.exchangeCode(query.code, transaction.codeVerifier);
       const identity = await this.oidc.verifyIdentity(tokens, transaction.nonce);
-      const sessionId = await this.sessions.create(tokens, identity);
+      // La ligne du joueur nait ici, au premier retour du realm, et son miroir
+      // d'identite est rafraichi a chaque passage.
+      const user = await this.users.signIn({
+        keycloakId: identity.sub,
+        email: identity.email,
+        emailVerified: identity.emailVerified,
+      });
+      const sessionId = await this.sessions.create(tokens, identity, user.id);
 
       res.cookie(this.config.cookies.session, sessionId, {
         ...this.cookieOptions(),
@@ -140,10 +149,23 @@ export class AuthController {
       return { authenticated: false };
     }
 
+    // Les sessions ouvertes avant le provisionnement ne portent pas d'id
+    // applicatif : on le resout une fois plutot que de renvoyer le sub, que le
+    // front ne doit jamais confondre avec l'identifiant de la ligne.
+    const userId =
+      session.userId ??
+      (
+        await this.users.resolve({
+          keycloakId: session.sub,
+          email: session.email,
+          emailVerified: session.emailVerified,
+        })
+      ).id;
+
     return {
       authenticated: true,
       user: {
-        id: session.sub,
+        id: userId,
         email: session.email,
         emailVerified: session.emailVerified,
         roles: session.roles,

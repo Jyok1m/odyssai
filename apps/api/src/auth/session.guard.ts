@@ -6,10 +6,13 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { AppConfig } from '../config/app-config.js';
+import type { User } from '../generated/prisma/client.js';
+import { UsersService } from '../users/users.service.js';
 import { SessionService, type StoredSession } from './session.service.js';
 
 export interface AuthenticatedRequest extends Request {
   odyssaiSession: StoredSession;
+  odyssaiUser: User;
 }
 
 /**
@@ -21,6 +24,7 @@ export class SessionGuard implements CanActivate {
   constructor(
     private readonly config: AppConfig,
     private readonly sessions: SessionService,
+    private readonly users: UsersService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -38,6 +42,13 @@ export class SessionGuard implements CanActivate {
     }
 
     request.odyssaiSession = session;
+    // Resolution par `sub` et non par `userId` : une lecture sur un index
+    // unique dans les deux cas, mais celle-ci recree la ligne si elle manque.
+    request.odyssaiUser = await this.users.resolve({
+      keycloakId: session.sub,
+      email: session.email,
+      emailVerified: session.emailVerified,
+    });
     return true;
   }
 }

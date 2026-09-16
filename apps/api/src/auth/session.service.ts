@@ -32,6 +32,9 @@ export type Transaction = z.infer<typeof Transaction>;
 
 const StoredSession = z.object({
   sub: z.string().min(1),
+  /** Ligne applicative du joueur. Absent des sessions ouvertes avant le
+   * provisionnement : le guard retombe alors sur une resolution par `sub`. */
+  userId: z.uuid().optional(),
   email: z.email(),
   emailVerified: z.boolean(),
   roles: z.array(z.string()),
@@ -101,9 +104,13 @@ export class SessionService {
     return parsed.success ? parsed.data : null;
   }
 
-  async create(tokens: TokenSet, identity: VerifiedIdentity): Promise<string> {
+  async create(
+    tokens: TokenSet,
+    identity: VerifiedIdentity,
+    userId?: string,
+  ): Promise<string> {
     const id = randomToken();
-    await this.write(id, toStoredSession(tokens, identity));
+    await this.write(id, toStoredSession(tokens, identity, userId));
     return id;
   }
 
@@ -216,9 +223,11 @@ export class SessionService {
 function toStoredSession(
   tokens: TokenSet,
   identity: VerifiedIdentity,
+  userId?: string,
 ): StoredSession {
   return {
     sub: identity.sub,
+    userId,
     email: identity.email,
     emailVerified: identity.emailVerified,
     roles: identity.roles,

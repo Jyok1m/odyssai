@@ -5,6 +5,9 @@ import { AuthController } from './auth.controller.js';
 import { OidcService, type TokenSet, type VerifiedIdentity } from './oidc.service.js';
 import { SessionService, type StoredSession } from './session.service.js';
 import { makeConfig, makeRequest, makeResponse } from './testing/doubles.js';
+import type { UsersService } from '../users/users.service.js';
+
+const USER_ID = '01999a4c-7f3a-7000-8000-00000000abcd';
 
 const TOKENS: TokenSet = {
   access_token: 'access',
@@ -39,6 +42,10 @@ describe('AuthController', () => {
     peek: ReturnType<typeof vi.fn>;
     destroy: ReturnType<typeof vi.fn>;
   };
+  let users: {
+    signIn: ReturnType<typeof vi.fn>;
+    resolve: ReturnType<typeof vi.fn>;
+  };
   let controller: AuthController;
 
   beforeEach(() => {
@@ -64,10 +71,16 @@ describe('AuthController', () => {
       destroy: vi.fn().mockResolvedValue(undefined),
     };
 
+    users = {
+      signIn: vi.fn().mockResolvedValue({ id: USER_ID }),
+      resolve: vi.fn().mockResolvedValue({ id: USER_ID }),
+    };
+
     controller = new AuthController(
       config,
       oidc as unknown as OidcService,
       sessions as unknown as SessionService,
+      users as unknown as UsersService,
     );
   });
 
@@ -227,6 +240,7 @@ describe('AuthController', () => {
     it('expose l identite sans aucun jeton', async () => {
       const stored: StoredSession = {
         ...IDENTITY,
+        userId: USER_ID,
         accessToken: 'access',
         refreshToken: 'refresh',
         idToken: 'id',
@@ -242,7 +256,7 @@ describe('AuthController', () => {
       expect(state).toEqual({
         authenticated: true,
         user: {
-          id: 'utilisateur-1',
+          id: USER_ID,
           email: 'joueur@odyssai.test',
           emailVerified: true,
           roles: ['player'],
