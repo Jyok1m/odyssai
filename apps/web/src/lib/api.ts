@@ -1,22 +1,18 @@
 import { SessionState, SignOutResult, type UiLocale } from "@odyssai/schemas";
 
 /**
- * Accès à l'API depuis le navigateur. Elle est sur une autre origine et détient
- * le cookie de session, d'où `credentials: "include"` sur chaque appel.
- *
- * Ce cookie est en SameSite=Lax et part quand même, parce que « same-site » se
- * juge sur le domaine enregistrable et non sur l'origine. Déplacer l'API sur un
- * autre domaine casserait la lecture de session sans rien changer au code.
+ * L'API est sur une autre origine et détient le cookie de session, d'où
+ * `credentials: "include"` partout. Le cookie est en SameSite=Lax et part quand
+ * même, « same-site » se jugeant sur le domaine enregistrable : déplacer l'API
+ * sur un autre domaine casserait la lecture de session sans toucher au code.
  */
 export const API_BASE_URL = (
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001"
 ).replace(/\/+$/, "");
 
 /**
- * URL de connexion, à suivre par une navigation de premier niveau et non par
- * fetch : l'API répond une redirection vers Keycloak, qui refuse d'être chargé
- * en requête de second plan. `redirectTo` est un chemin interne, revalidé côté
- * API : une URL absolue ferait de /auth/signin un redirecteur ouvert.
+ * À suivre par une navigation de premier niveau et non par fetch : l'API répond
+ * une redirection vers Keycloak, qui refuse d'être chargé en second plan.
  */
 export function signInUrl(redirectTo: string, locale: UiLocale): string {
   return authUrl("signin", redirectTo, locale);
@@ -27,10 +23,7 @@ export function signUpUrl(redirectTo: string, locale: UiLocale): string {
   return authUrl("signup", redirectTo, locale);
 }
 
-/**
- * `locale` repart en ui_locales : sans elle, Keycloak sert la langue du realm
- * et le joueur changerait de langue en passant par la connexion.
- */
+// `locale` repart en ui_locales : sans elle, Keycloak sert la langue du realm.
 function authUrl(
   kind: "signin" | "signup",
   redirectTo: string,
@@ -42,7 +35,7 @@ function authUrl(
   return url.toString();
 }
 
-/** État d'authentification courant. La réponse ne porte jamais de jeton. */
+/** La réponse ne porte jamais de jeton. */
 export async function fetchSession(signal?: AbortSignal): Promise<SessionState> {
   const response = await fetch(`${API_BASE_URL}/auth/session`, {
     credentials: "include",
@@ -60,9 +53,8 @@ export async function fetchSession(signal?: AbortSignal): Promise<SessionState> 
 }
 
 /**
- * Ferme la session serveur et rend l'URL de déconnexion Keycloak, que le front
- * doit suivre : sinon la session SSO reste ouverte et la connexion suivante
- * repasserait sans mot de passe.
+ * Rend l'URL de déconnexion Keycloak, que le front doit suivre : sinon la
+ * session SSO reste ouverte et la connexion suivante passerait sans mot de passe.
  */
 export async function requestSignOut(): Promise<string> {
   const response = await fetch(`${API_BASE_URL}/auth/signout`, {

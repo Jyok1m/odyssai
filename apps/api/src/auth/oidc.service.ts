@@ -30,7 +30,6 @@ const TokenResponse = z.object({
 
 export type TokenSet = z.infer<typeof TokenResponse>;
 
-/** Revendications retenues de l'id_token et de l'access token. */
 export interface VerifiedIdentity {
   sub: string;
   email: string;
@@ -51,11 +50,9 @@ const AccessTokenClaims = z.object({
 });
 
 /**
- * Dialogue OpenID Connect avec Keycloak.
- *
- * Le service ne connait que le flot Authorization Code + PKCE : aucun mot de
- * passe ne passe par ici, et le client est confidentiel donc chaque appel au
- * point de jeton est authentifie par le secret.
+ * Dialogue OpenID Connect avec Keycloak : uniquement Authorization Code + PKCE.
+ * Aucun mot de passe ne passe par ici, et le client etant confidentiel chaque
+ * appel au point de jeton est authentifie par le secret.
  */
 @Injectable()
 export class OidcService {
@@ -65,10 +62,7 @@ export class OidcService {
 
   constructor(private readonly config: AppConfig) {}
 
-  /**
-   * Decouverte paresseuse et memorisee : l'API demarre meme si Keycloak est
-   * momentanement injoignable, et une decouverte ratee n'est pas mise en cache.
-   */
+  /** Paresseuse et memorisee : l'API demarre meme si Keycloak est injoignable. */
   private metadata(): Promise<z.infer<typeof Discovery>> {
     this.discovery ??= this.fetchMetadata().catch((error: unknown) => {
       this.discovery = undefined;
@@ -111,16 +105,14 @@ export class OidcService {
     return metadata;
   }
 
-  /** URL de la page de connexion Keycloak. */
   async authorizationUrl(params: AuthorizationParams): Promise<string> {
     const { authorization_endpoint } = await this.metadata();
     return this.buildAuthorizeUrl(authorization_endpoint, params);
   }
 
   /**
-   * URL de la page d'inscription Keycloak. Le point n'est pas publie par la
-   * decouverte : c'est une extension Keycloak, obtenue en remplacant le
-   * segment final du point d'autorisation.
+   * Le point d'inscription n'est pas publie par la decouverte : c'est une
+   * extension Keycloak, obtenue en remplacant le segment final de /auth.
    */
   async registrationUrl(params: AuthorizationParams): Promise<string> {
     const { authorization_endpoint } = await this.metadata();
@@ -146,16 +138,14 @@ export class OidcService {
       code_challenge_method: 'S256',
     });
 
-    // ui_locales est le parametre OpenID Connect prevu pour ca. Keycloak le lit
-    // et sert la page dans cette langue, sans quoi il retombe sur la langue du
-    // realm et le joueur change de langue en passant par la connexion.
+    // Sans ui_locales, Keycloak sert la langue du realm et le joueur change de
+    // langue en passant par la connexion.
     if (params.uiLocale) query.set('ui_locales', params.uiLocale);
 
     url.search = query.toString();
     return url.toString();
   }
 
-  /** Echange le code d'autorisation contre les jetons. */
   async exchangeCode(code: string, codeVerifier: string): Promise<TokenSet> {
     return this.tokenRequest({
       grant_type: 'authorization_code',
@@ -165,7 +155,6 @@ export class OidcService {
     });
   }
 
-  /** Renouvelle les jetons. Le realm fait tourner le refresh a chaque appel. */
   async refresh(refreshToken: string): Promise<TokenSet> {
     return this.tokenRequest({
       grant_type: 'refresh_token',
@@ -197,7 +186,6 @@ export class OidcService {
     return TokenResponse.parse(await response.json());
   }
 
-  /** Revoque un refresh token. Sans effet si le jeton est deja invalide. */
   async revoke(refreshToken: string): Promise<void> {
     const metadata = await this.metadata();
     const endpoint =
@@ -239,11 +227,8 @@ export class OidcService {
   }
 
   /**
-   * Verifie les deux jetons et en extrait l'identite.
-   *
    * L'id_token porte l'identite et le nonce, l'access token porte les roles du
-   * realm. Les deux sont verifies par signature contre le JWKS du realm : rien
-   * n'est lu dans un jeton qui n'a pas ete valide.
+   * realm. Rien n'est lu dans un jeton qui n'a pas ete verifie contre le JWKS.
    */
   async verifyIdentity(
     tokens: TokenSet,
@@ -271,7 +256,6 @@ export class OidcService {
     };
   }
 
-  /** Verifie signature, emetteur et audience d'un jeton du realm. */
   async verify(token: string): Promise<JWTPayload> {
     await this.metadata();
     if (!this.jwks) {
@@ -283,7 +267,7 @@ export class OidcService {
     try {
       const { payload } = await jwtVerify(token, this.jwks, {
         issuer: this.config.keycloak.issuer,
-        // Repose sur le mapper d'audience pose par infra/keycloak/setup-realm.sh.
+        // Repose sur le mapper d'audience pose par le role ansible keycloak.
         audience: this.config.keycloak.clientId,
         clockTolerance: 5,
       });
@@ -296,8 +280,8 @@ export class OidcService {
 
   private basicAuth(): string {
     const { clientId, clientSecret } = this.config.keycloak;
-    // RFC 6749 section 2.3.1 : les deux valeurs sont encodees en
-    // application/x-www-form-urlencoded avant le codage base64.
+    // RFC 6749 2.3.1 : les deux valeurs sont encodees en form-urlencoded avant
+    // le codage base64.
     const credentials = `${encodeURIComponent(clientId)}:${encodeURIComponent(clientSecret)}`;
     return `Basic ${Buffer.from(credentials).toString('base64')}`;
   }
@@ -307,6 +291,5 @@ export interface AuthorizationParams {
   state: string;
   nonce: string;
   codeChallenge: string;
-  /** Langue des pages de Keycloak. Absente, le realm sert sa langue par defaut. */
   uiLocale?: UiLocale;
 }

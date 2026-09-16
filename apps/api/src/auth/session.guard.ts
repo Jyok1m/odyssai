@@ -8,15 +8,13 @@ import type { Request } from 'express';
 import { AppConfig } from '../config/app-config.js';
 import { SessionService, type StoredSession } from './session.service.js';
 
-/** Requete dont la session a ete resolue par SessionGuard. */
 export interface AuthenticatedRequest extends Request {
   odyssaiSession: StoredSession;
 }
 
 /**
- * Garde des routes de jeu : resout la session serveur a partir du cookie
- * opaque et la depose sur la requete. Les controleurs n'ont ainsi jamais a
- * manipuler de jeton.
+ * Resout la session serveur depuis le cookie opaque et la depose sur la
+ * requete : les controleurs de jeu n'ont jamais a manipuler de jeton.
  */
 @Injectable()
 export class SessionGuard implements CanActivate {

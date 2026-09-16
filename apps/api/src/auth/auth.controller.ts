@@ -24,10 +24,7 @@ import { AppConfig } from '../config/app-config.js';
 import { OidcService } from './oidc.service.js';
 import { SessionService, refreshLifetimeSeconds, safeCompare } from './session.service.js';
 
-/**
- * Parametres du retour de Keycloak. Le succes porte code et state, l'echec
- * porte error : les deux formes arrivent sur la meme route.
- */
+/** Retour de Keycloak : succes (code, state) et echec (error) sur la meme route. */
 const CallbackQuery = z.object({
   code: z.string().min(1).max(2048).optional(),
   state: z.string().min(1).max(512).optional(),
@@ -39,11 +36,9 @@ const CallbackQuery = z.object({
 type Redirection = { url: string; statusCode: number };
 
 /**
- * Authentification en mandataire : le navigateur ne parle jamais a Keycloak
- * autrement que par ses pages de connexion, et ne detient jamais de jeton.
- *
- * signin et signup sont deux redirections vers le meme flot Authorization
- * Code + PKCE, la seconde visant la page d'inscription du realm.
+ * Authentification en mandataire : le navigateur ne parle a Keycloak que par
+ * ses pages, et ne detient jamais de jeton. signin et signup sont le meme flot
+ * Authorization Code + PKCE, la seconde visant la page d'inscription du realm.
  */
 @Controller('auth')
 export class AuthController {
@@ -100,8 +95,7 @@ export class AuthController {
       return this.failure('invalid_request');
     }
 
-    // RFC 9207 : Keycloak renvoie l'emetteur, on verifie qu'on revient bien
-    // du realm attendu et pas d'un fournisseur substitue.
+    // RFC 9207 : on revient bien du realm attendu, pas d'un fournisseur substitue.
     if (query.iss && query.iss !== this.config.keycloak.issuer) {
       this.logger.warn(`emetteur inattendu au retour : ${query.iss}`);
       return this.failure('invalid_request');
@@ -130,7 +124,7 @@ export class AuthController {
     }
   }
 
-  /** Etat d'authentification pour le front. Ne renvoie jamais de jeton. */
+  /** Ne renvoie jamais de jeton. */
   @Get('session')
   async session(
     @Req() req: Request,
@@ -141,7 +135,7 @@ export class AuthController {
 
     const session = await this.sessions.read(sessionId);
     if (!session) {
-      // Session expiree ou revoquee : on retire le cookie devenu inutile.
+      // Session expiree ou revoquee : cookie devenu inutile.
       res.clearCookie(this.config.cookies.session, this.cookieOptions());
       return { authenticated: false };
     }
@@ -158,12 +152,9 @@ export class AuthController {
   }
 
   /**
-   * Ferme la session locale et rend l'URL de deconnexion Keycloak, que le
-   * front doit suivre pour fermer aussi la session SSO du navigateur.
-   *
-   * En POST : avec SameSite=Lax le cookie de session ne part pas sur une
-   * requete POST venue d'un autre site, ce qui suffit a bloquer la
-   * deconnexion forcee.
+   * Rend l'URL de fin de session du realm, que le front doit suivre pour
+   * fermer aussi la session SSO. En POST : avec SameSite=Lax le cookie ne part
+   * pas sur un POST venu d'un autre site, ce qui bloque la deconnexion forcee.
    */
   @Post('signout')
   @HttpCode(HttpStatus.OK)
@@ -179,8 +170,8 @@ export class AuthController {
       await this.sessions.destroy(sessionId);
 
       if (session) {
-        // Une revocation ratee ne doit pas empecher la deconnexion locale :
-        // la session Redis, elle, est deja supprimee.
+        // Une revocation ratee n'empeche pas la deconnexion : la cle Redis
+        // est deja supprimee.
         await this.oidc.revoke(session.refreshToken).catch((error: unknown) => {
           this.logger.warn(`revocation ignoree : ${String(error)}`);
         });
@@ -199,14 +190,12 @@ export class AuthController {
     res: Response,
   ): Promise<Redirection> {
     const redirectTo = this.parseRedirect(rawRedirect);
-    // Une langue inconnue est ignoree plutot que refusee : elle n'est qu'un
-    // confort d'affichage, et Keycloak sert alors la langue du realm.
+    // Langue inconnue ignoree : Keycloak sert alors celle du realm.
     const uiLocale = UiLocale.safeParse(rawLocale).data;
     const { state, nonce, codeChallenge } = await this.sessions.startTransaction(redirectTo);
 
-    // Lie la transaction a ce navigateur. SameSite=Lax et non Strict : en
-    // Strict le cookie ne reviendrait pas avec la redirection depuis Keycloak,
-    // qui est une navigation venue d'un autre site.
+    // Lie la transaction a ce navigateur. Lax et non Strict : en Strict le
+    // cookie ne reviendrait pas avec la redirection depuis Keycloak.
     res.cookie(this.config.cookies.transaction, state, {
       ...this.cookieOptions(),
       maxAge: 600_000,
@@ -242,8 +231,8 @@ export class AuthController {
       httpOnly: true,
       secure: this.config.cookies.secure,
       sameSite: 'lax',
-      // Pas d'attribut domain : le prefixe __Host- l'interdit, et le cookie
-      // reste ainsi limite a l'origine exacte de l'API.
+      // Pas d'attribut domain : __Host- l'interdit et borne le cookie a
+      // l'origine exacte de l'API.
       path: '/',
     };
   }

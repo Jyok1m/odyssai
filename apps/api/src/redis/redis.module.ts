@@ -13,8 +13,7 @@ export const REDIS = Symbol('REDIS');
       useFactory: (config: AppConfig) => {
         const logger = new Logger('Redis');
         const client = new Redis(config.redisUrl, {
-          // Une session illisible doit remonter vite en erreur plutot que de
-          // faire patienter la requete du joueur.
+          // Echouer vite plutot que faire patienter la requete du joueur.
           maxRetriesPerRequest: 3,
           connectTimeout: 5_000,
           enableReadyCheck: true,

@@ -17,9 +17,9 @@ function JsonLdScript({ data }: { data: object }) {
 }
 
 /**
- * Données structurées du site. Volontairement limitées à ce qui est
- * vérifiable : ni note agrégée, ni offre, ni date de sortie, qui seraient
- * inventées et exposeraient à une pénalité pour balisage trompeur.
+ * Limitées à ce qui est vérifiable : ni note agrégée, ni offre, ni date de
+ * sortie, qui seraient inventées et vaudraient une pénalité pour balisage
+ * trompeur.
  */
 export async function JsonLd({ locale }: { locale: Locale }) {
   const t = await getTranslations({ locale, namespace: "Metadata" });
@@ -64,11 +64,7 @@ export async function JsonLd({ locale }: { locale: Locale }) {
   );
 }
 
-/**
- * Fil d'Ariane d'une page de contenu. Le site est plat : l'accueil, puis la
- * page. Les URLs passent par `urlFor`, donc elles portent le chemin localisé
- * et non le chemin interne.
- */
+/** Le site est plat : l'accueil, puis la page. `urlFor` donne le chemin localisé. */
 export async function BreadcrumbJsonLd({
   locale,
   href,

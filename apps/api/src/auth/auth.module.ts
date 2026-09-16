@@ -7,8 +7,7 @@ import { SessionService } from './session.service.js';
 @Module({
   controllers: [AuthController],
   providers: [OidcService, SessionService, SessionGuard],
-  // SessionGuard et SessionService sont exportes pour les futurs modules de
-  // jeu, qui protegent leurs routes sans reimplementer la lecture de session.
+  // Exportes pour les futurs modules de jeu.
   exports: [SessionService, SessionGuard],
 })
 export class AuthModule {}

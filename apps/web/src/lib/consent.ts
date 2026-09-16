@@ -1,11 +1,8 @@
 /**
- * Choix de l'utilisateur sur les cookies non essentiels. Dans un cookie et non
- * dans localStorage : c'est une preuve de consentement, elle doit survivre à un
- * nettoyage de stockage et rester lisible côté serveur.
- *
- * Six mois, la durée au-delà de laquelle la CNIL veut que le choix soit
- * redemandé. `version` sert à le redemander plus tôt : un consentement donné
- * pour une mesure d'audience ne vaut pas pour une régie publicitaire.
+ * Choix sur les cookies non essentiels, dans un cookie et non dans
+ * localStorage : c'est une preuve de consentement, elle doit rester lisible
+ * côté serveur. Six mois, la durée au-delà de laquelle la CNIL veut que le
+ * choix soit redemandé ; `version` permet de le redemander plus tôt.
  */
 export const CONSENT_COOKIE = "odyssai_consent";
 export const CONSENT_VERSION = 1;
@@ -28,8 +25,7 @@ export function readConsent(): Consent | null {
 
   try {
     const parsed = JSON.parse(decodeURIComponent(raw)) as Partial<Consent>;
-    // Un choix d'une version antérieure est traité comme absent, ce qui fait
-    // réapparaître la bannière.
+    // Une version antérieure vaut absence : la bannière réapparaît.
     if (parsed.version !== CONSENT_VERSION) return null;
     return { version: CONSENT_VERSION, analytics: parsed.analytics === true };
   } catch {
@@ -41,8 +37,7 @@ export function writeConsent(analytics: boolean): Consent {
   const consent: Consent = { version: CONSENT_VERSION, analytics };
   const value = encodeURIComponent(JSON.stringify(consent));
 
-  // SameSite=Lax et pas Strict : le retour depuis Keycloak est une navigation
-  // venue d'un autre site, et le choix ne doit pas disparaître au passage.
+  // Lax et non Strict : le retour depuis Keycloak vient d'un autre site.
   document.cookie = [
     `${CONSENT_COOKIE}=${value}`,
     "path=/",
@@ -56,11 +51,9 @@ export function writeConsent(analytics: boolean): Consent {
   return consent;
 }
 
-/* ------------------------------------------------------------------ magasin
-
-   Le cookie est un système extérieur à React, exposé en magasin pour que le
-   bandeau s'y abonne par useSyncExternalStore. Le passer par un effet ferait
-   un rendu en cascade, et deux composants montés ensemble divergeraient. */
+/* Le cookie est un système extérieur à React, exposé en magasin pour que le
+   bandeau s'y abonne par useSyncExternalStore : un effet ferait un rendu en
+   cascade, et deux composants montés ensemble divergeraient. */
 
 const listeners = new Set<() => void>();
 let forcedOpen = false;
@@ -84,7 +77,6 @@ export function isBannerOpenOnServer(): boolean {
   return false;
 }
 
-/** Retirer son choix doit être aussi simple que le donner. */
 export function openBanner(): void {
   forcedOpen = true;
   emit();

@@ -10,9 +10,8 @@ import { Button } from "@/components/ui/button";
 import { requestSignOut } from "@/lib/api";
 
 /**
- * Bloc d'authentification du header, en trois états : inconnu pendant la
- * lecture de la session, invitation à se connecter, puis identité du joueur.
- * `stacked` est la forme du panneau mobile.
+ * Trois états : inconnu pendant la lecture de la session, invitation à se
+ * connecter, puis identité du joueur. `stacked` est la forme du panneau mobile.
  */
 export function AuthMenu({
   size = "sm",
@@ -28,10 +27,9 @@ export function AuthMenu({
   const [leaving, setLeaving] = useState(false);
 
   if (session.status === "loading") {
-    // Réserve la place du bouton, sans quoi le header se réagence sous le
-    // curseur dès que l'API répond. Une seule classe de largeur : deux
-    // utilitaires sur la même propriété seraient arbitrés par la feuille CSS
-    // et non par l'ordre dans className.
+    // Réserve la place du bouton, sans quoi le header se réagence dès que
+    // l'API répond. Une seule classe de largeur : deux utilitaires sur la même
+    // propriété seraient arbitrés par la feuille CSS, pas par className.
     return (
       <div
         aria-hidden="true"
@@ -45,8 +43,7 @@ export function AuthMenu({
   }
 
   if (session.status === "anonymous") {
-    // Sans garde par le drapeau d'alpha : ouvrir un compte est deja possible,
-    // le drapeau ne retient plus que l'entree dans le jeu.
+    // Pas de garde par le drapeau d'alpha : il ne retient que l'entrée en jeu.
     return (
       <Button
         as="a"
@@ -72,9 +69,8 @@ export function AuthMenu({
     }
   };
 
-  // Dans la barre, l'adresse complete pousse la navigation contre le selecteur
-  // de langue. La partie locale suffit a reconnaitre son compte ; l'adresse
-  // entiere reste dans title et dans le panneau mobile.
+  // L'adresse complète pousserait la navigation contre le sélecteur de langue.
+  // Elle reste dans title et dans le panneau mobile.
   const shortName = session.user.email.split("@")[0];
 
   return (
@@ -95,8 +91,7 @@ export function AuthMenu({
       </span>
       <Button
         type="button"
-        // Bordé sur toute la largeur : un bouton fantôme y passerait pour du
-        // texte centré.
+        // Bordé : un bouton fantôme passerait pour du texte centré.
         variant={stacked ? "secondary" : "ghost"}
         size={size}
         onClick={signOut}

@@ -68,7 +68,6 @@ export class SessionService {
     private readonly oidc: OidcService,
   ) {}
 
-  /** Prepare un aller vers Keycloak : state, nonce et couple PKCE. */
   async startTransaction(
     redirectTo: string,
   ): Promise<{ state: string; nonce: string; codeChallenge: string }> {
@@ -93,10 +92,7 @@ export class SessionService {
     };
   }
 
-  /**
-   * Lit et supprime la transaction dans la meme operation : un code
-   * d'autorisation rejoue ne trouve plus rien.
-   */
+  /** Lit et supprime d'un coup : un code d'autorisation rejoue ne trouve rien. */
   async consumeTransaction(state: string): Promise<Transaction | null> {
     const raw = await this.redis.getdel(`${TX_PREFIX}${state}`);
     if (!raw) return null;
@@ -105,7 +101,6 @@ export class SessionService {
     return parsed.success ? parsed.data : null;
   }
 
-  /** Ouvre une session a partir des jetons fraichement obtenus. */
   async create(tokens: TokenSet, identity: VerifiedIdentity): Promise<string> {
     const id = randomToken();
     await this.write(id, toStoredSession(tokens, identity));
@@ -139,12 +134,10 @@ export class SessionService {
   }
 
   /**
-   * Renouvelle les jetons sous verrou.
-   *
-   * Le realm est en rotation stricte : un refresh token ne sert qu'une fois.
-   * Deux requetes simultanees qui renouvelleraient chacune de leur cote
-   * feraient invalider la session entiere par Keycloak, qui lit le second
-   * appel comme un rejeu.
+   * Sous verrou : le realm est en rotation stricte, un refresh token ne sert
+   * qu'une fois. Deux requetes qui renouvelleraient chacune de leur cote
+   * feraient invalider la session entiere, Keycloak lisant le second appel
+   * comme un rejeu.
    */
   private async renew(
     id: string,
@@ -238,11 +231,9 @@ function toStoredSession(
 }
 
 /**
- * Duree de vie du refresh token. Keycloak omet refresh_expires_in quand le
- * jeton est hors ligne ou sans expiration propre : on retombe alors sur la
- * duree maximale de session SSO du realm, soit dix heures.
- *
- * Elle borne a la fois la cle Redis et l'age maximal du cookie de session.
+ * Keycloak omet refresh_expires_in quand le jeton est hors ligne ou sans
+ * expiration propre : on retombe alors sur la duree maximale de session SSO du
+ * realm, dix heures. Elle borne la cle Redis et l'age du cookie de session.
  */
 export function refreshLifetimeSeconds(tokens: TokenSet): number {
   return tokens.refresh_expires_in && tokens.refresh_expires_in > 0
@@ -254,7 +245,7 @@ function refreshDeadline(tokens: TokenSet): number {
   return Date.now() + refreshLifetimeSeconds(tokens) * 1000;
 }
 
-/** 256 bits d'entropie : suffisant pour un identifiant de session opaque. */
+/** 256 bits d'entropie pour un identifiant de session opaque. */
 function randomToken(): string {
   return randomBytes(32).toString('base64url');
 }

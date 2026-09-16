@@ -1,22 +1,14 @@
 import { z } from 'zod';
 
-/**
- * Chemin interne sur : une seule barre oblique en tete, puis aucun caractere
- * de controle, espace, DEL ni antislash.
- *
- * Validation lexicale plutot que via URL : ce paquet est isomorphe et son
- * tsconfig ne declare ni DOM ni types Node.
- */
+// Validation lexicale plutot que via URL : ce paquet est isomorphe et son
+// tsconfig ne declare ni DOM ni types Node.
 const SAFE_INTERNAL_PATH = new RegExp('^/(?![/\\\\])[^\\u0000-\\u0020\\u007f\\\\]*$');
 
 /**
- * Cible de redirection apres authentification.
- *
- * Seul un chemin interne est acceptable : une URL absolue transformerait
- * /auth/signin en redirecteur ouvert, qu'un hameconnage utiliserait pour
- * renvoyer le joueur vers un faux OdyssAI apres un passage credible par
- * Keycloak. Les caracteres de controle sont exclus parce que la valeur
- * repart dans un en-tete Location.
+ * Cible de redirection apres authentification. Seul un chemin interne est
+ * acceptable : une URL absolue ferait de /auth/signin un redirecteur ouvert,
+ * qu'un hameconnage utiliserait apres un passage credible par Keycloak. Les
+ * caracteres de controle sont exclus parce que la valeur repart en Location.
  */
 export const InternalPath = z
   .string()
@@ -25,10 +17,7 @@ export const InternalPath = z
 
 export type InternalPath = z.infer<typeof InternalPath>;
 
-/**
- * Utilisateur courant tel que l'API l'expose au navigateur.
- * Aucun jeton n'y figure : ils ne quittent jamais le serveur.
- */
+/** Utilisateur courant expose au navigateur. Aucun jeton n'y figure. */
 export const SessionUser = z.object({
   id: z.string().min(1),
   email: z.email(),
@@ -46,10 +35,7 @@ export const SessionState = z.discriminatedUnion('authenticated', [
 
 export type SessionState = z.infer<typeof SessionState>;
 
-/**
- * Codes rendus au web en parametre d'URL quand le retour de Keycloak echoue.
- * Volontairement grossiers : le detail reste dans les journaux du serveur.
- */
+/** Volontairement grossiers : le detail reste dans les journaux du serveur. */
 export const AuthErrorCode = z.enum([
   'access_denied',
   'invalid_request',
@@ -59,10 +45,7 @@ export const AuthErrorCode = z.enum([
 
 export type AuthErrorCode = z.infer<typeof AuthErrorCode>;
 
-/**
- * Reponse de POST /auth/signout. L'URL pointe la fin de session du realm,
- * que le navigateur doit suivre pour fermer aussi sa session SSO.
- */
+/** Reponse de POST /auth/signout. L'URL pointe la fin de session du realm. */
 export const SignOutResult = z.object({
   logoutUrl: z.url(),
 });
@@ -70,9 +53,8 @@ export const SignOutResult = z.object({
 export type SignOutResult = z.infer<typeof SignOutResult>;
 
 /**
- * Langue demandee aux pages de Keycloak, passee en ui_locales sur le point
- * d'autorisation. Bornee a ce que le realm declare : une valeur libre
- * partirait telle quelle dans une URL construite par l'API.
+ * Langue des pages de Keycloak, passee en ui_locales. Bornee a ce que le realm
+ * declare : une valeur libre partirait telle quelle dans une URL de l'API.
  */
 export const UiLocale = z.enum(['fr', 'en']);
 
