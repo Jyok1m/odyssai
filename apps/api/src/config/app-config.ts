@@ -13,14 +13,13 @@ const EnvSchema = z.object({
   KEYCLOAK_CLIENT_SECRET: z.string().min(1),
 
   REDIS_URL: z.url(),
+  POSTGRES_URL: z.url(),
 });
 
 type Env = z.infer<typeof EnvSchema>;
 
-/**
- * Configuration validee au demarrage : une variable manquante fait echouer le
- * bootstrap plutot que la premiere connexion d'un joueur.
- */
+/** Validee au demarrage : une variable manquante casse le bootstrap, pas la
+ * premiere connexion d'un joueur. */
 @Injectable()
 export class AppConfig {
   private readonly env: Env;
@@ -57,10 +56,13 @@ export class AppConfig {
     return this.env.REDIS_URL;
   }
 
+  get postgresUrl(): string {
+    return this.env.POSTGRES_URL;
+  }
+
   get keycloak() {
     return {
-      // Sans barre finale : le point de decouverte se construit par
-      // concatenation et Keycloak refuse une double barre.
+      // Sans barre finale : la decouverte se construit par concatenation.
       issuer: this.env.KEYCLOAK_ISSUER.replace(/\/+$/, ''),
       clientId: this.env.KEYCLOAK_CLIENT_ID,
       clientSecret: this.env.KEYCLOAK_CLIENT_SECRET,
@@ -69,9 +71,8 @@ export class AppConfig {
   }
 
   /**
-   * Les cookies ne sont Secure que si l'API est servie en https. En http local
-   * le prefixe __Host- est retire : il impose Secure, et Safari refuse un
-   * cookie Secure sur http://localhost, ce qui casserait le flot en dev.
+   * En http local le prefixe __Host- est retire : il impose Secure, et Safari
+   * refuse un cookie Secure sur http://localhost.
    */
   get cookieSecure(): boolean {
     return this.apiBaseUrl.protocol === 'https:';

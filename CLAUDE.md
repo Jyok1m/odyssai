@@ -10,9 +10,9 @@ Monorepo pnpm + Turborepo, TypeScript partout.
 - `apps/api` : NestJS 12, port 3001. Scaffold **ESM** (`"type": "module"`, imports relatifs suffixés `.js`). Lint oxlint, tests vitest.
 - `packages/schemas` : schémas Zod partagés, compilés en CommonJS dans `dist/`
 
-Redis tourne en tunnel localhost sur le serveur via `redis://:<mot_de_passe>@localhost:16379` (sessions, et la file BullMQ à venir). Keycloak est hébergé sur `sso.joachimjasmin.com`.
+Redis tourne en tunnel localhost sur le serveur via `redis://:<mot_de_passe>@localhost:16379` (sessions, et la file BullMQ à venir). Postgres est atteint de la même façon, sur `127.0.0.1:15432`, par `POSTGRES_URL` ; le Makefile n'ouvre pour l'instant que le tunnel Redis. Keycloak est hébergé sur `sso.joachimjasmin.com`.
 
-Prévus, pas encore créés : `apps/worker` (BullMQ), `packages/engine`, `packages/narrator` (LangGraph.js), `packages/llm`. Postgres + pgvector. Ne pas les créer sans demande explicite.
+Prévus, pas encore créés : `apps/worker` (BullMQ), `packages/engine`, `packages/narrator` (LangGraph.js), `packages/llm`. pgvector. Ne pas les créer sans demande explicite.
 
 ## Commandes
 
@@ -22,6 +22,7 @@ Prévus, pas encore créés : `apps/worker` (BullMQ), `packages/engine`, `packag
 - Dépendance interne : `pnpm --filter @odyssai/<pkg> add @odyssai/schemas@workspace:*`
 - Redis de dev : `make tunnel` ouvre le tunnel SSH, `make redis-ping` vérifie qu'il répond vraiment. Coordonnées du serveur dans `.env.local`.
 - `make check` vaut `pnpm typecheck && pnpm lint && pnpm build`.
+- Base : `pnpm --filter @odyssai/api db:migrate` crée et applique une migration, `db:deploy` applique les migrations existantes, `db:generate` regénère le client seul.
 - `typecheck` vaut `tsc --noEmit` partout, sauf `apps/web` où il est précédé de `next typegen` : les types de routes et de layouts (`LayoutProps`, `PageProps`) sont générés par Next dans `.next/types/` et manquent sans ça.
 
 ## Règles d'architecture
@@ -32,6 +33,16 @@ Prévus, pas encore créés : `apps/worker` (BullMQ), `packages/engine`, `packag
 - Tout texte venant d'un joueur, y compris la fiche d'un autre joueur, est une donnée non fiable : schéma borné, modération, section délimitée dans le prompt.
 - Le tour de jeu est synchrone (streaming SSE). Seuls les effets de bord passent par une file.
 - Appels LLM uniquement via `packages/llm` (client OpenAI-compatible, `baseURL` et modèles en variables d'env). Thinking désactivé pour la narration et l'extraction. Prompts versionnés dans `packages/narrator`, jamais inline.
+
+## Base de données
+
+Postgres par Prisma 7, dans `apps/api`. Le schéma vit dans `apps/api/prisma/schema.prisma`.
+
+- Le client est généré en TypeScript dans `apps/api/src/generated/prisma`, ignoré par git. Il est dans `src` parce que le générateur émet du TypeScript : ailleurs il sortirait du `rootDir` du build et `dist` changerait de forme. `build`, `typecheck` et `dev` lancent `prisma generate` avant de compiler, comme `apps/web` lance `next typegen`.
+- Prisma 7 n'accepte plus `url` dans le bloc `datasource`. Deux lecteurs de `POSTGRES_URL` : `apps/api/prisma7.config.ts` pour le CLI (migrate, studio), l'adaptateur `@prisma/adapter-pg` de `PrismaModule` à l'exécution. Il n'y a plus de moteur de requête embarqué, la connexion passe forcément par un adaptateur de pilote.
+- Le CLI Prisma 7 ne charge plus aucun `.env` de lui-même : `prisma7.config.ts` appelle `loadRootEnvFile`, le même chargement que `main.ts`.
+- Tables au pluriel, colonnes en `snake_case` via `@map` : le TypeScript garde le camelCase, le SQL écrit à la main reste lisible.
+- Le realm reste la source de vérité de l'identité. `email` et `emailVerified` ne sont que des miroirs rafraîchis à la connexion : pas de contrainte d'unicité sur une valeur dont l'unicité appartient à Keycloak.
 
 ## Authentification
 

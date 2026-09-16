@@ -1,7 +1,6 @@
 /**
- * Environnement des tests de bout en bout. AppModule valide sa configuration
- * a l'instanciation : sans ces variables, le module ne se construit pas.
- * Redis, lui, est remplace par un double dans chaque suite.
+ * AppModule valide sa configuration a l'instanciation : sans ces variables, le
+ * module ne se construit pas. Redis est double dans chaque suite.
  */
 Object.assign(process.env, {
   NODE_ENV: 'test',
@@ -12,4 +11,5 @@ Object.assign(process.env, {
   KEYCLOAK_CLIENT_ID: 'odyssai-api',
   KEYCLOAK_CLIENT_SECRET: 'secret-de-test',
   REDIS_URL: 'redis://127.0.0.1:6379/0',
+  POSTGRES_URL: 'postgresql://odyssai:secret@127.0.0.1:5432/odyssai_test',
 });

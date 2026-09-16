@@ -38,8 +38,9 @@ the realm.
 ## Where the project stands
 
 The marketing site (French and English) and Keycloak authentication work end to
-end. The game engine, the narrator and the application database are not written
-yet.
+end. The application database has just started: Prisma is wired up and the
+`users` table is its first and only schema. The game engine and the narrator
+are not written yet.
 
 ## Why this repository is public
 
@@ -67,7 +68,7 @@ covers it. Next only ever reads its own application directory. The third one is
 for the Makefile alone and never reaches an application.
 
 ```bash
-cp .env.example .env                    # origins, Keycloak, Redis
+cp .env.example .env                    # origins, Keycloak, Redis, Postgres
 cp apps/web/.env.example apps/web/.env  # SITE_URL and the NEXT_PUBLIC_ flags
 cp .env.local.example .env.local        # the dev server's SSH coordinates
 ```
@@ -83,6 +84,18 @@ make redis-ping  # from another shell
 A port accepting connections proves nothing: the SSH client keeps it bound even
 after the session behind it has died. Only a real `PING` settles it, which is
 what `make redis-ping` sends, over the very `REDIS_URL` the API reads.
+
+**Postgres** holds the application database. `POSTGRES_URL` expects it on
+`127.0.0.1:15432`, the same loopback arrangement as Redis, but `make tunnel`
+only forwards Redis for now. Prisma 7 no longer takes that URL from the
+schema: the CLI reads it from `apps/api/prisma7.config.ts`, the running API
+from the `pg` driver adapter. The client is generated TypeScript, so `build`, `typecheck` and
+`dev` all run `prisma generate` before compiling.
+
+```bash
+pnpm --filter @odyssai/api db:migrate   # create and apply a migration
+pnpm --filter @odyssai/api db:deploy    # apply the existing ones
+```
 
 **Keycloak is not configured from here.** The realms, their clients and the
 login theme live in the `keycloak` role of a separate infrastructure

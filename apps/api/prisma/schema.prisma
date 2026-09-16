@@ -1,0 +1,66 @@
+// Schema de la base applicative.
+//
+// L'identite (email, mot de passe, MFA) appartient a Keycloak. Cette base ne
+// porte que le profil de jeu et un miroir des revendications utiles hors
+// session : le realm reste la source de verite.
+//
+// L'URL de connexion n'est plus declaree ici depuis Prisma 7 : prisma7.config.ts
+// pour le CLI, src/prisma/prisma.module.ts a l'execution, tous deux sur
+// POSTGRES_URL. Le client est genere dans src/ parce que le generateur emet du
+// TypeScript : ailleurs, il sortirait du rootDir du build.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Doit suivre UiLocale de @odyssai/schemas, qui borne la meme liste cote HTTP.
+enum Locale {
+  fr
+  en
+
+  @@map("locale")
+}
+
+/// Un joueur. La ligne nait au premier retour de Keycloak, pas a l'inscription :
+/// le realm sert ses propres pages et l'API ne voit le joueur qu'au callback.
+model User {
+  /// UUIDv7, donc ordonne dans le temps : les insertions restent groupees en
+  /// fin d'index.
+  id String @id @default(uuid(7)) @db.Uuid
+
+  /// Revendication `sub` de l'id_token, seul lien entre une session et cette
+  /// ligne. Pas de @db.Uuid : Keycloak prefixe les utilisateurs federes
+  /// (`f:<storage>:<id>`).
+  keycloakId String @unique @map("keycloak_id")
+
+  /// Miroir du realm, rafraichi a chaque connexion. Indexe mais pas unique :
+  /// l'unicite appartient a Keycloak, et une copie obsolete ne doit pas
+  /// refuser la connexion de celui qui a repris l'adresse.
+  email String
+
+  emailVerified Boolean @default(false) @map("email_verified")
+
+  /// Choisi apres la premiere connexion, il n'existe pas dans le realm. NULL
+  /// n'entre pas dans la contrainte d'unicite en Postgres.
+  username String? @unique @db.VarChar(32)
+
+  /// Decide ici et non par un role du realm : le realm authentifie,
+  /// l'application decide qui est maitre du jeu.
+  isAdmin Boolean @default(false) @map("is_admin")
+
+  /// Renvoyee a Keycloak au prochain signin.
+  locale Locale @default(fr)
+
+  lastLoginAt DateTime? @map("last_login_at") @db.Timestamptz(3)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([email])
+  @@map("users")
+}

@@ -10,6 +10,7 @@ const BASE_ENV: Record<string, string> = {
   KEYCLOAK_CLIENT_ID: 'odyssai-api',
   KEYCLOAK_CLIENT_SECRET: 'secret-de-test',
   REDIS_URL: 'redis://127.0.0.1:6379/0',
+  POSTGRES_URL: 'postgresql://odyssai:secret@127.0.0.1:5432/odyssai_test',
 };
 
 /** AppConfig reel, alimente par un environnement de test. */
@@ -58,18 +59,14 @@ interface Entry {
   expiresAt: number;
 }
 
-/**
- * Redis reduit aux commandes employees par SessionService : get, set avec
- * EX/PX/NX, getdel, del et le script de liberation de verrou.
- */
+/** Redis reduit aux commandes employees par SessionService. */
 export class FakeRedis {
   private readonly store = new Map<string, Entry>();
 
   /**
-   * Lecture synchrone interne. Les commandes publiques s'appuient dessus pour
-   * rester atomiques : un await entre le test de presence et l'ecriture
-   * laisserait deux appels concurrents obtenir le meme verrou NX, ce qu'un
-   * vrai Redis ne fait jamais.
+   * Synchrone pour que les commandes publiques restent atomiques : un await
+   * entre le test de presence et l'ecriture laisserait deux appels concurrents
+   * obtenir le meme verrou NX.
    */
   private live(key: string): string | null {
     const entry = this.store.get(key);
@@ -115,7 +112,7 @@ export class FakeRedis {
     return this.store.delete(key) ? 1 : 0;
   }
 
-  /** Rejoue le script de liberation : supprime seulement si la valeur colle. */
+  /** Rejoue le script de liberation : supprime si la valeur colle. */
   async eval(
     _script: string,
     _numKeys: number,
@@ -127,7 +124,6 @@ export class FakeRedis {
     return 1;
   }
 
-  /** Appele par le crochet d'arret de RedisModule. */
   async quit(): Promise<'OK'> {
     this.store.clear();
     return 'OK';
