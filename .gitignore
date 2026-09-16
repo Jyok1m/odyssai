@@ -7,6 +7,13 @@ out/
 build/
 *.tsbuildinfo
 
+# Competences d'agents posees par le CLI Prisma, regenerees et symboliquement
+# dupliquees en trois exemplaires.
+.agents/
+**/.claude/skills/
+**/.windsurf/skills/
+skills-lock.json
+
 .env
 .env.*
 !.env.example
