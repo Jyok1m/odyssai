@@ -32,6 +32,12 @@ export interface StreamChatRequest {
   extraBody?: Record<string, unknown>;
   signal?: AbortSignal;
   trace?: LlmTrace;
+  /**
+   * Appele avec la decision d'echantillonnage, avant l'appel. Le journal doit
+   * savoir si la requete est tracee pour qu'on retrouve la trace par sa
+   * metadonnee, et la decision se prend ici.
+   */
+  onTraced?: (traced: boolean) => void;
 }
 
 export type LlmStreamEvent =
@@ -115,6 +121,7 @@ export function createLlmClient(options: CreateLlmClientOptions): LlmClient {
         traced !== undefined &&
         tracing !== undefined &&
         Math.random() < tracing.sampleRate;
+      request.onTraced?.(useTraced);
 
       let stream: AsyncIterable<OpenAI.ChatCompletionChunk>;
       try {

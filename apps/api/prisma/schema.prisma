@@ -64,3 +64,53 @@ model User {
   @@index([email])
   @@map("users")
 }
+
+/// D'ou vient la reponse servie. `error` n'existe pas dans le contrat partage
+/// avec le web : une panne n'est pas une source, c'est un evenement d'erreur.
+enum GuideSource {
+  faq
+  llm
+  off_topic
+  degraded
+  error
+
+  @@map("guide_source")
+}
+
+/// Une question posee au guide. Ni adresse IP ni identifiant de joueur : le
+/// journal sert a mesurer l'usage et le cout, pas a suivre un visiteur.
+model GuideQuestion {
+  id     String @id @default(uuid(7)) @db.Uuid
+  locale Locale
+
+  question String
+  /// Empreinte de la question normalisee, pour reperer les formulations qui
+  /// reviennent et meritent une entree de FAQ.
+  normalizedHash String @map("normalized_hash")
+
+  source     GuideSource
+  faqEntryId String?     @map("faq_entry_id")
+
+  provider        String?
+  model           String?
+  inputTokens     Int?     @map("input_tokens")
+  outputTokens    Int?     @map("output_tokens")
+  reasoningTokens Int?     @map("reasoning_tokens")
+  costUsd         Decimal? @map("cost_usd") @db.Decimal(10, 6)
+
+  /// Vrai si la requete a ete echantillonnee : la trace se retrouve dans
+  /// LangSmith par la metadonnee guide_question_id.
+  traced Boolean @default(false)
+
+  /// Uniquement pour les reponses generees, jamais pour les textes fixes.
+  answer String?
+
+  promptVersion String @map("prompt_version")
+  corpusVersion String @map("corpus_version")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([createdAt])
+  @@index([normalizedHash])
+  @@map("guide_questions")
+}

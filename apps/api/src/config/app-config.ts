@@ -84,6 +84,7 @@ export class AppConfig {
       secure: this.cookieSecure,
       session: `${prefix}odyssai_session`,
       transaction: `${prefix}odyssai_tx`,
+      guidePass: `${prefix}odyssai_guide_pass`,
     };
   }
 }

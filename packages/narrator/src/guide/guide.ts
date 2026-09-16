@@ -22,6 +22,7 @@ export interface GuideRequest {
   input: GuideInput;
   signal?: AbortSignal;
   trace?: LlmTrace;
+  onTraced?: (traced: boolean) => void;
 }
 
 export type GuideResult = OffTopicSplit & {
@@ -49,7 +50,7 @@ export function buildGuideMessages(input: GuideInput): PromptMessage[] {
  * l'environnement et ne construit jamais de client lui-meme.
  */
 export async function guide(request: GuideRequest): Promise<GuideResult> {
-  const { llm, config, input, signal, trace } = request;
+  const { llm, config, input, signal, trace, onTraced } = request;
 
   // Un controleur interne, pour que la detection du hors-sujet puisse couper
   // l'appel amont sans priver l'appelant de son propre abandon.
@@ -67,6 +68,7 @@ export async function guide(request: GuideRequest): Promise<GuideResult> {
     extraBody: config.extraBody,
     signal: controller.signal,
     trace,
+    onTraced,
   });
 
   const split = await splitOffTopic(stream, controller);

@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module.js';
 import { AppConfig } from './config/app-config.js';
+import { GuideConfig } from './config/guide-config.js';
 import { loadRootEnvFile } from './config/root-env.js';
 
 async function bootstrap() {
@@ -10,8 +11,13 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
   const config = app.get(AppConfig);
+  const guideConfig = app.get(GuideConfig);
 
   app.use(cookieParser());
+
+  // Mal regle, req.ip vaut l'adresse du proxy et la limite par IP du guide
+  // devient une limite globale.
+  app.getHttpAdapter().getInstance().set('trust proxy', guideConfig.trustProxy);
 
   // Le front est sur une autre origine et envoie le cookie de session :
   // credentials impose une origine nommee, jamais un joker.
