@@ -48,6 +48,15 @@ interface CharacterRow {
   updatedAt: Date;
 }
 
+interface MessageRow {
+  id: string;
+  universeId: string;
+  channel: string;
+  role: 'user' | 'assistant';
+  content: string;
+  createdAt: Date;
+}
+
 interface JobRow {
   id: string;
   universeId: string;
@@ -65,6 +74,7 @@ export interface OnboardingStore {
   users: UserRow[];
   universes: UniverseRow[];
   characters: CharacterRow[];
+  messages: MessageRow[];
   jobs: JobRow[];
 }
 
@@ -226,6 +236,51 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         store.characters.push(row);
         return { ...row };
       },
+    },
+
+    conversationMessage: {
+      findMany: async ({ where, orderBy, select }: any) => {
+        const rows = store.messages
+          .filter(
+            (row) =>
+              row.universeId === where.universeId &&
+              row.channel === where.channel &&
+              (where.role === undefined || row.role === where.role),
+          )
+          .sort((a, b) =>
+            orderBy?.createdAt === 'desc'
+              ? b.createdAt.getTime() - a.createdAt.getTime()
+              : a.createdAt.getTime() - b.createdAt.getTime(),
+          );
+
+        if (!select) return rows.map((row) => ({ ...row }));
+        return rows.map((row) =>
+          Object.fromEntries(
+            Object.keys(select).map((key) => [key, (row as any)[key]]),
+          ),
+        );
+      },
+      create: async ({ data }: any) => {
+        const row: MessageRow = {
+          id: randomUUID(),
+          universeId: data.universeId,
+          channel: data.channel,
+          role: data.role,
+          content: data.content,
+          // Les messages d'un meme test naissent dans la meme milliseconde :
+          // sans ce decalage, leur ordre de lecture serait indefini.
+          createdAt: new Date(Date.now() + store.messages.length),
+        };
+        store.messages.push(row);
+        return { ...row };
+      },
+      count: async ({ where }: any) =>
+        store.messages.filter(
+          (row) =>
+            row.universeId === where.universeId &&
+            row.channel === where.channel &&
+            (where.role === undefined || row.role === where.role),
+        ).length,
     },
 
     generationJob: {

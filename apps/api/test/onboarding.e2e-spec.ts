@@ -39,6 +39,7 @@ async function boot(username: string | null = 'Joueuse'): Promise<Harness> {
     users: [makeUser({ username, usernameFolded: username?.toLowerCase() ?? null })],
     universes: [],
     characters: [],
+    messages: [],
     jobs: [],
   };
 

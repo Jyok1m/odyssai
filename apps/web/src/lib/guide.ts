@@ -8,6 +8,7 @@ import {
 } from "@odyssai/schemas";
 
 import { API_BASE_URL } from "./api";
+import { readEventStream } from "./sse";
 
 /** Clé de test Cloudflare, qui accepte tout : elle ne vaut que pour le dev. */
 const TEST_SITE_KEY = "1x00000000000000000000AA";
@@ -53,11 +54,7 @@ export async function requestGuidePass(turnstileToken: string): Promise<void> {
   if (!response.ok) throw await toRequestError(response);
 }
 
-/**
- * Ouvre le flux et rend chaque événement validé. Le découpage se fait sur
- * `\n\n` en gardant le reste : un événement arrive souvent coupé entre deux
- * morceaux du corps.
- */
+/** Ouvre le flux et rend chaque événement validé. */
 export async function askGuide(
   body: { question: string; locale: UiLocale },
   onEvent: (event: GuideStreamEvent) => void,
@@ -74,30 +71,7 @@ export async function askGuide(
   if (!response.ok) throw await toRequestError(response);
   if (!response.body) throw new GuideRequestError("unknown");
 
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    buffer += decoder.decode(value, { stream: true });
-    const parts = buffer.split("\n\n");
-    buffer = parts.pop() ?? "";
-
-    for (const part of parts) {
-      for (const line of part.split("\n")) {
-        // Les lignes de commentaire, dont les `: ping`, ne portent rien.
-        if (line.startsWith(":") || !line.startsWith("data:")) continue;
-
-        const parsed = GuideStreamEventSchema.safeParse(
-          safeJsonParse(line.slice("data:".length).trim()),
-        );
-        if (parsed.success) onEvent(parsed.data);
-      }
-    }
-  }
+  await readEventStream(response, GuideStreamEventSchema, onEvent);
 }
 
 async function toRequestError(response: Response): Promise<GuideRequestError> {
@@ -114,13 +88,6 @@ async function toRequestError(response: Response): Promise<GuideRequestError> {
   return new GuideRequestError(code, retryAfterSeconds);
 }
 
-function safeJsonParse(raw: string): unknown {
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
 
 interface TurnstileApi {
   render: (

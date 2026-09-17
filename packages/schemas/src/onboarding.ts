@@ -216,3 +216,88 @@ export const OnboardingErrorBodySchema = z.object({
 });
 
 export type OnboardingErrorBody = z.infer<typeof OnboardingErrorBodySchema>;
+
+export const CHARACTER_MESSAGE_MAX_CHARS = 600;
+
+/**
+ * Bornes de la conversation de creation. Le minimum decide quand la fiche peut
+ * etre proposee, le maximum ferme les echanges : un joueur authentifie n'a pas
+ * de limite par adresse, c'est donc le nombre de tours qui borne le cout.
+ */
+export const CHARACTER_TURNS_MIN = 3;
+export const CHARACTER_TURNS_MAX = 12;
+
+export const ConversationMessageSchema = z.object({
+  id: z.uuid(),
+  role: z.enum(['user', 'assistant']),
+  content: z.string(),
+  createdAt: z.iso.datetime(),
+});
+
+export type ConversationMessage = z.infer<typeof ConversationMessageSchema>;
+
+/** Reponse de GET /onboarding/character. Tout ce qu'il faut pour reprendre. */
+export const CharacterConversationSchema = z.object({
+  messages: z.array(ConversationMessageSchema),
+  /** Tours de joueur restants avant la fermeture de la conversation. */
+  turnsLeft: z.number().int().nonnegative(),
+  /** Vrai des que la conversation porte assez pour proposer une fiche. */
+  canExtract: z.boolean(),
+});
+
+export type CharacterConversation = z.infer<typeof CharacterConversationSchema>;
+
+export const CharacterMessageRequestSchema = z.object({
+  content: z.string().trim().min(1).max(CHARACTER_MESSAGE_MAX_CHARS),
+});
+
+export type CharacterMessageRequest = z.infer<
+  typeof CharacterMessageRequestSchema
+>;
+
+/** Evenements du flux SSE, un objet JSON par ligne `data:`. */
+export const CharacterStreamEventSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('delta'), text: z.string() }),
+  z.object({
+    type: z.literal('done'),
+    turnsLeft: z.number().int().nonnegative(),
+    canExtract: z.boolean(),
+  }),
+  z.object({
+    type: z.literal('error'),
+    code: z.enum(['upstream_error', 'internal_error']),
+  }),
+]);
+
+export type CharacterStreamEvent = z.infer<typeof CharacterStreamEventSchema>;
+
+/**
+ * Proposition de fiche. Elle n'est pas enregistree : le modele propose, le
+ * schema tranche, le joueur corrige, et c'est PUT /onboarding qui ecrit.
+ */
+export const CharacterExtractResponseSchema = z.object({
+  character: CharacterDraftSchema,
+  /** Ce que le modele n'a pas su tirer de la conversation. */
+  missing: z.array(z.string()),
+});
+
+export type CharacterExtractResponse = z.infer<
+  typeof CharacterExtractResponseSchema
+>;
+
+export const CharacterErrorBodySchema = z.object({
+  code: z.enum([
+    'validation_error',
+    /** Le joueur n'est pas a l'etape du personnage. */
+    'wrong_step',
+    /** La generation est lancee : la conversation est close. */
+    'locked',
+    /** Le nombre de tours est epuise. La fiche reste extractible. */
+    'conversation_over',
+    /** Trop peu d'echanges pour proposer quoi que ce soit. */
+    'too_short',
+    'upstream_error',
+  ]),
+});
+
+export type CharacterErrorBody = z.infer<typeof CharacterErrorBodySchema>;

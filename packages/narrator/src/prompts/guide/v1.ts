@@ -2,7 +2,7 @@ import type { UiLocale } from '@odyssai/schemas';
 import { OFF_TOPIC_SENTINEL } from '../../guide/off-topic.js';
 
 export interface PromptMessage {
-  role: 'system' | 'user';
+  role: 'system' | 'user' | 'assistant';
   content: string;
 }
 

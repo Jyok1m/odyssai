@@ -144,7 +144,45 @@
       "title": "More is coming",
       "lead": "Character creation and world generation are being written. What you typed is kept."
     },
-    "enter": "Enter the game"
+    "enter": "Enter the game",
+    "character": {
+      "title": "Who will you play?",
+      "lead": "Answer plainly. When there is enough, you will draw up the sheet and you can correct it.",
+      "you": "You",
+      "guide": "Guide",
+      "thinking": "Thinking.",
+      "inputLabel": "Your answer",
+      "placeholder": "Write your answer.",
+      "send": "Send",
+      "draft": "Draw up the sheet",
+      "drafting": "Reading the conversation.",
+      "keepTalking": "A few more exchanges before the sheet can be drawn up.",
+      "turnsLeft": "{count} messages left.",
+      "turnsOver": "The conversation is closed. You can draw up the sheet.",
+      "unavailable": "Character creation is not available right now."
+    },
+    "sheet": {
+      "title": "Their sheet",
+      "lead": "Drawn from your conversation. Correct anything that is off: what you save is what counts.",
+      "missing": "For you to fill in: {fields}.",
+      "summary": "In two sentences",
+      "traitsPlaceholder": "tenacious, curious, unforgiving",
+      "attributeName": "Name of attribute {position}",
+      "attributeValue": "Value of attribute {position}",
+      "attributePlaceholder": "courage, cunning, lore",
+      "addAttribute": "Add an attribute",
+      "removeAttribute": "Remove this attribute",
+      "confirm": "Confirm and generate my world",
+      "incomplete": "One field is still missing.",
+      "backToChat": "Back to the conversation",
+      "fields": {
+        "name": "Name",
+        "gender": "Gender",
+        "age": "Age",
+        "personality": "Character traits",
+        "attributes": "Attributes"
+      }
+    }
   },
   "Concept": {
     "metaTitle": "Concept",

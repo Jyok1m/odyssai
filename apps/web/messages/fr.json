@@ -144,7 +144,45 @@
       "title": "La suite arrive",
       "lead": "La création du personnage et la génération de ton monde sont en cours d'écriture. Ce que tu as saisi est gardé."
     },
-    "enter": "Entrer en jeu"
+    "enter": "Entrer en jeu",
+    "character": {
+      "title": "Qui vas-tu incarner ?",
+      "lead": "Réponds simplement. Quand il y aura de quoi, tu dresseras la fiche et tu pourras la corriger.",
+      "you": "Toi",
+      "guide": "Guide",
+      "thinking": "Il réfléchit.",
+      "inputLabel": "Ta réponse",
+      "placeholder": "Écris ta réponse.",
+      "send": "Envoyer",
+      "draft": "Dresser la fiche",
+      "drafting": "Lecture de la conversation.",
+      "keepTalking": "Encore quelques échanges avant de pouvoir dresser la fiche.",
+      "turnsLeft": "{count} messages restants.",
+      "turnsOver": "La conversation est close. Tu peux dresser la fiche.",
+      "unavailable": "La création de personnage n'est pas disponible pour le moment."
+    },
+    "sheet": {
+      "title": "Sa fiche",
+      "lead": "Tirée de votre conversation. Corrige tout ce qui ne va pas : c'est ce que tu enregistreras qui compte.",
+      "missing": "À compléter toi-même : {fields}.",
+      "summary": "En deux phrases",
+      "traitsPlaceholder": "tenace, curieuse, rancunière",
+      "attributeName": "Nom de l'attribut {position}",
+      "attributeValue": "Valeur de l'attribut {position}",
+      "attributePlaceholder": "courage, ruse, savoir",
+      "addAttribute": "Ajouter un attribut",
+      "removeAttribute": "Retirer cet attribut",
+      "confirm": "Valider et générer mon monde",
+      "incomplete": "Il manque encore un champ.",
+      "backToChat": "Revenir à la conversation",
+      "fields": {
+        "name": "Nom",
+        "gender": "Genre",
+        "age": "Âge",
+        "personality": "Traits de caractère",
+        "attributes": "Attributs"
+      }
+    }
   },
   "Concept": {
     "metaTitle": "Concept",

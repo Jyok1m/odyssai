@@ -88,6 +88,20 @@ De la page d'accueil au monde généré. `GET/PUT /onboarding` derrière `Sessio
 - `AuthModule` réexporte `UsersModule` parce que Nest construit `SessionGuard` dans le module qui l'applique. Un module de jeu n'a donc qu'à importer `AuthModule`.
 - La route est gardée par `NEXT_PUBLIC_ALPHA_OPEN` : fermée, elle répond 404 au lieu d'annoncer une ouverture.
 
+## Création de personnage
+
+Étape 3 du parcours. `GET /onboarding/character` rend la conversation, `POST .../messages` diffuse un tour en SSE, `POST .../extract` propose une fiche.
+
+- **Le modèle propose, le schéma tranche, le joueur corrige.** L'extraction n'écrit rien : elle rend une proposition, et c'est `PUT /onboarding` qui enregistre ce que le joueur a validé.
+- L'extraction valide **champ par champ** : un âge fantaisiste ne doit pas emporter le nom et la personnalité. Ce qui ne tient pas part dans `missing`, et l'écran le demande.
+- Deux appels distincts, conversation et extraction. Mêler une réponse adressée au joueur et une structure destinée à la base ferait porter deux rôles au même texte.
+- Le message du joueur est écrit **avant** l'appel au modèle : une coupure en cours de réponse ne doit pas lui faire perdre ce qu'il a tapé. La réponse, elle, n'est écrite que si elle est complète.
+- La conversation ne voit **rien des œuvres citées**. Le joueur les a écrites, donc il n'y aurait pas de fuite à les lui renvoyer, mais la fiche repart ensuite dans les prompts de génération.
+- En revanche le **nom du personnage n'est pas soumis à la garde sur les emprunts** : le joueur nomme son personnage, c'est sa décision. La garde protège le monde généré, pas les choix du joueur.
+- Le coût est borné par le nombre de tours (`CHARACTER_TURNS_MAX`), pas par une limite d'adresse : le joueur est authentifié. `CHARACTER_TURNS_MIN` décide quand la fiche devient extractible.
+- Le premier message n'est pas enregistré : tant que le joueur n'a rien dit, il n'y a pas de conversation, et l'écrire en créerait une que l'extraction compterait pour rien.
+- `apps/web/src/lib/sse.ts` porte le lecteur de flux, partagé par le guide et la conversation. Ne pas le recopier dans un troisième appelant.
+
 ## Génération de monde
 
 La passe d'abstraction convertit ce que le joueur a cité en thèmes, et c'est la **seule étape de toute la chaîne à voir les titres**. Tout ce qui suit ne reçoit que `WorldThemes`.

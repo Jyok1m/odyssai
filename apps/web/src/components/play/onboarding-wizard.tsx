@@ -1,6 +1,11 @@
 "use client";
 
-import type { InspirationDraft, OnboardingState } from "@odyssai/schemas";
+import type {
+  CharacterDraft,
+  InspirationDraft,
+  OnboardingState,
+  OnboardingUpdate,
+} from "@odyssai/schemas";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -9,6 +14,7 @@ import { useSession } from "@/components/auth/session-provider";
 import { Button } from "@/components/ui/button";
 import { OnboardingError, fetchOnboarding, saveOnboarding } from "@/lib/onboarding";
 
+import { CharacterStep } from "./character-step";
 import { InspirationStep, type SaveStatus } from "./inspiration-step";
 import { StepRail } from "./step-rail";
 import { UsernameStep } from "./username-step";
@@ -71,7 +77,7 @@ export function OnboardingWizard() {
   );
 
   const commit = useCallback(
-    async (draft: InspirationDraft, advance: boolean) => {
+    async (update: OnboardingUpdate) => {
       inFlight.current?.abort();
       const controller = new AbortController();
       inFlight.current = controller;
@@ -80,12 +86,7 @@ export function OnboardingWizard() {
       setError(null);
 
       try {
-        setState(
-          await saveOnboarding(
-            { step: "inspiration", inspiration: draft, advance },
-            controller.signal,
-          ),
-        );
+        setState(await saveOnboarding(update, controller.signal));
         setStatus("saved");
       } catch (caught: unknown) {
         if (controller.signal.aborted) return;
@@ -112,7 +113,10 @@ export function OnboardingWizard() {
     (draft: InspirationDraft) => {
       if (timer.current) clearTimeout(timer.current);
       setStatus("saving");
-      timer.current = setTimeout(() => void commit(draft, false), AUTOSAVE_DELAY_MS);
+      timer.current = setTimeout(
+        () => void commit({ step: "inspiration", inspiration: draft, advance: false }),
+        AUTOSAVE_DELAY_MS,
+      );
     },
     [commit],
   );
@@ -121,7 +125,14 @@ export function OnboardingWizard() {
     (draft: InspirationDraft) => {
       // La minuterie en attente écrirait la même chose une seconde fois.
       if (timer.current) clearTimeout(timer.current);
-      void commit(draft, true);
+      void commit({ step: "inspiration", inspiration: draft, advance: true });
+    },
+    [commit],
+  );
+
+  const onCharacter = useCallback(
+    (character: CharacterDraft) => {
+      void commit({ step: "character", character, advance: true });
     },
     [commit],
   );
@@ -163,10 +174,17 @@ export function OnboardingWizard() {
           onDraft={onDraft}
           onAdvance={onAdvance}
         />
+      ) : state.step === "character" ? (
+        <CharacterStep
+          initial={state.character}
+          saving={status === "saving"}
+          error={error}
+          onAdvance={onCharacter}
+        />
       ) : (
-        // Les étapes suivantes arrivent avec la conversation de personnage et
-        // le graphe de génération. Le parcours s'arrête ici pour l'instant,
-        // et il le dit plutôt que d'afficher un écran vide.
+        // La génération elle-même arrive avec le worker et son graphe. Le
+        // parcours s'arrête ici pour l'instant, et il le dit plutôt que
+        // d'afficher un écran vide.
         <div className="max-w-headline">
           <h2 className="font-voice text-subtitle text-vellum">
             {t("soon.title")}
