@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { AppConfig } from '../config/app-config.js';
-import { PrismaClient } from '../generated/prisma/client.js';
+import { PrismaClient } from '@odyssai/db';
 
 export const PRISMA = Symbol('PRISMA');
 

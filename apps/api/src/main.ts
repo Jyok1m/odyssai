@@ -4,7 +4,7 @@ import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module.js';
 import { AppConfig } from './config/app-config.js';
 import { GuideConfig } from './config/guide-config.js';
-import { loadRootEnvFile } from './config/root-env.js';
+import { loadRootEnvFile } from '@odyssai/db';
 
 async function bootstrap() {
   loadRootEnvFile();

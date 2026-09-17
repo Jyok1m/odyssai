@@ -20,7 +20,7 @@ import {
   normalizeQuestion,
 } from '@odyssai/narrator';
 import { GuideConfig } from '../dist/config/guide-config.js';
-import { loadRootEnvFile } from '../dist/config/root-env.js';
+import { loadRootEnvFile } from '@odyssai/db';
 
 const DATASET = 'odyssai-guide-fr';
 

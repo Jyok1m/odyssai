@@ -1,0 +1,16 @@
+/**
+ * Acces a la base applicative. Le client est genere depuis le schema de ce
+ * paquet, qui est aussi celui que le CLI Prisma lit pour les migrations : une
+ * seule source pour l'api et pour le worker.
+ *
+ * ESM et non CommonJS comme les autres paquets : le client genere par Prisma 7
+ * emet du `import.meta`, que TypeScript refuse de transpiler en CommonJS. Rien
+ * n'est perdu, seuls des consommateurs ESM le lisent.
+ */
+export { PrismaClient, Prisma } from './generated/prisma/client.js';
+export type {
+  User,
+  GuideQuestion,
+} from './generated/prisma/client.js';
+export { Locale, GuideSource } from './generated/prisma/enums.js';
+export { loadRootEnvFile } from './env.js';

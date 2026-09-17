@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { AppConfig } from '../config/app-config.js';
-import type { User } from '../generated/prisma/client.js';
+import type { User } from '@odyssai/db';
 import { UsersService } from '../users/users.service.js';
 import { SessionService, type StoredSession } from './session.service.js';
 

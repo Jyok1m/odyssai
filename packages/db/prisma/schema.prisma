@@ -5,7 +5,7 @@
 // session : le realm reste la source de verite.
 //
 // L'URL de connexion n'est plus declaree ici depuis Prisma 7 : prisma7.config.ts
-// pour le CLI, src/prisma/prisma.module.ts a l'execution, tous deux sur
+// pour le CLI, l'adaptateur pg de l'api a l'execution, tous deux sur
 // POSTGRES_URL. Le client est genere dans src/ parce que le generateur emet du
 // TypeScript : ailleurs, il sortirait du rootDir du build.
 

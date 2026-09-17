@@ -12,7 +12,7 @@ import {
   type PlayerProfile,
 } from '@odyssai/schemas';
 import { AppConfig } from '../config/app-config.js';
-import type { User } from '../generated/prisma/client.js';
+import type { User } from '@odyssai/db';
 import {
   UsernameLockedError,
   UsernameTakenError,

@@ -9,7 +9,7 @@
 import { Client } from 'langsmith';
 import { createLlmClient, type LlmStreamEvent } from '@odyssai/llm';
 import { GuideConfig } from '../dist/config/guide-config.js';
-import { loadRootEnvFile } from '../dist/config/root-env.js';
+import { loadRootEnvFile } from '@odyssai/db';
 
 loadRootEnvFile(new URL('..', import.meta.url).pathname);
 

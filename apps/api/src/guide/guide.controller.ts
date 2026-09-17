@@ -37,7 +37,7 @@ import {
 } from '@odyssai/narrator';
 import { AppConfig } from '../config/app-config.js';
 import { GuideConfig } from '../config/guide-config.js';
-import type { GuideSource } from '../generated/prisma/client.js';
+import type { GuideSource } from '@odyssai/db';
 import { GuideBudgetService } from './guide-budget.service.js';
 import { GuideFaqService } from './guide-faq.service.js';
 import { GuideJournalService } from './guide-journal.service.js';

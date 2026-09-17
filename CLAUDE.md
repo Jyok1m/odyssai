@@ -9,6 +9,7 @@ Monorepo pnpm + Turborepo, TypeScript partout.
 - `apps/web` : Next.js 16 (App Router, Turbopack), port 3000. Lint ESLint.
 - `apps/api` : NestJS 12, port 3001. Scaffold **ESM** (`"type": "module"`, imports relatifs suffixés `.js`). Lint oxlint, tests vitest.
 - `packages/schemas` : schémas Zod partagés, compilés en CommonJS dans `dist/`
+- `packages/db` : schéma Prisma, migrations et client généré. **ESM**, contrairement aux autres paquets.
 - `packages/llm` : client OpenAI-compatible (streaming, usage, tracing LangSmith). Même format que `schemas`.
 - `packages/narrator` : corpus du guide, prompts versionnés, FAQ, détection du hors-sujet. Même format.
 
@@ -25,7 +26,7 @@ Prévus, pas encore créés : `apps/worker` (BullMQ), `packages/engine`, LangGra
 - Redis de dev : `make tunnel` ouvre le tunnel SSH, `make redis-ping` vérifie qu'il répond vraiment. Coordonnées du serveur dans `.env.local`.
 - `make check` vaut `pnpm typecheck && pnpm lint && pnpm build && corpus:check`.
 - Guide : `pnpm --filter @odyssai/narrator corpus:build` régénère le corpus depuis les messages next-intl, `corpus:check` échoue s'il a dérivé. `pnpm --filter @odyssai/api llm:smoke` fait un appel réel de contrôle, `eval:guide` lance l'expérience LangSmith (ni l'un ni l'autre dans `make check`).
-- Base : `pnpm --filter @odyssai/api db:migrate` crée et applique une migration, `db:deploy` applique les migrations existantes, `db:generate` regénère le client seul.
+- Base : `pnpm --filter @odyssai/db db:migrate` crée et applique une migration, `db:deploy` applique les migrations existantes, `db:generate` regénère le client seul, `db:studio` ouvre Studio.
 - `typecheck` vaut `tsc --noEmit` partout, sauf `apps/web` où il est précédé de `next typegen` : les types de routes et de layouts (`LayoutProps`, `PageProps`) sont générés par Next dans `.next/types/` et manquent sans ça.
 
 ## Règles d'architecture
@@ -41,10 +42,11 @@ Prévus, pas encore créés : `apps/worker` (BullMQ), `packages/engine`, LangGra
 
 ## Base de données
 
-Postgres par Prisma 7, dans `apps/api`. Le schéma vit dans `apps/api/prisma/schema.prisma`.
+Postgres par Prisma 7, dans `packages/db`. Le schéma vit dans `packages/db/prisma/schema.prisma`, et le paquet est consommé par `apps/api` comme il le sera par `apps/worker` : une seule source pour le schéma, les migrations et le client.
 
-- Le client est généré en TypeScript dans `apps/api/src/generated/prisma`, ignoré par git. Il est dans `src` parce que le générateur émet du TypeScript : ailleurs il sortirait du `rootDir` du build et `dist` changerait de forme. `build`, `typecheck` et `dev` lancent `prisma generate` avant de compiler, comme `apps/web` lance `next typegen`.
-- Prisma 7 n'accepte plus `url` dans le bloc `datasource`. Deux lecteurs de `POSTGRES_URL` : `apps/api/prisma7.config.ts` pour le CLI (migrate, studio), l'adaptateur `@prisma/adapter-pg` de `PrismaModule` à l'exécution. Il n'y a plus de moteur de requête embarqué, la connexion passe forcément par un adaptateur de pilote.
+- Le client est généré en TypeScript dans `packages/db/src/generated/prisma`, ignoré par git. Il est dans `src` parce que le générateur émet du TypeScript : ailleurs il sortirait du `rootDir` du build. Les scripts `build`, `typecheck` et `dev` du paquet lancent `prisma generate` avant de compiler, et turbo le construit avant ses consommateurs.
+- `packages/db` est le seul paquet en **ESM** : le client généré émet du `import.meta`, que TypeScript refuse de transpiler en CommonJS. Sans conséquence, seuls des consommateurs ESM le lisent.
+- Prisma 7 n'accepte plus `url` dans le bloc `datasource`. Deux lecteurs de `POSTGRES_URL` : `packages/db/prisma7.config.ts` pour le CLI (migrate, studio), l'adaptateur `@prisma/adapter-pg` de `PrismaModule` à l'exécution. Il n'y a plus de moteur de requête embarqué, la connexion passe forcément par un adaptateur de pilote.
 - Le CLI Prisma 7 ne charge plus aucun `.env` de lui-même : `prisma7.config.ts` appelle `loadRootEnvFile`, le même chargement que `main.ts`.
 - Tables au pluriel, colonnes en `snake_case` via `@map` : le TypeScript garde le camelCase, le SQL écrit à la main reste lisible.
 - Le realm reste la source de vérité de l'identité. `email` et `emailVerified` ne sont que des miroirs rafraîchis à la connexion : pas de contrainte d'unicité sur une valeur dont l'unicité appartient à Keycloak.

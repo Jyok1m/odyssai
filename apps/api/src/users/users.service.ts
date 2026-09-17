@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PRISMA } from '../prisma/prisma.module.js';
-import { Prisma, PrismaClient, type User } from '../generated/prisma/client.js';
+import { Prisma, PrismaClient, type User } from '@odyssai/db';
 
 /** Le pseudo du joueur est deja pose : il ne se choisit qu'une fois. */
 export class UsernameLockedError extends Error {

@@ -15,6 +15,7 @@ COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
 COPY packages/schemas/package.json packages/schemas/
+COPY packages/db/package.json packages/db/
 COPY packages/llm/package.json packages/llm/
 COPY packages/narrator/package.json packages/narrator/
 # --child-concurrency=1 : l'extraction de cinq cents paquets en parallele est
@@ -22,13 +23,15 @@ COPY packages/narrator/package.json packages/narrator/
 RUN pnpm install --frozen-lockfile --child-concurrency=1 --filter=@odyssai/api...
 
 COPY packages/schemas packages/schemas
+COPY packages/db packages/db
 COPY packages/llm packages/llm
 COPY packages/narrator packages/narrator
 COPY apps/api apps/api
 
-# turbo n'est pas installe par l'install filtree : on ordonne a la main, et
-# narrator depend de llm et de schemas.
+# turbo n'est pas installe par l'install filtree : on ordonne a la main. db
+# genere son client avant de compiler, narrator depend de llm et de schemas.
 RUN pnpm --filter @odyssai/schemas build \
+ && pnpm --filter @odyssai/db build \
  && pnpm --filter @odyssai/llm build \
  && pnpm --filter @odyssai/narrator build \
  && pnpm --filter @odyssai/api build

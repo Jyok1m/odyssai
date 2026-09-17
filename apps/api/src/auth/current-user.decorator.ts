@@ -1,5 +1,5 @@
 import { createParamDecorator, type ExecutionContext } from '@nestjs/common';
-import type { User } from '../generated/prisma/client.js';
+import type { User } from '@odyssai/db';
 import type { AuthenticatedRequest } from './session.guard.js';
 
 /**

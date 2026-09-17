@@ -1,6 +1,6 @@
 node_modules/
 dist/
-apps/api/src/generated/
+packages/db/src/generated/
 .next/
 .turbo/
 out/

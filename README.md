@@ -110,13 +110,13 @@ what `make redis-ping` sends, over the very `REDIS_URL` the API reads.
 **Postgres** holds the application database. `POSTGRES_URL` expects it on
 `127.0.0.1:15432`, the same loopback arrangement as Redis, but `make tunnel`
 only forwards Redis for now. Prisma 7 no longer takes that URL from the
-schema: the CLI reads it from `apps/api/prisma7.config.ts`, the running API
+schema: the CLI reads it from `packages/db/prisma7.config.ts`, the running API
 from the `pg` driver adapter. The client is generated TypeScript, so `build`, `typecheck` and
 `dev` all run `prisma generate` before compiling.
 
 ```bash
-pnpm --filter @odyssai/api db:migrate   # create and apply a migration
-pnpm --filter @odyssai/api db:deploy    # apply the existing ones
+pnpm --filter @odyssai/db db:migrate    # create and apply a migration
+pnpm --filter @odyssai/db db:deploy     # apply the existing ones
 ```
 
 **Keycloak is not configured from here.** The realms, their clients and the

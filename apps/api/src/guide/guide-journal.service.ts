@@ -3,7 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import type { UiLocale } from '@odyssai/schemas';
 import { GuideConfig } from '../config/guide-config.js';
 import { PRISMA } from '../prisma/prisma.module.js';
-import { PrismaClient, type GuideSource } from '../generated/prisma/client.js';
+import { PrismaClient, type GuideSource } from '@odyssai/db';
 
 export interface JournalEntry {
   id: string;
