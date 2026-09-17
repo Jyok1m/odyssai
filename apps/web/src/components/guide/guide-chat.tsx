@@ -193,7 +193,7 @@ export function GuideChat() {
         >
           {turns.map((turn, index) => (
             <li key={index} className="flex flex-col gap-3">
-              <p className="ml-auto max-w-[85%] rounded-card bg-mist px-4 py-2.5 text-ui text-vellum">
+              <p className="ml-auto max-w-[85%] rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum">
                 <span className="sr-only">{t("you")} : </span>
                 {turn.question}
               </p>
@@ -208,12 +208,12 @@ export function GuideChat() {
               >
                 <p className="text-caption text-vellum-3">{t("guide")}</p>
                 {turn.answer ? (
-                  <p className="mt-1 text-ui whitespace-pre-wrap text-vellum">
+                  <p className="mt-1 text-ui-sm whitespace-pre-wrap text-vellum">
                     {turn.answer}
                   </p>
                 ) : (
                   !turn.error && (
-                    <p className="mt-1 text-ui text-vellum-3">
+                    <p className="mt-1 text-ui-sm text-vellum-3">
                       {t("thinking")}
                     </p>
                   )
