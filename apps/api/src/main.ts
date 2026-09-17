@@ -10,7 +10,9 @@ import { loadRootEnvFile } from '@odyssai/db';
 async function bootstrap() {
   loadRootEnvFile();
 
-  const app = await NestFactory.create(AppModule);
+  // rawBody : la signature d'un webhook Stripe se calcule sur les octets
+  // recus, et le JSON re-serialise par Nest ne les reproduit pas.
+  const app = await NestFactory.create(AppModule, { rawBody: true });
   const config = app.get(AppConfig);
   const guideConfig = app.get(GuideConfig);
 

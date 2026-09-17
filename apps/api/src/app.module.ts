@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { AuthModule } from './auth/auth.module.js';
+import { BillingModule } from './billing/billing.module.js';
 import { ConfigModule } from './config/config.module.js';
 import { ErasureModule } from './erasure/erasure.module.js';
 import { ModerationModule } from './moderation/moderation.module.js';
@@ -20,6 +21,7 @@ import { UsageModule } from './usage/usage.module.js';
     PrismaModule,
     UsageModule,
     CreditsModule,
+    BillingModule,
     ErasureModule,
     AuthModule,
     GuideModule,

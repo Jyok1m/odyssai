@@ -44,6 +44,7 @@
     "langsmith": "^0.10.4",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "stripe": "^22.6.2",
     "zod": "^4.5.4"
   },
   "devDependencies": {

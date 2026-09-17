@@ -208,6 +208,33 @@ Deux couches, dans cet ordre, sur tout ce qu'un joueur écrit.
 
 `build` et `typecheck` de `packages/db` l'appelaient chacun de leur côté, et turbo les lance en parallèle : les deux `mkdir` du même répertoire généré se marchaient dessus (`EEXIST`). Ça ne se voyait qu'avec un cache froid. La génération est maintenant une tâche `generate` dont `build`, `typecheck` et `dev` dépendent. **Ne pas la remettre dans les scripts.**
 
+## Crédits et abonnements
+
+Le joueur achète des **crédits**, tarifés par action : un tour en vaut un, un monde vingt-cinq. Le barème est dans `packages/engine/src/credits.ts`, en constantes, et le rapport entre un crédit et son coût réel se règle là sans toucher à Stripe.
+
+- **Postgres est la vérité des crédits, pas Redis.** Le budget du guide vit en Redis parce qu'il est anonyme, très fréquent et approximatif : une éviction y coûte une estimation. Un crédit est facturé, et une éviction effacerait la consommation d'un mois payé.
+- **On débite avant l'appel et on rembourse s'il échoue.** Le prix d'une action est connu d'avance, contrairement au budget en dollars du guide : il n'y a pas de danse réserver puis régler à reproduire.
+- `credit_entries` est en **ajout seul** et fige le solde de chaque écriture : relire le grand livre des années plus tard doit rendre ce que le joueur a vu, même si le barème a changé.
+- Le roulement de période est **paresseux, à la lecture**. Une tâche nocturne ferait le même travail en moins fiable et laisserait un joueur sans réserve jusqu'à son passage.
+- Les crédits **ne se reportent pas** : la réserve est remise à la dotation du plan, jamais augmentée. Sinon un joueur absent six mois reviendrait avec six mois d'avance.
+- La modération et les embeddings ne sont **jamais facturés** : faire payer au joueur le fait qu'on le surveille serait indéfendable.
+
+### Stripe
+
+Les plans vivent en code, leurs prix chez Stripe, l'appariement dans `STRIPE_PRICE_*` : un identifiant de prix diffère entre le mode test et la production, et le mettre en base rendrait la base propre à un environnement.
+
+- Tout est facultatif. Sans `STRIPE_PRIVATE_KEY`, `BillingConfig.enabled` est faux, la vente se tait et le palier libre suffit à jouer : on développe sans compte Stripe.
+- Une clé `sk_live_` est refusée au démarrage hors production, une `sk_test_` en production. Le secret de webhook devient obligatoire dès qu'une clé est présente.
+- `NestFactory.create(AppModule, { rawBody: true })`, et `@Req() req: RawBodyRequest<Request>` dans le contrôleur. La signature se calcule sur les octets reçus : le JSON re-sérialisé par Nest ne les reproduit pas. `test/billing.e2e-spec.ts` le vérifie de bout en bout, c'est sa raison d'être.
+- **L'entitlement ne vient que du webhook**, jamais de la redirection de succès, qu'un joueur peut appeler à la main.
+- L'idempotence est la **clé primaire de `stripe_events`** : Stripe rejoue jusqu'à obtenir un 2xx, et un `invoice.paid` traité deux fois créditerait deux fois.
+- **L'ordre des webhooks n'est pas garanti.** `invoice.paid` peut précéder `customer.subscription.created` : le renouvellement relit donc l'abonnement chez Stripe avant de créditer, sans quoi un joueur qui vient de payer recevrait la dotation du palier libre.
+- Un prix inconnu est ignoré, jamais deviné : le prendre pour le palier libre ferait retomber un abonné payant.
+- `invoice.payment_failed` ne coupe rien. Stripe relance plusieurs jours, et c'est `customer.subscription.deleted` qui tranche.
+- Le garde est posé **méthode par méthode** sur `BillingController` : le webhook n'a pas de session.
+- Checkout Session pour souscrire, Customer Portal pour gérer et résilier. Aucune saisie de carte chez nous : l'héberger ferait entrer le projet dans le périmètre PCI sans rien apporter.
+- En développement : `stripe listen --forward-to localhost:3001/billing/webhook` donne le secret à mettre dans `STRIPE_WEBHOOK_SECRET`.
+
 ## Conventions
 
 - Les schémas Zod sont la source de vérité ; les types en dérivent via `z.infer`.

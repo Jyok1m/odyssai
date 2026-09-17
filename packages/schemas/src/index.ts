@@ -1,4 +1,5 @@
 export * from './auth.js';
+export * from './billing.js';
 export * from './guide.js';
 export * from './onboarding.js';
 export * from './profile.js';

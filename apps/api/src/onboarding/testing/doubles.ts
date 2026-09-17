@@ -73,6 +73,12 @@ interface CreditEntryRow {
   createdAt: Date;
 }
 
+interface StripeEventRow {
+  id: string;
+  type: string;
+  createdAt: Date;
+}
+
 interface EncounterRow {
   id: string;
   visitorId: string;
@@ -112,6 +118,7 @@ export interface OnboardingStore {
   encounters?: EncounterRow[];
   subscriptions?: SubscriptionRow[];
   creditEntries?: CreditEntryRow[];
+  stripeEvents?: StripeEventRow[];
 }
 
 /** `Prisma.DbNull` est un marqueur, pas une valeur : la colonne recoit NULL. */
@@ -414,9 +421,13 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
 
     subscription: {
       findUnique: async ({ where }: any) =>
-        (store.subscriptions ?? []).find((row) =>
-          where.id ? row.id === where.id : row.userId === where.userId,
-        ) ?? null,
+        (store.subscriptions ?? []).find((row) => {
+          if (where.id) return row.id === where.id;
+          if (where.stripeCustomerId) {
+            return row.stripeCustomerId === where.stripeCustomerId;
+          }
+          return row.userId === where.userId;
+        }) ?? null,
       create: async ({ data }: any) => {
         const row: SubscriptionRow = {
           id: randomUUID(),
@@ -468,6 +479,20 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
       findUnique: async ({ where }: any) =>
         (store.creditEntries ?? []).find((row) => row.id === where.id) ?? null,
       findMany: async () => [...(store.creditEntries ?? [])],
+    },
+
+    /** La cle primaire porte l'idempotence des webhooks : un meme identifiant
+     * deux fois doit echouer, comme en base. */
+    stripeEvent: {
+      create: async ({ data }: any) => {
+        store.stripeEvents = store.stripeEvents ?? [];
+        if (store.stripeEvents.some((row) => row.id === data.id)) {
+          throw new Error('doublon');
+        }
+        const row = { id: data.id, type: data.type, createdAt: new Date() };
+        store.stripeEvents.push(row);
+        return { ...row };
+      },
     },
 
     /** Aucune extension dans un double : le rappel long se degrade, et c'est
