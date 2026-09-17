@@ -24,7 +24,10 @@ pipeline {
                     branch 'main'
                 }
             }
-            parallel {
+            // En serie et non en parallele : deux `pnpm install` de cinq cents
+            // paquets en meme temps depassent la memoire de la machine, qui
+            // porte aussi Postgres, Redis, Keycloak et le reste.
+            stages {
                 stage('web') {
                     steps {
                         // Contexte à la racine : le lockfile et
