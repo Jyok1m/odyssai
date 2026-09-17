@@ -134,6 +134,7 @@ La garde sur la propriété intellectuelle a trois étages, et aucun ne suffit s
 - L'écriture finale est **une seule transaction** : un monde à moitié écrit avec une étape `ready` serait pire qu'un échec, le joueur y entrerait sans lore.
 - Le contrôle final rejoue le lore **une fois** si un nom emprunté apparaît. Au delà, la génération échoue : une boucle qui insiste coûterait sept appels par tour sans garantie de converger.
 - Les tables du checkpointer appartiennent à LangGraph, pas à Prisma : `setup()` les crée au démarrage, aucune migration ne les décrit.
+- Le `dev` du worker lance **deux processus** : `tsc --watch` émet, `node --watch` relit `dist`. Node ne sait pas exécuter les sources directement, son stripping de types ne réécrivant pas les spécificateurs `.js` en `.ts`. La compilation initiale précède le watch, sans quoi node démarrerait sur un `dist` absent.
 - **`packages/narrator` est en CommonJS**, donc ses déclarations résolvent `@langchain/*` par la condition `require` alors que le worker, en ESM, les résout par `import`. Même classe à l'exécution, deux identités de type : `apps/worker/src/generate.ts` prend le type de narrator pour que la seule conversion reste au point d'entrée.
 
 ## Écran de génération et coquille de jeu

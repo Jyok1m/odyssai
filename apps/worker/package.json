@@ -8,10 +8,10 @@
   "main": "./dist/main.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json && (tsc -p tsconfig.json --watch --preserveWatchOutput & node --watch dist/main.js)",
     "start": "node dist/main.js",
     "lint": "oxlint src/",
-    "typecheck": "tsc --noEmit",
-    "start:dev": "node --watch --experimental-strip-types src/main.ts"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@langchain/langgraph": "^1.4.15",

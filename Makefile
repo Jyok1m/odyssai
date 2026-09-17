@@ -41,7 +41,7 @@ help: ## Liste les cibles
 install: ## Installe les dependances du workspace
 	pnpm install
 
-dev: ## Lance web (3000) et api (3001) en watch. Le worker a sa propre cible
+dev: ## Lance web (3000), api (3001) et le worker de generation en watch
 	pnpm dev
 
 build: ## Construit tous les paquets
@@ -53,8 +53,8 @@ lint: ## Lint tous les paquets
 typecheck: ## Verifie les types partout
 	pnpm typecheck
 
-worker: ## Lance le worker de generation, qui n'est pas dans `make dev`
-	@pnpm --filter @odyssai/worker start:dev
+worker: ## Lance le worker de generation seul, sans web ni api
+	@pnpm --filter @odyssai/worker dev
 
 corpus-check: ## Verifie que le corpus du guide colle aux messages next-intl
 	pnpm --filter @odyssai/narrator corpus:check
