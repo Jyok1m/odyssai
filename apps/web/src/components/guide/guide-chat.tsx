@@ -66,13 +66,21 @@ export function GuideChat() {
     field.style.height = `${Math.min(field.scrollHeight, TEXTAREA_MAX_PX)}px`;
   }, [input]);
 
-  // Suit le flux, sauf si le visiteur est remonté lire une réponse précédente.
+  const seenTurns = useRef(0);
+
+  // Un message envoyé ramène toujours le fil en bas. Pendant le flux en
+  // revanche, on ne suit que si le visiteur y est déjà : sinon il serait
+  // arraché à la réponse précédente qu'il est en train de lire.
   useEffect(() => {
     const thread = threadRef.current;
     if (!thread) return;
+
+    const posted = turns.length > seenTurns.current;
+    seenTurns.current = turns.length;
+
     const distance =
       thread.scrollHeight - thread.scrollTop - thread.clientHeight;
-    if (distance < 80) thread.scrollTop = thread.scrollHeight;
+    if (posted || distance < 80) thread.scrollTop = thread.scrollHeight;
   }, [turns]);
 
   // Le fil ne vit que dans ce composant : rien n'est conservé d'une visite à
@@ -190,15 +198,17 @@ export function GuideChat() {
                 {turn.question}
               </p>
 
-              {/* Pas de bulle pour le guide : sa voix est le texte lui-même,
-                    en serif, comme la narration du reste du site. */}
+              {/* Pas de bulle pour le guide, mais la même fonte et la même
+                  taille que la question : le guide est un outil, pas le
+                  narrateur. Le serif reste réservé à la narration du jeu,
+                  sinon une réponse factuelle prend l'air d'un bout d'histoire. */}
               <div
                 className="max-w-[92%]"
                 aria-busy={streaming && index === turns.length - 1}
               >
                 <p className="text-caption text-vellum-3">{t("guide")}</p>
                 {turn.answer ? (
-                  <p className="mt-1 font-voice text-narration whitespace-pre-wrap text-vellum">
+                  <p className="mt-1 text-ui whitespace-pre-wrap text-vellum">
                     {turn.answer}
                   </p>
                 ) : (
@@ -316,12 +326,10 @@ export function GuideChat() {
         </div>
 
         {/* Entrée pour envoyer n'a pas de sens sur un clavier tactile. */}
-        <p className="mt-2 hidden px-1 text-caption text-vellum-3 sm:block">
-          {t("hint")} {t("separate")}
-        </p>
-        <p className="mt-2 px-1 text-caption text-vellum-3 sm:hidden">
+        <p className="mt-2 px-1 text-caption text-vellum-3">{t("separate")}</p>
+        {/* <p className="mt-2 px-1 text-caption text-vellum-3 sm:hidden">
           {t("separate")}
-        </p>
+        </p> */}
         <div ref={challengeRef} className="mt-3 empty:mt-0" />
       </form>
     </section>
