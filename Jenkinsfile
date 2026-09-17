@@ -27,6 +27,12 @@ pipeline {
         // la forme pointée ne résoudrait nulle part et sortirait du
         // certificat d'edge.
         NEXT_PUBLIC_API_BASE_URL = "${env.BRANCH_NAME == 'main' ? 'https://api.odyssai.app' : 'https://api-dev.odyssai.app'}"
+
+        // Cle publique du widget Turnstile, elle aussi figee dans le bundle au
+        // build. Un widget Cloudflare ne vaut que pour les hostnames qu'il
+        // declare : celui de odyssai.app refuse un jeton emis sur
+        // dev.odyssai.app, d'ou un widget par copie.
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY = "${env.BRANCH_NAME == 'main' ? '0xPROD_SITE_KEY' : '0xDEV_SITE_KEY'}"
     }
 
     stages {
@@ -47,6 +53,7 @@ pipeline {
                                 --platform "$PLATFORM" \
                                 --build-arg SITE_URL="$SITE_URL" \
                                 --build-arg NEXT_PUBLIC_API_BASE_URL="$NEXT_PUBLIC_API_BASE_URL" \
+                                --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY="$NEXT_PUBLIC_TURNSTILE_SITE_KEY" \
                                 -f apps/web/Dockerfile \
                                 -t "$WEB_IMAGE:$DOCKER_TAG" \
                                 .

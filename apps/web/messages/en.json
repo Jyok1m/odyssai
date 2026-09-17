@@ -373,7 +373,7 @@
 				"body": [
 					"The home page offers a guide that answers questions about the game. Every question asked is recorded for thirty days, to measure how the service is used and to spot the questions that keep coming back. That record holds neither your IP address nor your account identifier: nothing ties it to you.",
 					"A question that finds no answer in the guide's FAQ is passed to a language model provider, through OpenRouter, to be answered. The service is configured to accept only providers that do not retain the exchanges.",
-					"A sample of the exchanges is kept as technical traces with LangSmith, on its European infrastructure, to diagnose poor answers. The guide needs no personal data to answer: do not put any in your questions."
+					"A sample of the exchanges leaves a technical trace with LangSmith, on its European infrastructure, to monitor the service. Those traces hold neither your question nor the answer: only counters, timings and the model name. The guide needs no personal data to answer: do not put any in your questions."
 				]
 			},
 			{

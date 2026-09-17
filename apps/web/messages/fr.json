@@ -373,7 +373,7 @@
 				"body": [
 					"La page d'accueil propose un guide qui répond aux questions sur le jeu. Chaque question posée est enregistrée pendant trente jours, pour mesurer l'usage du service et repérer les questions qui reviennent. Cet enregistrement ne contient ni ton adresse IP, ni ton identifiant de compte : rien ne le relie à toi.",
 					"Une question qui ne trouve pas sa réponse dans la foire aux questions du guide est transmise à un fournisseur de modèle de langage, par l'intermédiaire d'OpenRouter, pour y répondre. Le service est configuré pour n'accepter que des fournisseurs qui ne conservent pas les échanges.",
-					"Un échantillon des échanges est conservé sous forme de traces techniques chez LangSmith, sur son infrastructure européenne, pour diagnostiquer les réponses de mauvaise qualité. Le guide n'a besoin d'aucune donnée personnelle pour répondre : n'en mets pas dans tes questions."
+					"Un échantillon des échanges laisse une trace technique chez LangSmith, sur son infrastructure européenne, pour surveiller le service. Ces traces ne contiennent ni ta question ni la réponse : seulement des compteurs, des durées et le nom du modèle. Le guide n'a besoin d'aucune donnée personnelle pour répondre : n'en mets pas dans tes questions."
 				]
 			},
 			{
