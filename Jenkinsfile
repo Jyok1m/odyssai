@@ -2,11 +2,12 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_NS    = 'jyok1m'
-        WEB_IMAGE    = "${DOCKER_NS}/odyssai-web"
-        API_IMAGE    = "${DOCKER_NS}/odyssai-api"
-        WORKER_IMAGE = "${DOCKER_NS}/odyssai-worker"
-        DOCKER_TAG   = "${env.BRANCH_NAME}"
+        DOCKER_NS     = 'jyok1m'
+        WEB_IMAGE     = "${DOCKER_NS}/odyssai-web"
+        API_IMAGE     = "${DOCKER_NS}/odyssai-api"
+        WORKER_IMAGE  = "${DOCKER_NS}/odyssai-worker"
+        MIGRATE_IMAGE = "${DOCKER_NS}/odyssai-migrate"
+        DOCKER_TAG    = "${env.BRANCH_NAME}"
         SSH_HOST = "host.docker.internal"
         PLATFORM = 'linux/amd64'
         // Static pre-render
@@ -29,6 +30,20 @@ pipeline {
             // paquets en meme temps depassent la memoire de la machine, qui
             // porte aussi Postgres, Redis, Keycloak et le reste.
             stages {
+                // En premier parce qu'il est le plus court : un schema qui ne
+                // compile pas se voit en quinze secondes plutot qu'apres le
+                // build du web.
+                stage('migrate') {
+                    steps {
+                        sh '''
+                            docker build \
+                                --platform "$PLATFORM" \
+                                -f packages/db/Dockerfile \
+                                -t "$MIGRATE_IMAGE:$DOCKER_TAG" \
+                                .
+                        '''
+                    }
+                }
                 stage('web') {
                     steps {
                         // Contexte à la racine : le lockfile et
@@ -93,6 +108,7 @@ pipeline {
                         docker push "$WEB_IMAGE:$DOCKER_TAG"
                         docker push "$API_IMAGE:$DOCKER_TAG"
                         docker push "$WORKER_IMAGE:$DOCKER_TAG"
+                        docker push "$MIGRATE_IMAGE:$DOCKER_TAG"
                         docker logout
                     '''
                 }
@@ -110,6 +126,9 @@ pipeline {
                 // Le worker avant le web : il ne sert rien, donc un
                 // redémarrage un peu long ne fait attendre personne.
                 SERVICES = "${env.BRANCH_NAME == 'main' ? 'api worker web' : 'api-dev worker-dev web-dev'}"
+                // Conteneur jetable, dans le profil `tools` du compose : il ne
+                // demarre jamais avec les autres, seulement quand on l'appelle.
+                MIGRATE = "${env.BRANCH_NAME == 'main' ? 'migrate' : 'migrate-dev'}"
             }
             steps {
                 withCredentials([
@@ -123,7 +142,8 @@ pipeline {
                             "$SSH_USER@$SSH_HOST" \
                             "trap 'docker logout >/dev/null 2>&1' EXIT; \
                             docker login -u '$DOCKER_USER' --password-stdin && \
-                            docker compose -f /opt/odyssai/docker-compose.yml pull $SERVICES && \
+                            docker compose -f /opt/odyssai/docker-compose.yml --profile tools pull $SERVICES $MIGRATE && \
+                            docker compose -f /opt/odyssai/docker-compose.yml --profile tools run --rm $MIGRATE && \
                             docker compose -f /opt/odyssai/docker-compose.yml up -d $SERVICES"
                     '''
                 }
@@ -137,6 +157,7 @@ pipeline {
                 docker rmi "$WEB_IMAGE:$DOCKER_TAG" || true
                 docker rmi "$API_IMAGE:$DOCKER_TAG" || true
                 docker rmi "$WORKER_IMAGE:$DOCKER_TAG" || true
+                docker rmi "$MIGRATE_IMAGE:$DOCKER_TAG" || true
             '''
         }
     }

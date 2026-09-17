@@ -4,7 +4,9 @@
 -- voyait comme des intruses et proposait de les supprimer, ce qui aurait
 -- efface l'etat de reprise des generations en cours. Le worker les recree
 -- desormais dans le schema `langgraph`, hors de portee de Prisma, et celles-ci
--- sont vides.
+-- sont vides. `IF EXISTS` parce qu'une base neuve, elle, ne les a jamais
+-- portees : sans lui la suite des migrations n'etait plus rejouable depuis
+-- zero, et le premier deploiement sur une base en retard echouait ici.
 
 -- DropForeignKey
 ALTER TABLE "characters" DROP CONSTRAINT "characters_universe_id_fkey";
@@ -20,16 +22,16 @@ ALTER COLUMN "universe_id" DROP NOT NULL;
 ALTER TABLE "universes" ALTER COLUMN "owner_id" DROP NOT NULL;
 
 -- DropTable
-DROP TABLE "checkpoint_blobs";
+DROP TABLE IF EXISTS "checkpoint_blobs";
 
 -- DropTable
-DROP TABLE "checkpoint_migrations";
+DROP TABLE IF EXISTS "checkpoint_migrations";
 
 -- DropTable
-DROP TABLE "checkpoint_writes";
+DROP TABLE IF EXISTS "checkpoint_writes";
 
 -- DropTable
-DROP TABLE "checkpoints";
+DROP TABLE IF EXISTS "checkpoints";
 
 -- CreateTable
 CREATE TABLE "encounters" (
