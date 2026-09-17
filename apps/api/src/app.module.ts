@@ -10,6 +10,7 @@ import { OnboardingModule } from './onboarding/onboarding.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { RedisModule } from './redis/redis.module.js';
 import { TurnModule } from './turn/turn.module.js';
+import { CreditsModule } from './credits/credits.module.js';
 import { UsageModule } from './usage/usage.module.js';
 
 @Module({
@@ -18,6 +19,7 @@ import { UsageModule } from './usage/usage.module.js';
     RedisModule,
     PrismaModule,
     UsageModule,
+    CreditsModule,
     ErasureModule,
     AuthModule,
     GuideModule,

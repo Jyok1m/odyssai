@@ -31,6 +31,7 @@ import { NARRATOR_LLM } from '../onboarding/narrator-llm.provider.js';
 import { PRISMA } from '../prisma/prisma.module.js';
 import { ModerationService } from '../moderation/moderation.service.js';
 import { TurnLimitsService } from './turn-limits.service.js';
+import { CreditsService, OutOfCreditsError } from '../credits/credits.service.js';
 import { UsageService } from '../usage/usage.service.js';
 import { TurnMemoryService } from './turn-memory.service.js';
 import { uuidv7 } from '../guide/guide.controller.js';
@@ -58,6 +59,7 @@ export class TurnController {
     private readonly limits: TurnLimitsService,
     private readonly moderation: ModerationService,
     private readonly usage: UsageService,
+    private readonly credits: CreditsService,
   ) {}
 
   @Get()
@@ -163,6 +165,21 @@ export class TurnController {
 
     const fate = request.kind === 'fate';
     const said = request.kind === 'say' ? request.content : '';
+
+    // Debit avant tout appel : une reserve vide refuse le tour sans rien
+    // depenser, et le joueur n'a pas de facture surprise.
+    let debit: string | null = null;
+    try {
+      debit = await this.credits.spend('turn' as const, user.id, world.universeId);
+    } catch (error: unknown) {
+      if (error instanceof OutOfCreditsError) {
+        throw new HttpException(
+          { code: 'out_of_credits', needed: error.needed, balance: error.balance },
+          HttpStatus.PAYMENT_REQUIRED,
+        );
+      }
+      throw error;
+    }
 
     const memory = await this.memory.recall(world.universeId, said);
     const seq = memory.nextSeq;
@@ -302,6 +319,8 @@ export class TurnController {
       }
     } catch (error: unknown) {
       this.logger.warn(`tour en echec : ${String(error)}`);
+      // Le joueur n'a pas eu son tour : il ne doit pas l'avoir paye.
+      if (debit) await this.credits.refund(debit);
       if (streaming) this.write(res, { type: 'error', code: 'upstream_error' });
     } finally {
       clearInterval(ping);

@@ -12,6 +12,7 @@ import {
 } from '@odyssai/schemas';
 import { Prisma, PrismaClient, type User } from '@odyssai/db';
 import { PRISMA } from '../prisma/prisma.module.js';
+import { CreditsService } from '../credits/credits.service.js';
 import { GenerationQueueService } from './generation-queue.service.js';
 
 /** L'etape visee n'est pas ouverte : on n'ecrit pas plus loin qu'on n'est. */
@@ -72,6 +73,7 @@ export class OnboardingService {
   constructor(
     @Inject(PRISMA) private readonly prisma: PrismaClient,
     private readonly queue: GenerationQueueService,
+    private readonly credits: CreditsService,
   ) {}
 
   /** Lecture seule : une visite ne cree jamais de ligne. */
@@ -107,7 +109,12 @@ export class OnboardingService {
     const universe =
       update.step === 'inspiration'
         ? await this.saveInspiration(existing.id, update.inspiration, update.advance)
-        : await this.saveCharacter(existing.id, update.character, update.advance);
+        : await this.saveCharacter(
+            existing.id,
+            update.character,
+            update.advance,
+            user.id,
+          );
 
     return this.toState(user, universe);
   }
@@ -153,6 +160,7 @@ export class OnboardingService {
     universeId: string,
     character: CharacterDraft,
     advance: boolean,
+    userId: string,
   ): Promise<UniverseRow> {
     const data = {
       name: character.name ?? null,
@@ -170,6 +178,11 @@ export class OnboardingService {
 
     const complete = CharacterSheetSchema.safeParse(character).success;
     if (advance && complete) {
+      // Debite ici et non dans le worker : un refus doit arriver avant que le
+      // travail ne parte en file, sans quoi le joueur verrait une generation
+      // demarrer puis echouer.
+      await this.credits.spend('worldGeneration', userId, universeId);
+
       await this.prisma.universe.update({
         where: { id: universeId },
         data: { step: 'generating' },

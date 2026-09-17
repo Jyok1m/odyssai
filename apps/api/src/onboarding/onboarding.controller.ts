@@ -5,6 +5,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpException,
+  HttpStatus,
   Put,
   UnprocessableEntityException,
   UseGuards,
@@ -17,6 +19,7 @@ import {
 import type { User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
+import { OutOfCreditsError } from '../credits/credits.service.js';
 import { ErasureService } from '../erasure/erasure.service.js';
 import {
   IncompleteError,
@@ -76,6 +79,12 @@ export class OnboardingController {
     try {
       return await this.onboarding.save(user, parsed.data);
     } catch (error: unknown) {
+      if (error instanceof OutOfCreditsError) {
+        throw new HttpException(
+          { code: 'out_of_credits', needed: error.needed, balance: error.balance },
+          HttpStatus.PAYMENT_REQUIRED,
+        );
+      }
       if (error instanceof WrongStepError) {
         throw new ConflictException({ code: 'wrong_step' });
       }

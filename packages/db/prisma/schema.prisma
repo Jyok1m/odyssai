@@ -73,7 +73,8 @@ model User {
 
   universe   Universe?
   encounters Encounter[]
-  llmUsage   LlmUsage[]
+  llmUsage     LlmUsage[]
+  subscription Subscription?
 
   @@index([email])
   @@map("users")
@@ -248,6 +249,85 @@ model Character {
   encounters Encounter[]
 
   @@map("characters")
+}
+
+/// L'abonnement d'un joueur, et sa reserve de credits.
+///
+/// `credits` est denormalise a cote du grand livre : un solde se lit a chaque
+/// tour, et le recalculer par une somme a chaque fois couterait une agregation
+/// sur une table qui ne fait que grandir. Les deux s'ecrivent toujours dans la
+/// meme transaction, donc ils ne peuvent pas diverger.
+model Subscription {
+  id     String @id @default(uuid(7)) @db.Uuid
+  userId String @unique @map("user_id") @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  plan   String @default("free") @db.VarChar(24)
+  status String @default("active") @db.VarChar(24)
+
+  credits Int @default(0)
+
+  /// L'ancre du renouvellement. Vient de la facture pour un abonnement paye,
+  /// de la creation du compte pour le palier libre : un abonne du 20 ne doit
+  /// pas voir sa reserve repartir le 1er.
+  periodStart DateTime @map("period_start") @db.Timestamptz(3)
+  periodEnd   DateTime @map("period_end") @db.Timestamptz(3)
+
+  /// Accorde une seule fois, a l'ouverture du compte.
+  welcomed Boolean @default(false)
+
+  /// `users.email` n'est pas unique : c'est l'identifiant Stripe qui fait le
+  /// lien, jamais l'adresse.
+  stripeCustomerId     String? @unique @map("stripe_customer_id")
+  stripeSubscriptionId String? @unique @map("stripe_subscription_id")
+  cancelAtPeriodEnd    Boolean @default(false) @map("cancel_at_period_end")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  entries CreditEntry[]
+
+  @@map("subscriptions")
+}
+
+/// Le grand livre des credits. En ajout seul : on ne corrige pas une ecriture
+/// comptable, on en passe une autre.
+model CreditEntry {
+  id             String       @id @default(uuid(7)) @db.Uuid
+  subscriptionId String       @map("subscription_id") @db.Uuid
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  /// Negatif pour un debit, positif pour une attribution ou un remboursement.
+  delta Int
+
+  /// grant, welcome, turn, character, world, refund, adjustment.
+  reason String @db.VarChar(24)
+
+  /// Ce a quoi l'ecriture se rattache : un univers, un tour, une facture.
+  ref String?
+
+  /// Le solde apres l'ecriture, fige. Relire le grand livre des annees plus
+  /// tard doit donner ce que le joueur a vu, meme si le bareme a change.
+  balance Int
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([subscriptionId, createdAt])
+  @@map("credit_entries")
+}
+
+/// Les evenements Stripe deja traites.
+///
+/// C'est toute l'idempotence : Stripe rejoue ses webhooks jusqu'a obtenir un
+/// 2xx, et un `invoice.paid` traite deux fois crediterait deux fois.
+model StripeEvent {
+  /// L'identifiant rendu par Stripe, et non un uuid : c'est lui la cle.
+  id String @id
+
+  type      String   @db.VarChar(64)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@map("stripe_events")
 }
 
 /// Ce que chaque appel de modele a coute, quel qu'il soit.

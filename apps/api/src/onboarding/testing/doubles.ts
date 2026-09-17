@@ -49,6 +49,30 @@ interface CharacterRow {
   updatedAt: Date;
 }
 
+interface SubscriptionRow {
+  id: string;
+  userId: string;
+  plan: string;
+  status: string;
+  credits: number;
+  periodStart: Date;
+  periodEnd: Date;
+  welcomed: boolean;
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+  cancelAtPeriodEnd: boolean;
+}
+
+interface CreditEntryRow {
+  id: string;
+  subscriptionId: string;
+  delta: number;
+  reason: string;
+  ref: string | null;
+  balance: number;
+  createdAt: Date;
+}
+
 interface EncounterRow {
   id: string;
   visitorId: string;
@@ -86,6 +110,8 @@ export interface OnboardingStore {
   messages: MessageRow[];
   jobs: JobRow[];
   encounters?: EncounterRow[];
+  subscriptions?: SubscriptionRow[];
+  creditEntries?: CreditEntryRow[];
 }
 
 /** `Prisma.DbNull` est un marqueur, pas une valeur : la colonne recoit NULL. */
@@ -385,6 +411,64 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
     },
 
     $transaction: async (run: any) => run(double),
+
+    subscription: {
+      findUnique: async ({ where }: any) =>
+        (store.subscriptions ?? []).find((row) =>
+          where.id ? row.id === where.id : row.userId === where.userId,
+        ) ?? null,
+      create: async ({ data }: any) => {
+        const row: SubscriptionRow = {
+          id: randomUUID(),
+          userId: data.userId,
+          plan: data.plan ?? 'free',
+          status: data.status ?? 'active',
+          credits: data.credits ?? 0,
+          periodStart: data.periodStart,
+          periodEnd: data.periodEnd,
+          welcomed: data.welcomed ?? false,
+          stripeCustomerId: data.stripeCustomerId ?? null,
+          stripeSubscriptionId: data.stripeSubscriptionId ?? null,
+          cancelAtPeriodEnd: data.cancelAtPeriodEnd ?? false,
+        };
+        store.subscriptions = [...(store.subscriptions ?? []), row];
+        return { ...row };
+      },
+      update: async ({ where, data }: any) => {
+        const row = (store.subscriptions ?? []).find((item) =>
+          where.id ? item.id === where.id : item.userId === where.userId,
+        )!;
+        // `increment` est la seule operation atomique employee par le service.
+        if (data.credits?.increment !== undefined) {
+          row.credits += data.credits.increment;
+        } else if (data.credits !== undefined) {
+          row.credits = data.credits;
+        }
+        for (const [key, value] of Object.entries(data)) {
+          if (key !== 'credits') (row as any)[key] = value;
+        }
+        return { ...row };
+      },
+    },
+
+    creditEntry: {
+      create: async ({ data }: any) => {
+        const row: CreditEntryRow = {
+          id: randomUUID(),
+          subscriptionId: data.subscriptionId,
+          delta: data.delta,
+          reason: data.reason,
+          ref: data.ref ?? null,
+          balance: data.balance,
+          createdAt: new Date(),
+        };
+        store.creditEntries = [...(store.creditEntries ?? []), row];
+        return { ...row };
+      },
+      findUnique: async ({ where }: any) =>
+        (store.creditEntries ?? []).find((row) => row.id === where.id) ?? null,
+      findMany: async () => [...(store.creditEntries ?? [])],
+    },
 
     /** Aucune extension dans un double : le rappel long se degrade, et c'est
      * ce que les tests doivent voir. */

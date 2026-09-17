@@ -4,6 +4,7 @@ import {
   ConflictException,
   Controller,
   Get,
+  HttpException,
   HttpStatus,
   Inject,
   Logger,
@@ -40,6 +41,7 @@ import {
 } from './character.service.js';
 import { ModerationService } from '../moderation/moderation.service.js';
 import { NARRATOR_LLM } from './narrator-llm.provider.js';
+import { CreditsService, OutOfCreditsError } from '../credits/credits.service.js';
 import { UsageService } from '../usage/usage.service.js';
 import { LockedError, WrongStepError } from './onboarding.service.js';
 
@@ -63,6 +65,7 @@ export class CharacterController {
     @Inject(NARRATOR_LLM) private readonly llm: LlmClient,
     private readonly moderation: ModerationService,
     private readonly usage: UsageService,
+    private readonly credits: CreditsService,
   ) {}
 
   @Get()
@@ -114,6 +117,19 @@ export class CharacterController {
     }
 
     const universeId = await this.guard(() => this.characters.open(user));
+
+    let debit: string | null = null;
+    try {
+      debit = await this.credits.spend('characterMessage', user.id, universeId);
+    } catch (error: unknown) {
+      if (error instanceof OutOfCreditsError) {
+        throw new HttpException(
+          { code: 'out_of_credits', needed: error.needed, balance: error.balance },
+          HttpStatus.PAYMENT_REQUIRED,
+        );
+      }
+      throw error;
+    }
 
     const history = await this.characters.history(universeId);
     await this.guard(() =>
@@ -178,6 +194,7 @@ export class CharacterController {
       });
     } catch (error: unknown) {
       this.logger.warn(`conversation de personnage en echec : ${String(error)}`);
+      if (debit) await this.credits.refund(debit);
       this.write(res, { type: 'error', code: 'upstream_error' });
     } finally {
       clearInterval(ping);

@@ -212,6 +212,8 @@ export const OnboardingErrorBodySchema = z.object({
     'incomplete',
     /** Une generation est en cours ou terminee : le parcours est ferme. */
     'locked',
+    /** La reserve de credits est epuisee. */
+    'out_of_credits',
   ]),
 });
 
@@ -298,6 +300,8 @@ export const CharacterErrorBodySchema = z.object({
     'too_short',
     /** Le message a ete refuse par la moderation. */
     'refused',
+    /** La reserve de credits est epuisee. */
+    'out_of_credits',
     'upstream_error',
   ]),
 });

@@ -100,6 +100,8 @@ export const TurnErrorBodySchema = z.object({
     'not_ready',
     'rate_limited',
     'busy',
+    /** La reserve de credits est epuisee. */
+    'out_of_credits',
     /** Le message a ete refuse par la moderation. */
     'refused',
     'upstream_error',
@@ -110,6 +112,9 @@ export const TurnErrorBodySchema = z.object({
     .nullable()
     .optional(),
   retryAfterSeconds: z.number().int().nonnegative().optional(),
+  /** Presents sur un refus pour reserve vide, pour que l'ecran sache quoi dire. */
+  needed: z.number().int().nonnegative().optional(),
+  balance: z.number().int().nonnegative().optional(),
 });
 
 export type TurnErrorBody = z.infer<typeof TurnErrorBodySchema>;

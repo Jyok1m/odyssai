@@ -17,6 +17,13 @@ export type {
   Character,
   ConversationMessage,
   GenerationJob,
+  Encounter,
+  Turn,
+  CanonFact,
+  LlmUsage,
+  Subscription,
+  CreditEntry,
+  StripeEvent,
 } from './generated/prisma/client.js';
 
 export {
