@@ -16,7 +16,8 @@ export function Hero() {
       <Constellation className="pointer-events-none absolute top-6 right-0 -z-10 w-[90%] opacity-35 sm:w-[min(620px,60%)] sm:opacity-100" />
 
       <div className="mx-auto max-w-wrap px-6 lg:px-8">
-        <div className="max-w-3xl py-32 sm:py-40">
+        {/* Bas resserre : le panneau du guide doit entrer dans le premier ecran. */}
+        <div className="max-w-3xl pt-32 pb-16 sm:pt-40 sm:pb-20">
           <p className="relative inline-flex items-center rounded-full border border-line px-2.5 py-1 text-tag font-medium text-vellum-2 transition-colors hover:border-vellum-3">
             {t("badge")}{" "}
             <Link href="/concept" className="ml-1.5 font-semibold text-accent">
