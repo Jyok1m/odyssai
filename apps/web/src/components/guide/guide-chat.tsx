@@ -294,7 +294,7 @@ export function GuideChat() {
               event.preventDefault();
               void ask(input);
             }}
-            className="max-h-40 w-full resize-none self-center border-0 bg-transparent py-1.5 font-ui text-ui text-vellum placeholder:text-vellum-3"
+            className="max-h-40 w-full resize-none self-center border-0 bg-transparent py-1.5 font-ui text-ui-sm text-vellum placeholder:text-vellum-3"
           />
 
           {input.length >= COUNTER_FROM && (
