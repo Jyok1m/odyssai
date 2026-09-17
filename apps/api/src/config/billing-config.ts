@@ -14,7 +14,18 @@ import { PLANS, type PlanId } from '@odyssai/engine';
  */
 const EnvSchema = z
   .object({
-    NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+    /**
+     * Le deploiement, et non la facon dont Node est bati.
+     *
+     * `NODE_ENV` ne peut pas servir ici : les deux copies du site tournent
+     * avec `NODE_ENV=production`, l'image etant la meme, alors que celle de
+     * dev doit justement travailler en mode test chez Stripe. Sans cette
+     * variable, la copie de dev refuserait de demarrer ou debiterait de
+     * vraies cartes, et les deux sont inacceptables.
+     */
+    ODYSSAI_ENV: z
+      .enum(['development', 'staging', 'production'])
+      .default('development'),
 
     /** Nommee ainsi parce que c'est le nom deja pose dans le .env du projet. */
     STRIPE_PRIVATE_KEY: z.string().default(''),
@@ -34,14 +45,14 @@ const EnvSchema = z
     // Le meme garde-fou que pour les cles de test Turnstile, dans l'autre
     // sens : une cle live hors production facturerait de vraies cartes.
     if (
-      env.NODE_ENV !== 'production' &&
+      env.ODYSSAI_ENV !== 'production' &&
       env.STRIPE_PRIVATE_KEY.startsWith('sk_live_')
     ) {
       fail('STRIPE_PRIVATE_KEY', 'cle live interdite hors production : elle debite de vraies cartes');
     }
 
     if (
-      env.NODE_ENV === 'production' &&
+      env.ODYSSAI_ENV === 'production' &&
       env.STRIPE_PRIVATE_KEY.startsWith('sk_test_')
     ) {
       fail('STRIPE_PRIVATE_KEY', 'cle de test en production : aucun paiement ne serait reel');

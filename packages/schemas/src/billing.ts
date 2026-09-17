@@ -30,13 +30,42 @@ export const BillingSummarySchema = z.object({
 export type BillingSummary = z.infer<typeof BillingSummarySchema>;
 
 /** Le bareme publie, pour que le joueur sache ce que coute une action. */
-export const CreditPriceSchema = z.object({
+export const CreditCostsSchema = z.object({
   turn: z.number().int().nonnegative(),
   characterMessage: z.number().int().nonnegative(),
   worldGeneration: z.number().int().nonnegative(),
 });
 
-export type CreditPrice = z.infer<typeof CreditPriceSchema>;
+export type CreditCosts = z.infer<typeof CreditCostsSchema>;
+
+export const PlanOfferSchema = z.object({
+  id: PlanIdSchema,
+  /** Credits rendus a chaque periode. */
+  monthly: z.number().int().nonnegative(),
+  /**
+   * Faux tant que le prix du plan n'est pas configure chez Stripe. L'ecran
+   * cache alors l'offre plutot que de proposer un bouton qui echouerait : un
+   * plan sans prix n'existe pas.
+   */
+  purchasable: z.boolean(),
+});
+
+export type PlanOffer = z.infer<typeof PlanOfferSchema>;
+
+/**
+ * Ce qui se vend et ce que cela coute, servi sans session : le bareme n'a rien
+ * de personnel, et la page de tarifs doit pouvoir s'afficher avant de
+ * s'inscrire.
+ *
+ * Les montants en euros ne sont pas ici : ils vivent chez Stripe, qui les
+ * affiche sur sa propre page. Les recopier ferait deux verites.
+ */
+export const BillingCatalogSchema = z.object({
+  costs: CreditCostsSchema,
+  plans: z.array(PlanOfferSchema),
+});
+
+export type BillingCatalog = z.infer<typeof BillingCatalogSchema>;
 
 /** Les plans payants seulement : on ne souscrit pas au palier libre. */
 export const CheckoutRequestSchema = z.object({

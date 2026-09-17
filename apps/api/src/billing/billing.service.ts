@@ -1,8 +1,14 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
 import { PrismaClient, type User } from '@odyssai/db';
-import { CREDIT_COSTS, nextPeriod, planOf, type PlanId } from '@odyssai/engine';
-import type { BillingSummary, CreditPrice } from '@odyssai/schemas';
+import {
+  CREDIT_COSTS,
+  PLANS,
+  nextPeriod,
+  planOf,
+  type PlanId,
+} from '@odyssai/engine';
+import type { BillingCatalog, BillingSummary } from '@odyssai/schemas';
 import { AppConfig } from '../config/app-config.js';
 import { BillingConfig } from '../config/billing-config.js';
 import { CreditsService } from '../credits/credits.service.js';
@@ -32,12 +38,29 @@ export class BillingService {
       : null;
   }
 
-  /** Le bareme publie. Une constante du moteur, servie telle quelle. */
-  prices(): CreditPrice {
+  /**
+   * Ce qui se vend et ce que cela coute.
+   *
+   * `purchasable` est faux tant que le prix d'un plan n'est pas configure chez
+   * Stripe : l'ecran cache alors l'offre plutot que de proposer un bouton qui
+   * repondrait 503.
+   */
+  catalog(): BillingCatalog {
     return {
-      turn: CREDIT_COSTS.turn,
-      characterMessage: CREDIT_COSTS.characterMessage,
-      worldGeneration: CREDIT_COSTS.worldGeneration,
+      costs: {
+        turn: CREDIT_COSTS.turn,
+        characterMessage: CREDIT_COSTS.characterMessage,
+        worldGeneration: CREDIT_COSTS.worldGeneration,
+      },
+      plans: PLANS.map((id) => {
+        const plan = planOf(id);
+        return {
+          id: plan.id,
+          monthly: plan.monthly,
+          purchasable:
+            plan.billed && this.config.enabled && this.config.priceOf(plan.id) !== '',
+        };
+      }),
     };
   }
 
@@ -97,7 +120,7 @@ export class BillingService {
     const price = this.config.priceOf(plan);
     if (!price) throw new BillingDisabledError();
 
-    const account = new URL('/compte', this.app.webBaseUrl).toString();
+    const account = this.accountUrl(user);
 
     const session = await this.client().checkout.sessions.create({
       mode: 'subscription',
@@ -122,10 +145,23 @@ export class BillingService {
   async portal(user: User): Promise<string> {
     const session = await this.client().billingPortal.sessions.create({
       customer: await this.customerOf(user),
-      return_url: new URL('/compte', this.app.webBaseUrl).toString(),
+      return_url: this.accountUrl(user),
     });
 
     return session.url;
+  }
+
+  /**
+   * Ou revenir apres Stripe.
+   *
+   * Le chemin est construit ici et non recu du navigateur : accepter une URL
+   * de retour du client ouvrirait une redirection arbitraire. Les deux
+   * chemins localises sont recopies de `routing.ts` du web, faute de source
+   * partagee entre les deux applications.
+   */
+  private accountUrl(user: User): string {
+    const path = user.locale === 'en' ? '/en/account' : '/fr/compte';
+    return new URL(path, this.app.webBaseUrl).toString();
   }
 
   /**

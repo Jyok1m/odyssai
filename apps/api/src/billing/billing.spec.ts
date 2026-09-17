@@ -79,7 +79,7 @@ function fakePrisma(row: Row) {
 function billing(prisma: PrismaClient) {
   process.env = {
     ...KEPT,
-    NODE_ENV: 'test',
+    ODYSSAI_ENV: 'development',
     STRIPE_PRIVATE_KEY: 'sk_test_factice',
     STRIPE_WEBHOOK_SECRET: SECRET,
     STRIPE_PRICE_APPRENTI: 'price_apprenti',

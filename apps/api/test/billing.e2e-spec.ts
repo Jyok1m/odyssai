@@ -91,12 +91,27 @@ describe('Facturation (e2e)', () => {
     await app.close();
   });
 
-  it('publie le bareme sans demander de session', async () => {
-    const response = await request(app.getHttpServer()).get('/billing/prices');
+  it('publie le catalogue sans demander de session', async () => {
+    const response = await request(app.getHttpServer()).get('/billing/catalog');
 
     expect(response.status).toBe(200);
-    expect(response.body.turn).toBe(CREDIT_COSTS.turn);
-    expect(response.body.worldGeneration).toBe(CREDIT_COSTS.worldGeneration);
+    expect(response.body.costs.turn).toBe(CREDIT_COSTS.turn);
+    expect(response.body.costs.worldGeneration).toBe(CREDIT_COSTS.worldGeneration);
+  });
+
+  /** Un plan sans prix chez Stripe n'existe pas : l'ecran doit le cacher. */
+  it('ne met en vente que les plans dont le prix est configure', async () => {
+    const { body } = await request(app.getHttpServer()).get('/billing/catalog');
+    const offers = Object.fromEntries(
+      body.plans.map((plan: { id: string; purchasable: boolean }) => [
+        plan.id,
+        plan.purchasable,
+      ]),
+    );
+
+    expect(offers.free).toBe(false);
+    expect(offers.apprenti).toBe(true);
+    expect(offers.arpenteur).toBe(true);
   });
 
   it('garde le solde derriere une session', async () => {

@@ -8,7 +8,9 @@ import {
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
+import { OutOfCredits } from "@/components/billing/out-of-credits";
 import { Button } from "@/components/ui/button";
+import { isOutOfCredits } from "@/lib/billing";
 import { TurnError, fetchHistory, playTurn } from "@/lib/turn";
 
 /**
@@ -24,6 +26,9 @@ export function GameChat() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Distinct du message d'erreur : la réserve vide n'est pas une panne, et ce
+  // qu'il faut montrer est un lien, pas une phrase.
+  const [empty, setEmpty] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   const thread = useRef<HTMLOListElement>(null);
@@ -57,6 +62,7 @@ export function GameChat() {
 
     setBusy(true);
     setError(null);
+    setEmpty(false);
     streamed.current = "";
 
     const now = new Date().toISOString();
@@ -99,7 +105,8 @@ export function GameChat() {
         if (event.type === "error") setError(t("errorGeneric"));
       });
     } catch (caught: unknown) {
-      setError(t(errorKey(caught)));
+      if (isOutOfCredits(caught)) setEmpty(true);
+      else setError(t(errorKey(caught)));
       // Le tour est enregistré côté serveur même si la diffusion a échoué :
       // la réponse vide serait un mensonge, on la retire.
       setMessages((current) => current.filter((message) => message.content !== ""));
@@ -206,7 +213,7 @@ export function GameChat() {
       </div>
 
       <p aria-live="polite" className="mt-3 min-h-5 text-ui-sm text-ember">
-        {error}
+        {empty ? <OutOfCredits /> : error}
       </p>
     </section>
   );

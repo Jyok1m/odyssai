@@ -8,6 +8,12 @@ function build(overrides: Record<string, string>): BillingConfig {
   return new BillingConfig();
 }
 
+/**
+ * La copie de dev tourne avec NODE_ENV=production, l'image etant la meme que
+ * celle de la production : c'est ODYSSAI_ENV qui distingue les deux, et c'est
+ * tout l'interet de la variable.
+ */
+
 afterEach(() => {
   process.env = { ...KEPT };
 });
@@ -30,7 +36,7 @@ describe('configuration Stripe', () => {
   it('refuse une cle live hors production', () => {
     expect(() =>
       build({
-        NODE_ENV: 'development',
+        ODYSSAI_ENV: 'staging',
         STRIPE_PRIVATE_KEY: 'sk_live_factice',
         STRIPE_WEBHOOK_SECRET: 'whsec_factice',
       }),
@@ -40,7 +46,7 @@ describe('configuration Stripe', () => {
   it('refuse une cle de test en production', () => {
     expect(() =>
       build({
-        NODE_ENV: 'production',
+        ODYSSAI_ENV: 'production',
         STRIPE_PRIVATE_KEY: 'sk_test_factice',
         STRIPE_WEBHOOK_SECRET: 'whsec_factice',
       }),
@@ -65,6 +71,18 @@ describe('configuration Stripe', () => {
         STRIPE_WEBHOOK_SECRET: '',
       }),
     ).toThrow(/STRIPE_WEBHOOK_SECRET/);
+  });
+
+  it('accepte une cle de test sur une copie batie en production', () => {
+    const config = build({
+      NODE_ENV: 'production',
+      ODYSSAI_ENV: 'staging',
+      STRIPE_PRIVATE_KEY: 'sk_test_factice',
+      STRIPE_WEBHOOK_SECRET: 'whsec_factice',
+    });
+
+    expect(config.enabled).toBe(true);
+    expect(config.live).toBe(false);
   });
 
   it('apparie un prix a son plan, dans les deux sens', () => {

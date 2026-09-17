@@ -9,6 +9,7 @@ import type {
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { OutOfCredits } from "@/components/billing/out-of-credits";
 import { useAuthLinks } from "@/components/auth/auth-links";
 import { useSession } from "@/components/auth/session-provider";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,9 @@ export function OnboardingWizard() {
   const [state, setState] = useState<OnboardingState | null>(null);
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [error, setError] = useState<string | null>(null);
+  // La réserve vide n'est pas une panne : elle se dit en bannière, avec le
+  // lien qui permet d'y remédier, et n'occupe pas le champ d'erreur du pas.
+  const [empty, setEmpty] = useState(false);
   const [fatal, setFatal] = useState<string | null>(null);
   /** Vrai quand le joueur regarde une étape antérieure à celle du serveur. */
   const [back, setBack] = useState(false);
@@ -114,6 +118,7 @@ export function OnboardingWizard() {
 
       setStatus("saving");
       setError(null);
+      setEmpty(false);
 
       try {
         setState(await saveOnboarding(update, controller.signal));
@@ -133,6 +138,14 @@ export function OnboardingWizard() {
         }
 
         setStatus("idle");
+
+        // La génération d'un monde est le gros poste du barème : c'est ici
+        // que le refus se rencontre le plus souvent.
+        if (code === "out_of_credits") {
+          setEmpty(true);
+          return;
+        }
+
         setError(t(saveErrorKey(code)));
         if (code === "unknown") console.error("enregistrement impossible", caught);
       }
@@ -218,6 +231,12 @@ export function OnboardingWizard() {
     <div className="space-y-10">
       {header(t("title"), t("lead"))}
       <StepRail current={failedRun ? "inspiration" : showing} />
+
+      {empty ? (
+        <p className="rounded-card border border-brass/40 bg-brass/8 px-4 py-3 text-ui-sm">
+          <OutOfCredits />
+        </p>
+      ) : null}
 
       {failedRun ? (
         <p className="rounded-card border border-ember/40 bg-ember/8 px-4 py-3 text-ui-sm text-vellum-2">

@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { Prisma, PrismaClient, type Subscription } from '@odyssai/db';
+import { PrismaClient, type Subscription } from '@odyssai/db';
 import { creditsFor, nextPeriod, planOf, type CreditAction } from '@odyssai/engine';
 import { PRISMA } from '../prisma/prisma.module.js';
 

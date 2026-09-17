@@ -12,6 +12,7 @@ import { FIELD } from "@/components/ui/field";
 import { requestSignOut } from "@/lib/api";
 import { ProfileError, fetchProfile, updateUsername } from "@/lib/profile";
 
+import { Credits } from "./credits";
 import { EraseAccount } from "./erase-account";
 
 /** `confirming` est la seconde frappe : le pseudo ne se choisit qu'une fois. */
@@ -179,6 +180,8 @@ export function AccountPanel() {
           {error}
         </p>
       </section>
+
+      <Credits />
 
       <section>
         <h2 className="font-voice text-subtitle text-vellum">

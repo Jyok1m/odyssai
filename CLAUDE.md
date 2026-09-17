@@ -224,7 +224,8 @@ Le joueur achète des **crédits**, tarifés par action : un tour en vaut un, un
 Les plans vivent en code, leurs prix chez Stripe, l'appariement dans `STRIPE_PRICE_*` : un identifiant de prix diffère entre le mode test et la production, et le mettre en base rendrait la base propre à un environnement.
 
 - Tout est facultatif. Sans `STRIPE_PRIVATE_KEY`, `BillingConfig.enabled` est faux, la vente se tait et le palier libre suffit à jouer : on développe sans compte Stripe.
-- Une clé `sk_live_` est refusée au démarrage hors production, une `sk_test_` en production. Le secret de webhook devient obligatoire dès qu'une clé est présente.
+- **`ODYSSAI_ENV`, pas `NODE_ENV`.** Les deux copies du site tournent avec `NODE_ENV=production`, l'image étant la même : il ne peut pas les distinguer. `ODYSSAI_ENV` vaut `production` sur la vraie et `staging` sur celle de dev, et lui seul décide du mode Stripe autorisé.
+- Une clé `sk_live_` est refusée au démarrage hors `ODYSSAI_ENV=production`, une `sk_test_` à l'intérieur. Le secret de webhook devient obligatoire dès qu'une clé est présente : une clé sans secret vendrait un abonnement que rien ne créditerait.
 - `NestFactory.create(AppModule, { rawBody: true })`, et `@Req() req: RawBodyRequest<Request>` dans le contrôleur. La signature se calcule sur les octets reçus : le JSON re-sérialisé par Nest ne les reproduit pas. `test/billing.e2e-spec.ts` le vérifie de bout en bout, c'est sa raison d'être.
 - **L'entitlement ne vient que du webhook**, jamais de la redirection de succès, qu'un joueur peut appeler à la main.
 - L'idempotence est la **clé primaire de `stripe_events`** : Stripe rejoue jusqu'à obtenir un 2xx, et un `invoice.paid` traité deux fois créditerait deux fois.
@@ -234,6 +235,9 @@ Les plans vivent en code, leurs prix chez Stripe, l'appariement dans `STRIPE_PRI
 - Le garde est posé **méthode par méthode** sur `BillingController` : le webhook n'a pas de session.
 - Checkout Session pour souscrire, Customer Portal pour gérer et résilier. Aucune saisie de carte chez nous : l'héberger ferait entrer le projet dans le périmètre PCI sans rien apporter.
 - En développement : `stripe listen --forward-to localhost:3001/billing/webhook` donne le secret à mettre dans `STRIPE_WEBHOOK_SECRET`.
+- `GET /billing/catalog` est **public** : le barème n'a rien de personnel, et une page de tarifs doit s'afficher avant l'inscription. `purchasable` y est faux tant qu'un plan n'a pas de prix configuré, et l'écran cache alors l'offre au lieu d'offrir un bouton qui répondrait 503.
+- Aucun montant en euros dans le code : les prix vivent chez Stripe, qui les affiche sur sa propre page. Les recopier ferait deux vérités, et la fausse serait la nôtre.
+- L'URL de retour après Stripe est **construite côté serveur** depuis `user.locale`, jamais reçue du navigateur : accepter une URL de retour du client ouvrirait une redirection arbitraire. Les deux chemins localisés y sont recopiés de `routing.ts`, faute de source partagée entre les deux applications.
 
 ## Conventions
 

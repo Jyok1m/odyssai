@@ -103,6 +103,29 @@
     "errorUnreachable": "L'API ne répond pas. Vérifie qu'elle tourne, et que tu es bien sur l'adresse habituelle du site.",
     "errorSignedOut": "Ta session a expiré. Reconnecte-toi, ta saisie est gardée."
   },
+  "Billing": {
+    "title": "Ta réserve",
+    "loading": "Lecture de ta réserve.",
+    "balance": "{credits, plural, =0 {Aucun crédit} one {# crédit} other {# crédits}} sur {monthly} pour ce mois.",
+    "planLabel": "Plan",
+    "renewsLabel": "Renouvelée le",
+    "endsLabel": "Prend fin le",
+    "plan": {
+      "free": "Libre",
+      "apprenti": "Apprenti",
+      "arpenteur": "Arpenteur"
+    },
+    "costs": "Un tour coûte {turn, plural, one {# crédit} other {# crédits}}, la création d'un monde {world}.",
+    "upgradeTo": "Passer à {plan} : {credits} crédits par mois",
+    "manage": "Gérer mon abonnement",
+    "priceAtCheckout": "Le montant s'affiche sur la page de paiement, tenue par Stripe. Nous ne voyons jamais ton numéro de carte.",
+    "outOfCredits": "Ta réserve est vide. Elle se remplit au mois suivant, ou tout de suite en changeant de plan.",
+    "seePlans": "Voir les plans",
+    "errorDisabled": "La vente n'est pas ouverte pour le moment.",
+    "errorGeneric": "Impossible de lire ta réserve pour le moment.",
+    "errorUnreachable": "L'API ne répond pas. Vérifie qu'elle tourne, et que tu es bien sur l'adresse habituelle du site.",
+    "errorSignedOut": "Ta session a expiré. Reconnecte-toi."
+  },
   "Play": {
     "title": "Entrer en jeu",
     "lead": "Quelques questions, puis ton monde se construit. Tu peux t'arrêter et revenir : tout est gardé.",

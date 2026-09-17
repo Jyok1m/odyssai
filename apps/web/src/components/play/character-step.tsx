@@ -8,7 +8,9 @@ import {
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
+import { OutOfCredits } from "@/components/billing/out-of-credits";
 import { Button } from "@/components/ui/button";
+import { isOutOfCredits } from "@/lib/billing";
 import {
   CharacterError,
   extractCharacter,
@@ -38,6 +40,8 @@ export function CharacterStep({ initial, saving, error, onAdvance }: Props) {
   const [streaming, setStreaming] = useState(false);
   const [drafting, setDrafting] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
+  // La réserve vide n'est pas une panne : ce qu'il faut montrer est un lien.
+  const [empty, setEmpty] = useState(false);
 
   // Une fiche déjà enregistrée rouvre directement le formulaire : le joueur
   // qui revient veut la corriger, pas reprendre la conversation.
@@ -78,6 +82,7 @@ export function CharacterStep({ initial, saving, error, onAdvance }: Props) {
 
     setInput("");
     setChatError(null);
+    setEmpty(false);
     setStreaming(true);
     streamed.current = "";
 
@@ -106,7 +111,8 @@ export function CharacterStep({ initial, saving, error, onAdvance }: Props) {
         if (event.type === "error") setChatError(t("errorGeneric"));
       });
     } catch (caught: unknown) {
-      setChatError(t(errorKey(caught)));
+      if (isOutOfCredits(caught)) setEmpty(true);
+      else setChatError(t(errorKey(caught)));
       // Le message parti reste affiché : il est enregistré côté serveur.
       setMessages((current) => current.filter((message) => message.content !== ""));
     } finally {
@@ -254,7 +260,7 @@ export function CharacterStep({ initial, saving, error, onAdvance }: Props) {
       </div>
 
       <p aria-live="polite" className="mt-3 min-h-5 text-ui-sm text-ember">
-        {chatError}
+        {empty ? <OutOfCredits /> : chatError}
       </p>
     </div>
   );

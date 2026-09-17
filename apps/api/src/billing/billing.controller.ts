@@ -16,8 +16,8 @@ import type { User } from '@odyssai/db';
 import {
   CheckoutRequestSchema,
   type BillingRedirect,
+  type BillingCatalog,
   type BillingSummary,
-  type CreditPrice,
 } from '@odyssai/schemas';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
@@ -41,9 +41,11 @@ export class BillingController {
     return this.billing.summary(user);
   }
 
-  @Get('prices')
-  prices(): CreditPrice {
-    return this.billing.prices();
+  /** Sans garde : le bareme n'a rien de personnel, et la page de tarifs doit
+   * pouvoir s'afficher avant de s'inscrire. */
+  @Get('catalog')
+  catalog(): BillingCatalog {
+    return this.billing.catalog();
   }
 
   @Post('checkout')

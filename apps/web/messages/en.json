@@ -103,6 +103,29 @@
     "errorUnreachable": "The API is not answering. Check that it is running, and that you are on the usual address of the site.",
     "errorSignedOut": "Your session has expired. Sign in again, what you typed is kept."
   },
+  "Billing": {
+    "title": "Your reserve",
+    "loading": "Reading your reserve.",
+    "balance": "{credits, plural, =0 {No credits} one {# credit} other {# credits}} out of {monthly} this month.",
+    "planLabel": "Plan",
+    "renewsLabel": "Renews on",
+    "endsLabel": "Ends on",
+    "plan": {
+      "free": "Free",
+      "apprenti": "Apprentice",
+      "arpenteur": "Wayfarer"
+    },
+    "costs": "A turn costs {turn, plural, one {# credit} other {# credits}}, creating a world {world}.",
+    "upgradeTo": "Move to {plan}: {credits} credits a month",
+    "manage": "Manage my subscription",
+    "priceAtCheckout": "The amount is shown on the payment page, held by Stripe. We never see your card number.",
+    "outOfCredits": "Your reserve is empty. It refills next month, or right away on another plan.",
+    "seePlans": "See the plans",
+    "errorDisabled": "Subscriptions are not open at the moment.",
+    "errorGeneric": "Cannot read your reserve right now.",
+    "errorUnreachable": "The API is not answering. Check that it is running, and that you are on the site's usual address.",
+    "errorSignedOut": "Your session has expired. Sign in again."
+  },
   "Play": {
     "title": "Enter the game",
     "lead": "A few questions, then your world is built. You can stop and come back: everything is kept.",
