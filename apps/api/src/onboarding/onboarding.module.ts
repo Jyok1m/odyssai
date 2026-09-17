@@ -3,6 +3,7 @@ import type { LlmClient } from '@odyssai/llm';
 import { AuthModule } from '../auth/auth.module.js';
 import { CharacterController } from './character.controller.js';
 import { CharacterService } from './character.service.js';
+import { GenerationQueueService } from './generation-queue.service.js';
 import { NARRATOR_LLM, narratorLlmProvider } from './narrator-llm.provider.js';
 import { OnboardingController } from './onboarding.controller.js';
 import { OnboardingService } from './onboarding.service.js';
@@ -11,7 +12,12 @@ import { OnboardingService } from './onboarding.service.js';
 @Module({
   imports: [AuthModule],
   controllers: [OnboardingController, CharacterController],
-  providers: [OnboardingService, CharacterService, narratorLlmProvider],
+  providers: [
+    OnboardingService,
+    CharacterService,
+    GenerationQueueService,
+    narratorLlmProvider,
+  ],
   exports: [OnboardingService],
 })
 export class OnboardingModule implements OnApplicationShutdown {

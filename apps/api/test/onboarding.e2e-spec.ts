@@ -9,6 +9,7 @@ import { AppModule } from './../src/app.module.js';
 import { PRISMA } from './../src/prisma/prisma.module.js';
 import { REDIS } from './../src/redis/redis.module.js';
 import { FakeRedis } from './../src/auth/testing/doubles.js';
+import { GenerationQueueService } from './../src/onboarding/generation-queue.service.js';
 import {
   makeOnboardingPrisma,
   makeUser,
@@ -32,6 +33,8 @@ const SHEET = {
 interface Harness {
   app: INestApplication<App>;
   store: OnboardingStore;
+  /** Univers publies dans la file, pour verifier que l'annonce part. */
+  queued: string[];
 }
 
 async function boot(username: string | null = 'Joueuse'): Promise<Harness> {
@@ -62,18 +65,29 @@ async function boot(username: string | null = 'Joueuse'): Promise<Harness> {
     3600,
   );
 
+  const queued: string[] = [];
+
   const moduleFixture = await Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(REDIS)
     .useValue(redis)
     .overrideProvider(PRISMA)
     .useValue(makeOnboardingPrisma(store))
+    // La file est doublee : ce test verifie que l'annonce part, pas que
+    // Redis la recoit.
+    .overrideProvider(GenerationQueueService)
+    .useValue({
+      enqueue: async (universeId: string) => {
+        queued.push(universeId);
+      },
+      onApplicationShutdown: async () => {},
+    })
     .compile();
 
   const app = moduleFixture.createNestApplication<INestApplication<App>>();
   app.use(cookieParser());
   await app.init();
 
-  return { app, store };
+  return { app, store, queued };
 }
 
 function get(app: INestApplication<App>) {
@@ -90,9 +104,10 @@ function put(app: INestApplication<App>, body: unknown) {
 describe('/onboarding (e2e)', () => {
   let app: INestApplication<App>;
   let store: OnboardingStore;
+  let queued: string[];
 
   beforeEach(async () => {
-    ({ app, store } = await boot());
+    ({ app, store, queued } = await boot());
   });
 
   it('refuse un visiteur sans session', async () => {
@@ -246,6 +261,8 @@ describe('/onboarding (e2e)', () => {
     expect(state.step).toBe('generating');
     expect(state.generation).toEqual({ status: 'queued', step: null, error: null });
     expect(store.jobs).toHaveLength(1);
+    // La ligne d'abord, l'annonce ensuite.
+    expect(queued).toEqual([store.universes[0]!.id]);
 
     // Une generation lancee ferme le parcours : plus rien ne s ecrit.
     await put(app, { step: 'character', character: { name: 'Autre' } })

@@ -13,9 +13,9 @@ Monorepo pnpm + Turborepo, TypeScript partout.
 - `packages/llm` : client OpenAI-compatible (streaming, usage, tracing LangSmith). Même format que `schemas`.
 - `packages/narrator` : corpus du guide, prompts versionnés, FAQ, détection du hors-sujet. Même format.
 
-Redis tourne en tunnel localhost sur le serveur via `redis://:<mot_de_passe>@localhost:16379` (sessions, et la file BullMQ à venir). Postgres est atteint de la même façon, sur `127.0.0.1:15432`, par `POSTGRES_URL` ; le Makefile n'ouvre pour l'instant que le tunnel Redis. Keycloak est hébergé sur `sso.joachimjasmin.com`.
+Redis tourne en tunnel localhost sur le serveur via `redis://:<mot_de_passe>@localhost:16379` (sessions et file BullMQ). Postgres est atteint de la même façon, sur `127.0.0.1:15432`, par `POSTGRES_URL` ; le Makefile n'ouvre pour l'instant que le tunnel Redis. Keycloak est hébergé sur `sso.joachimjasmin.com`.
 
-Prévus, pas encore créés : `apps/worker` (BullMQ), `packages/engine`, LangGraph. pgvector. Ne pas les créer sans demande explicite.
+Prévus, pas encore créés : `packages/engine`, pgvector. Ne pas les créer sans demande explicite.
 
 ## Commandes
 
@@ -117,6 +117,21 @@ La garde sur la propriété intellectuelle a trois étages, et aucun ne suffit s
 - Le modèle de narration **se choisit par évaluation**, pas par réputation. `LLM_NARRATOR_CANDIDATES` porte les modèles à comparer, `pnpm --filter @odyssai/api eval:narration` les fait tourner sur `packages/narrator/evals/abstraction.fr.jsonl`, et le gagnant se reporte dans `LLM_NARRATOR_MODEL`. Vide, `NarratorConfig.configured` est faux et l'api démarre quand même : aucune route ne lit la narration.
 - Les évaluateurs sont en code, sans LLM juge. Le plus sévère est `no_banned_name` : une liste écrite à la main, cas par cas, des noms qui ne doivent pas survivre à l'abstraction.
 - `eval:narration` n'entre pas dans `make check` et consomme des appels réels : une exécution vaut le nombre de cas multiplié par le nombre de candidats.
+
+## Worker et graphe de génération
+
+`apps/worker` consomme la file BullMQ `odyssai-generation` et exécute le graphe LangGraph. Le graphe vit dans `packages/narrator`, sa persistance dans le worker : narrator ne connaît pas Postgres.
+
+- **Redis transporte, Postgres enregistre.** `generation_jobs` porte l'étape, le statut et l'erreur ; les travaux finis ne sont pas gardés en Redis, ce qui empêcherait une relance, l'identifiant du travail étant celui de l'univers.
+- L'identifiant du travail est l'`universeId` : deux requêtes concurrentes du même joueur ne lancent qu'une génération. La base ne peut pas garantir ça seule, rien n'y empêchant deux lectures concurrentes de voir la même étape.
+- **Reprendre un fil se fait en passant `null` en entrée.** Passer l'entrée complète fait repartir le graphe du début même quand un checkpoint existe. C'est `getState().next` qui dit s'il y a quelque chose à reprendre.
+- La **passe d'abstraction reste hors du graphe** : elle est la seule à voir les titres, et l'avoir à part rend la frontière visible. Ses thèmes sont écrits en base dès qu'ils existent, ce qui vaut point de reprise et donne en plus une donnée interrogeable.
+- Les nœuds du graphe sont préfixés `write_` : LangGraph refuse qu'un nœud porte le nom d'un canal d'état, et `charter` ou `lore` sont les deux à la fois.
+- Un nœud rejoue **deux fois** une sortie illisible ou refusée par le schéma. Une erreur de transport, elle, remonte tout de suite : c'est BullMQ qui la relance, avec son délai, et le checkpointer fait reprendre au bon nœud.
+- L'écriture finale est **une seule transaction** : un monde à moitié écrit avec une étape `ready` serait pire qu'un échec, le joueur y entrerait sans lore.
+- Le contrôle final rejoue le lore **une fois** si un nom emprunté apparaît. Au delà, la génération échoue : une boucle qui insiste coûterait sept appels par tour sans garantie de converger.
+- Les tables du checkpointer appartiennent à LangGraph, pas à Prisma : `setup()` les crée au démarrage, aucune migration ne les décrit.
+- **`packages/narrator` est en CommonJS**, donc ses déclarations résolvent `@langchain/*` par la condition `require` alors que le worker, en ESM, les résout par `import`. Même classe à l'exécution, deux identités de type : `apps/worker/src/generate.ts` prend le type de narrator pour que la seule conversion reste au point d'entrée.
 
 ## Conventions
 

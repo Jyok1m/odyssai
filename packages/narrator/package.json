@@ -25,6 +25,7 @@
     "corpus:check": "node scripts/build-guide-corpus.mts --check"
   },
   "dependencies": {
+    "@langchain/langgraph": "^1.4.15",
     "@odyssai/llm": "workspace:*",
     "@odyssai/schemas": "workspace:*",
     "zod": "^4.5.4"

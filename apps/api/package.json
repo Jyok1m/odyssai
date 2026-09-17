@@ -35,6 +35,7 @@
     "@odyssai/llm": "workspace:*",
     "@odyssai/narrator": "workspace:*",
     "@odyssai/schemas": "workspace:*",
+    "bullmq": "^6.3.6",
     "cookie-parser": "^1.4.7",
     "ioredis": "^6.0.0",
     "ipaddr.js": "^2.5.0",

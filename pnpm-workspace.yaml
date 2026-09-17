@@ -6,6 +6,11 @@ allowBuilds:
   '@parcel/watcher': true
   '@prisma/engines': true
   '@swc/core': true
+  # Accelerateur natif optionnel de msgpackr, que BullMQ emploie. Sans lui,
+  # msgpackr retombe sur son implementation JavaScript. Nos charges utiles
+  # font un UUID : la compilation native couterait plus a l'image qu'elle ne
+  # rapporte a la file.
+  msgpackr-extract: false
   prisma: true
   sharp: true
   unrs-resolver: true

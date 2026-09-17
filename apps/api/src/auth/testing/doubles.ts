@@ -82,6 +82,14 @@ export class FakeRedis {
     return this.live(key);
   }
 
+  /**
+   * BullMQ duplique la connexion pour ses commandes bloquantes. Le double est
+   * deja isole et n'ouvre rien : se rendre lui-meme suffit.
+   */
+  duplicate(): this {
+    return this;
+  }
+
   async set(
     key: string,
     value: string,

@@ -86,6 +86,7 @@ Which variable lives where, and when it is read:
 | `LLM_GUIDE_*` | `.env` | API boot | same, from the role defaults |
 | `GUIDE_*`, `TURNSTILE_SECRET_KEY`, `TRUST_PROXY` | `.env` | API boot | same, the two secrets out of the vault |
 | `LLM_NARRATOR_*` | `.env` | API boot | same, from the role defaults. `LLM_NARRATOR_MODEL` stays empty until `eval:narration` has picked a winner |
+| `WORKER_CONCURRENCY` | `.env` | worker boot | the compose `environment:` block. The worker, unlike the API, refuses to start without `LLM_NARRATOR_MODEL` |
 | `SITE_URL` | `apps/web/.env` | web **build** and runtime | a Jenkins build arg for the prerender, repeated in the compose `environment:` for the routes that read it per request |
 | `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | `apps/web/.env` | web **build only** | Jenkins build args, one value per branch |
 | `NEXT_PUBLIC_ALPHA_OPEN` | `apps/web/.env` | web **build only** | nothing: the `ARG` default in the Dockerfile, which is `false` |

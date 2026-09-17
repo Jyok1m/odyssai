@@ -12,6 +12,7 @@ import {
 } from '@odyssai/schemas';
 import { Prisma, PrismaClient, type User } from '@odyssai/db';
 import { PRISMA } from '../prisma/prisma.module.js';
+import { GenerationQueueService } from './generation-queue.service.js';
 
 /** L'etape visee n'est pas ouverte : on n'ecrit pas plus loin qu'on n'est. */
 export class WrongStepError extends Error {
@@ -68,7 +69,10 @@ type UniverseRow = Prisma.UniverseGetPayload<{
 export class OnboardingService {
   private readonly logger = new Logger(OnboardingService.name);
 
-  constructor(@Inject(PRISMA) private readonly prisma: PrismaClient) {}
+  constructor(
+    @Inject(PRISMA) private readonly prisma: PrismaClient,
+    private readonly queue: GenerationQueueService,
+  ) {}
 
   /** Lecture seule : une visite ne cree jamais de ligne. */
   async getState(user: User): Promise<OnboardingState> {
@@ -170,9 +174,10 @@ export class OnboardingService {
         where: { id: universeId },
         data: { step: 'generating' },
       });
-      // La ligne de travail est ecrite ici, sa mise en file viendra avec le
-      // worker : c'est elle qui rend la generation interrogeable, pas Redis.
+      // La ligne d'abord, la file ensuite : c'est elle qui rend la generation
+      // interrogeable et diagnosticable, Redis ne fait que transporter.
       await this.prisma.generationJob.create({ data: { universeId } });
+      await this.queue.enqueue(universeId);
     }
 
     const universe = await this.prisma.universe.findUniqueOrThrow({
