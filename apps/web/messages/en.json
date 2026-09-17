@@ -68,6 +68,7 @@
 	},
 	"Auth": {
 		"signOut": "Log out",
+		"account": "My account",
 		"signOutFailed": "Logging out failed. Try again in a moment.",
 		"errors": {
 			"access_denied": "Login cancelled.",

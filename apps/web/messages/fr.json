@@ -68,6 +68,7 @@
 	},
 	"Auth": {
 		"signOut": "Se déconnecter",
+		"account": "Mon compte",
 		"signOutFailed": "La déconnexion a échoué. Réessaie dans un instant.",
 		"errors": {
 			"access_denied": "Connexion annulée.",

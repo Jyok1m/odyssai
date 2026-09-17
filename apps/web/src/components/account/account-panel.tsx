@@ -2,7 +2,7 @@
 
 import { Username, type PlayerProfile } from "@odyssai/schemas";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useAuthLinks } from "@/components/auth/auth-links";
 import { useSession } from "@/components/auth/session-provider";
@@ -29,11 +29,12 @@ export function AccountPanel() {
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
   const [username, setUsername] = useState("");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
-  const loaded = useRef(false);
 
+  // Pas de garde "deja charge" : en mode strict React monte l'effet deux fois,
+  // et un tel garde laisserait la premiere requete annulee sans jamais la
+  // relancer. Le champ resterait desactive pour toujours.
   useEffect(() => {
-    if (session.status !== "authenticated" || loaded.current) return;
-    loaded.current = true;
+    if (session.status !== "authenticated") return;
 
     const controller = new AbortController();
     fetchProfile(controller.signal)
@@ -42,7 +43,8 @@ export function AccountPanel() {
         setUsername(next.username ?? "");
       })
       .catch(() => {
-        if (!controller.signal.aborted) setStatus({ kind: "error", message: t("errorGeneric") });
+        if (!controller.signal.aborted)
+          setStatus({ kind: "error", message: t("errorGeneric") });
       });
 
     return () => controller.abort();
@@ -78,7 +80,8 @@ export function AccountPanel() {
       setUsername(next.username ?? "");
       setStatus({ kind: "saved" });
     } catch (error: unknown) {
-      const taken = error instanceof ProfileError && error.code === "username_taken";
+      const taken =
+        error instanceof ProfileError && error.code === "username_taken";
       setStatus({
         kind: "error",
         message: taken ? t("errorTaken") : t("errorGeneric"),
@@ -86,13 +89,17 @@ export function AccountPanel() {
     }
   };
 
-  const dirty = profile !== null && username.trim() !== (profile.username ?? "");
+  const dirty = username.trim() !== (profile?.username ?? "");
 
   return (
     <div className="max-w-headline space-y-12">
       <section>
-        <h2 className="font-voice text-subtitle text-vellum">{t("usernameLabel")}</h2>
-        <p className="mt-2 text-ui-sm text-pretty text-vellum-2">{t("usernameHint")}</p>
+        <h2 className="font-voice text-subtitle text-vellum">
+          {t("usernameLabel")}
+        </h2>
+        <p className="mt-2 text-ui-sm text-pretty text-vellum-2">
+          {t("usernameHint")}
+        </p>
 
         <form
           className="mt-4 flex flex-wrap items-start gap-3"
@@ -109,14 +116,18 @@ export function AccountPanel() {
             value={username}
             maxLength={32}
             placeholder={t("usernamePlaceholder")}
-            disabled={profile === null}
             onChange={(event) => {
               setUsername(event.target.value);
               setStatus({ kind: "idle" });
             }}
             className="h-10 min-w-0 flex-1 rounded-control border border-line bg-ink px-3.5 font-ui text-ui-sm text-vellum transition-colors placeholder:text-vellum-3 focus:border-accent"
           />
-          <Button type="submit" disabled={!dirty || status.kind === "saving"}>
+          <Button
+            type="submit"
+            disabled={
+              username.trim().length === 0 || !dirty || status.kind === "saving"
+            }
+          >
             {t("save")}
           </Button>
         </form>
@@ -135,8 +146,12 @@ export function AccountPanel() {
       </section>
 
       <section>
-        <h2 className="font-voice text-subtitle text-vellum">{t("identityTitle")}</h2>
-        <p className="mt-2 text-ui-sm text-pretty text-vellum-2">{t("identityLead")}</p>
+        <h2 className="font-voice text-subtitle text-vellum">
+          {t("identityTitle")}
+        </h2>
+        <p className="mt-2 text-ui-sm text-pretty text-vellum-2">
+          {t("identityLead")}
+        </p>
 
         <dl className="mt-6 space-y-4">
           <div>
@@ -149,7 +164,11 @@ export function AccountPanel() {
                     profile.emailVerified ? "text-vellum-3" : "text-brass"
                   }
                 >
-                  ({profile.emailVerified ? t("emailVerified") : t("emailUnverified")})
+                  (
+                  {profile.emailVerified
+                    ? t("emailVerified")
+                    : t("emailUnverified")}
+                  )
                 </span>
               ) : null}
             </dd>

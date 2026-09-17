@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, type SVGProps } from "react";
 import toast from "react-hot-toast";
 
 import { useAuthLinks } from "@/components/auth/auth-links";
@@ -80,19 +80,23 @@ export function AuthMenu({
         stacked ? "space-y-3" : "flex min-w-0 items-center justify-end gap-x-3"
       }
     >
-      {/* Le nom mene au compte : c'est l'affordance attendue, et elle evite
-          un lien de plus dans une barre deja chargee. */}
-      <Link
+      {/* Un bouton et non du texte : sans bordure ni icone, rien ne disait
+          que le nom menait quelque part. L'icone porte l'affordance, le nom
+          dit de quel compte il s'agit. */}
+      <Button
+        as={Link}
         href="/compte"
+        variant={stacked ? "secondary" : "ghost"}
+        size={size}
         title={session.user.email}
-        className={[
-          "truncate text-ui-sm text-vellum-2 transition-colors hover:text-accent",
-          // Sous xl, le bouton de deconnexion porte seul l'information.
-          stacked ? "block" : "hidden max-w-32 xl:block",
-        ].join(" ")}
+        aria-label={t("account")}
+        className={["min-w-0", stacked ? "w-full" : ""].filter(Boolean).join(" ")}
       >
-        {stacked ? session.user.email : shortName}
-      </Link>
+        <AccountIcon aria-hidden="true" className="size-4 shrink-0" />
+        <span className="truncate">
+          {stacked ? session.user.email : shortName}
+        </span>
+      </Button>
       <Button
         type="button"
         // Bordé : un bouton fantôme passerait pour du texte centré.
@@ -107,5 +111,25 @@ export function AuthMenu({
         {t("signOut")}
       </Button>
     </div>
+  );
+}
+
+/**
+ * Silhouette de compte. `currentColor` et `viewBox` a 24 comme les icones de
+ * marque : la taille et la couleur restent decidees par le parent.
+ */
+function AccountIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <circle cx="12" cy="8.5" r="3.5" />
+      <path d="M5 19.5a7 7 0 0 1 14 0" />
+    </svg>
   );
 }
