@@ -2,10 +2,11 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_NS  = 'jyok1m'
-        WEB_IMAGE  = "${DOCKER_NS}/odyssai-web"
-        API_IMAGE  = "${DOCKER_NS}/odyssai-api"
-        DOCKER_TAG = "${env.BRANCH_NAME}"
+        DOCKER_NS    = 'jyok1m'
+        WEB_IMAGE    = "${DOCKER_NS}/odyssai-web"
+        API_IMAGE    = "${DOCKER_NS}/odyssai-api"
+        WORKER_IMAGE = "${DOCKER_NS}/odyssai-worker"
+        DOCKER_TAG   = "${env.BRANCH_NAME}"
         SSH_HOST = "host.docker.internal"
         PLATFORM = 'linux/amd64'
         // Static pre-render
@@ -55,6 +56,19 @@ pipeline {
                         '''
                     }
                 }
+                stage('worker') {
+                    steps {
+                        // Aucun build-arg : le worker ne sert aucune page, tout
+                        // ce qu'il lit arrive par son fichier d'environnement.
+                        sh '''
+                            docker build \
+                                --platform "$PLATFORM" \
+                                -f apps/worker/Dockerfile \
+                                -t "$WORKER_IMAGE:$DOCKER_TAG" \
+                                .
+                        '''
+                    }
+                }
             }
         }
 
@@ -65,9 +79,9 @@ pipeline {
                     branch 'main'
                 }
             }
-            // Les deux push restent séquentiels : ils partagent la même
-            // session docker login, et un logout concurrent ferait échouer
-            // le push de l'autre.
+            // Les push restent séquentiels : ils partagent la même session
+            // docker login, et un logout concurrent ferait échouer celui des
+            // autres.
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub-credentials',
@@ -78,6 +92,7 @@ pipeline {
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                         docker push "$WEB_IMAGE:$DOCKER_TAG"
                         docker push "$API_IMAGE:$DOCKER_TAG"
+                        docker push "$WORKER_IMAGE:$DOCKER_TAG"
                         docker logout
                     '''
                 }
@@ -92,7 +107,9 @@ pipeline {
                 }
             }
             environment {
-                SERVICES = "${env.BRANCH_NAME == 'main' ? 'api web' : 'api-dev web-dev'}"
+                // Le worker avant le web : il ne sert rien, donc un
+                // redémarrage un peu long ne fait attendre personne.
+                SERVICES = "${env.BRANCH_NAME == 'main' ? 'api worker web' : 'api-dev worker-dev web-dev'}"
             }
             steps {
                 withCredentials([
@@ -119,6 +136,7 @@ pipeline {
             sh '''
                 docker rmi "$WEB_IMAGE:$DOCKER_TAG" || true
                 docker rmi "$API_IMAGE:$DOCKER_TAG" || true
+                docker rmi "$WORKER_IMAGE:$DOCKER_TAG" || true
             '''
         }
     }
