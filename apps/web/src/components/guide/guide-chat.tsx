@@ -181,7 +181,7 @@ export function GuideChat() {
       {started && (
         <ol
           ref={threadRef}
-          className="mt-5 flex max-h-96 flex-col gap-5 overflow-y-auto overscroll-contain px-1 sm:max-h-[30rem]"
+          className="mt-5 flex max-h-80 flex-col gap-5 overflow-y-auto overscroll-contain px-1 sm:max-h-96"
         >
           {turns.map((turn, index) => (
             <li key={index} className="flex flex-col gap-3">
