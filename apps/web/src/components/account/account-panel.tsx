@@ -78,13 +78,8 @@ export function AccountPanel() {
       toast.success(t("saved"));
     } catch (caught: unknown) {
       const code = caught instanceof ProfileError ? caught.code : "unknown";
-      setError(
-        code === "username_taken"
-          ? t("errorTaken")
-          : code === "username_locked"
-            ? t("errorLocked")
-            : t("errorGeneric"),
-      );
+      setError(t(profileErrorKey(code)));
+      if (code === "unknown") console.error("pseudo non enregistré", caught);
       setStep("editing");
     }
   };
@@ -223,4 +218,20 @@ export function AccountPanel() {
       </section>
     </div>
   );
+}
+
+/** Un message par cause : « impossible d'enregistrer » ne dit pas laquelle. */
+function profileErrorKey(code: ProfileError["code"]) {
+  switch (code) {
+    case "username_taken":
+      return "errorTaken" as const;
+    case "username_locked":
+      return "errorLocked" as const;
+    case "unreachable":
+      return "errorUnreachable" as const;
+    case "unauthenticated":
+      return "errorSignedOut" as const;
+    default:
+      return "errorGeneric" as const;
+  }
 }

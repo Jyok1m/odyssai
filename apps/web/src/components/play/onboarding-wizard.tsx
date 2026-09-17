@@ -25,6 +25,27 @@ import { UsernameStep } from "./username-step";
  * onglet fermé juste après la dernière frappe ne perde rien. */
 const AUTOSAVE_DELAY_MS = 900;
 
+/**
+ * Un message par cause. Tout renvoyer sur « impossible d'enregistrer » laisse
+ * le joueur, et celui qui dépanne, sans rien pour distinguer une API éteinte
+ * d'une session expirée ou d'une étape désynchronisée.
+ */
+function saveErrorKey(code: OnboardingError["code"]) {
+  switch (code) {
+    case "locked":
+      return "locked" as const;
+    case "unreachable":
+      return "errorUnreachable" as const;
+    case "unauthenticated":
+      return "errorSignedOut" as const;
+    case "wrong_step":
+    case "validation_error":
+      return "errorRefused" as const;
+    default:
+      return "errorGeneric" as const;
+  }
+}
+
 export function OnboardingWizard() {
   const t = useTranslations("Play");
   const tNav = useTranslations("Nav");
@@ -51,9 +72,13 @@ export function OnboardingWizard() {
       .catch((caught: unknown) => {
         if (controller.signal.aborted) return;
         setFatal(
-          caught instanceof OnboardingError && caught.code === "unauthenticated"
-            ? t("signedOut")
-            : t("errorGeneric"),
+          t(
+            caught instanceof OnboardingError
+              ? caught.code === "unauthenticated"
+                ? "signedOut"
+                : saveErrorKey(caught.code)
+              : "errorGeneric",
+          ),
         );
       });
 
@@ -105,7 +130,8 @@ export function OnboardingWizard() {
         }
 
         setStatus("idle");
-        setError(code === "locked" ? t("locked") : t("errorGeneric"));
+        setError(t(saveErrorKey(code)));
+        if (code === "unknown") console.error("enregistrement impossible", caught);
       }
     },
     [t],

@@ -8,7 +8,12 @@ import { API_BASE_URL } from "./api";
 
 /** Refus de l'API sur le profil. `username_taken` est le seul cas métier. */
 export class ProfileError extends Error {
-  readonly code: ProfileErrorBody["code"] | "unauthenticated" | "unknown";
+  readonly code:
+    | ProfileErrorBody["code"]
+    | "unauthenticated"
+    /** L'API n'a pas répondu : réseau coupé, ou origine refusée. */
+    | "unreachable"
+    | "unknown";
 
   constructor(code: ProfileError["code"]) {
     super(code);
@@ -18,13 +23,17 @@ export class ProfileError extends Error {
 }
 
 export async function fetchProfile(signal?: AbortSignal): Promise<PlayerProfile> {
-  const response = await fetch(`${API_BASE_URL}/me`, {
-    credentials: "include",
-    headers: { Accept: "application/json" },
-    // Une réponse en cache ferait survivre un pseudo périmé à sa modification.
-    cache: "no-store",
-    signal,
-  });
+  const response = await send(
+    `${API_BASE_URL}/me`,
+    {
+      credentials: "include",
+      headers: { Accept: "application/json" },
+      // Une réponse en cache ferait survivre un pseudo périmé à sa modification.
+      cache: "no-store",
+      signal,
+    },
+    () => new ProfileError("unreachable"),
+  );
 
   if (!response.ok) throw await toProfileError(response);
   return PlayerProfile.parse(await response.json());
@@ -35,15 +44,39 @@ export async function updateUsername(username: string): Promise<PlayerProfile> {
   // l'aller-retour et l'API reste seule juge.
   const body = UpdateProfileRequestSchema.parse({ username });
 
-  const response = await fetch(`${API_BASE_URL}/me`, {
-    method: "PATCH",
-    credentials: "include",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify(body),
-  });
+  const response = await send(
+    `${API_BASE_URL}/me`,
+    {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(body),
+    },
+    () => new ProfileError("unreachable"),
+  );
 
   if (!response.ok) throw await toProfileError(response);
   return PlayerProfile.parse(await response.json());
+}
+
+/**
+ * `fetch` rejette sur un échec réseau, et aussi quand le navigateur bloque la
+ * réponse pour cause d'origine non autorisée. Les deux méritent d'être dits :
+ * confondus avec un refus de l'API, ils donnent un message qui n'apprend rien.
+ */
+async function send(
+  input: string,
+  init: RequestInit,
+  unreachable: () => Error,
+): Promise<Response> {
+  try {
+    return await fetch(input, init);
+  } catch (caught: unknown) {
+    // AbortError vient de nous : il remonte tel quel.
+    if (caught instanceof DOMException && caught.name === "AbortError") throw caught;
+    console.error("appel à l'API impossible", caught);
+    throw unreachable();
+  }
 }
 
 async function toProfileError(response: Response): Promise<ProfileError> {

@@ -37,13 +37,8 @@ export function UsernameStep({ onDone }: { onDone: () => void }) {
       onDone();
     } catch (caught: unknown) {
       const code = caught instanceof ProfileError ? caught.code : "unknown";
-      setError(
-        code === "username_taken"
-          ? tAccount("errorTaken")
-          : code === "username_locked"
-            ? tAccount("errorLocked")
-            : tAccount("errorGeneric"),
-      );
+      setError(tAccount(profileErrorKey(code)));
+      if (code === "unknown") console.error("pseudo non enregistré", caught);
       setPhase("editing");
     }
   };
@@ -99,4 +94,20 @@ export function UsernameStep({ onDone }: { onDone: () => void }) {
       </p>
     </form>
   );
+}
+
+/** Un message par cause : « impossible d'enregistrer » ne dit pas laquelle. */
+function profileErrorKey(code: ProfileError["code"]) {
+  switch (code) {
+    case "username_taken":
+      return "errorTaken" as const;
+    case "username_locked":
+      return "errorLocked" as const;
+    case "unreachable":
+      return "errorUnreachable" as const;
+    case "unauthenticated":
+      return "errorSignedOut" as const;
+    default:
+      return "errorGeneric" as const;
+  }
 }

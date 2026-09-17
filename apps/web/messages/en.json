@@ -99,7 +99,9 @@
     "passwordLabel": "Password",
     "manage": "Manage at the identity service",
     "signedOut": "Sign in to see your account.",
-    "loading": "Loading."
+    "loading": "Loading.",
+    "errorUnreachable": "The API is not answering. Check that it is running, and that you are on the usual address of the site.",
+    "errorSignedOut": "Your session has expired. Sign in again, what you typed is kept."
   },
   "Play": {
     "title": "Enter the game",
@@ -219,7 +221,10 @@
       "soonTitle": "The first turn is not written yet",
       "soonLead": "Your world exists, and so does your character. What is missing is the play itself, and it is coming.",
       "placeholder": "The narrator is not listening yet."
-    }
+    },
+    "errorUnreachable": "The API is not answering. Check that it is running, and that you are on the usual address of the site.",
+    "errorSignedOut": "Your session has expired. Sign in again, what you typed is kept.",
+    "errorRefused": "This save was refused. Reload the page to pick up the current step."
   },
   "Concept": {
     "metaTitle": "Concept",

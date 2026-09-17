@@ -99,7 +99,9 @@
     "passwordLabel": "Mot de passe",
     "manage": "Gérer chez le service d'identité",
     "signedOut": "Connecte-toi pour voir ton compte.",
-    "loading": "Chargement."
+    "loading": "Chargement.",
+    "errorUnreachable": "L'API ne répond pas. Vérifie qu'elle tourne, et que tu es bien sur l'adresse habituelle du site.",
+    "errorSignedOut": "Ta session a expiré. Reconnecte-toi, ta saisie est gardée."
   },
   "Play": {
     "title": "Entrer en jeu",
@@ -219,7 +221,10 @@
       "soonTitle": "Le premier tour n'est pas encore écrit",
       "soonLead": "Ton monde existe, ton personnage aussi. Ce qui manque est la partie elle-même, et elle arrive.",
       "placeholder": "Le narrateur n'écoute pas encore."
-    }
+    },
+    "errorUnreachable": "L'API ne répond pas. Vérifie qu'elle tourne, et que tu es bien sur l'adresse habituelle du site.",
+    "errorSignedOut": "Ta session a expiré. Reconnecte-toi, ta saisie est gardée.",
+    "errorRefused": "Cet enregistrement a été refusé. Recharge la page pour repartir de l'étape en cours."
   },
   "Concept": {
     "metaTitle": "Concept",
