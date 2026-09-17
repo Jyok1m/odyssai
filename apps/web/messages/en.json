@@ -217,10 +217,7 @@
       "independent": "unaffiliated",
       "you": "You",
       "traits": "Traits",
-      "attributes": "Attributes",
-      "soonTitle": "The first turn is not written yet",
-      "soonLead": "Your world exists, and so does your character. What is missing is the play itself, and it is coming.",
-      "placeholder": "The narrator is not listening yet."
+      "attributes": "Attributes"
     },
     "errorUnreachable": "The API is not answering. Check that it is running, and that you are on the usual address of the site.",
     "errorSignedOut": "Your session has expired. Sign in again, what you typed is kept.",
@@ -628,5 +625,26 @@
       "account": "Your name and game profile",
       "visited": "Unless they have already been seen by other players: a visited world is kept without you, and a character others met stays in their stories, described as dead."
     }
+  },
+  "Game": {
+    "loading": "Opening the table.",
+    "opening": "The game master is waiting for you to say what you do. You can also ask a question, or defer to fate.",
+    "you": "You",
+    "narrator": "The game master",
+    "thinking": "Thinking.",
+    "inputLabel": "What you do, or what you ask",
+    "placeholder": "What do you do?",
+    "send": "Send",
+    "rollDie": "Roll a d20",
+    "dieHint": "When you do not know what to do, let fate decide.",
+    "fateSaid": "I defer to fate.",
+    "favourable": "favourable",
+    "unfavourable": "unfavourable",
+    "errorGeneric": "The turn did not go through.",
+    "errorRateLimited": "You have played many turns in a row. Come back in a while.",
+    "errorNotReady": "Your world is not ready yet.",
+    "errorUnreachable": "The API is not answering. Check that it is running, and that you are on the usual address of the site.",
+    "errorSignedOut": "Your session has expired. Sign in again, your game is kept.",
+    "errorUnavailable": "The game master is not available right now."
   }
 }

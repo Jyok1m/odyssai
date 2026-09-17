@@ -8,6 +8,7 @@ import { GuideModule } from './guide/guide.module.js';
 import { OnboardingModule } from './onboarding/onboarding.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { RedisModule } from './redis/redis.module.js';
+import { TurnModule } from './turn/turn.module.js';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { RedisModule } from './redis/redis.module.js';
     AuthModule,
     GuideModule,
     OnboardingModule,
+    TurnModule,
   ],
   controllers: [AppController],
   providers: [AppService],

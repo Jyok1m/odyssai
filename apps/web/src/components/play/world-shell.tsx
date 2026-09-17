@@ -6,6 +6,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 
 import { WorldError, fetchWorld } from "@/lib/world";
 
+import { GameChat } from "./game-chat";
 import { RestartAction } from "./restart-action";
 
 /**
@@ -59,6 +60,10 @@ export function WorldShell({ onRestart }: { onRestart: () => void }) {
           {world.charter.premise}
         </p>
       </header>
+
+      {/* La table, en premier sous l'en-tête : c'est là qu'on joue, le reste
+          est de la documentation qu'on consulte. */}
+      <GameChat />
 
       <section className="rounded-card border border-line bg-abyss p-5 sm:p-6">
         <h2 className="font-voice text-subtitle text-vellum">
@@ -162,29 +167,6 @@ export function WorldShell({ onRestart }: { onRestart: () => void }) {
             </div>
           ))}
         </dl>
-      </section>
-
-      {/* Le tour de jeu n'existe pas : la saisie est inerte et le dit. Faire
-          croire l'inverse serait pire qu'une absence. */}
-      <section className="rounded-card border border-line bg-abyss p-5 sm:p-6">
-        <h2 className="font-voice text-subtitle text-vellum">
-          {t("world.soonTitle")}
-        </h2>
-        <p className="mt-3 max-w-measure text-ui-sm text-pretty text-vellum-2">
-          {t("world.soonLead")}
-        </p>
-
-        <div className="mt-5 flex items-center gap-2 rounded-card border border-line bg-ink py-2 pr-2 pl-3.5 opacity-60">
-          <label htmlFor="turn" className="sr-only">
-            {t("world.placeholder")}
-          </label>
-          <input
-            id="turn"
-            disabled
-            placeholder={t("world.placeholder")}
-            className="h-8 w-full border-0 bg-transparent font-ui text-ui-sm text-vellum placeholder:text-vellum-3"
-          />
-        </div>
       </section>
 
       {/* En bas, et derrière un mot à taper : recommencer abandonne un monde

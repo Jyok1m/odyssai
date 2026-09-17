@@ -386,6 +386,10 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
 
     $transaction: async (run: any) => run(double),
 
+    /** Aucune extension dans un double : le rappel long se degrade, et c'est
+     * ce que les tests doivent voir. */
+    $queryRawUnsafe: async () => [{ ok: false }],
+
     guideQuestion: {
       create: async () => ({}),
       deleteMany: async () => ({ count: 0 }),

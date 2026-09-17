@@ -20,7 +20,7 @@ import { OnboardingService } from './onboarding.service.js';
     GenerationQueueService,
     narratorLlmProvider,
   ],
-  exports: [OnboardingService],
+  exports: [OnboardingService, NARRATOR_LLM],
 })
 export class OnboardingModule implements OnApplicationShutdown {
   constructor(@Inject(NARRATOR_LLM) private readonly llm: LlmClient) {}

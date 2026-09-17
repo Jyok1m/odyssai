@@ -13,6 +13,7 @@ import { AppModule } from './../src/app.module.js';
 import { PRISMA } from './../src/prisma/prisma.module.js';
 import { REDIS } from './../src/redis/redis.module.js';
 import { NARRATOR_LLM } from './../src/onboarding/narrator-llm.provider.js';
+import { GenerationQueueService } from './../src/onboarding/generation-queue.service.js';
 import { FakeRedis } from './../src/auth/testing/doubles.js';
 import { makeFakeLlm } from './../src/guide/testing/doubles.js';
 import {
@@ -97,6 +98,8 @@ async function boot(options: {
       .useValue(redis)
       .overrideProvider(PRISMA)
       .useValue(makeOnboardingPrisma(store))
+      .overrideProvider(GenerationQueueService)
+      .useValue({ enqueue: async () => {}, onApplicationShutdown: async () => {} })
       .overrideProvider(NARRATOR_LLM)
       .useValue(makeFakeLlm({ chunks: options.chunks ?? ['Bonjour. ', 'Quel age ?'] }))
       .compile();

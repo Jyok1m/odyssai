@@ -1,0 +1,204 @@
+import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
+import type { LlmClient } from '@odyssai/llm';
+import {
+  CanonFactSchema,
+  CharacterSheetSchema,
+  WorldBibleSchema,
+  WorldCharterSchema,
+  type CanonFact,
+  type CharacterSheet,
+  type WorldBible,
+  type WorldCharter,
+} from '@odyssai/schemas';
+import { PrismaClient } from '@odyssai/db';
+import { PRISMA } from '../prisma/prisma.module.js';
+import { NarratorConfig } from '../config/narrator-config.js';
+import { NARRATOR_LLM } from '../onboarding/narrator-llm.provider.js';
+
+/** Les tours rendus mot pour mot. Au dela, c'est le rappel qui prend le relais. */
+const RECENT_TURNS = 12;
+
+/** Ce qu'une recherche par similarite ramene au plus. */
+const RECALLED_MAX = 6;
+
+const CHANNEL = 'game_turn' as const;
+
+export interface TurnWorld {
+  universeId: string;
+  charter: WorldCharter;
+  bible: WorldBible;
+  character: CharacterSheet;
+}
+
+export interface TurnMemory {
+  canon: CanonFact[];
+  recent: { role: 'user' | 'assistant'; content: string }[];
+  recalled: string[];
+  nextSeq: number;
+}
+
+/**
+ * Ce que le meneur a en tete au moment de jouer.
+ *
+ * Tout est en base, rien ne se perd. Ce qui entre dans un tour, en revanche,
+ * est choisi : la charte et le canon toujours, les derniers tours mot pour mot,
+ * et des tours anciens seulement s'ils ressemblent a ce que le joueur vient de
+ * dire.
+ */
+@Injectable()
+export class TurnMemoryService implements OnModuleInit {
+  private readonly logger = new Logger(TurnMemoryService.name);
+
+  /**
+   * L'extension n'est pas toujours la. L'image Postgres officielle ne l'embarque
+   * pas, et le rappel long ne doit pas empecher de jouer : sans elle on se
+   * contente des derniers tours, et la memoire longue s'allume le jour ou
+   * l'image change, sans rien toucher au code.
+   */
+  private vectors = false;
+
+  constructor(
+    @Inject(PRISMA) private readonly prisma: PrismaClient,
+    @Inject(NARRATOR_LLM) private readonly llm: LlmClient,
+    private readonly config: NarratorConfig,
+  ) {}
+
+  async onModuleInit(): Promise<void> {
+    // Dans un try, et non un `.catch` : une base qui ne repond pas rejette,
+    // mais un client reduit jette avant meme d'avoir une promesse a rejeter.
+    // Une sonde de capacite ne doit jamais pouvoir faire tomber le demarrage.
+    try {
+      const rows = await this.prisma.$queryRawUnsafe<{ ok: boolean }[]>(
+        "select exists(select 1 from pg_extension where extname = 'vector') as ok",
+      );
+      this.vectors = rows[0]?.ok === true;
+    } catch {
+      this.vectors = false;
+    }
+    this.logger.log(
+      this.vectors
+        ? 'memoire longue active, rappel par similarite'
+        : "extension vector absente : le meneur ne se souvient que des derniers tours",
+    );
+  }
+
+  get hasLongMemory(): boolean {
+    return this.vectors;
+  }
+
+  /** Le monde, ou `null` si la partie n'est pas jouable. */
+  async world(userId: string): Promise<TurnWorld | null> {
+    const universe = await this.prisma.universe.findUnique({
+      where: { ownerId: userId },
+      include: { character: true },
+    });
+
+    if (!universe || universe.step !== 'ready') return null;
+
+    const charter = WorldCharterSchema.safeParse(universe.charter);
+    const bible = WorldBibleSchema.safeParse(universe.bible);
+    const character = CharacterSheetSchema.safeParse({
+      name: universe.character?.name ?? undefined,
+      gender: universe.character?.gender ?? undefined,
+      age: universe.character?.age ?? undefined,
+      personality: universe.character?.personality ?? undefined,
+      attributes: universe.character?.attributes ?? undefined,
+    });
+
+    if (!charter.success || !bible.success || !character.success) {
+      this.logger.error(`monde ${universe.id} illisible malgre l'etape ready`);
+      return null;
+    }
+
+    return {
+      universeId: universe.id,
+      charter: charter.data,
+      bible: bible.data,
+      character: character.data,
+    };
+  }
+
+  async recall(universeId: string, message: string): Promise<TurnMemory> {
+    const [canonRows, recentRows, last] = await Promise.all([
+      this.prisma.canonFact.findMany({
+        where: { universeId },
+        orderBy: { createdAt: 'asc' },
+      }),
+      this.prisma.conversationMessage.findMany({
+        where: { universeId, channel: CHANNEL },
+        orderBy: { seq: 'desc' },
+        take: RECENT_TURNS,
+      }),
+      this.prisma.conversationMessage.findFirst({
+        where: { universeId, channel: CHANNEL },
+        orderBy: { seq: 'desc' },
+        select: { seq: true },
+      }),
+    ]);
+
+    const recent = recentRows
+      .reverse()
+      .map((row) => ({ role: row.role, content: row.content }));
+
+    const canon = canonRows.flatMap((row) => {
+      const parsed = CanonFactSchema.safeParse({
+        subject: row.subject,
+        statement: row.statement,
+      });
+      return parsed.success ? [parsed.data] : [];
+    });
+
+    return {
+      canon,
+      recent,
+      recalled: await this.recalled(universeId, message, recentRows.length),
+      nextSeq: last ? last.seq + 1 : 0,
+    };
+  }
+
+  /**
+   * Les tours anciens qui ressemblent a la demande. Ceux deja rendus mot pour
+   * mot sont exclus : les repeter couterait des tokens sans rien apprendre.
+   */
+  private async recalled(
+    universeId: string,
+    message: string,
+    recentCount: number,
+  ): Promise<string[]> {
+    if (!this.vectors || !message.trim() || recentCount < RECENT_TURNS) return [];
+
+    try {
+      const { vectors } = await this.llm.embed({
+        model: this.config.embed.model,
+        inputs: [message],
+      });
+
+      const literal = `[${vectors[0]!.join(',')}]`;
+
+      const rows = await this.prisma.$queryRawUnsafe<{ content: string }[]>(
+        `select content
+           from conversation_messages
+          where universe_id = $1::uuid
+            and channel = 'game_turn'
+            and embedding is not null
+            and seq < (
+              select coalesce(max(seq), 0) - $2
+                from conversation_messages
+               where universe_id = $1::uuid and channel = 'game_turn'
+            )
+          order by embedding <=> $3::vector
+          limit $4`,
+        universeId,
+        RECENT_TURNS,
+        literal,
+        RECALLED_MAX,
+      );
+
+      return rows.map((row) => row.content);
+    } catch (error: unknown) {
+      // Un rappel rate n'est pas un tour rate : le meneur joue avec ce qu'il a.
+      this.logger.warn(`rappel par similarite indisponible : ${String(error)}`);
+      return [];
+    }
+  }
+}

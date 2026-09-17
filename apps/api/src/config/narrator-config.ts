@@ -33,6 +33,18 @@ const EnvSchema = z
       .nonnegative()
       .default(0),
 
+    /**
+     * Bornes d'un joueur authentifie. Le guide se defend d'un visiteur anonyme
+     * par cinq couches ; ici l'identite suffit, il ne reste qu'a empecher qu'un
+     * compte a lui seul epuise le budget.
+     */
+    TURN_RATE_PER_HOUR: z.coerce.number().int().positive().default(60),
+    TURN_RATE_PER_DAY: z.coerce.number().int().positive().default(300),
+
+    /** Modele d'embeddings, pour la memoire longue du meneur. */
+    LLM_EMBED_MODEL: z.string().default('openai/text-embedding-3-small'),
+    LLM_EMBED_DIMENSIONS: z.coerce.number().int().positive().default(1536),
+
     OPENROUTER_API_KEY: z.string().default(''),
     OPENAI_API_KEY: z.string().default(''),
   })
@@ -124,6 +136,20 @@ export class NarratorConfig {
   }
 
   /** Les modeles a comparer. Lus par le script d'evaluation seul. */
+  get turnLimits() {
+    return {
+      perHour: this.env.TURN_RATE_PER_HOUR,
+      perDay: this.env.TURN_RATE_PER_DAY,
+    };
+  }
+
+  get embed() {
+    return {
+      model: this.env.LLM_EMBED_MODEL,
+      dimensions: this.env.LLM_EMBED_DIMENSIONS,
+    };
+  }
+
   get candidates(): string[] {
     return this.env.LLM_NARRATOR_CANDIDATES.split(',')
       .map((value) => value.trim())

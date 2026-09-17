@@ -164,6 +164,21 @@ La garde sur la propriété intellectuelle a trois étages, et aucun ne suffit s
 
 `PostgresSaver` est construit avec `schema: 'langgraph'`. Dans `public`, ses tables étaient invisibles de Prisma, et **chaque `migrate diff` proposait de les supprimer**, ce qui aurait effacé l'état de reprise des générations en cours. Ne pas l'y ramener.
 
+## Le tour de jeu
+
+Le narrateur est un meneur : il mène, le joueur répond. `POST /turn` en SSE, `GET /turn` pour reprendre. `packages/engine` porte les règles, pures, sans base ni modèle.
+
+- **Le code lance le dé à chaque tour**, avec `randomInt` et non `Math.random`. Pas de classement préalable pour décider s'il faut lancer : ce serait le modèle qui déciderait. Il ne reçoit qu'une **bande**, jamais le chiffre, et la consigne de ne s'en servir que si l'issue était incertaine.
+- Le joueur voit **deux états**, favorable ou défavorable, et seulement quand le dé a servi. Le jet brut est gardé dans `turns` : c'est ce qui permet de vérifier après coup qu'un dé n'était pas truqué.
+- `splitTail` (`packages/narrator/src/turn/`) sépare le récit du bloc structuré. C'est **l'inverse de `splitOffTopic`** : sa sentinelle est en tête et il décide avant le premier octet, ici le marqueur est en queue et la prose part au fil de l'eau. Il faut donc retenir en permanence le plus long suffixe qui pourrait être un début de marqueur.
+- **Le départ du joueur arrête la diffusion, pas la génération.** Le bloc de queue doit arriver pour que le canon s'écrive, et le tour doit s'enregistrer pour qu'il le retrouve. C'est l'inverse du guide, où couper l'appel amont est juste.
+- `readDelta` ne jette jamais : le récit est déjà parti au joueur quand elle s'exécute. Un bloc absent ou illisible laisse le tour debout, seul le canon ne grandit pas.
+- Un fait inventé passe par `arbitrateCanon` : refusé s'il contredit un interdit de la charte, refusé s'il emprunte un nom. Le canon nourrit tous les tours suivants, donc un interdit franchi une fois ne se referme plus.
+- `conversation_messages.seq` est le rang explicite. L'ordre d'un journal de partie ne peut pas dépendre d'une horloge à la milliseconde, le message et sa réponse s'écrivant dans la même transaction.
+- **La mémoire longue se dégrade proprement.** `TurnMemoryService` sonde l'extension `vector` au démarrage : absente, le meneur ne se souvient que des douze derniers tours et la partie reste jouable. La sonde est dans un `try`, pas un `.catch` : un client réduit jette avant d'avoir une promesse à rejeter, et une sonde de capacité ne doit jamais faire tomber le démarrage.
+- L'image Postgres doit être `pgvector/pgvector:pg18`. L'officielle n'embarque pas l'extension.
+- `TurnLimitsService` **importe** le script Lua du guide plutôt que de le recopier : il ne connaît que ses clés. La clé est ici l'identifiant du joueur, l'anonymisation HMAC n'ayant plus d'objet pour un authentifié.
+
 ## Conventions
 
 - Les schémas Zod sont la source de vérité ; les types en dérivent via `z.infer`.

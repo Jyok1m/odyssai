@@ -217,10 +217,7 @@
       "independent": "sans attache",
       "you": "Toi",
       "traits": "Traits",
-      "attributes": "Attributs",
-      "soonTitle": "Le premier tour n'est pas encore écrit",
-      "soonLead": "Ton monde existe, ton personnage aussi. Ce qui manque est la partie elle-même, et elle arrive.",
-      "placeholder": "Le narrateur n'écoute pas encore."
+      "attributes": "Attributs"
     },
     "errorUnreachable": "L'API ne répond pas. Vérifie qu'elle tourne, et que tu es bien sur l'adresse habituelle du site.",
     "errorSignedOut": "Ta session a expiré. Reconnecte-toi, ta saisie est gardée.",
@@ -628,5 +625,26 @@
       "account": "Ton pseudo et ton profil de jeu",
       "visited": "Sauf s'ils ont déjà été vus par d'autres joueurs : un monde visité est conservé sans toi, un personnage rencontré reste dans les récits des autres, décrit comme mort."
     }
+  },
+  "Game": {
+    "loading": "Ouverture de la table.",
+    "opening": "Le meneur attend que tu dises ce que tu fais. Tu peux aussi lui poser une question, ou t'en remettre au sort.",
+    "you": "Toi",
+    "narrator": "Le meneur",
+    "thinking": "Il réfléchit.",
+    "inputLabel": "Ce que tu fais, ou ce que tu demandes",
+    "placeholder": "Que fais-tu ?",
+    "send": "Envoyer",
+    "rollDie": "Lancer un d20",
+    "dieHint": "Quand tu ne sais pas quoi faire, laisse le sort décider.",
+    "fateSaid": "Je m'en remets au sort.",
+    "favourable": "favorable",
+    "unfavourable": "défavorable",
+    "errorGeneric": "Le tour n'a pas abouti.",
+    "errorRateLimited": "Tu as joué beaucoup de tours d'affilée. Reviens dans un moment.",
+    "errorNotReady": "Ton monde n'est pas encore prêt.",
+    "errorUnreachable": "L'API ne répond pas. Vérifie qu'elle tourne, et que tu es bien sur l'adresse habituelle du site.",
+    "errorSignedOut": "Ta session a expiré. Reconnecte-toi, ta partie est gardée.",
+    "errorUnavailable": "Le meneur n'est pas disponible pour le moment."
   }
 }
