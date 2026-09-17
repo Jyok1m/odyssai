@@ -29,6 +29,7 @@ import { SessionGuard } from '../auth/session.guard.js';
 import { NarratorConfig } from '../config/narrator-config.js';
 import { NARRATOR_LLM } from '../onboarding/narrator-llm.provider.js';
 import { PRISMA } from '../prisma/prisma.module.js';
+import { ModerationService } from '../moderation/moderation.service.js';
 import { TurnLimitsService } from './turn-limits.service.js';
 import { TurnMemoryService } from './turn-memory.service.js';
 import { uuidv7 } from '../guide/guide.controller.js';
@@ -54,6 +55,7 @@ export class TurnController {
     private readonly config: NarratorConfig,
     private readonly memory: TurnMemoryService,
     private readonly limits: TurnLimitsService,
+    private readonly moderation: ModerationService,
   ) {}
 
   @Get()
@@ -113,8 +115,22 @@ export class TurnController {
       throw new ServiceUnavailableException({ code: 'upstream_error' });
     }
 
+    const request = parsed.data;
+
     const world = await this.memory.world(user.id);
     if (!world) throw new NotFoundException({ code: 'not_ready' });
+
+    // Avant la limite et avant tout appel : un message refuse ne doit ni
+    // consommer un tour, ni atteindre le modele, ni entrer en base.
+    if (request.kind === 'say') {
+      const seen = await this.moderation.check(request.content, user.locale);
+      if (!seen.allow) {
+        throw new HttpException(
+          { code: 'refused', reason: seen.reason },
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
+      }
+    }
 
     const verdict = await this.limits.consume(user.id);
     if (!verdict.allowed) {
@@ -125,7 +141,6 @@ export class TurnController {
       );
     }
 
-    const request = parsed.data;
     const fate = request.kind === 'fate';
     const said = request.kind === 'say' ? request.content : '';
 
@@ -195,6 +210,13 @@ export class TurnController {
 
       const delta = turn.delta();
       const usage = turn.usage();
+
+      // La reponse du meneur, relue par la couche lexicale seule : elle est
+      // instantanee, et le recit est deja parti au joueur de toute facon. Un
+      // second appel de classification l'aurait retarde sans rien empecher.
+      if (!this.moderation.clean(answer)) {
+        this.logger.warn(`reponse du meneur signalee au tour ${seq}`);
+      }
 
       // Le canon grandit : ce qui a ete refuse a la generation ne doit pas
       // rentrer par une reponse du meneur.

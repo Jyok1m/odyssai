@@ -172,12 +172,24 @@ Le narrateur est un meneur : il mène, le joueur répond. `POST /turn` en SSE, `
 - Le joueur voit **deux états**, favorable ou défavorable, et seulement quand le dé a servi. Le jet brut est gardé dans `turns` : c'est ce qui permet de vérifier après coup qu'un dé n'était pas truqué.
 - `splitTail` (`packages/narrator/src/turn/`) sépare le récit du bloc structuré. C'est **l'inverse de `splitOffTopic`** : sa sentinelle est en tête et il décide avant le premier octet, ici le marqueur est en queue et la prose part au fil de l'eau. Il faut donc retenir en permanence le plus long suffixe qui pourrait être un début de marqueur.
 - **Le départ du joueur arrête la diffusion, pas la génération.** Le bloc de queue doit arriver pour que le canon s'écrive, et le tour doit s'enregistrer pour qu'il le retrouve. C'est l'inverse du guide, où couper l'appel amont est juste.
+- Le prompt du meneur est en **v2**. La v1 était cryptique et tournait en boucle : elle demandait de « terminer sur une ouverture », ce que le modèle traduisait par une question à chaque tour. La v2 exige que **quelque chose ait changé** à la fin du tour, interdit de reposer la même question, impose de trancher à la place d'un joueur qui hésite, et bannit le registre oraculaire au profit du concret.
 - `readDelta` ne jette jamais : le récit est déjà parti au joueur quand elle s'exécute. Un bloc absent ou illisible laisse le tour debout, seul le canon ne grandit pas.
 - Un fait inventé passe par `arbitrateCanon` : refusé s'il contredit un interdit de la charte, refusé s'il emprunte un nom. Le canon nourrit tous les tours suivants, donc un interdit franchi une fois ne se referme plus.
 - `conversation_messages.seq` est le rang explicite. L'ordre d'un journal de partie ne peut pas dépendre d'une horloge à la milliseconde, le message et sa réponse s'écrivant dans la même transaction.
 - **La mémoire longue se dégrade proprement.** `TurnMemoryService` sonde l'extension `vector` au démarrage : absente, le meneur ne se souvient que des douze derniers tours et la partie reste jouable. La sonde est dans un `try`, pas un `.catch` : un client réduit jette avant d'avoir une promesse à rejeter, et une sonde de capacité ne doit jamais faire tomber le démarrage.
 - L'image Postgres doit être `pgvector/pgvector:pg18`. L'officielle n'embarque pas l'extension.
 - `TurnLimitsService` **importe** le script Lua du guide plutôt que de le recopier : il ne connaît que ses clés. La clé est ici l'identifiant du joueur, l'anonymisation HMAC n'ayant plus d'objet pour un authentifié.
+
+## Modération
+
+Deux couches, dans cet ordre, sur tout ce qu'un joueur écrit.
+
+- **Lexicale d'abord** (`packages/engine/src/moderation.ts`) : instantanée, gratuite, elle arrête ce qui est manifeste avant tout appel et avant toute écriture.
+- **Classificateur ensuite** (`moderation/v1`) : un petit modèle de conversation. **Aucun point de modération dédié n'est joignable** avec les clés du projet, vérifié : OpenRouter répond 404 sur `/moderations` et la clé OpenAI est vide. Un verdict illisible ou un modèle injoignable valent acceptation : la couche lexicale a déjà tourné, et un classificateur en panne ne doit pas empêcher de jouer.
+- La liste lexicale est **délibérément courte**. Trois racines ont été retirées après avoir fait tomber du français courant : `retard` (mot de tous les jours), `fag` (attrapait « fagot »), `rape` (tout fromage râpé une fois les accents défaits). Les manquer est le prix ; le classificateur lit la phrase, pas les lettres.
+- La comparaison est **toujours sur des mots entiers**, jamais en sous-chaîne, et l'écrasement des répétitions ne touche que les étirements de trois lettres ou plus : à deux, `faggot` devenait `fagot`. Un mot épelé (« c.o.n.n.a.r.d ») n'est recollé que sur une suite d'au moins quatre lettres isolées, signature d'un contournement et non d'une phrase.
+- **Le mot reconnu ne repart jamais au joueur**, seulement la raison : le renvoyer reviendrait à le republier.
+- La réponse du meneur est relue par la couche lexicale seule. Un second appel de classification retarderait un récit déjà parti.
 
 ## Conventions
 

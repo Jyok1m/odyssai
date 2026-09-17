@@ -269,6 +269,8 @@ function errorKey(caught: unknown) {
   if (!(caught instanceof CharacterError)) return "errorGeneric" as const;
 
   switch (caught.code) {
+    case "refused":
+      return "character.refused" as const;
     case "conversation_over":
       return "character.turnsOver" as const;
     case "too_short":

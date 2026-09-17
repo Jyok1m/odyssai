@@ -296,6 +296,8 @@ export const CharacterErrorBodySchema = z.object({
     'conversation_over',
     /** Trop peu d'echanges pour proposer quoi que ce soit. */
     'too_short',
+    /** Le message a ete refuse par la moderation. */
+    'refused',
     'upstream_error',
   ]),
 });

@@ -161,7 +161,8 @@
       "keepTalking": "Encore quelques échanges avant de pouvoir dresser la fiche.",
       "turnsLeft": "{count} messages restants.",
       "turnsOver": "La conversation est close. Tu peux dresser la fiche.",
-      "unavailable": "La création de personnage n'est pas disponible pour le moment."
+      "unavailable": "La création de personnage n'est pas disponible pour le moment.",
+      "refused": "Ce message a été refusé. Reformule-le sans insulte ni contenu explicite."
     },
     "sheet": {
       "title": "Sa fiche",
@@ -645,6 +646,7 @@
     "errorNotReady": "Ton monde n'est pas encore prêt.",
     "errorUnreachable": "L'API ne répond pas. Vérifie qu'elle tourne, et que tu es bien sur l'adresse habituelle du site.",
     "errorSignedOut": "Ta session a expiré. Reconnecte-toi, ta partie est gardée.",
-    "errorUnavailable": "Le meneur n'est pas disponible pour le moment."
+    "errorUnavailable": "Le meneur n'est pas disponible pour le moment.",
+    "errorRefused": "Ce message a été refusé. Le jeu accepte la violence et les sujets sombres, mais pas les insultes ni le contenu explicite."
   }
 }

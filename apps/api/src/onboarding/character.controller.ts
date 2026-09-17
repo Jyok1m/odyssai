@@ -38,6 +38,7 @@ import {
   ConversationOverError,
   TooShortError,
 } from './character.service.js';
+import { ModerationService } from '../moderation/moderation.service.js';
 import { NARRATOR_LLM } from './narrator-llm.provider.js';
 import { LockedError, WrongStepError } from './onboarding.service.js';
 
@@ -59,6 +60,7 @@ export class CharacterController {
     private readonly characters: CharacterService,
     private readonly config: NarratorConfig,
     @Inject(NARRATOR_LLM) private readonly llm: LlmClient,
+    private readonly moderation: ModerationService,
   ) {}
 
   @Get()
@@ -94,6 +96,17 @@ export class CharacterController {
     if (!parsed.success) throw new BadRequestException({ code: 'validation_error' });
 
     this.assertConfigured();
+
+    // Avant d'ecrire quoi que ce soit : le nom d'un personnage est vu par les
+    // autres joueurs le jour ou les univers se croisent.
+    const seen = await this.moderation.check(parsed.data.content, user.locale);
+    if (!seen.allow) {
+      throw new UnprocessableEntityException({
+        code: 'refused',
+        reason: seen.reason,
+      });
+    }
+
     const universeId = await this.guard(() => this.characters.open(user));
 
     const history = await this.characters.history(universeId);

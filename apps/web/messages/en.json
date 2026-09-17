@@ -161,7 +161,8 @@
       "keepTalking": "A few more exchanges before the sheet can be drawn up.",
       "turnsLeft": "{count} messages left.",
       "turnsOver": "The conversation is closed. You can draw up the sheet.",
-      "unavailable": "Character creation is not available right now."
+      "unavailable": "Character creation is not available right now.",
+      "refused": "This message was refused. Rephrase it without insults or explicit content."
     },
     "sheet": {
       "title": "Their sheet",
@@ -645,6 +646,7 @@
     "errorNotReady": "Your world is not ready yet.",
     "errorUnreachable": "The API is not answering. Check that it is running, and that you are on the usual address of the site.",
     "errorSignedOut": "Your session has expired. Sign in again, your game is kept.",
-    "errorUnavailable": "The game master is not available right now."
+    "errorUnavailable": "The game master is not available right now.",
+    "errorRefused": "This message was refused. The game accepts violence and dark subjects, but not insults or explicit content."
   }
 }

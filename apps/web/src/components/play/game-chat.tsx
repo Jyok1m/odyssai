@@ -233,6 +233,8 @@ function errorKey(caught: unknown) {
   if (!(caught instanceof TurnError)) return "errorGeneric" as const;
 
   switch (caught.code) {
+    case "refused":
+      return "errorRefused" as const;
     case "rate_limited":
       return "errorRateLimited" as const;
     case "not_ready":

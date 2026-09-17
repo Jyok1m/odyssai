@@ -41,6 +41,13 @@ const EnvSchema = z
     TURN_RATE_PER_HOUR: z.coerce.number().int().positive().default(60),
     TURN_RATE_PER_DAY: z.coerce.number().int().positive().default(300),
 
+    /**
+     * Le classificateur de moderation. Vide, seule la couche lexicale tourne :
+     * elle arrete l'evidence, pas le reste.
+     */
+    MODERATION_MODEL: z.string().default('qwen/qwen3-8b'),
+    MODERATION_MAX_OUTPUT_TOKENS: z.coerce.number().int().positive().default(40),
+
     /** Modele d'embeddings, pour la memoire longue du meneur. */
     LLM_EMBED_MODEL: z.string().default('openai/text-embedding-3-small'),
     LLM_EMBED_DIMENSIONS: z.coerce.number().int().positive().default(1536),
@@ -140,6 +147,16 @@ export class NarratorConfig {
     return {
       perHour: this.env.TURN_RATE_PER_HOUR,
       perDay: this.env.TURN_RATE_PER_DAY,
+    };
+  }
+
+  get moderation() {
+    return {
+      enabled: this.env.MODERATION_MODEL.length > 0,
+      model: this.env.MODERATION_MODEL,
+      // Un verdict n'a pas a etre cree : zero pour qu'il soit reproductible.
+      temperature: 0,
+      maxOutputTokens: this.env.MODERATION_MAX_OUTPUT_TOKENS,
     };
   }
 

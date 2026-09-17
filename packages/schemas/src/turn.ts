@@ -100,9 +100,30 @@ export const TurnErrorBodySchema = z.object({
     'not_ready',
     'rate_limited',
     'busy',
+    /** Le message a ete refuse par la moderation. */
+    'refused',
     'upstream_error',
   ]),
+  /** Presente sur un refus. Sert a choisir le message, jamais affichee brute. */
+  reason: z
+    .enum(['insulte', 'haine', 'sexuel', 'minorite', 'violence_gratuite'])
+    .nullable()
+    .optional(),
   retryAfterSeconds: z.number().int().nonnegative().optional(),
 });
 
 export type TurnErrorBody = z.infer<typeof TurnErrorBodySchema>;
+
+/**
+ * Verdict de moderation. `reason` n'est jamais rendu au joueur tel quel : il
+ * sert au journal et a choisir le message affiche.
+ */
+export const ModerationVerdictSchema = z.object({
+  allow: z.boolean(),
+  reason: z
+    .enum(['insulte', 'haine', 'sexuel', 'minorite', 'violence_gratuite'])
+    .nullable()
+    .default(null),
+});
+
+export type ModerationVerdict = z.infer<typeof ModerationVerdictSchema>;

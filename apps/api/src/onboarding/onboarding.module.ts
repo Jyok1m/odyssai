@@ -1,7 +1,8 @@
-import { Module, type OnApplicationShutdown, Inject } from '@nestjs/common';
+import { Module, forwardRef, type OnApplicationShutdown, Inject } from '@nestjs/common';
 import type { LlmClient } from '@odyssai/llm';
 import { AuthModule } from '../auth/auth.module.js';
 import { ErasureModule } from '../erasure/erasure.module.js';
+import { ModerationModule } from '../moderation/moderation.module.js';
 import { CharacterController } from './character.controller.js';
 import { CharacterService } from './character.service.js';
 import { GenerationController } from './generation.controller.js';
@@ -12,7 +13,7 @@ import { OnboardingService } from './onboarding.service.js';
 
 /** AuthModule apporte SessionGuard et ce qu'il lui faut pour se construire. */
 @Module({
-  imports: [AuthModule, ErasureModule],
+  imports: [AuthModule, ErasureModule, forwardRef(() => ModerationModule)],
   controllers: [OnboardingController, CharacterController, GenerationController],
   providers: [
     OnboardingService,
