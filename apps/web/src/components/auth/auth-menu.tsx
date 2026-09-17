@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { useAuthLinks } from "@/components/auth/auth-links";
 import { useSession } from "@/components/auth/session-provider";
 import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 import { requestSignOut } from "@/lib/api";
 
 /**
@@ -79,16 +80,19 @@ export function AuthMenu({
         stacked ? "space-y-3" : "flex min-w-0 items-center justify-end gap-x-3"
       }
     >
-      <span
+      {/* Le nom mene au compte : c'est l'affordance attendue, et elle evite
+          un lien de plus dans une barre deja chargee. */}
+      <Link
+        href="/compte"
         title={session.user.email}
         className={[
-          "truncate text-ui-sm text-vellum-2",
+          "truncate text-ui-sm text-vellum-2 transition-colors hover:text-accent",
           // Sous xl, le bouton de deconnexion porte seul l'information.
           stacked ? "block" : "hidden max-w-32 xl:block",
         ].join(" ")}
       >
         {stacked ? session.user.email : shortName}
-      </span>
+      </Link>
       <Button
         type="button"
         // Bordé : un bouton fantôme passerait pour du texte centré.

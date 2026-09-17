@@ -49,6 +49,16 @@ model User {
   /// n'entre pas dans la contrainte d'unicite en Postgres.
   username String? @unique @db.VarChar(32)
 
+  /// Le meme, en minuscules. Sans lui, Nyx et nyx coexisteraient, et le pseudo
+  /// etant affiche aux autres joueurs l'usurpation serait triviale. Colonne
+  /// plutot qu'index fonctionnel : Prisma ne sait pas modeliser le second et
+  /// proposerait de le supprimer a la migration suivante. Ecrit par
+  /// UsersService, jamais a la main. Les diacritiques ne sont pas replies :
+  /// Elise et Elise sans accent restent deux pseudos distincts. Plus large que
+  /// username : quelques majuscules Unicode s'abaissent en deux points de code,
+  /// et la colonne rejetterait la valeur repliee.
+  usernameFolded String? @unique @map("username_folded") @db.VarChar(64)
+
   /// Decide ici et non par un role du realm : le realm authentifie,
   /// l'application decide qui est maitre du jeu.
   isAdmin Boolean @default(false) @map("is_admin")

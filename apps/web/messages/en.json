@@ -77,6 +77,28 @@
 			"unknown": "The login failed. Try again."
 		}
 	},
+	"Account": {
+		"title": "My account",
+		"lead": "Your display name belongs here. Your address and password belong to the identity service.",
+		"usernameLabel": "Display name",
+		"usernameHint": "Between 3 and 32 characters. This is what other players will see.",
+		"usernamePlaceholder": "Ilse Varn",
+		"usernameEmpty": "You have not chosen a display name yet.",
+		"save": "Save",
+		"saved": "Display name saved.",
+		"errorTaken": "That name is already taken.",
+		"errorInvalid": "Letters, digits, space, hyphen and apostrophe only, between 3 and 32 characters.",
+		"errorGeneric": "Cannot save right now.",
+		"identityTitle": "Address and password",
+		"identityLead": "They are handled by the OdyssAI identity service, not by the game: your password never travels through the site.",
+		"emailLabel": "Email address",
+		"emailVerified": "verified",
+		"emailUnverified": "not verified",
+		"passwordLabel": "Password",
+		"manage": "Manage at the identity service",
+		"signedOut": "Sign in to see your account.",
+		"loading": "Loading your account."
+	},
 	"Concept": {
 		"metaTitle": "Concept",
 		"metaDescription": "An online narrative role-playing game led by an AI narrator that remembers everything. Your choices have consequences that last.",

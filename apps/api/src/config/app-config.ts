@@ -71,6 +71,18 @@ export class AppConfig {
   }
 
   /**
+   * Console de compte du realm. `referrer` doit nommer un client existant :
+   * c'est ce qui donne au joueur un retour vers le site depuis les pages de
+   * Keycloak, sans quoi il s'y retrouve enferme.
+   */
+  get accountUrl(): string {
+    const url = new URL(`${this.keycloak.issuer}/account`);
+    url.searchParams.set('referrer', this.env.KEYCLOAK_CLIENT_ID);
+    url.searchParams.set('referrer_uri', this.webBaseUrl.toString());
+    return url.toString();
+  }
+
+  /**
    * En http local le prefixe __Host- est retire : il impose Secure, et Safari
    * refuse un cookie Secure sur http://localhost.
    */

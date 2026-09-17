@@ -24,6 +24,9 @@ export const routing = defineRouting({
     "/mentions-legales": { fr: "/mentions-legales", en: "/legal-notice" },
     "/confidentialite": { fr: "/confidentialite", en: "/privacy" },
     "/cookies": { fr: "/cookies", en: "/cookies" },
+    // Page privee : absente du sitemap et en noindex, contrairement a toutes
+    // les autres, qui sont publiques.
+    "/compte": { fr: "/compte", en: "/account" },
   },
 });
 

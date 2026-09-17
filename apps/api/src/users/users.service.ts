@@ -2,6 +2,14 @@ import { Inject, Injectable } from '@nestjs/common';
 import { PRISMA } from '../prisma/prisma.module.js';
 import { Prisma, PrismaClient, type User } from '../generated/prisma/client.js';
 
+/** Le pseudo est deja pris, a la casse pres. */
+export class UsernameTakenError extends Error {
+  constructor() {
+    super('pseudo deja pris');
+    this.name = 'UsernameTakenError';
+  }
+}
+
 /** Ce que le realm apprend d'un joueur : son sujet, et le miroir d'identite. */
 export interface RealmIdentity {
   keycloakId: string;
@@ -54,6 +62,23 @@ export class UsersService {
       },
       update: {},
     });
+  }
+
+  /**
+   * Pose le pseudo du joueur. Le replie est ecrit ici et nulle part ailleurs :
+   * c'est lui qui porte l'unicite insensible a la casse, et une ecriture qui
+   * l'oublierait laisserait passer un doublon.
+   */
+  async setUsername(userId: string, username: string): Promise<User> {
+    try {
+      return await this.prisma.user.update({
+        where: { id: userId },
+        data: { username, usernameFolded: username.toLowerCase() },
+      });
+    } catch (error: unknown) {
+      if (isUniqueViolation(error)) throw new UsernameTakenError();
+      throw error;
+    }
   }
 
   private async upsert(
