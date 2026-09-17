@@ -31,7 +31,7 @@
 	},
 	"Guide": {
 		"title": "Ask the guide",
-		"intro": "The guide answers from the pages of this site. It knows nothing more, and it does not guess.",
+		"intro": "The guide exlusively answers from the pages of this site.",
 		"suggestionsLabel": "For example",
 		"inputLabel": "Your question",
 		"placeholder": "What happens when two universes cross?",
@@ -319,9 +319,7 @@
 			},
 			{
 				"title": "Publication director",
-				"body": [
-					"The publication director is Joachim Alexandre Jasmin."
-				]
+				"body": ["The publication director is Joachim Alexandre Jasmin."]
 			},
 			{
 				"title": "Hosting",

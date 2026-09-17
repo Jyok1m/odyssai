@@ -7,32 +7,13 @@ pipeline {
         API_IMAGE  = "${DOCKER_NS}/odyssai-api"
         DOCKER_TAG = "${env.BRANCH_NAME}"
         SSH_HOST = "host.docker.internal"
-
-        // Les images sont publiées pour amd64. Sur un agent arm, docker a
-        // besoin de binfmt/QEMU pour cette plateforme.
         PLATFORM = 'linux/amd64'
-
-        // SITE_URL est consommée pendant le prerender de Next : /fr et /en
-        // sont statiques, donc canonical, OpenGraph, sitemap et JSON-LD sont
-        // figés au build. L'image est donc liée à son environnement.
+        // Static pre-render
         SITE_URL = "${env.BRANCH_NAME == 'main' ? 'https://odyssai.app' : 'https://dev.odyssai.app'}"
-
-        // Même contrainte pour l'origine de l'API : le navigateur l'appelle
-        // pour la connexion et la lecture de session, et la valeur est
-        // inscrite dans le bundle au build. Elle doit partager le domaine
-        // enregistrable du site, sinon le cookie de session (SameSite=Lax)
-        // ne part pas : api.odyssai.app avec odyssai.app, api-dev avec dev.
-        // Les deux noms viennent du rôle Ansible odyssai. `api-dev` et non
-        // `api.dev` : le joker DNS *.odyssai.app ne couvre qu'un seul label,
-        // la forme pointée ne résoudrait nulle part et sortirait du
-        // certificat d'edge.
         NEXT_PUBLIC_API_BASE_URL = "${env.BRANCH_NAME == 'main' ? 'https://api.odyssai.app' : 'https://api-dev.odyssai.app'}"
 
-        // Cle publique du widget Turnstile, elle aussi figee dans le bundle au
-        // build. Un widget Cloudflare ne vaut que pour les hostnames qu'il
-        // declare : celui de odyssai.app refuse un jeton emis sur
-        // dev.odyssai.app, d'ou un widget par copie.
-        NEXT_PUBLIC_TURNSTILE_SITE_KEY = "${env.BRANCH_NAME == 'main' ? '0xPROD_SITE_KEY' : '0xDEV_SITE_KEY'}"
+        // Cle publique du widget Turnstile
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY = "${env.BRANCH_NAME == 'main' ? '0x4AAAAAAE58ZZITd0iT8j5F' : '0x4AAAAAAE59s7cZsoHX1-Ku'}"
     }
 
     stages {

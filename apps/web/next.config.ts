@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
 	// Sans ça, le traçage des fichiers s'arrête à apps/web et rate les
 	// dépendances hissées à la racine du workspace.
 	outputFileTracingRoot: path.join(__dirname, "../.."),
+	allowedDevOrigins: ["127.0.0.1"],
 };
 
 const withNextIntl = createNextIntlPlugin();
