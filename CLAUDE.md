@@ -74,6 +74,20 @@ Agent de questions-réponses du site vitrine, sur la page d'accueil. Il répond 
 - Le journal `guide_questions` ne porte ni adresse IP ni identifiant de joueur. `traced` dit si la requête a été échantillonnée : la trace se retrouve dans LangSmith par la métadonnée `guide_question_id`.
 - Les entrées de FAQ arrivent en `validated: false` et ne sont servies qu'après relecture humaine.
 
+## Parcours d'entrée en jeu
+
+De la page d'accueil au monde généré. `GET/PUT /onboarding` derrière `SessionGuard`, une seule ressource pour tout le parcours, et la route interne `/play` (servie `/jouer` en français) côté web.
+
+- **Deux schémas par étape** dans `packages/schemas/src/onboarding.ts` : un brouillon permissif enregistré au fil de la saisie, un strict qui conditionne le passage à l'étape suivante. Le parcours doit être reprenable, donc une saisie à moitié remplie doit pouvoir s'écrire en base.
+- `advance: true` sur une saisie incomplète **enregistre quand même**, puis répond 422 `incomplete` : rien de ce que le joueur a tapé ne se perd parce qu'il a cliqué trop tôt.
+- L'étape `username` n'existe pas dans l'énumération de la base : elle se déduit de la présence d'un pseudo, et le poser passe par `PATCH /me`, pas par cette ressource.
+- La ligne `universes` naît au premier enregistrement, jamais à la lecture : `GET /onboarding` n'écrit rien.
+- On écrit à son étape ou en deçà, jamais au delà. `generating` et `ready` ferment le parcours ; `failed` reste ouvert, c'est la seule sortie d'une génération qui n'a pas abouti.
+- Les thèmes sont effacés à chaque modification de l'inspiration : ils en sont une fonction pure, et un thème périmé ferait générer un monde à partir d'une saisie que le joueur a changée.
+- `characters.name` est nullable : la fiche s'écrit en plusieurs fois, la présence du nom est exigée par le schéma strict, pas par la table.
+- `AuthModule` réexporte `UsersModule` parce que Nest construit `SessionGuard` dans le module qui l'applique. Un module de jeu n'a donc qu'à importer `AuthModule`.
+- La route est gardée par `NEXT_PUBLIC_ALPHA_OPEN` : fermée, elle répond 404 au lieu d'annoncer une ouverture.
+
 ## Conventions
 
 - Les schémas Zod sont la source de vérité ; les types en dérivent via `z.infer`.

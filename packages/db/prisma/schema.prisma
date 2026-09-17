@@ -204,7 +204,10 @@ model Character {
   universeId String   @unique @map("universe_id") @db.Uuid
   universe   Universe @relation(fields: [universeId], references: [id], onDelete: Cascade)
 
-  name String @db.VarChar(60)
+  /// Nullable parce que la fiche s'ecrit en plusieurs fois : la presence du
+  /// nom est exigee par le schema strict au moment de lancer la generation,
+  /// pas par la table, qui doit pouvoir porter un brouillon.
+  name String? @db.VarChar(60)
 
   /// Texte borne par le schema Zod plutot qu'enum : le vocabulaire du genre
   /// n'a pas a etre fige par une migration.

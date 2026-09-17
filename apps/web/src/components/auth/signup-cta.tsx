@@ -6,18 +6,32 @@ import toast from "react-hot-toast";
 import { useAuthLinks } from "@/components/auth/auth-links";
 import { useSession } from "@/components/auth/session-provider";
 import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
+import { ALPHA_OPEN } from "@/lib/flags";
 
 /**
- * Appel à l'action principal. Ouvrir un compte est possible dès maintenant,
- * jouer ne l'est pas : le bouton mène à l'inscription Keycloak tant que le
- * joueur est anonyme, et dit l'attente une fois qu'il est connecté.
+ * Appel à l'action principal. Trois réponses selon l'état : l'inscription pour
+ * un visiteur, l'attente pour un joueur connecté tant que l'alpha est fermée,
+ * et l'entrée en jeu une fois qu'elle est ouverte.
  */
 export function SignupCta({ children }: { children: string }) {
   const t = useTranslations("Alpha");
+  const tPlay = useTranslations("Play");
   const session = useSession();
   const { signUp } = useAuthLinks();
 
   if (session.status === "authenticated") {
+    // Un seul libellé, qu'on commence ou qu'on reprenne : distinguer les deux
+    // demanderait de lire le parcours à chaque visite de la page d'accueil,
+    // et l'assistant reprend de toute façon là où le joueur s'est arrêté.
+    if (ALPHA_OPEN) {
+      return (
+        <Button as={Link} href="/play">
+          {tPlay("enter")}
+        </Button>
+      );
+    }
+
     return (
       <Button type="button" onClick={() => toast(t("closed"))}>
         {children}

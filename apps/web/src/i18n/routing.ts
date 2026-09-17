@@ -24,9 +24,13 @@ export const routing = defineRouting({
     "/mentions-legales": { fr: "/mentions-legales", en: "/legal-notice" },
     "/confidentialite": { fr: "/confidentialite", en: "/privacy" },
     "/cookies": { fr: "/cookies", en: "/cookies" },
-    // Page privee : absente du sitemap et en noindex, contrairement a toutes
-    // les autres, qui sont publiques.
+    // Pages privees : absentes du sitemap et en noindex, contrairement a
+    // toutes les autres, qui sont publiques.
     "/compte": { fr: "/compte", en: "/account" },
+    // Le chemin interne est en anglais comme tout le reste du code, le chemin
+    // servi reste en francais : le joueur ne voit pas d'anglais dans sa barre
+    // d'adresse.
+    "/play": { fr: "/jouer", en: "/play" },
   },
 });
 

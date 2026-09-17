@@ -10,7 +10,9 @@ import { SessionService } from './session.service.js';
   imports: [UsersModule],
   controllers: [AuthController, MeController],
   providers: [OidcService, SessionService, SessionGuard],
-  // Exportes pour les futurs modules de jeu.
-  exports: [SessionService, SessionGuard],
+  // UsersModule est reexporte parce que Nest construit SessionGuard dans le
+  // module qui s'en sert : sans cela, chaque module de jeu devrait connaitre
+  // les dependances internes du garde pour pouvoir l'appliquer.
+  exports: [SessionService, SessionGuard, UsersModule],
 })
 export class AuthModule {}

@@ -34,7 +34,7 @@ const WorkTitle = z.string().trim().min(2).max(WORK_TITLE_MAX);
  * connaitre les franchises. C'est la passe d'abstraction qui la porte, en
  * fondant les themes plutot qu'en les additionnant.
  */
-function normalizeTitle(title: string): string {
+export function normalizeWorkTitle(title: string): string {
   return title
     .normalize('NFKD')
     .replace(/\p{Diacritic}/gu, '')
@@ -44,7 +44,7 @@ function normalizeTitle(title: string): string {
 }
 
 const distinctWorks = (works: string[]) =>
-  new Set(works.map(normalizeTitle)).size === works.length;
+  new Set(works.map(normalizeWorkTitle)).size === works.length;
 
 /**
  * Ce qui se sauvegarde a chaque frappe. Volontairement permissif : un joueur
