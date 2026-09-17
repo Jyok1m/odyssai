@@ -112,6 +112,14 @@ h4 {
   outline-offset: 2px;
 }
 
+/* Cette feuille n'est dans aucun `@layer`, donc elle bat les utilitaires de
+   Tailwind quelle que soit la spécificité : `outline-none` en classe reste
+   sans effet. Là où un conteneur porte déjà l'indication de focus par sa
+   bordure, comme le composer du kit, le liseré ferait doublon. */
+[data-focus-ring="container"] :focus-visible {
+  outline: none;
+}
+
 /* Tailwind 4 aligne le curseur des boutons sur le défaut du navigateur, soit
    la flèche. Le kit les dessine comme des contrôles cliquables : le curseur
    doit le dire aussi. Posé une fois ici plutôt qu'en classe sur chaque
