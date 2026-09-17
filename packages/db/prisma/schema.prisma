@@ -71,7 +71,8 @@ model User {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  universe Universe?
+  universe   Universe?
+  encounters Encounter[]
 
   @@index([email])
   @@map("users")
@@ -153,9 +154,18 @@ enum InspirationMode {
 /// Un univers par joueur. Il nait des la premiere entree dans le parcours, bien
 /// avant d'avoir un monde : c'est lui qui porte la reprise.
 model Universe {
-  id      String @id @default(uuid(7)) @db.Uuid
-  ownerId String @unique @map("owner_id") @db.Uuid
-  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  id String @id @default(uuid(7)) @db.Uuid
+
+  /// Nullable : un monde deja visite par d'autres joueurs survit au depart de
+  /// celui qui l'a fait naitre, detache de lui. NULL n'entre pas dans la
+  /// contrainte d'unicite en Postgres, donc plusieurs mondes orphelins
+  /// cohabitent sans se gener.
+  ///
+  /// SetNull et non Cascade : c'est le service d'effacement qui decide du sort
+  /// d'un monde, pas la base. Contrepartie assumee, supprimer un utilisateur a
+  /// la main laisse desormais son monde orphelin au lieu de l'emporter.
+  ownerId String? @unique @map("owner_id") @db.Uuid
+  owner   User?   @relation(fields: [ownerId], references: [id], onDelete: SetNull)
 
   step OnboardingStep @default(inspiration)
 
@@ -187,9 +197,10 @@ model Universe {
   /// Teinte de l'accent, que l'interface applique en entrant dans ce monde.
   accentHue Int? @map("accent_hue")
 
-  character Character?
-  messages  ConversationMessage[]
-  jobs      GenerationJob[]
+  character  Character?
+  messages   ConversationMessage[]
+  jobs       GenerationJob[]
+  encounters Encounter[]
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
@@ -200,9 +211,13 @@ model Universe {
 /// Le personnage du joueur. Un seul par univers pour l'instant, d'ou l'unicite
 /// sur universe_id : c'est celui qu'il incarne.
 model Character {
-  id         String   @id @default(uuid(7)) @db.Uuid
-  universeId String   @unique @map("universe_id") @db.Uuid
-  universe   Universe @relation(fields: [universeId], references: [id], onDelete: Cascade)
+  id String @id @default(uuid(7)) @db.Uuid
+
+  /// Nullable : un personnage que d'autres joueurs ont rencontre survit a la
+  /// suppression de son monde. C'est le SetNull qui le protege de la cascade,
+  /// sans dependre d'un ordre d'ecriture.
+  universeId String?   @unique @map("universe_id") @db.Uuid
+  universe   Universe? @relation(fields: [universeId], references: [id], onDelete: SetNull)
 
   /// Nullable parce que la fiche s'ecrit en plusieurs fois : la presence du
   /// nom est exigee par le schema strict au moment de lancer la generation,
@@ -219,10 +234,49 @@ model Character {
   personality Json?
   attributes  Json?
 
+  /// La tombe. Non nul, le personnage a ete rencontre par d'autres avant que
+  /// son joueur ne parte : on le garde pour que les recits qui l'ont croise
+  /// puissent le dire mort, au lieu de le faire disparaitre de leur memoire.
+  diedAt DateTime? @map("died_at") @db.Timestamptz(3)
+
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
+  encounters Encounter[]
+
   @@map("characters")
+}
+
+/// Trace d'un croisement : un joueur a visite un univers, et parfois y a
+/// rencontre son personnage.
+///
+/// Rien n'y ecrit encore, la traversee entre univers restant a construire. La
+/// table existe des maintenant parce que c'est elle qui decide du sort d'un
+/// monde et d'un personnage quand leur joueur s'en va : sans elle, il faudrait
+/// deviner plus tard lesquels auraient du etre gardes.
+model Encounter {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  visitorId String @map("visitor_id") @db.Uuid
+  visitor   User   @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+
+  /// L'univers OU la rencontre a eu lieu, et non celui d'ou vient le
+  /// personnage. Quand un personnage voyage, c'est le monde d'accueil qui est
+  /// enregistre : son monde d'origine, lui, n'a recu personne. C'est ce qui
+  /// rend les deux questions reellement independantes.
+  universeId String   @map("universe_id") @db.Uuid
+  universe   Universe @relation(fields: [universeId], references: [id], onDelete: Cascade)
+
+  /// Nul quand le visiteur n'a fait que traverser le monde sans croiser son
+  /// habitant.
+  characterId String?    @map("character_id") @db.Uuid
+  character   Character? @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([universeId, visitorId])
+  @@index([characterId, visitorId])
+  @@map("encounters")
 }
 
 /// Ce qui distingue la creation de personnage du tour de jeu a venir. Les deux

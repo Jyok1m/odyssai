@@ -6,12 +6,16 @@ import { useEffect, useState, type CSSProperties } from "react";
 
 import { WorldError, fetchWorld } from "@/lib/world";
 
+import { RestartAction } from "./restart-action";
+
 /**
  * Coquille de jeu. Elle montre le monde généré et le personnage, et ouvre la
  * conversation. Le tour de jeu n'existe pas encore : la saisie est là, inerte,
  * et le dit plutôt que de faire croire à une partie.
  */
-export function WorldShell() {
+/** `onRestart` fait relire le parcours : le serveur a ramené le joueur à
+ * l'inspiration, et l'assistant doit le suivre. */
+export function WorldShell({ onRestart }: { onRestart: () => void }) {
   const t = useTranslations("Play");
 
   const [world, setWorld] = useState<WorldView | null>(null);
@@ -181,6 +185,12 @@ export function WorldShell() {
             className="h-8 w-full border-0 bg-transparent font-ui text-ui-sm text-vellum placeholder:text-vellum-3"
           />
         </div>
+      </section>
+
+      {/* En bas, et derrière un mot à taper : recommencer abandonne un monde
+          qu'on a mis des minutes à faire naître. */}
+      <section className="border-t border-line pt-8">
+        <RestartAction onDone={onRestart} />
       </section>
     </div>
   );

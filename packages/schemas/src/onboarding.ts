@@ -301,3 +301,28 @@ export const CharacterErrorBodySchema = z.object({
 });
 
 export type CharacterErrorBody = z.infer<typeof CharacterErrorBodySchema>;
+
+/**
+ * Ce qu'il est advenu d'un monde et d'un personnage quand leur joueur s'en va.
+ *
+ * `kept` et `remembered` ne sont pas des echecs de suppression : un monde deja
+ * visite par d'autres joueurs et un personnage deja rencontre leur
+ * appartiennent aussi, et les effacer creverait un trou dans leurs recits.
+ */
+export const DepartureOutcomeSchema = z.object({
+  world: z.enum(['deleted', 'kept', 'none']),
+  character: z.enum(['deleted', 'remembered', 'none']),
+});
+
+export type DepartureOutcome = z.infer<typeof DepartureOutcomeSchema>;
+
+/**
+ * Reponse de DELETE /me. L'identite vit dans le realm, que l'api n'a pas le
+ * droit de toucher : elle rend l'adresse de la console de compte pour que le
+ * joueur y termine lui-meme.
+ */
+export const AccountErasureSchema = DepartureOutcomeSchema.extend({
+  accountUrl: z.url(),
+});
+
+export type AccountErasure = z.infer<typeof AccountErasureSchema>;

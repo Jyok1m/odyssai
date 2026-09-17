@@ -1,6 +1,8 @@
 import {
+  AccountErasureSchema,
   PlayerProfile,
   UpdateProfileRequestSchema,
+  type AccountErasure,
   type ProfileErrorBody,
 } from "@odyssai/schemas";
 
@@ -57,6 +59,21 @@ export async function updateUsername(username: string): Promise<PlayerProfile> {
 
   if (!response.ok) throw await toProfileError(response);
   return PlayerProfile.parse(await response.json());
+}
+
+/**
+ * Le départ. Efface les données de jeu et ferme la session ; l'identité reste
+ * chez Keycloak, et `accountUrl` mène là où le joueur la supprimera lui-même.
+ */
+export async function eraseAccount(): Promise<AccountErasure> {
+  const response = await send(
+    `${API_BASE_URL}/me`,
+    { method: "DELETE", credentials: "include" },
+    () => new ProfileError("unreachable"),
+  );
+
+  if (!response.ok) throw await toProfileError(response);
+  return AccountErasureSchema.parse(await response.json());
 }
 
 /**

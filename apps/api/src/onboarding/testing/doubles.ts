@@ -22,7 +22,7 @@ interface UserRow {
 
 interface UniverseRow {
   id: string;
-  ownerId: string;
+  ownerId: string | null;
   step: string;
   mode: string | null;
   works: string[];
@@ -38,14 +38,23 @@ interface UniverseRow {
 
 interface CharacterRow {
   id: string;
-  universeId: string;
+  universeId: string | null;
   name: string | null;
   gender: string | null;
   age: number | null;
   personality: unknown;
   attributes: unknown;
+  diedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+interface EncounterRow {
+  id: string;
+  visitorId: string;
+  universeId: string;
+  characterId: string | null;
+  createdAt: Date;
 }
 
 interface MessageRow {
@@ -76,6 +85,7 @@ export interface OnboardingStore {
   characters: CharacterRow[];
   messages: MessageRow[];
   jobs: JobRow[];
+  encounters?: EncounterRow[];
 }
 
 /** `Prisma.DbNull` est un marqueur, pas une valeur : la colonne recoit NULL. */
@@ -155,6 +165,15 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         const row = store.users.find((user) => user.id === where.id)!;
         return { ...assign(row, data) };
       },
+      // SetNull sur universes.owner_id : le monde survit, detache.
+      delete: async ({ where }: any) => {
+        const row = store.users.find((user) => user.id === where.id)!;
+        store.users = store.users.filter((user) => user.id !== where.id);
+        for (const universe of store.universes) {
+          if (universe.ownerId === where.id) universe.ownerId = null as any;
+        }
+        return { ...row };
+      },
     },
 
     universe: {
@@ -222,9 +241,33 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         row.updatedAt = new Date();
         return hydrate(row, include);
       },
+      /** Cascade sur messages, travaux et rencontres ; SetNull sur le personnage. */
+      delete: async ({ where }: any) => {
+        store.universes = store.universes.filter((row) => row.id !== where.id);
+        store.messages = store.messages.filter((row) => row.universeId !== where.id);
+        store.jobs = store.jobs.filter((row) => row.universeId !== where.id);
+        store.encounters = (store.encounters ?? []).filter(
+          (row) => row.universeId !== where.id,
+        );
+        for (const character of store.characters) {
+          if (character.universeId === where.id) character.universeId = null as any;
+        }
+        return {};
+      },
     },
 
     character: {
+      update: async ({ where, data }: any) => {
+        const row = store.characters.find((item) => item.id === where.id)!;
+        return { ...assign(row, data) };
+      },
+      delete: async ({ where }: any) => {
+        store.characters = store.characters.filter((row) => row.id !== where.id);
+        store.encounters = (store.encounters ?? []).filter(
+          (row) => row.characterId !== where.id,
+        );
+        return {};
+      },
       upsert: async ({ where, create, update }: any) => {
         const existing = store.characters.find(
           (row) => row.universeId === where.universeId,
@@ -240,6 +283,7 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
           age: null,
           personality: null,
           attributes: null,
+          diedAt: null,
           createdAt: now,
           updatedAt: now,
         };
@@ -247,6 +291,21 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         store.characters.push(row);
         return { ...row };
       },
+    },
+
+    encounter: {
+      count: async ({ where }: any) =>
+        (store.encounters ?? []).filter((row) => {
+          if (where.universeId !== undefined && row.universeId !== where.universeId) {
+            return false;
+          }
+          if (where.characterId !== undefined && row.characterId !== where.characterId) {
+            return false;
+          }
+          return where.visitorId?.not === undefined
+            ? true
+            : row.visitorId !== where.visitorId.not;
+        }).length,
     },
 
     conversationMessage: {
@@ -292,9 +351,21 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
             row.channel === where.channel &&
             (where.role === undefined || row.role === where.role),
         ).length,
+      deleteMany: async ({ where }: any) => {
+        const kept = store.messages.filter((row) => row.universeId !== where.universeId);
+        const count = store.messages.length - kept.length;
+        store.messages = kept;
+        return { count };
+      },
     },
 
     generationJob: {
+      deleteMany: async ({ where }: any) => {
+        const kept = store.jobs.filter((row) => row.universeId !== where.universeId);
+        const count = store.jobs.length - kept.length;
+        store.jobs = kept;
+        return { count };
+      },
       create: async ({ data }: any) => {
         const row: JobRow = {
           id: randomUUID(),
@@ -312,6 +383,8 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         return { ...row };
       },
     },
+
+    $transaction: async (run: any) => run(double),
 
     guideQuestion: {
       create: async () => ({}),

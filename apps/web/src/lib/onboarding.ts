@@ -1,7 +1,9 @@
 import {
+  DepartureOutcomeSchema,
   OnboardingStateSchema,
   OnboardingUpdateSchema,
   type OnboardingErrorBody,
+  type DepartureOutcome,
   type OnboardingState,
   type OnboardingUpdate,
 } from "@odyssai/schemas";
@@ -80,6 +82,23 @@ async function send(
     console.error("appel à l'API impossible", caught);
     throw unreachable();
   }
+}
+
+/**
+ * Recommencer. Le monde et le personnage sont traités selon la règle du
+ * départ, et le joueur repart à l'inspiration.
+ */
+export async function restartOnboarding(
+  signal?: AbortSignal,
+): Promise<DepartureOutcome> {
+  const response = await send(
+    `${API_BASE_URL}/onboarding`,
+    { method: "DELETE", credentials: "include", signal },
+    () => new OnboardingError("unreachable"),
+  );
+
+  if (!response.ok) throw await toOnboardingError(response);
+  return DepartureOutcomeSchema.parse(await response.json());
 }
 
 async function toOnboardingError(response: Response): Promise<OnboardingError> {

@@ -224,7 +224,9 @@
     },
     "errorUnreachable": "The API is not answering. Check that it is running, and that you are on the usual address of the site.",
     "errorSignedOut": "Your session has expired. Sign in again, what you typed is kept.",
-    "errorRefused": "This save was refused. Reload the page to pick up the current step."
+    "errorRefused": "This save was refused. Reload the page to pick up the current step.",
+    "backToInspiration": "Back to my inspiration",
+    "backToCharacter": "Back to my character"
   },
   "Concept": {
     "metaTitle": "Concept",
@@ -529,9 +531,11 @@
       {
         "title": "How long",
         "body": [
-          "Account data is kept for as long as the account exists, then erased within thirty days of its deletion.",
+          "Account data is kept for as long as the account exists. Deleting it from the My account page is immediate: there is no delay and no restore.",
           "Questions asked to the guide are erased after thirty days.",
-          "Server technical logs are kept for at most twelve months."
+          "Server technical logs are kept for at most twelve months.",
+          "A world other players have already visited is not deleted with its author: it is kept, detached from them, and emptied of everything they typed, namely the works they named, their free description and the creation conversation. What remains is the text written by the model, with no link to a person.",
+          "Likewise, a character other players met stays in their stories, described as dead. Its name is the only thing that remains of it."
         ]
       },
       {
@@ -545,8 +549,9 @@
       {
         "title": "Your rights",
         "body": [
-          "You have rights of access, rectification, erasure, restriction, objection and portability. Write to the contact address; you will get an answer within one month.",
-          "If it does not satisfy you, you may lodge a complaint with the French authority CNIL, 3 place de Fontenoy, 75007 Paris, at cnil.fr."
+          "You have rights of access, rectification, erasure, restriction, objection and portability. Erasure is done straight from the My account page, without having to ask. For the other rights, write to the contact address; you will get an answer within one month.",
+          "If it does not satisfy you, you may lodge a complaint with the French authority CNIL, 3 place de Fontenoy, 75007 Paris, at cnil.fr.",
+          "Deleting your account here erases your game data. Your email address and password live at the identity service, where the confirmation screen takes you to delete them yourself: we are not allowed to touch them on your behalf."
         ]
       }
     ]
@@ -591,5 +596,37 @@
     "accept": "Accept all",
     "decline": "Decline",
     "manage": "Manage cookies"
+  },
+  "Danger": {
+    "word": "DELETE",
+    "prompt": "Type {word} to confirm.",
+    "cancel": "Cancel",
+    "restart": {
+      "label": "Start a new game",
+      "title": "Start over",
+      "lead": "Your current world and character will be given up, and you will start again from the inspiration step.",
+      "confirm": "Start over",
+      "busy": "Erasing.",
+      "kept": "Your world had already received visitors: it is kept, detached from you and emptied of what you typed.",
+      "remembered": "Other players met your character: they keep it in their stories, now dead.",
+      "gone": "Nothing had been seen by anyone: everything was deleted."
+    },
+    "erase": {
+      "label": "Delete my account",
+      "title": "Delete my account",
+      "lead": "This is immediate and final. There is no delay and no restore.",
+      "confirm": "Delete permanently",
+      "busy": "Deleting.",
+      "doneTitle": "Your game data is erased",
+      "doneLead": "One step remains, at the identity service: your email address and password live there, and we are not allowed to touch them on your behalf.",
+      "doneWarning": "Until you do, signing in here again will create an empty player.",
+      "finish": "Finish the deletion"
+    },
+    "what": {
+      "world": "Your world, its lore, factions and characters",
+      "character": "Your character and the conversation that created it",
+      "account": "Your name and game profile",
+      "visited": "Unless they have already been seen by other players: a visited world is kept without you, and a character others met stays in their stories, described as dead."
+    }
   }
 }

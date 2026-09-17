@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ErasureModule } from '../erasure/erasure.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { AuthController } from './auth.controller.js';
 import { MeController } from './me.controller.js';
@@ -7,7 +8,7 @@ import { SessionGuard } from './session.guard.js';
 import { SessionService } from './session.service.js';
 
 @Module({
-  imports: [UsersModule],
+  imports: [UsersModule, ErasureModule],
   controllers: [AuthController, MeController],
   providers: [OidcService, SessionService, SessionGuard],
   // UsersModule est reexporte parce que Nest construit SessionGuard dans le

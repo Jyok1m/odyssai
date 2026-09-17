@@ -71,6 +71,11 @@ export async function generate(
   if (!universe) throw new NothingToDo('univers absent');
   if (universe.step === 'ready') throw new NothingToDo('monde deja genere');
 
+  // Un monde detache est un monde dont le joueur est parti, conserve parce que
+  // d'autres l'avaient visite. Il n'y a plus personne pour qui generer, et pas
+  // de langue dans laquelle ecrire.
+  if (!universe.owner) throw new NothingToDo('monde sans proprietaire');
+
   const job = universe.jobs[0];
   if (!job) throw new NothingToDo('aucun travail enregistre');
 

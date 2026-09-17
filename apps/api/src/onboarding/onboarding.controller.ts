@@ -3,15 +3,21 @@ import {
   Body,
   ConflictException,
   Controller,
+  Delete,
   Get,
   Put,
   UnprocessableEntityException,
   UseGuards,
 } from '@nestjs/common';
-import { OnboardingUpdateSchema, type OnboardingState } from '@odyssai/schemas';
+import {
+  OnboardingUpdateSchema,
+  type DepartureOutcome,
+  type OnboardingState,
+} from '@odyssai/schemas';
 import type { User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
+import { ErasureService } from '../erasure/erasure.service.js';
 import {
   IncompleteError,
   LockedError,
@@ -29,11 +35,32 @@ import {
 @Controller('onboarding')
 @UseGuards(SessionGuard)
 export class OnboardingController {
-  constructor(private readonly onboarding: OnboardingService) {}
+  constructor(
+    private readonly onboarding: OnboardingService,
+    private readonly erasure: ErasureService,
+  ) {}
 
   @Get()
   state(@CurrentUser() user: User): Promise<OnboardingState> {
     return this.onboarding.getState(user);
+  }
+
+  /**
+   * Recommencer. Le monde et le personnage sont traites selon la regle du
+   * depart, puis le joueur repart a l'etape inspiration.
+   *
+   * Refuse pendant la generation, comme les ecritures le sont : effacer un
+   * monde qu'un worker est en train d'ecrire le ferait echouer sur une ligne
+   * disparue plutot que de l'arreter proprement.
+   */
+  @Delete()
+  async restart(@CurrentUser() user: User): Promise<DepartureOutcome> {
+    const state = await this.onboarding.getState(user);
+    if (state.step === 'generating') {
+      throw new ConflictException({ code: 'locked' });
+    }
+
+    return this.erasure.releaseWorld(user.id);
   }
 
   @Put()

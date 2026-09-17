@@ -16,6 +16,7 @@ import { OnboardingError, fetchOnboarding, saveOnboarding } from "@/lib/onboardi
 
 import { CharacterStep } from "./character-step";
 import { GenerationStep } from "./generation-step";
+import { RestartAction } from "./restart-action";
 import { WorldShell } from "./world-shell";
 import { InspirationStep, type SaveStatus } from "./inspiration-step";
 import { StepRail } from "./step-rail";
@@ -56,6 +57,8 @@ export function OnboardingWizard() {
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const [fatal, setFatal] = useState<string | null>(null);
+  /** Vrai quand le joueur regarde une étape antérieure à celle du serveur. */
+  const [back, setBack] = useState(false);
 
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inFlight = useRef<AbortController | null>(null);
@@ -190,7 +193,7 @@ export function OnboardingWizard() {
 
   // Le monde prêt n'est plus un parcours : il prend tout l'écran, sans titre
   // d'assistant ni fil d'étapes au-dessus de lui.
-  if (state.step === "ready") return <WorldShell />;
+  if (state.step === "ready") return <WorldShell onRestart={reload} />;
 
   if (state.step === "generating") {
     return (
@@ -205,10 +208,16 @@ export function OnboardingWizard() {
   // n'a pas abouti, et l'API l'accepte en écriture pour cette raison.
   const failedRun = state.step === "failed";
 
+  // L'étape affichée, distincte de celle du serveur, peut reculer. L'API
+  // accepte déjà d'écrire à son étape ou en deçà, donc corriger l'inspiration
+  // depuis l'écran du personnage n'a rien à demander de plus, et seul un
+  // `advance` déplace l'étape côté serveur.
+  const showing = back && state.step === "character" ? "inspiration" : state.step;
+
   return (
     <div className="space-y-10">
       {header(t("title"), t("lead"))}
-      <StepRail current={failedRun ? "inspiration" : state.step} />
+      <StepRail current={failedRun ? "inspiration" : showing} />
 
       {failedRun ? (
         <p className="rounded-card border border-ember/40 bg-ember/8 px-4 py-3 text-ui-sm text-vellum-2">
@@ -218,7 +227,7 @@ export function OnboardingWizard() {
 
       {state.step === "username" ? (
         <UsernameStep onDone={reload} />
-      ) : state.step === "character" ? (
+      ) : showing === "character" ? (
         <CharacterStep
           initial={state.character}
           saving={status === "saving"}
@@ -234,6 +243,16 @@ export function OnboardingWizard() {
           onAdvance={onAdvance}
         />
       )}
+
+      {/* Reculer d'une étape, ou en revenir. La saisie est déjà gardée des
+          deux côtés : il ne manquait que le chemin. */}
+      {state.step === "character" ? (
+        <Button variant="ghost" size="sm" onClick={() => setBack(!back)}>
+          {back ? t("backToCharacter") : t("backToInspiration")}
+        </Button>
+      ) : null}
+
+      {failedRun ? <RestartAction onDone={reload} /> : null}
     </div>
   );
 }

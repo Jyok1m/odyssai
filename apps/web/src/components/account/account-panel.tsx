@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { requestSignOut } from "@/lib/api";
 import { ProfileError, fetchProfile, updateUsername } from "@/lib/profile";
 
+import { EraseAccount } from "./erase-account";
+
 /** `confirming` est la seconde frappe : le pseudo ne se choisit qu'une fois. */
 type Step = "idle" | "editing" | "confirming" | "saving";
 
@@ -215,6 +217,12 @@ export function AccountPanel() {
         >
           {tAuth("signOut")}
         </Button>
+      </section>
+
+      {/* Tout en bas, apres la deconnexion : on ne tombe pas dessus en
+          cherchant a partir pour la journee. */}
+      <section className="border-t border-line pt-8">
+        <EraseAccount />
       </section>
     </div>
   );

@@ -3,12 +3,17 @@ import {
   Body,
   ConflictException,
   Controller,
+  Delete,
   Get,
   Patch,
+  Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { CookieOptions, Request, Response } from 'express';
 import {
   UpdateProfileRequestSchema,
+  type AccountErasure,
   type PlayerProfile,
 } from '@odyssai/schemas';
 import { AppConfig } from '../config/app-config.js';
@@ -18,7 +23,9 @@ import {
   UsernameTakenError,
   UsersService,
 } from '../users/users.service.js';
+import { ErasureService } from '../erasure/erasure.service.js';
 import { CurrentUser } from './current-user.decorator.js';
+import { SessionService } from './session.service.js';
 import { SessionGuard } from './session.guard.js';
 
 /**
@@ -35,6 +42,8 @@ export class MeController {
   constructor(
     private readonly users: UsersService,
     private readonly config: AppConfig,
+    private readonly erasure: ErasureService,
+    private readonly sessions: SessionService,
   ) {}
 
   @Get()
@@ -69,6 +78,47 @@ export class MeController {
       }
       throw error;
     }
+  }
+
+  /**
+   * Le depart. Efface les donnees de jeu selon la regle, la ligne du joueur,
+   * et ferme la session.
+   *
+   * L'identite reste : elle appartient au realm, et l'api n'a volontairement
+   * aucun droit dessus. `accountUrl` mene le joueur la ou il la supprimera
+   * lui-meme. Tant qu'il ne l'a pas fait, se reconnecter ici recree un joueur
+   * vide, ce que l'ecran doit lui dire.
+   */
+  @Delete()
+  async erase(
+    @CurrentUser() user: User,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AccountErasure> {
+    const outcome = await this.erasure.eraseAccount(user.id);
+
+    // Apres l'effacement : une session detruite d'abord ferait echouer le
+    // garde sur la requete en cours.
+    const sessionId = this.readCookie(req, this.config.cookies.session);
+    if (sessionId) await this.sessions.destroy(sessionId);
+    res.clearCookie(this.config.cookies.session, this.cookieOptions());
+
+    return { ...outcome, accountUrl: this.config.accountUrl };
+  }
+
+  private cookieOptions(): CookieOptions {
+    return {
+      httpOnly: true,
+      secure: this.config.cookies.secure,
+      sameSite: 'lax',
+      path: '/',
+    };
+  }
+
+  private readCookie(req: Request, name: string): string | undefined {
+    const jar = req.cookies as Record<string, unknown> | undefined;
+    const value = jar?.[name];
+    return typeof value === 'string' && value.length > 0 ? value : undefined;
   }
 
   private toProfile(user: User): PlayerProfile {

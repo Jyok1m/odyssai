@@ -148,6 +148,22 @@ La garde sur la propriété intellectuelle a trois étages, et aucun ne suffit s
 - La teinte du monde passe par `--world-hue` sous `[data-world]`, comme le kit le prévoit. Ne pas écrire `--accent` à la main : ce serait contourner la règle au lieu de la suivre, et perdre sa transition.
 - Le champ de saisie du tour de jeu est **présent et inerte**, et le dit. Le tour n'existe pas encore, et faire croire l'inverse serait pire qu'une absence.
 
+## Partir : recommencer, supprimer son compte
+
+`DELETE /onboarding` recommence une partie, `DELETE /me` efface le compte. Les deux passent par `ErasureService` (`apps/api/src/erasure/`), un module à part : `MeController` vit dans `AuthModule`, qu'`OnboardingModule` importe déjà, et l'inverse ferait un cycle.
+
+- **Deux questions indépendantes**, pas une. Un personnage rencontré ailleurs est gardé avec `died_at` posé ; un monde visité est gardé, détaché. Un personnage voyage, donc il peut avoir été rencontré sans que son monde ait reçu qui que ce soit.
+- `encounters.universe_id` est l'univers **où** la rencontre a eu lieu, pas celui d'où vient le personnage. C'est ce qui rend les deux questions réellement indépendantes, et un test l'a démontré en échouant sur une fixture qui les confondait.
+- Personne n'écrit dans `encounters` : la traversée entre univers reste à construire. Les deux prédicats sont donc faux et tout est supprimé, ce qui est juste tant que personne ne peut se croiser.
+- Un monde gardé est **vidé des mots du joueur** : `works`, `own_description` et toute la conversation de création. Ce qui reste est le texte du modèle, sans lien avec une personne. C'est ce qui permet de le conserver sans trahir la page Confidentialité, qui le dit désormais explicitement.
+- `universes.owner_id` et `characters.universe_id` sont nullables en `SetNull`, pas en `Cascade` : c'est le service qui décide du sort d'un monde, pas la base. Contrepartie, supprimer un utilisateur à la main laisse son monde orphelin. Le worker refuse de générer pour un monde sans propriétaire.
+- **L'API n'a aucun droit sur Keycloak**, et n'en gagne aucun : `DELETE /me` efface le jeu et ferme la session, puis rend `accountUrl` pour que le joueur supprime son identité lui-même. Le rôle ansible active pour cela l'action requise `delete_account` et le rôle client `account/delete-account`.
+- La confirmation est un **mot à taper** (`DangerAction`), pas une case ni un second clic : les deux s'obtiennent par réflexe, recopier un mot demande de lire.
+
+### Le checkpointer LangGraph vit dans son propre schéma
+
+`PostgresSaver` est construit avec `schema: 'langgraph'`. Dans `public`, ses tables étaient invisibles de Prisma, et **chaque `migrate diff` proposait de les supprimer**, ce qui aurait effacé l'état de reprise des générations en cours. Ne pas l'y ramener.
+
 ## Conventions
 
 - Les schémas Zod sont la source de vérité ; les types en dérivent via `z.infer`.

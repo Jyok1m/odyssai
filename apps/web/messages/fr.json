@@ -224,7 +224,9 @@
     },
     "errorUnreachable": "L'API ne répond pas. Vérifie qu'elle tourne, et que tu es bien sur l'adresse habituelle du site.",
     "errorSignedOut": "Ta session a expiré. Reconnecte-toi, ta saisie est gardée.",
-    "errorRefused": "Cet enregistrement a été refusé. Recharge la page pour repartir de l'étape en cours."
+    "errorRefused": "Cet enregistrement a été refusé. Recharge la page pour repartir de l'étape en cours.",
+    "backToInspiration": "Revenir à mon inspiration",
+    "backToCharacter": "Revenir à mon personnage"
   },
   "Concept": {
     "metaTitle": "Concept",
@@ -529,9 +531,11 @@
       {
         "title": "Durée de conservation",
         "body": [
-          "Les données de compte sont conservées tant que le compte existe, puis effacées dans les trente jours suivant sa suppression.",
+          "Les données de compte sont conservées tant que le compte existe. La suppression depuis la page Mon compte est immédiate : il n'y a ni délai ni restauration.",
           "Les questions posées au guide sont effacées au bout de trente jours.",
-          "Les journaux techniques du serveur sont conservés douze mois au plus."
+          "Les journaux techniques du serveur sont conservés douze mois au plus.",
+          "Un monde que d'autres joueurs ont déjà visité n'est pas supprimé avec son auteur : il est conservé, détaché de lui, et vidé de tout ce qu'il avait saisi, à savoir les œuvres citées, sa description libre et la conversation de création. Ce qui subsiste est le texte écrit par le modèle, sans lien avec une personne.",
+          "De même, un personnage que d'autres joueurs ont rencontré reste dans leurs récits, décrit comme mort. Son nom est la seule chose qui en demeure."
         ]
       },
       {
@@ -545,8 +549,9 @@
       {
         "title": "Tes droits",
         "body": [
-          "Tu disposes des droits d'accès, de rectification, d'effacement, de limitation, d'opposition et de portabilité. Écris à l'adresse de contact, la réponse intervient sous un mois.",
-          "Si elle ne te convient pas, tu peux saisir la CNIL, 3 place de Fontenoy, 75007 Paris, sur cnil.fr."
+          "Tu disposes des droits d'accès, de rectification, d'effacement, de limitation, d'opposition et de portabilité. L'effacement se fait directement depuis la page Mon compte, sans avoir à le demander. Pour les autres droits, écris à l'adresse de contact, la réponse intervient sous un mois.",
+          "Si elle ne te convient pas, tu peux saisir la CNIL, 3 place de Fontenoy, 75007 Paris, sur cnil.fr.",
+          "Supprimer ton compte ici efface tes données de jeu. Ton adresse e-mail et ton mot de passe vivent chez le service d'identité, où l'écran de confirmation te mène pour les supprimer toi-même : nous n'avons pas le droit d'y toucher à ta place."
         ]
       }
     ]
@@ -591,5 +596,37 @@
     "accept": "Tout accepter",
     "decline": "Refuser",
     "manage": "Gérer les cookies"
+  },
+  "Danger": {
+    "word": "SUPPRIMER",
+    "prompt": "Tape {word} pour confirmer.",
+    "cancel": "Annuler",
+    "restart": {
+      "label": "Recommencer une partie",
+      "title": "Recommencer",
+      "lead": "Ton monde et ton personnage actuels seront abandonnés, et tu repartiras de l'inspiration.",
+      "confirm": "Recommencer",
+      "busy": "Effacement.",
+      "kept": "Ton monde a déjà reçu des visiteurs : il est conservé, détaché de toi et vidé de tes saisies.",
+      "remembered": "D'autres joueurs ont croisé ton personnage : il reste dans leurs récits, désormais mort.",
+      "gone": "Rien n'avait été vu par personne : tout a été supprimé."
+    },
+    "erase": {
+      "label": "Supprimer mon compte",
+      "title": "Supprimer mon compte",
+      "lead": "Cette action est immédiate et sans retour. Il n'y a ni délai ni restauration.",
+      "confirm": "Supprimer définitivement",
+      "busy": "Suppression.",
+      "doneTitle": "Tes données de jeu sont effacées",
+      "doneLead": "Il reste une étape, chez le service d'identité : ton adresse e-mail et ton mot de passe y vivent, et nous n'avons pas le droit d'y toucher à ta place.",
+      "doneWarning": "Tant que tu ne l'as pas fait, te reconnecter ici recréera un joueur vide.",
+      "finish": "Terminer la suppression"
+    },
+    "what": {
+      "world": "Ton monde, son lore, ses factions et ses personnages",
+      "character": "Ton personnage et la conversation qui l'a créé",
+      "account": "Ton pseudo et ton profil de jeu",
+      "visited": "Sauf s'ils ont déjà été vus par d'autres joueurs : un monde visité est conservé sans toi, un personnage rencontré reste dans les récits des autres, décrit comme mort."
+    }
   }
 }
