@@ -25,6 +25,7 @@ import {
 } from '@odyssai/narrator';
 import {
   findProperNouns,
+  normalizeWorkTitle,
   themesProse,
   type Inspiration,
   type WorldThemes,
@@ -229,13 +230,26 @@ const evaluators = [
   /**
    * Le controle le plus severe, et le seul ecrit a la main cas par cas : aucun
    * nom de l'oeuvre citee ne doit survivre a l'abstraction.
+   *
+   * Une sortie rejetee vaut zero et non un. Sa prose est vide, donc elle
+   * passerait tous les controles de surete sans rien avoir produit, et un
+   * modele incapable de repondre s'afficherait comme le plus sur de tous.
    */
   function no_banned_name(run: Run, example?: Example) {
+    const value = output(run);
+    if (value.kind !== 'ok') return { key: 'no_banned_name', score: 0 };
+
     const { banned } = meta(example);
     if (banned.length === 0) return { key: 'no_banned_name', score: 1 };
 
-    const prose = output(run).prose.toLowerCase();
-    const leaked = banned.filter((name) => prose.includes(name.toLowerCase()));
+    // Sur des mots entiers, et non en sous-chaine : « San », le nom d'un
+    // personnage, se retrouve dans « sans », « paysan » et « artisan », et
+    // faisait echouer des sorties parfaitement propres. Meme piege que celui
+    // deja corrige dans findBorrowedNames.
+    const prose = ` ${normalizeWorkTitle(value.prose)} `;
+    const leaked = banned.filter((name) =>
+      prose.includes(` ${normalizeWorkTitle(name)} `),
+    );
 
     return {
       key: 'no_banned_name',
@@ -245,7 +259,10 @@ const evaluators = [
   },
 
   function no_proper_noun(run: Run) {
-    const found = findProperNouns(output(run).prose);
+    const value = output(run);
+    if (value.kind !== 'ok') return { key: 'no_proper_noun', score: 0 };
+
+    const found = findProperNouns(value.prose);
     return {
       key: 'no_proper_noun',
       score: found.length === 0 ? 1 : 0,
@@ -254,7 +271,9 @@ const evaluators = [
   },
 
   function no_em_dash(run: Run) {
-    return { key: 'no_em_dash', score: output(run).prose.includes('—') ? 0 : 1 };
+    const value = output(run);
+    if (value.kind !== 'ok') return { key: 'no_em_dash', score: 0 };
+    return { key: 'no_em_dash', score: value.prose.includes('—') ? 0 : 1 };
   },
 
   /** Un monde se dit, il ne s'esquisse pas : trop court, il ne nourrit rien. */
@@ -272,7 +291,10 @@ interface Score {
   count: number;
 }
 
+const cost = new Map<string, number>();
+
 const summary = new Map<string, Map<string, Score>>();
+const failures: string[] = [];
 let spent = 0;
 
 for (const model of candidates) {
@@ -290,15 +312,28 @@ for (const model of candidates) {
 
   const perKey = new Map<string, Score>();
   for (const row of results.results) {
+    const caseId =
+      ((row.example?.metadata ?? {}) as { caseId?: string }).caseId ?? '?';
+
     for (const evaluation of row.evaluationResults.results) {
+      const value = typeof evaluation.score === 'number' ? evaluation.score : 0;
       const score = perKey.get(evaluation.key) ?? { total: 0, count: 0 };
-      score.total += typeof evaluation.score === 'number' ? evaluation.score : 0;
+      score.total += value;
       score.count += 1;
       perKey.set(evaluation.key, score);
+
+      if (value < 1) {
+        failures.push(
+          `${model} · ${caseId} · ${evaluation.key}${evaluation.comment ? ` · ${evaluation.comment}` : ''}`,
+        );
+      }
     }
 
-    const cost = (row.run.outputs as { costUsd?: number } | undefined)?.costUsd;
-    if (typeof cost === 'number') spent += cost;
+    const paid = (row.run.outputs as { costUsd?: number } | undefined)?.costUsd;
+    if (typeof paid === 'number') {
+      spent += paid;
+      cost.set(model, (cost.get(model) ?? 0) + paid);
+    }
   }
 
   summary.set(model, perKey);
@@ -307,7 +342,9 @@ for (const model of candidates) {
 await llm.flushTraces();
 
 const keys = evaluators.map((evaluator) => evaluator.name);
-console.log(`\n${'modele'.padEnd(34)}${keys.map((k) => k.padEnd(18)).join('')}`);
+console.log(
+  `\n${'modele'.padEnd(40)}${keys.map((k) => k.padEnd(18)).join('')}${'cout'.padEnd(12)}`,
+);
 
 for (const [model, perKey] of summary) {
   const cells = keys.map((key) => {
@@ -315,7 +352,15 @@ for (const [model, perKey] of summary) {
     const value = score && score.count > 0 ? score.total / score.count : 0;
     return `${(value * 100).toFixed(0)} %`.padEnd(18);
   });
-  console.log(`${model.padEnd(34)}${cells.join('')}`);
+  const paid = cost.get(model) ?? 0;
+  console.log(
+    `${model.padEnd(40)}${cells.join('')}${(paid > 0 ? `${paid.toFixed(5)} USD` : 'n/c').padEnd(12)}`,
+  );
+}
+
+if (failures.length > 0) {
+  console.log(`\nEchecs, cas par cas :`);
+  for (const line of failures) console.log(`  ${line}`);
 }
 
 console.log(

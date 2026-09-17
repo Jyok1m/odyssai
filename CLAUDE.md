@@ -116,6 +116,9 @@ La garde sur la propriété intellectuelle a trois étages, et aucun ne suffit s
 - `findBorrowedNames` ne compare que les mots **capitalisés**, et ignore les titres d'un seul mot en minuscules : sinon un monde désertique inspiré de Dune ne pourrait plus parler de dunes. La comparaison porte sur des mots entiers, jamais sur des sous-chaînes.
 - Le modèle de narration **se choisit par évaluation**, pas par réputation. `LLM_NARRATOR_CANDIDATES` porte les modèles à comparer, `pnpm --filter @odyssai/api eval:narration` les fait tourner sur `packages/narrator/evals/abstraction.fr.jsonl`, et le gagnant se reporte dans `LLM_NARRATOR_MODEL`. Vide, `NarratorConfig.configured` est faux et l'api démarre quand même : aucune route ne lit la narration.
 - Les évaluateurs sont en code, sans LLM juge. Le plus sévère est `no_banned_name` : une liste écrite à la main, cas par cas, des noms qui ne doivent pas survivre à l'abstraction.
+- **Une sortie rejetée vaut zéro sur les contrôles de sûreté**, pas un. Sa prose est vide, donc elle passerait tout sans rien avoir produit, et un modèle incapable de répondre s'afficherait comme le plus sûr de tous.
+- Les noms interdits se cherchent sur des **mots entiers**, comme dans `findBorrowedNames`. En sous-chaîne, « San » se trouve dans « sans » et « paysan », et faisait échouer des sorties propres.
+- Un modèle `:free` d'OpenRouter qui note 0 % n'est pas mauvais, il est **bridé** : sous la charge continue de l'évaluation son palier gratuit se ferme. Le mesurer demande de le lancer seul.
 - `eval:narration` n'entre pas dans `make check` et consomme des appels réels : une exécution vaut le nombre de cas multiplié par le nombre de candidats.
 
 ## Worker et graphe de génération
