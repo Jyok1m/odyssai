@@ -10,6 +10,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { FIELD, FIELD_AREA } from "@/components/ui/field";
 
 interface Props {
   initial: CharacterDraft;
@@ -19,9 +20,6 @@ interface Props {
   error: string | null;
   onSubmit: (character: CharacterDraft) => void;
 }
-
-const FIELD =
-  "h-10 w-full rounded-control border border-line bg-ink px-3.5 font-ui text-ui-sm text-vellum transition-colors focus:border-accent";
 
 /**
  * Les champs que l'API peut dire manquants. Filtrer dessus type la clé de
@@ -100,6 +98,7 @@ export function CharacterSheetForm({
 
   return (
     <form
+      data-focus-ring="container"
       className="max-w-headline"
       onSubmit={(event) => {
         event.preventDefault();
@@ -189,7 +188,7 @@ export function CharacterSheetForm({
             value={summary}
             maxLength={500}
             onChange={(event) => setSummary(event.target.value)}
-            className="mt-1.5 w-full rounded-card border border-line bg-ink px-3.5 py-2.5 font-ui text-ui-sm text-vellum transition-colors focus:border-accent"
+            className={`mt-1.5 ${FIELD_AREA}`}
           />
         </div>
       </div>
@@ -216,6 +215,8 @@ export function CharacterSheetForm({
                 onChange={(event) =>
                   setAttribute(index, { value: Number(event.target.value) })
                 }
+                // Pas le FIELD partage : un select ne prend pas la largeur
+                // et se serre davantage. Le focus reste porte par sa bordure.
                 className="h-10 shrink-0 rounded-control border border-line bg-ink px-3 font-ui text-ui-sm text-vellum transition-colors focus:border-accent"
               >
                 {[1, 2, 3, 4, 5].map((value) => (

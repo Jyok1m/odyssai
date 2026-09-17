@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
+import { FIELD_DANGER } from "@/components/ui/field";
 
 interface Props {
   /** Le bouton qui ouvre la demande. */
@@ -55,6 +56,7 @@ export function DangerAction({
 
   return (
     <form
+      data-focus-ring="container"
       className="rounded-card border border-ember/40 bg-ember/8 p-5"
       onSubmit={(event) => {
         event.preventDefault();
@@ -78,7 +80,7 @@ export function DangerAction({
           value={typed}
           autoComplete="off"
           onChange={(event) => setTyped(event.target.value)}
-          className="h-10 w-48 rounded-control border border-line bg-ink px-3.5 font-ui text-ui-sm text-vellum transition-colors focus:border-ember"
+          className={`w-48 ${FIELD_DANGER}`}
         />
         <Button type="submit" variant="danger" disabled={!ready || busy}>
           {busy ? busyLabel : confirmLabel}

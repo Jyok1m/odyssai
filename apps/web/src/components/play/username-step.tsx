@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { FIELD } from "@/components/ui/field";
 import { ProfileError, updateUsername } from "@/lib/profile";
 
 /** `confirming` est la seconde frappe : le pseudo ne se choisit qu'une fois. */
@@ -45,6 +46,7 @@ export function UsernameStep({ onDone }: { onDone: () => void }) {
 
   return (
     <form
+      data-focus-ring="container"
       className="max-w-headline"
       onSubmit={(event) => {
         event.preventDefault();
@@ -77,7 +79,7 @@ export function UsernameStep({ onDone }: { onDone: () => void }) {
             if (phase === "confirming") setPhase("editing");
             setError(null);
           }}
-          className="h-10 min-w-0 flex-1 rounded-control border border-line bg-ink px-3.5 font-ui text-ui-sm text-vellum transition-colors focus:border-accent"
+          className={`min-w-0 flex-1 ${FIELD}`}
         />
         <Button
           type="submit"

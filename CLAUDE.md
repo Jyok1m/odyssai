@@ -200,6 +200,8 @@ Le narrateur est un meneur : il mène, le joueur répond. `POST /turn` en SSE, `
 - `--accent` est la couleur du monde courant, surchargée par `[data-world]`. Les utilitaires `accent` la suivent. Ne jamais figer le verdigris là où l'accent est attendu.
 - Logos dans `apps/web/public` : `odyssai-logo-dark.svg` (lockup, fond sombre), `odyssai-logo-light.svg` (sur vélin), `odyssai-mark.svg` (symbole seul), `odyssai-app-icon.svg`. Le wordmark ne s'utilise jamais sans le symbole ; en dessous de 120 px de large, symbole seul.
 - Attention à l'ordre des classes : deux utilitaires visant la même propriété sont arbitrés par la feuille CSS, pas par la chaîne `className`. Une variante doit poser sa propre valeur, pas compter sur un socle.
+- **Le focus d'un champ est porté par sa bordure, jamais par un liseré.** Les deux ensemble font un double cadre. Tout conteneur de champ porte donc `data-focus-ring="container"`, qui neutralise le liseré global de `globals.css` ; sans lui le navigateur ajoute le sien par dessus, et `outline-none` en classe n'y peut rien, la règle étant hors `@layer`.
+- Le style d'un champ vit dans `apps/web/src/components/ui/field.ts` (`FIELD`, `FIELD_AREA`, `FIELD_DANGER`). Ne pas le recopier. Deux exceptions assumées et commentées : une bordure conditionnelle et un `select`.
 
 ## SEO
 

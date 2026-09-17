@@ -13,6 +13,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { FIELD_AREA } from "@/components/ui/field";
 
 export type SaveStatus = "idle" | "saving" | "saved";
 
@@ -91,7 +92,7 @@ export function InspirationStep({
   };
 
   return (
-    <div className="max-w-headline">
+    <div data-focus-ring="container" className="max-w-headline">
       <h2 className="font-voice text-subtitle text-vellum">
         {t("inspiration.title")}
       </h2>
@@ -154,6 +155,10 @@ export function InspirationStep({
                       ),
                     )
                   }
+                  // Pas le FIELD partage : la couleur de bordure est
+                  // conditionnelle, et deux utilitaires visant la meme
+                  // propriete sont arbitres par la feuille CSS, pas par
+                  // l'ordre dans className. Elle se pose donc une seule fois.
                   className={[
                     "h-10 min-w-0 flex-1 rounded-control border bg-ink px-3.5 font-ui text-ui-sm text-vellum transition-colors focus:border-accent",
                     marked.has(index) ? "border-ember" : "border-line",
@@ -212,7 +217,7 @@ export function InspirationStep({
             onChange={(event) =>
               change(() => setDescription(event.target.value))
             }
-            className="w-full rounded-card border border-line bg-ink px-3.5 py-3 font-ui text-ui-sm text-vellum transition-colors focus:border-accent"
+            className={FIELD_AREA}
           />
           <p className="mt-2 text-caption text-vellum-3">
             {description.trim().length < OWN_DESCRIPTION_MIN

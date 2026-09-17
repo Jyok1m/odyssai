@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { useAuthLinks } from "@/components/auth/auth-links";
 import { useSession } from "@/components/auth/session-provider";
 import { Button } from "@/components/ui/button";
+import { FIELD } from "@/components/ui/field";
 import { requestSignOut } from "@/lib/api";
 import { ProfileError, fetchProfile, updateUsername } from "@/lib/profile";
 
@@ -123,6 +124,7 @@ export function AccountPanel() {
           </div>
         ) : (
           <form
+            data-focus-ring="container"
             className="mt-3"
             onSubmit={(event) => {
               event.preventDefault();
@@ -148,7 +150,7 @@ export function AccountPanel() {
                   if (step === "confirming") setStep("editing");
                   setError(null);
                 }}
-                className="h-10 min-w-0 flex-1 rounded-control border border-line bg-ink px-3.5 font-ui text-ui-sm text-vellum transition-colors focus:border-accent"
+                className={`min-w-0 flex-1 ${FIELD}`}
               />
               <Button
                 type="submit"
