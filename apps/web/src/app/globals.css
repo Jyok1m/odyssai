@@ -120,6 +120,20 @@ h4 {
   outline: none;
 }
 
+/* Safari sur iOS zoome sur tout champ dont la police est sous 16 px, a la
+   prise de focus, et la page saute. On la remonte la et la seulement : la
+   taille voulue tient partout ailleurs, et personne ne compare deux appareils
+   cote a cote. Le detecteur est le seul qui distingue iOS de facon fiable.
+   Hors `@layer`, comme le reste de cette feuille, sinon les utilitaires de
+   Tailwind l'emporteraient. */
+@supports (-webkit-touch-callout: none) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
 /* Tailwind 4 aligne le curseur des boutons sur le défaut du navigateur, soit
    la flèche. Le kit les dessine comme des contrôles cliquables : le curseur
    doit le dire aussi. Posé une fois ici plutôt qu'en classe sur chaque
