@@ -18,6 +18,13 @@ const EnvSchema = z
     LLM_NARRATOR_TEMPERATURE: z.coerce.number().min(0).max(2).default(0.6),
     LLM_NARRATOR_MAX_OUTPUT_TOKENS: z.coerce.number().int().positive().default(900),
 
+    /**
+     * Servent au journal d'usage quand le fournisseur ne rend pas le cout.
+     * Zero par defaut : une ligne sans cout vaut mieux qu'un cout invente.
+     */
+    LLM_NARRATOR_PRICE_INPUT_USD_PER_MTOK: z.coerce.number().nonnegative().default(0),
+    LLM_NARRATOR_PRICE_OUTPUT_USD_PER_MTOK: z.coerce.number().nonnegative().default(0),
+
     OPENROUTER_API_KEY: z.string().default(''),
     OPENAI_API_KEY: z.string().default(''),
 
@@ -129,6 +136,11 @@ export function loadConfig() {
       temperature: env.LLM_NARRATOR_TEMPERATURE,
       maxOutputTokens: env.LLM_NARRATOR_MAX_OUTPUT_TOKENS,
       extraBody: extraBody.ok ? extraBody.value : {},
+    },
+    /** Sert au journal d'usage quand le fournisseur ne rend pas le cout. */
+    prices: {
+      inputUsdPerMTok: env.LLM_NARRATOR_PRICE_INPUT_USD_PER_MTOK,
+      outputUsdPerMTok: env.LLM_NARRATOR_PRICE_OUTPUT_USD_PER_MTOK,
     },
     tracing: {
       enabled: env.LANGSMITH_TRACING,

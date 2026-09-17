@@ -31,6 +31,7 @@ import { NARRATOR_LLM } from '../onboarding/narrator-llm.provider.js';
 import { PRISMA } from '../prisma/prisma.module.js';
 import { ModerationService } from '../moderation/moderation.service.js';
 import { TurnLimitsService } from './turn-limits.service.js';
+import { UsageService } from '../usage/usage.service.js';
 import { TurnMemoryService } from './turn-memory.service.js';
 import { uuidv7 } from '../guide/guide.controller.js';
 
@@ -56,6 +57,7 @@ export class TurnController {
     private readonly memory: TurnMemoryService,
     private readonly limits: TurnLimitsService,
     private readonly moderation: ModerationService,
+    private readonly usage: UsageService,
   ) {}
 
   @Get()
@@ -133,7 +135,11 @@ export class TurnController {
     // Avant la limite et avant tout appel : un message refuse ne doit ni
     // consommer un tour, ni atteindre le modele, ni entrer en base.
     if (request.kind === 'say') {
-      const seen = await this.moderation.check(request.content, user.locale);
+      const seen = await this.moderation.check(
+        request.content,
+        user.locale,
+        user.id,
+      );
       if (!seen.allow) {
         throw new HttpException(
           { code: 'refused', reason: seen.reason },
@@ -225,6 +231,15 @@ export class TurnController {
       const delta = turn.delta();
       const usage = turn.usage();
 
+      await this.usage.record({
+        kind: 'turn',
+        provider: this.config.provider,
+        userId: user.id,
+        universeId: world.universeId,
+        usage,
+        prices: this.config.prices,
+      });
+
       // La reponse du meneur, relue par la couche lexicale seule : elle est
       // instantanee, et le recit est deja parti au joueur de toute facon. Un
       // second appel de classification l'aurait retarde sans rien empecher.
@@ -262,7 +277,7 @@ export class TurnController {
             model: usage.model ?? this.config.model.model,
             inputTokens: usage.inputTokens,
             outputTokens: usage.outputTokens,
-            costUsd: usage.costUsd,
+            costUsd: UsageService.cost(usage, this.config.prices),
             traceId: turnId,
           },
         }),

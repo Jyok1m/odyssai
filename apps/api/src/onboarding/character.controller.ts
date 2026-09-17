@@ -40,6 +40,7 @@ import {
 } from './character.service.js';
 import { ModerationService } from '../moderation/moderation.service.js';
 import { NARRATOR_LLM } from './narrator-llm.provider.js';
+import { UsageService } from '../usage/usage.service.js';
 import { LockedError, WrongStepError } from './onboarding.service.js';
 
 const PING_INTERVAL_MS = 15_000;
@@ -61,6 +62,7 @@ export class CharacterController {
     private readonly config: NarratorConfig,
     @Inject(NARRATOR_LLM) private readonly llm: LlmClient,
     private readonly moderation: ModerationService,
+    private readonly usage: UsageService,
   ) {}
 
   @Get()
@@ -99,7 +101,11 @@ export class CharacterController {
 
     // Avant d'ecrire quoi que ce soit : le nom d'un personnage est vu par les
     // autres joueurs le jour ou les univers se croisent.
-    const seen = await this.moderation.check(parsed.data.content, user.locale);
+    const seen = await this.moderation.check(
+      parsed.data.content,
+      user.locale,
+      user.id,
+    );
     if (!seen.allow) {
       throw new UnprocessableEntityException({
         code: 'refused',
@@ -155,6 +161,15 @@ export class CharacterController {
         await this.characters.recordAssistant(universeId, answer);
       }
 
+      await this.usage.record({
+        kind: 'character',
+        provider: this.config.provider,
+        userId: user.id,
+        universeId,
+        usage: turn.usage(),
+        prices: this.config.prices,
+      });
+
       const turns = await this.characters.turnsUsed(universeId);
       this.write(res, {
         type: 'done',
@@ -193,6 +208,15 @@ export class CharacterController {
           locale: user.locale,
         },
       },
+    });
+
+    await this.usage.record({
+      kind: 'extract',
+      provider: this.config.provider,
+      userId: user.id,
+      universeId,
+      usage: result.usage,
+      prices: this.config.prices,
     });
 
     if (result.kind === 'invalid_json') {

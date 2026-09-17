@@ -1,5 +1,6 @@
 import type { LlmClient } from '@odyssai/llm';
 import { ModerationVerdictSchema, type ModerationVerdict, type UiLocale } from '@odyssai/schemas';
+import type { TailUsage } from './split-tail.js';
 import { MODERATION_PROMPT } from '../prompts/moderation/v1.js';
 
 export const MODERATION_PROMPT_VERSION = MODERATION_PROMPT.id;
@@ -23,10 +24,17 @@ export interface ModerateRequest {
 /** Ce qu'on retient quand le classificateur n'a rien dit d'exploitable. */
 const OPEN: ModerationVerdict = { allow: true, reason: null, language: null };
 
+export interface ModerationResult {
+  verdict: ModerationVerdict;
+  /** Un appel par message joueur : l'ignorer creait un angle mort complet. */
+  usage: TailUsage;
+}
+
 export async function moderate(
   request: ModerateRequest,
-): Promise<ModerationVerdict> {
+): Promise<ModerationResult> {
   let text = '';
+  const usage: TailUsage = {};
 
   for await (const event of request.llm.streamChat({
     model: request.config.model,
@@ -36,6 +44,13 @@ export async function moderate(
     signal: request.signal,
   })) {
     if (event.type === 'text') text += event.text;
+    if (event.type === 'usage') {
+      usage.model = event.model;
+      usage.inputTokens = event.inputTokens;
+      usage.outputTokens = event.outputTokens;
+      usage.reasoningTokens = event.reasoningTokens;
+      usage.costUsd = event.costUsd;
+    }
   }
 
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -44,8 +59,8 @@ export async function moderate(
     const parsed = ModerationVerdictSchema.safeParse(
       JSON.parse((fenced?.[1] ?? text).trim()),
     );
-    return parsed.success ? parsed.data : OPEN;
+    return { verdict: parsed.success ? parsed.data : OPEN, usage };
   } catch {
-    return OPEN;
+    return { verdict: OPEN, usage };
   }
 }

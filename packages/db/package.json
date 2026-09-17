@@ -18,13 +18,14 @@
     "prisma"
   ],
   "scripts": {
-    "build": "prisma generate && tsc -p tsconfig.json",
-    "dev": "prisma generate && tsc -p tsconfig.json --watch --preserveWatchOutput",
-    "typecheck": "prisma generate && tsc --noEmit",
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
+    "typecheck": "tsc --noEmit",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "generate": "prisma generate"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

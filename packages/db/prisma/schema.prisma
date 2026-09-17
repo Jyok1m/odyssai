@@ -73,6 +73,7 @@ model User {
 
   universe   Universe?
   encounters Encounter[]
+  llmUsage   LlmUsage[]
 
   @@index([email])
   @@map("users")
@@ -247,6 +248,48 @@ model Character {
   encounters Encounter[]
 
   @@map("characters")
+}
+
+/// Ce que chaque appel de modele a coute, quel qu'il soit.
+///
+/// Cinq des huit points d'appel jetaient leur usage, dont la generation d'un
+/// monde, qui en fait sept a vingt-trois. La donnee existait deja dans
+/// narrator, personne ne la lisait. Sans ce journal, un plan d'abonnement est
+/// une opinion : on ne peut pas tarifer ce qu'on ne mesure pas.
+///
+/// `guide_questions` garde son propre journal et reste anonyme : il n'a pas de
+/// joueur a rattacher, et c'est voulu.
+model LlmUsage {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  /// SetNull plutot que Cascade : la comptabilite survit au depart du joueur,
+  /// detachee de lui. Ce qui reste est un cout, plus une personne.
+  userId String? @map("user_id") @db.Uuid
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  universeId String? @map("universe_id") @db.Uuid
+
+  /// Le point d'appel : turn, moderation, embedding, character, extract,
+  /// abstraction, generation.
+  kind String @db.VarChar(24)
+
+  provider String @db.VarChar(16)
+  model    String
+
+  inputTokens     Int  @map("input_tokens")
+  outputTokens    Int  @map("output_tokens")
+  /// Factures au tarif de sortie chez les deux fournisseurs.
+  reasoningTokens Int? @map("reasoning_tokens")
+
+  /// Rendu par OpenRouter, calcule sinon. Decimal et non Float : un cout
+  /// s'additionne sur des milliers de lignes, et le binaire y derive.
+  costUsd Decimal? @map("cost_usd") @db.Decimal(12, 8)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([userId, createdAt])
+  @@index([kind, createdAt])
+  @@map("llm_usage")
 }
 
 /// Trace d'un croisement : un joueur a visite un univers, et parfois y a

@@ -10,12 +10,14 @@ import { OnboardingModule } from './onboarding/onboarding.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { RedisModule } from './redis/redis.module.js';
 import { TurnModule } from './turn/turn.module.js';
+import { UsageModule } from './usage/usage.module.js';
 
 @Module({
   imports: [
     ConfigModule,
     RedisModule,
     PrismaModule,
+    UsageModule,
     ErasureModule,
     AuthModule,
     GuideModule,

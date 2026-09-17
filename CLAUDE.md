@@ -193,6 +193,21 @@ Deux couches, dans cet ordre, sur tout ce qu'un joueur écrit.
 - **Le mot reconnu ne repart jamais au joueur**, seulement la raison : le renvoyer reviendrait à le republier.
 - La réponse du meneur est relue par la couche lexicale seule. Un second appel de classification retarderait un récit déjà parti.
 
+## Ce que les modèles coûtent
+
+`llm_usage` journalise **chaque** appel, quel qu'en soit le point de départ. Avant lui, cinq des huit points d'appel jetaient leur usage, dont la génération d'un monde, qui en fait sept à vingt-trois : la donnée était calculée par `narrator` et personne ne la lisait.
+
+- Sans ce journal, aucun barème d'abonnement ne peut être autre chose qu'une opinion. **On ne tarife pas ce qu'on ne mesure pas.**
+- `cost_usd` est un `Decimal(12,8)`, pas un `Float` : un coût s'additionne sur des milliers de lignes et le binaire y dérive.
+- La relation vers `users` est en **`SetNull`** : la comptabilité survit au départ d'un joueur, détachée de lui. Ce qui reste est un coût, plus une personne.
+- Une écriture ratée est journalisée, jamais relancée : le joueur a déjà reçu sa réponse, et la comptabilité ne vaut pas de casser un tour. Même règle que le journal du guide.
+- `guide_questions` garde son propre journal et **reste anonyme** : il n'a aucun joueur à rattacher, et c'est une décision de conception, pas un oubli.
+- Le coût rendu par le fournisseur prime ; sinon il se calcule depuis les jetons, en facturant les jetons de raisonnement au tarif de sortie, ce que font les deux fournisseurs.
+
+### `prisma generate` est une tâche turbo à part
+
+`build` et `typecheck` de `packages/db` l'appelaient chacun de leur côté, et turbo les lance en parallèle : les deux `mkdir` du même répertoire généré se marchaient dessus (`EEXIST`). Ça ne se voyait qu'avec un cache froid. La génération est maintenant une tâche `generate` dont `build`, `typecheck` et `dev` dépendent. **Ne pas la remettre dans les scripts.**
+
 ## Conventions
 
 - Les schémas Zod sont la source de vérité ; les types en dérivent via `z.infer`.

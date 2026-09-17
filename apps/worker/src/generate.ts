@@ -16,6 +16,49 @@ import {
 } from '@odyssai/narrator';
 import type { WorkerConfig } from './config.js';
 
+/**
+ * Le plus gros poste de depense du produit : sept appels au mieux,
+ * vingt-trois au pire, et aucun n'etait compte. L'usage etait pourtant deja
+ * agrege par le graphe et rendu par abstractWorld.
+ */
+async function journal(
+  deps: GenerateDeps,
+  kind: 'abstraction' | 'generation',
+  universeId: string,
+  ownerId: string | null,
+  usages: { model?: string; inputTokens?: number; outputTokens?: number; costUsd?: number }[],
+): Promise<void> {
+  const { inputUsdPerMTok, outputUsdPerMTok } = deps.config.prices;
+
+  for (const usage of usages) {
+    if (usage.inputTokens === undefined) continue;
+
+    const cost =
+      typeof usage.costUsd === 'number'
+        ? usage.costUsd
+        : (usage.inputTokens * inputUsdPerMTok +
+            (usage.outputTokens ?? 0) * outputUsdPerMTok) /
+          1e6;
+
+    await deps.prisma.llmUsage
+      .create({
+        data: {
+          kind,
+          provider: deps.config.provider,
+          userId: ownerId,
+          universeId,
+          model: usage.model ?? deps.config.model.model,
+          inputTokens: usage.inputTokens,
+          outputTokens: usage.outputTokens ?? 0,
+          costUsd: new Prisma.Decimal(cost.toFixed(8)),
+        },
+      })
+      // Une comptabilite ratee ne vaut pas de perdre un monde qui vient
+      // d'etre ecrit.
+      .catch(() => undefined);
+  }
+}
+
 /** Le message d'erreur est borne par la colonne : de quoi diagnostiquer. */
 const ERROR_MAX = 500;
 
@@ -63,7 +106,7 @@ export async function generate(
     where: { id: universeId },
     include: {
       character: true,
-      owner: { select: { locale: true } },
+      owner: { select: { id: true, locale: true } },
       jobs: { orderBy: { createdAt: 'desc' }, take: 1 },
     },
   });
@@ -114,7 +157,13 @@ export async function generate(
 
     if (!themes) {
       await step(deps, job.id, 'abstraction');
-      themes = await abstract(deps, universeId, inspiration.data, signal);
+      themes = await abstract(
+        deps,
+        universeId,
+        universe.owner.id,
+        inspiration.data,
+        signal,
+      );
     }
 
     const works = inspiration.data.mode === 'works' ? inspiration.data.works : [];
@@ -134,6 +183,14 @@ export async function generate(
         void step(deps, job.id, name === 'characters' ? 'characters' : name);
       },
     });
+
+    await journal(
+      deps,
+      'generation',
+      universeId,
+      universe.owner.id,
+      outcome.usage,
+    );
 
     // Une seule transaction : un monde a moitie ecrit avec une etape `ready`
     // serait pire qu'un echec, le joueur y entrerait sans lore.
@@ -167,6 +224,7 @@ export async function generate(
 async function abstract(
   deps: GenerateDeps,
   universeId: string,
+  ownerId: string,
   inspiration: ReturnType<typeof InspirationSchema.parse>,
   signal?: AbortSignal,
 ): Promise<WorldThemes> {
@@ -177,6 +235,8 @@ async function abstract(
     signal,
     trace: { name: 'abstraction', metadata: { universe_id: universeId } },
   });
+
+  await journal(deps, 'abstraction', universeId, ownerId, [result.usage]);
 
   if (result.kind !== 'ok') {
     throw new Error(`abstraction : ${result.reason} ${result.details.join(' | ')}`);

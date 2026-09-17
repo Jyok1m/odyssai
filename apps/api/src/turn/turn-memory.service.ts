@@ -14,6 +14,7 @@ import { PrismaClient } from '@odyssai/db';
 import { PRISMA } from '../prisma/prisma.module.js';
 import { NarratorConfig } from '../config/narrator-config.js';
 import { NARRATOR_LLM } from '../onboarding/narrator-llm.provider.js';
+import { UsageService } from '../usage/usage.service.js';
 
 /** Les tours rendus mot pour mot. Au dela, c'est le rappel qui prend le relais. */
 const RECENT_TURNS = 12;
@@ -61,6 +62,7 @@ export class TurnMemoryService implements OnModuleInit {
     @Inject(PRISMA) private readonly prisma: PrismaClient,
     @Inject(NARRATOR_LLM) private readonly llm: LlmClient,
     private readonly config: NarratorConfig,
+    private readonly usage: UsageService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -168,9 +170,22 @@ export class TurnMemoryService implements OnModuleInit {
     if (!this.vectors || !message.trim() || recentCount < RECENT_TURNS) return [];
 
     try {
-      const { vectors } = await this.llm.embed({
+      const embedded = await this.llm.embed({
         model: this.config.embed.model,
         inputs: [message],
+      });
+      const vectors = embedded.vectors;
+
+      await this.usage.record({
+        kind: 'embedding',
+        provider: this.config.provider,
+        universeId,
+        // Un embedding n'a pas de sortie : seule l'entree est facturee.
+        usage: {
+          model: embedded.model,
+          inputTokens: embedded.inputTokens,
+          outputTokens: 0,
+        },
       });
 
       const literal = `[${vectors[0]!.join(',')}]`;

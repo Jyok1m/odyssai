@@ -5,6 +5,7 @@ import { screenText } from '@odyssai/engine';
 import type { ModerationVerdict, UiLocale } from '@odyssai/schemas';
 import { NarratorConfig } from '../config/narrator-config.js';
 import { NARRATOR_LLM } from '../onboarding/narrator-llm.provider.js';
+import { UsageService } from '../usage/usage.service.js';
 
 /**
  * Deux couches, dans cet ordre.
@@ -30,9 +31,16 @@ export class ModerationService {
   constructor(
     @Inject(NARRATOR_LLM) private readonly llm: LlmClient,
     private readonly config: NarratorConfig,
+    private readonly usage: UsageService,
   ) {}
 
-  async check(text: string, locale: UiLocale): Promise<ModerationVerdict> {
+  /** `userId` sert au journal : la moderation n'est jamais facturee au
+   * joueur, mais elle coute, et ce cout doit se voir. */
+  async check(
+    text: string,
+    locale: UiLocale,
+    userId?: string,
+  ): Promise<ModerationVerdict> {
     const hits = screenText(text);
     if (hits.length > 0) {
       // Le mot reconnu reste dans le journal du serveur, jamais dans la
@@ -44,11 +52,18 @@ export class ModerationService {
     if (!this.config.moderation.enabled) return OPEN;
 
     try {
-      const verdict = await moderate({
+      const { verdict, usage } = await moderate({
         llm: this.llm,
         config: this.config.moderation,
         locale,
         text,
+      });
+
+      await this.usage.record({
+        kind: 'moderation',
+        provider: this.config.provider,
+        userId,
+        usage,
       });
 
       if (!verdict.allow) this.logger.log(`refus du classificateur : ${verdict.reason}`);
