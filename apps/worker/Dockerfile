@@ -12,8 +12,9 @@ WORKDIR /app
 
 FROM base AS build
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
-COPY apps/api/package.json apps/api/
-COPY apps/web/package.json apps/web/
+# Ni apps/api ni apps/web : un manifeste present est un membre du workspace,
+# dont `pnpm deploy` exige ensuite les dependances internes. Copier celui de
+# l'api obligeait a suivre ici les paquets qu'elle seule utilise.
 COPY apps/worker/package.json apps/worker/
 COPY packages/schemas/package.json packages/schemas/
 COPY packages/db/package.json packages/db/
@@ -30,9 +31,13 @@ COPY packages/llm packages/llm
 COPY packages/narrator packages/narrator
 COPY apps/worker apps/worker
 
-# turbo n'est pas installe par l'install filtree : on ordonne a la main. db
-# genere son client avant de compiler, narrator depend de llm et de schemas.
+# turbo n'est pas installe par l'install filtree : on ordonne a la main. C'est
+# aussi pourquoi `generate` s'appelle ici : le client Prisma est une tache turbo
+# a part, dont `build` depend, et non un prescript de `build`. Sans elle tsc ne
+# trouve pas le client et packages/db ne compile pas. narrator depend de llm et
+# de schemas.
 RUN pnpm --filter @odyssai/schemas build \
+ && pnpm --filter @odyssai/db generate \
  && pnpm --filter @odyssai/db build \
  && pnpm --filter @odyssai/llm build \
  && pnpm --filter @odyssai/narrator build \
