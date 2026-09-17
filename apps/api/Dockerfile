@@ -39,6 +39,19 @@ RUN pnpm --filter @odyssai/schemas build \
 # le comportement de l'install en développement.
 RUN pnpm --filter @odyssai/api deploy --prod --legacy /out
 
+# `prisma` et `typescript` sont des peers OPTIONNELS de @prisma/client : pnpm
+# les resout parce qu'ils existent dans le workspace, et deploy emporte tout
+# leur graphe, soit le studio, son Postgres embarque et le moteur de requete.
+# Rien ne les requiert a l'execution : la CLI n'a servi qu'a generer le client,
+# et la connexion passe par l'adaptateur pg. Environ 190 Mo.
+RUN rm -rf /out/node_modules/.pnpm/prisma@* \
+           /out/node_modules/.pnpm/typescript@* \
+           /out/node_modules/.pnpm/@prisma+studio-core@* \
+           /out/node_modules/.pnpm/@prisma+engines@* \
+           /out/node_modules/.pnpm/@electric-sql+pglite@* \
+           /out/node_modules/.pnpm/effect@* \
+           /out/node_modules/.pnpm/elkjs@*
+
 FROM node:24-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production \
