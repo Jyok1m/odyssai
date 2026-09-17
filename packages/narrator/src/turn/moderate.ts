@@ -20,6 +20,9 @@ export interface ModerateRequest {
  * tourne et n'a rien laisse passer d'evident ; ce qui arrive ici est du
  * jugement, pas de l'evidence.
  */
+/** Ce qu'on retient quand le classificateur n'a rien dit d'exploitable. */
+const OPEN: ModerationVerdict = { allow: true, reason: null, language: null };
+
 export async function moderate(
   request: ModerateRequest,
 ): Promise<ModerationVerdict> {
@@ -41,8 +44,8 @@ export async function moderate(
     const parsed = ModerationVerdictSchema.safeParse(
       JSON.parse((fenced?.[1] ?? text).trim()),
     );
-    return parsed.success ? parsed.data : { allow: true, reason: null };
+    return parsed.success ? parsed.data : OPEN;
   } catch {
-    return { allow: true, reason: null };
+    return OPEN;
   }
 }

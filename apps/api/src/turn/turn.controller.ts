@@ -120,6 +120,16 @@ export class TurnController {
     const world = await this.memory.world(user.id);
     if (!world) throw new NotFoundException({ code: 'not_ready' });
 
+    /**
+     * La langue du tour, et non celle du compte.
+     *
+     * Le joueur peut ecrire dans n'importe quelle langue : le meneur repond
+     * dans la sienne, et les consignes prennent la version anglaise des que
+     * ce n'est plus du francais. Le compte ne bouge pas : une phrase lachee
+     * en anglais ne doit pas faire basculer tout le site de quelqu'un.
+     */
+    let locale = user.locale;
+
     // Avant la limite et avant tout appel : un message refuse ne doit ni
     // consommer un tour, ni atteindre le modele, ni entrer en base.
     if (request.kind === 'say') {
@@ -130,6 +140,10 @@ export class TurnController {
           HttpStatus.UNPROCESSABLE_ENTITY,
         );
       }
+
+      // Une langue indetectable laisse le compte decider : un message de deux
+      // mots ne doit pas faire basculer le tour.
+      if (seen.language && seen.language !== 'fr') locale = 'en';
     }
 
     const verdict = await this.limits.consume(user.id);
@@ -189,7 +203,7 @@ export class TurnController {
       const turn = playTurn({
         llm: this.llm,
         config: this.config.model,
-        locale: user.locale,
+        locale,
         context: { ...world, ...memory, band, fate },
         message: fate ? "Je ne sais pas quoi faire, que le sort decide." : said,
         trace: {

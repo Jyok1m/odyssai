@@ -20,6 +20,9 @@ import { NARRATOR_LLM } from '../onboarding/narrator-llm.provider.js';
  * classificateur est donc un petit modele de conversation, ce qui coute un
  * appel par message.
  */
+/** Laisser passer, et sans avis sur la langue. */
+const OPEN: ModerationVerdict = { allow: true, reason: null, language: null };
+
 @Injectable()
 export class ModerationService {
   private readonly logger = new Logger(ModerationService.name);
@@ -35,10 +38,10 @@ export class ModerationService {
       // Le mot reconnu reste dans le journal du serveur, jamais dans la
       // reponse : le renvoyer au joueur reviendrait a le republier.
       this.logger.log(`refus lexical : ${hits[0]!.match}`);
-      return { allow: false, reason: 'insulte' };
+      return { allow: false, reason: 'insulte', language: null };
     }
 
-    if (!this.config.moderation.enabled) return { allow: true, reason: null };
+    if (!this.config.moderation.enabled) return OPEN;
 
     try {
       const verdict = await moderate({
@@ -54,7 +57,7 @@ export class ModerationService {
       // Un classificateur injoignable ne doit pas empecher de jouer : la
       // couche lexicale a deja tourne, et elle seule arrete l'evidence.
       this.logger.warn(`classificateur indisponible : ${String(error)}`);
-      return { allow: true, reason: null };
+      return OPEN;
     }
   }
 

@@ -124,6 +124,21 @@ export const ModerationVerdictSchema = z.object({
     .enum(['insulte', 'haine', 'sexuel', 'minorite', 'violence_gratuite'])
     .nullable()
     .default(null),
+  /**
+   * Code de la langue du message, en deux ou trois lettres. Le classificateur
+   * lit deja la phrase : la lui demander ne coute rien, la detecter ailleurs
+   * couterait un appel ou une dependance.
+   *
+   * Pas une enumeration : le joueur peut ecrire dans n'importe quelle langue,
+   * et seule la distinction « francais ou non » est exploitee.
+   */
+  language: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .regex(/^[a-z]{2,3}$/)
+    .nullable()
+    .default(null),
 });
 
 export type ModerationVerdict = z.infer<typeof ModerationVerdictSchema>;
