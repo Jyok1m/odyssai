@@ -73,6 +73,28 @@ cp apps/web/.env.example apps/web/.env  # SITE_URL and the NEXT_PUBLIC_ flags
 cp .env.local.example .env.local        # the dev server's SSH coordinates
 ```
 
+Which variable lives where, and when it is read:
+
+| Variables | Local file | Read | In production it comes from |
+| --- | --- | --- | --- |
+| `NODE_ENV`, `PORT` | `.env` | API boot | the compose `environment:` block, which overrides the env file |
+| `API_BASE_URL`, `WEB_BASE_URL` | `.env` | API boot | `odyssai-api.env.j2`, rendered by the `odyssai` Ansible role |
+| `KEYCLOAK_ISSUER`, `KEYCLOAK_CLIENT_ID`, `KEYCLOAK_CLIENT_SECRET` | `.env` | API boot | same, the secret out of the Ansible vault |
+| `REDIS_URL`, `POSTGRES_URL` | `.env` | API boot | same, by container name rather than through the host loopback |
+| `OPENROUTER_API_KEY`, `OPENAI_API_KEY` | `.env` | API boot | same, out of the vault |
+| `LANGSMITH_*` | `.env` | API boot | same, one project per copy |
+| `LLM_GUIDE_*` | `.env` | API boot | same, from the role defaults |
+| `GUIDE_*`, `TURNSTILE_SECRET_KEY`, `TRUST_PROXY` | `.env` | API boot | same, the two secrets out of the vault |
+| `SITE_URL` | `apps/web/.env` | web **build** and runtime | a Jenkins build arg for the prerender, repeated in the compose `environment:` for the routes that read it per request |
+| `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | `apps/web/.env` | web **build only** | Jenkins build args, one value per branch |
+| `NEXT_PUBLIC_ALPHA_OPEN` | `apps/web/.env` | web **build only** | nothing: the `ARG` default in the Dockerfile, which is `false` |
+| `SSH_HOST`, `SSH_PORT`, `SSH_KEY_FILE`, `REDIS_LOCAL_PORT`, `REDIS_REMOTE_PORT` | `.env.local` | `make tunnel` | nothing, this file never leaves a workstation |
+
+The third column is the one that catches people out. A `NEXT_PUBLIC_` variable
+is inlined into the browser bundle by `next build`, so setting it at runtime has
+no effect at all and changing it means rebuilding the image. Everything the API
+reads, by contrast, is read once at boot and a restart is enough.
+
 **Redis** is the session store. In development it runs on the server, which
 publishes it on its loopback only, so it is reached through an SSH tunnel:
 
