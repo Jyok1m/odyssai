@@ -122,6 +122,23 @@ export function makeFakeLlm(options: FakeLlmOptions = {}): FakeLlm {
       return state.aborted;
     },
 
+    /**
+     * Deterministe, et suffisant pour un test : deux textes identiques donnent
+     * le meme vecteur, deux textes differents des vecteurs differents. Aucun
+     * appel ne sort.
+     */
+    async embed({ inputs, model }: { inputs: string[]; model: string }) {
+      return {
+        vectors: inputs.map((text) =>
+          Array.from({ length: 8 }, (_, i) =>
+            [...text].reduce((sum, ch, at) => sum + ch.charCodeAt(0) * ((at % 8) + 1 === i + 1 ? 1 : 0), 0),
+          ),
+        ),
+        model,
+        inputTokens: inputs.reduce((total, text) => total + text.length, 0),
+      };
+    },
+
     async *streamChat(request: StreamChatRequest): AsyncIterable<LlmStreamEvent> {
       calls.push(request);
       request.onTraced?.(false);
