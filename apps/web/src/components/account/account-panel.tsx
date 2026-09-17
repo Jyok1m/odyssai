@@ -3,48 +3,40 @@
 import { Username, type PlayerProfile } from "@odyssai/schemas";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 import { useAuthLinks } from "@/components/auth/auth-links";
 import { useSession } from "@/components/auth/session-provider";
 import { Button } from "@/components/ui/button";
+import { requestSignOut } from "@/lib/api";
 import { ProfileError, fetchProfile, updateUsername } from "@/lib/profile";
 
-type Status =
-  | { kind: "idle" }
-  | { kind: "saving" }
-  | { kind: "saved" }
-  | { kind: "error"; message: string };
+/** `confirming` est la seconde frappe : le pseudo ne se choisit qu'une fois. */
+type Step = "idle" | "editing" | "confirming" | "saving";
 
-/**
- * Le pseudo se modifie ici, l'adresse et le mot de passe non : ils
- * appartiennent au realm, et c'est sa console de compte qui les sert. L'URL
- * vient de l'API, le navigateur n'a pas a connaitre l'adresse du realm.
- */
 export function AccountPanel() {
   const t = useTranslations("Account");
+  const tAuth = useTranslations("Auth");
   const tNav = useTranslations("Nav");
   const session = useSession();
   const { signIn } = useAuthLinks();
 
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
   const [username, setUsername] = useState("");
-  const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const [step, setStep] = useState<Step>("idle");
+  const [error, setError] = useState<string | null>(null);
+  const [leaving, setLeaving] = useState(false);
 
   // Pas de garde "deja charge" : en mode strict React monte l'effet deux fois,
-  // et un tel garde laisserait la premiere requete annulee sans jamais la
-  // relancer. Le champ resterait desactive pour toujours.
+  // et un tel garde laisserait la premiere requete annulee sans la relancer.
   useEffect(() => {
     if (session.status !== "authenticated") return;
 
     const controller = new AbortController();
     fetchProfile(controller.signal)
-      .then((next) => {
-        setProfile(next);
-        setUsername(next.username ?? "");
-      })
+      .then(setProfile)
       .catch(() => {
-        if (!controller.signal.aborted)
-          setStatus({ kind: "error", message: t("errorGeneric") });
+        if (!controller.signal.aborted) setError(t("errorGeneric"));
       });
 
     return () => controller.abort();
@@ -57,7 +49,7 @@ export function AccountPanel() {
   if (session.status === "anonymous") {
     return (
       <div className="flex flex-col items-start gap-4">
-        <p className="text-ui text-vellum-2">{t("signedOut")}</p>
+        <p className="text-ui-sm text-vellum-2">{t("signedOut")}</p>
         <Button as="a" href={signIn}>
           {tNav("login")}
         </Button>
@@ -65,31 +57,51 @@ export function AccountPanel() {
     );
   }
 
-  const save = async () => {
-    // Le meme schema que l'API : le champ repond sans aller-retour, et l'API
-    // reste seule juge de l'unicite.
+  const submit = async () => {
     if (!Username.safeParse(username).success) {
-      setStatus({ kind: "error", message: t("errorInvalid") });
+      setError(t("errorInvalid"));
       return;
     }
 
-    setStatus({ kind: "saving" });
+    // Premiere frappe : on demande confirmation au lieu d'enregistrer.
+    if (step === "editing") {
+      setError(null);
+      setStep("confirming");
+      return;
+    }
+
+    setStep("saving");
     try {
-      const next = await updateUsername(username);
-      setProfile(next);
-      setUsername(next.username ?? "");
-      setStatus({ kind: "saved" });
-    } catch (error: unknown) {
-      const taken =
-        error instanceof ProfileError && error.code === "username_taken";
-      setStatus({
-        kind: "error",
-        message: taken ? t("errorTaken") : t("errorGeneric"),
-      });
+      setProfile(await updateUsername(username));
+      setStep("idle");
+      setError(null);
+      toast.success(t("saved"));
+    } catch (caught: unknown) {
+      const code = caught instanceof ProfileError ? caught.code : "unknown";
+      setError(
+        code === "username_taken"
+          ? t("errorTaken")
+          : code === "username_locked"
+            ? t("errorLocked")
+            : t("errorGeneric"),
+      );
+      setStep("editing");
     }
   };
 
-  const dirty = username.trim() !== (profile?.username ?? "");
+  const signOut = async () => {
+    setLeaving(true);
+    try {
+      // Et non router.push : la fin de session est une page de Keycloak.
+      window.location.assign(await requestSignOut());
+    } catch (caught: unknown) {
+      console.error("déconnexion impossible", caught);
+      toast.error(tAuth("signOutFailed"));
+      setLeaving(false);
+    }
+  };
+
+  const chosen = profile?.username ?? null;
 
   return (
     <div className="max-w-headline space-y-12">
@@ -97,51 +109,75 @@ export function AccountPanel() {
         <h2 className="font-voice text-subtitle text-vellum">
           {t("usernameLabel")}
         </h2>
-        <p className="mt-2 text-ui-sm text-pretty text-vellum-2">
-          {t("usernameHint")}
-        </p>
 
-        <form
-          className="mt-4 flex flex-wrap items-start gap-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void save();
-          }}
-        >
-          <label htmlFor="username" className="sr-only">
-            {t("usernameLabel")}
-          </label>
-          <input
-            id="username"
-            value={username}
-            maxLength={32}
-            placeholder={t("usernamePlaceholder")}
-            onChange={(event) => {
-              setUsername(event.target.value);
-              setStatus({ kind: "idle" });
+        {chosen ? (
+          <p className="mt-3 text-ui-sm text-vellum">{chosen}</p>
+        ) : step === "idle" ? (
+          <div className="mt-3">
+            <p className="text-ui-sm text-vellum-3">{t("usernameNone")}</p>
+            <Button
+              variant="secondary"
+              className="mt-4"
+              disabled={profile === null}
+              onClick={() => setStep("editing")}
+            >
+              {t("choose")}
+            </Button>
+          </div>
+        ) : (
+          <form
+            className="mt-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void submit();
             }}
-            className="h-10 min-w-0 flex-1 rounded-control border border-line bg-ink px-3.5 font-ui text-ui-sm text-vellum transition-colors placeholder:text-vellum-3 focus:border-accent"
-          />
-          <Button
-            type="submit"
-            disabled={
-              username.trim().length === 0 || !dirty || status.kind === "saving"
-            }
           >
-            {t("save")}
-          </Button>
-        </form>
+            {/* Dit avant la saisie, pas apres : c'est la seule chose que le
+                joueur doit savoir avant de taper. */}
+            <p className="text-ui-sm text-brass">{t("usernameOnce")}</p>
 
-        <p aria-live="polite" className="mt-3 min-h-5 text-ui-sm">
-          {status.kind === "saved" && (
-            <span className="text-accent">{t("saved")}</span>
-          )}
-          {status.kind === "error" && (
-            <span className="text-ember">{status.message}</span>
-          )}
-          {status.kind === "idle" && profile?.username === null && (
-            <span className="text-vellum-3">{t("usernameEmpty")}</span>
-          )}
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <label htmlFor="username" className="sr-only">
+                {t("usernameLabel")}
+              </label>
+              <input
+                id="username"
+                autoFocus
+                value={username}
+                maxLength={32}
+                onChange={(event) => {
+                  setUsername(event.target.value);
+                  // Toute frappe annule la confirmation en cours.
+                  if (step === "confirming") setStep("editing");
+                  setError(null);
+                }}
+                className="h-10 min-w-0 flex-1 rounded-control border border-line bg-ink px-3.5 font-ui text-ui-sm text-vellum transition-colors focus:border-accent"
+              />
+              <Button
+                type="submit"
+                disabled={username.trim().length === 0 || step === "saving"}
+              >
+                {step === "confirming"
+                  ? t("confirm", { name: username.trim() })
+                  : t("save")}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setStep("idle");
+                  setUsername("");
+                  setError(null);
+                }}
+              >
+                {t("cancel")}
+              </Button>
+            </div>
+          </form>
+        )}
+
+        <p aria-live="polite" className="mt-3 min-h-5 text-ui-sm text-ember">
+          {error}
         </p>
       </section>
 
@@ -149,27 +185,14 @@ export function AccountPanel() {
         <h2 className="font-voice text-subtitle text-vellum">
           {t("identityTitle")}
         </h2>
-        <p className="mt-2 text-ui-sm text-pretty text-vellum-2">
-          {t("identityLead")}
-        </p>
 
-        <dl className="mt-6 space-y-4">
+        <dl className="mt-4 space-y-3">
           <div>
             <dt className="text-caption text-vellum-3">{t("emailLabel")}</dt>
             <dd className="mt-1 text-ui-sm text-vellum">
-              {profile?.email ?? "..."}{" "}
-              {profile ? (
-                <span
-                  className={
-                    profile.emailVerified ? "text-vellum-3" : "text-brass"
-                  }
-                >
-                  (
-                  {profile.emailVerified
-                    ? t("emailVerified")
-                    : t("emailUnverified")}
-                  )
-                </span>
+              {profile?.email ?? "…"}
+              {profile && !profile.emailVerified ? (
+                <span className="text-brass"> ({t("emailUnverified")})</span>
               ) : null}
             </dd>
           </div>
@@ -180,15 +203,23 @@ export function AccountPanel() {
         </dl>
 
         {profile ? (
-          <Button
-            as="a"
-            href={profile.accountUrl}
-            variant="secondary"
-            className="mt-6"
-          >
+          <Button as="a" href={profile.accountUrl} variant="secondary" className="mt-5">
             {t("manage")} <span aria-hidden="true">&rarr;</span>
           </Button>
         ) : null}
+      </section>
+
+      {/* La deconnexion vit ici et plus dans le bandeau : elle n'a pas a
+          occuper une place permanente a cote de la navigation. */}
+      <section className="border-t border-line pt-8">
+        <Button
+          variant="danger"
+          onClick={() => void signOut()}
+          disabled={leaving}
+          className="disabled:opacity-60"
+        >
+          {tAuth("signOut")}
+        </Button>
       </section>
     </div>
   );

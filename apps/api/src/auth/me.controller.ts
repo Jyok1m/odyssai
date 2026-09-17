@@ -13,7 +13,11 @@ import {
 } from '@odyssai/schemas';
 import { AppConfig } from '../config/app-config.js';
 import type { User } from '../generated/prisma/client.js';
-import { UsernameTakenError, UsersService } from '../users/users.service.js';
+import {
+  UsernameLockedError,
+  UsernameTakenError,
+  UsersService,
+} from '../users/users.service.js';
 import { CurrentUser } from './current-user.decorator.js';
 import { SessionGuard } from './session.guard.js';
 
@@ -59,6 +63,9 @@ export class MeController {
       // metier, pas une panne, et le front doit pouvoir le dire.
       if (error instanceof UsernameTakenError) {
         throw new ConflictException({ code: 'username_taken' });
+      }
+      if (error instanceof UsernameLockedError) {
+        throw new ConflictException({ code: 'username_locked' });
       }
       throw error;
     }

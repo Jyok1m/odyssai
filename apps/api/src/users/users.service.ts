@@ -2,6 +2,14 @@ import { Inject, Injectable } from '@nestjs/common';
 import { PRISMA } from '../prisma/prisma.module.js';
 import { Prisma, PrismaClient, type User } from '../generated/prisma/client.js';
 
+/** Le pseudo du joueur est deja pose : il ne se choisit qu'une fois. */
+export class UsernameLockedError extends Error {
+  constructor() {
+    super('pseudo deja pose');
+    this.name = 'UsernameLockedError';
+  }
+}
+
 /** Le pseudo est deja pris, a la casse pres. */
 export class UsernameTakenError extends Error {
   constructor() {
@@ -70,6 +78,14 @@ export class UsersService {
    * l'oublierait laisserait passer un doublon.
    */
   async setUsername(userId: string, username: string): Promise<User> {
+    // La regle tient ici et pas seulement a l'ecran : un PATCH direct
+    // contournerait un garde qui ne vivrait que dans le navigateur.
+    const current = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { username: true },
+    });
+    if (current?.username) throw new UsernameLockedError();
+
     try {
       return await this.prisma.user.update({
         where: { id: userId },

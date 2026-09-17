@@ -1,18 +1,19 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState, type SVGProps } from "react";
-import toast from "react-hot-toast";
+import type { SVGProps } from "react";
 
 import { useAuthLinks } from "@/components/auth/auth-links";
 import { useSession } from "@/components/auth/session-provider";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
-import { requestSignOut } from "@/lib/api";
 
 /**
  * Trois états : inconnu pendant la lecture de la session, invitation à se
- * connecter, puis identité du joueur. `stacked` est la forme du panneau mobile.
+ * connecter, puis accès au compte. `stacked` est la forme du panneau mobile.
+ *
+ * La déconnexion n'est pas ici : elle vit sur la page du compte, où elle n'a
+ * pas à occuper une place permanente à côté de la navigation.
  */
 export function AuthMenu({
   size = "sm",
@@ -25,7 +26,6 @@ export function AuthMenu({
   const tNav = useTranslations("Nav");
   const session = useSession();
   const { signIn } = useAuthLinks();
-  const [leaving, setLeaving] = useState(false);
 
   if (session.status === "loading") {
     // Réserve la place du bouton, sans quoi le header se réagence dès que
@@ -58,65 +58,24 @@ export function AuthMenu({
     );
   }
 
-  const signOut = async () => {
-    setLeaving(true);
-    try {
-      // Et non router.push : la fin de session est une page de Keycloak.
-      window.location.assign(await requestSignOut());
-    } catch (error: unknown) {
-      console.error("déconnexion impossible", error);
-      toast.error(t("signOutFailed"));
-      setLeaving(false);
-    }
-  };
-
-  // L'adresse complète pousserait la navigation contre le sélecteur de langue.
-  // Elle reste dans title et dans le panneau mobile.
-  const shortName = session.user.email.split("@")[0];
-
   return (
-    <div
-      className={
-        stacked ? "space-y-3" : "flex min-w-0 items-center justify-end gap-x-3"
-      }
+    <Button
+      as={Link}
+      href="/compte"
+      variant={stacked ? "secondary" : "ghost"}
+      size={size}
+      title={session.user.email}
+      className={stacked ? "w-full" : undefined}
     >
-      {/* Un bouton et non du texte : sans bordure ni icone, rien ne disait
-          que le nom menait quelque part. L'icone porte l'affordance, le nom
-          dit de quel compte il s'agit. */}
-      <Button
-        as={Link}
-        href="/compte"
-        variant={stacked ? "secondary" : "ghost"}
-        size={size}
-        title={session.user.email}
-        aria-label={t("account")}
-        className={["min-w-0", stacked ? "w-full" : ""].filter(Boolean).join(" ")}
-      >
-        <AccountIcon aria-hidden="true" className="size-4 shrink-0" />
-        <span className="truncate">
-          {stacked ? session.user.email : shortName}
-        </span>
-      </Button>
-      <Button
-        type="button"
-        // Bordé : un bouton fantôme passerait pour du texte centré.
-        variant={stacked ? "secondary" : "ghost"}
-        size={size}
-        onClick={signOut}
-        disabled={leaving}
-        className={["disabled:opacity-60", stacked ? "w-full" : ""]
-          .filter(Boolean)
-          .join(" ")}
-      >
-        {t("signOut")}
-      </Button>
-    </div>
+      <AccountIcon aria-hidden="true" className="size-4 shrink-0" />
+      {t("account")}
+    </Button>
   );
 }
 
 /**
- * Silhouette de compte. `currentColor` et `viewBox` a 24 comme les icones de
- * marque : la taille et la couleur restent decidees par le parent.
+ * Silhouette de compte. `currentColor` et `viewBox` à 24 comme les icônes de
+ * marque : la taille et la couleur restent décidées par le parent.
  */
 function AccountIcon(props: SVGProps<SVGSVGElement>) {
   return (

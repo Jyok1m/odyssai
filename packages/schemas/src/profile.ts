@@ -52,9 +52,12 @@ export const UpdateProfileRequestSchema = z.object({ username: Username });
 
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequestSchema>;
 
-/** Refus de PATCH /me. `username_taken` est le seul cas metier. */
+/**
+ * Refus de PATCH /me. `username_locked` dit que le pseudo est deja pose : il
+ * ne se choisit qu'une fois, et c'est l'API qui le garantit, pas l'ecran.
+ */
 export const ProfileErrorBodySchema = z.object({
-  code: z.enum(['validation_error', 'username_taken']),
+  code: z.enum(['validation_error', 'username_taken', 'username_locked']),
 });
 
 export type ProfileErrorBody = z.infer<typeof ProfileErrorBodySchema>;
