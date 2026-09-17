@@ -88,6 +88,22 @@ De la page d'accueil au monde généré. `GET/PUT /onboarding` derrière `Sessio
 - `AuthModule` réexporte `UsersModule` parce que Nest construit `SessionGuard` dans le module qui l'applique. Un module de jeu n'a donc qu'à importer `AuthModule`.
 - La route est gardée par `NEXT_PUBLIC_ALPHA_OPEN` : fermée, elle répond 404 au lieu d'annoncer une ouverture.
 
+## Génération de monde
+
+La passe d'abstraction convertit ce que le joueur a cité en thèmes, et c'est la **seule étape de toute la chaîne à voir les titres**. Tout ce qui suit ne reçoit que `WorldThemes`.
+
+La garde sur la propriété intellectuelle a trois étages, et aucun ne suffit seul :
+
+1. Le prompt `abstraction/v1` interdit les noms propres en sortie. Un modèle oublie une consigne.
+2. `WorldThemesSchema` les refuse champ par champ, via `findProperNouns`. Un schéma ne lit pas une intrigue.
+3. `findBorrowedNames` relit la prose produite contre les titres saisis. Un contrôle ne voit que ce qu'il sait chercher.
+
+- `findProperNouns` tient une majuscule hors tête de phrase pour un nom propre. La règle est grossière et se trompe dans le sens du refus : une relance coûte moins qu'un monde emprunté.
+- `findBorrowedNames` ne compare que les mots **capitalisés**, et ignore les titres d'un seul mot en minuscules : sinon un monde désertique inspiré de Dune ne pourrait plus parler de dunes. La comparaison porte sur des mots entiers, jamais sur des sous-chaînes.
+- Le modèle de narration **se choisit par évaluation**, pas par réputation. `LLM_NARRATOR_CANDIDATES` porte les modèles à comparer, `pnpm --filter @odyssai/api eval:narration` les fait tourner sur `packages/narrator/evals/abstraction.fr.jsonl`, et le gagnant se reporte dans `LLM_NARRATOR_MODEL`. Vide, `NarratorConfig.configured` est faux et l'api démarre quand même : aucune route ne lit la narration.
+- Les évaluateurs sont en code, sans LLM juge. Le plus sévère est `no_banned_name` : une liste écrite à la main, cas par cas, des noms qui ne doivent pas survivre à l'abstraction.
+- `eval:narration` n'entre pas dans `make check` et consomme des appels réels : une exécution vaut le nombre de cas multiplié par le nombre de candidats.
+
 ## Conventions
 
 - Les schémas Zod sont la source de vérité ; les types en dérivent via `z.infer`.
