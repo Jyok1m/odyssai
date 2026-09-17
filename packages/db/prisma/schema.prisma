@@ -432,7 +432,10 @@ model ConversationMessage {
   /// Rang explicite dans son canal. L'ordre d'un journal de partie ne peut pas
   /// dependre d'une horloge a la milliseconde : le message du joueur et la
   /// reponse du meneur s'ecrivent dans la meme transaction, et rien ne les
-  /// departagerait. Zero pour les conversations anterieures a cette colonne.
+  /// departagerait. Le defaut a zero n'a servi qu'a poser la colonne, les
+  /// conversations anterieures ayant ete renumerotees par la migration :
+  /// **tout ecrivain pose son rang**, sans quoi le deuxieme message d'un
+  /// canal tombe sur l'unicite.
   seq Int @default(0)
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)

@@ -55,7 +55,7 @@ export class CharacterService {
   async conversation(universeId: string): Promise<CharacterConversation> {
     const rows = await this.prisma.conversationMessage.findMany({
       where: { universeId, channel: CHANNEL },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { seq: 'asc' },
     });
 
     return this.toConversation(
@@ -72,7 +72,7 @@ export class CharacterService {
   async history(universeId: string): Promise<ConversationTurn[]> {
     const rows = await this.prisma.conversationMessage.findMany({
       where: { universeId, channel: CHANNEL },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { seq: 'asc' },
       select: { role: true, content: true },
     });
 
@@ -88,14 +88,42 @@ export class CharacterService {
     if (turns >= CHARACTER_TURNS_MAX) throw new ConversationOverError();
 
     await this.prisma.conversationMessage.create({
-      data: { universeId, channel: CHANNEL, role: 'user', content },
+      data: {
+        universeId,
+        channel: CHANNEL,
+        role: 'user',
+        seq: await this.nextSeq(universeId),
+        content,
+      },
     });
   }
 
   async recordAssistant(universeId: string, content: string): Promise<void> {
     await this.prisma.conversationMessage.create({
-      data: { universeId, channel: CHANNEL, role: 'assistant', content },
+      data: {
+        universeId,
+        channel: CHANNEL,
+        role: 'assistant',
+        seq: await this.nextSeq(universeId),
+        content,
+      },
     });
+  }
+
+  /**
+   * Le rang suivant dans ce canal, comme le fait le tour de jeu. La colonne a
+   * un defaut a zero, qui ne vaut que pour la premiere ligne : sans rang
+   * explicite, le deuxieme message tombait sur la contrainte d'unicite
+   * (univers, canal, rang) et la conversation s'arretait au premier echange.
+   */
+  private async nextSeq(universeId: string): Promise<number> {
+    const last = await this.prisma.conversationMessage.findFirst({
+      where: { universeId, channel: CHANNEL },
+      orderBy: { seq: 'desc' },
+      select: { seq: true },
+    });
+
+    return last ? last.seq + 1 : 0;
   }
 
   /** Assez d'echanges pour qu'une fiche ait de quoi se remplir. */

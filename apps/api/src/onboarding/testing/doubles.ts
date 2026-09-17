@@ -93,6 +93,7 @@ interface MessageRow {
   channel: string;
   role: 'user' | 'assistant';
   content: string;
+  seq: number;
   createdAt: Date;
 }
 
@@ -119,6 +120,36 @@ export interface OnboardingStore {
   subscriptions?: SubscriptionRow[];
   creditEntries?: CreditEntryRow[];
   stripeEvents?: StripeEventRow[];
+}
+
+function matchMessages(store: OnboardingStore, where: any): MessageRow[] {
+  return store.messages.filter(
+    (row) =>
+      row.universeId === where.universeId &&
+      row.channel === where.channel &&
+      (where.role === undefined || row.role === where.role),
+  );
+}
+
+function sortMessages(rows: MessageRow[], orderBy: any): MessageRow[] {
+  if (orderBy?.seq) {
+    const sign = orderBy.seq === 'desc' ? -1 : 1;
+    return [...rows].sort((a, b) => sign * (a.seq - b.seq));
+  }
+
+  const sign = orderBy?.createdAt === 'desc' ? -1 : 1;
+  return [...rows].sort(
+    (a, b) => sign * (a.createdAt.getTime() - b.createdAt.getTime()),
+  );
+}
+
+function project(rows: MessageRow[], select: any): any[] {
+  if (!select) return rows.map((row) => ({ ...row }));
+  return rows.map((row) =>
+    Object.fromEntries(
+      Object.keys(select).map((key) => [key, (row as any)[key]]),
+    ),
+  );
 }
 
 /** `Prisma.DbNull` est un marqueur, pas une valeur : la colonne recoit NULL. */
@@ -342,36 +373,40 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
     },
 
     conversationMessage: {
-      findMany: async ({ where, orderBy, select }: any) => {
-        const rows = store.messages
-          .filter(
-            (row) =>
-              row.universeId === where.universeId &&
-              row.channel === where.channel &&
-              (where.role === undefined || row.role === where.role),
-          )
-          .sort((a, b) =>
-            orderBy?.createdAt === 'desc'
-              ? b.createdAt.getTime() - a.createdAt.getTime()
-              : a.createdAt.getTime() - b.createdAt.getTime(),
-          );
-
-        if (!select) return rows.map((row) => ({ ...row }));
-        return rows.map((row) =>
-          Object.fromEntries(
-            Object.keys(select).map((key) => [key, (row as any)[key]]),
-          ),
-        );
+      findMany: async ({ where, orderBy, select }: any) =>
+        project(sortMessages(matchMessages(store, where), orderBy), select),
+      findFirst: async ({ where, orderBy, select }: any) => {
+        const [row] = sortMessages(matchMessages(store, where), orderBy);
+        return row ? project([row], select)[0] : null;
       },
       create: async ({ data }: any) => {
+        const seq = data.seq ?? 0;
+        // La vraie table porte une contrainte d'unicite sur (univers, canal,
+        // rang). Sans elle ici, un appelant qui oublie le rang ecrit autant de
+        // lignes a zero qu'il veut, et le test passe la ou la base refuse.
+        const clash = store.messages.some(
+          (row) =>
+            row.universeId === data.universeId &&
+            row.channel === data.channel &&
+            row.seq === seq,
+        );
+        if (clash) {
+          throw new Prisma.PrismaClientKnownRequestError(
+            'Unique constraint failed on the constraint: `conversation_messages_universe_id_channel_seq_key`',
+            { code: 'P2002', clientVersion: 'test' },
+          );
+        }
+
         const row: MessageRow = {
           id: randomUUID(),
           universeId: data.universeId,
           channel: data.channel,
           role: data.role,
           content: data.content,
+          seq,
           // Les messages d'un meme test naissent dans la meme milliseconde :
-          // sans ce decalage, leur ordre de lecture serait indefini.
+          // sans ce decalage, leur ordre de lecture serait indefini. C'est
+          // exactement ce que le rang evite en base.
           createdAt: new Date(Date.now() + store.messages.length),
         };
         store.messages.push(row);
