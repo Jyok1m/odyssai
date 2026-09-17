@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module.js';
 import { AppConfig } from './config/app-config.js';
+import { corsOptions } from './config/cors.js';
 import { GuideConfig } from './config/guide-config.js';
 import { loadRootEnvFile } from '@odyssai/db';
 
@@ -19,13 +20,7 @@ async function bootstrap() {
   // devient une limite globale.
   app.getHttpAdapter().getInstance().set('trust proxy', guideConfig.trustProxy);
 
-  // Le front est sur une autre origine et envoie le cookie de session :
-  // credentials impose une origine nommee, jamais un joker.
-  app.enableCors({
-    origin: config.webBaseUrl.origin,
-    credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
-  });
+  app.enableCors(corsOptions(config));
 
   app.enableShutdownHooks();
 

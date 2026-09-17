@@ -62,6 +62,7 @@ Un realm Keycloak par environnement (`odyssai-dev`, `odyssai-prod`). `apps/api` 
 - Le realm est en rotation stricte du refresh token (`revokeRefreshToken`, `refreshTokenMaxReuse: 0`). Tout renouvellement passe par le verrou Redis de `SessionService` : deux renouvellements concurrents feraient invalider la session entière par Keycloak, qui lirait le second comme un rejeu.
 - L'identité (email, mot de passe, MFA) appartient à Keycloak. Le profil de jeu (pseudo, univers, progression) appartient à la base applicative et ne remonte jamais dans le realm.
 - `SessionGuard` protège les routes de jeu et dépose la session sur la requête.
+- Les verbes ouverts au navigateur sont listés dans `apps/api/src/config/cors.ts`, **pas dans `main.ts`** : la configuration y serait hors du graphe de modules, donc invisible aux tests. **Toute route servie sous un nouveau verbe s'ajoute à `CORS_METHODS`.** Sans cela elle marche depuis curl et depuis supertest, qui n'émettent pas de préflight, et échoue dans un navigateur seul. `test/cors.e2e-spec.ts` monte l'application avec la vraie configuration et vérifie le préflight de chaque verbe.
 - Le thème `odyssai` habille les pages du realm et vit dans le même rôle ansible. Son CSS redéclare les tokens de `globals.css`, Keycloak ne compilant pas Tailwind : reporter toute évolution du kit.
 
 ## Guide
