@@ -182,6 +182,43 @@
         "personality": "Traits de caractère",
         "attributes": "Attributs"
       }
+    },
+    "generation": {
+      "title": "Ton monde se construit",
+      "lead": "Ça prend quelques minutes. Tu peux fermer cet onglet : rien ne s'arrête, et tu retrouveras ton monde en revenant.",
+      "leave": "Tu peux fermer cet onglet sans rien perdre.",
+      "lost": "Connexion perdue. On réessaie dès qu'elle revient.",
+      "failedTitle": "La construction n'a pas abouti",
+      "failedLead": "Rien n'est perdu : ta saisie et ton personnage sont gardés. Reprends l'inspiration et relance.",
+      "errorUnknown": "Cause inconnue.",
+      "back": "Reprendre mon inspiration",
+      "steps": {
+        "abstraction": "Dégager les thèmes",
+        "charter": "Écrire la charte",
+        "lore": "Dessiner le monde",
+        "factions": "Lever les factions",
+        "politics": "Poser les équilibres",
+        "characters": "Peupler le monde",
+        "affinities": "Nouer les liens",
+        "validation": "Relire l'ensemble"
+      }
+    },
+    "world": {
+      "openingTitle": "Te voilà",
+      "loading": "Ouverture du monde.",
+      "error": "Impossible d'ouvrir ton monde pour le moment.",
+      "charterTitle": "Ce monde",
+      "allowed": "Ce qui y est possible",
+      "forbidden": "Ce qui n'y existe pas",
+      "factions": "Les forces en présence",
+      "people": "Ceux que tu croiseras",
+      "independent": "sans attache",
+      "you": "Toi",
+      "traits": "Traits",
+      "attributes": "Attributs",
+      "soonTitle": "Le premier tour n'est pas encore écrit",
+      "soonLead": "Ton monde existe, ton personnage aussi. Ce qui manque est la partie elle-même, et elle arrive.",
+      "placeholder": "Le narrateur n'écoute pas encore."
     }
   },
   "Concept": {

@@ -158,13 +158,24 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
     },
 
     universe: {
-      findUnique: async ({ where, include }: any) =>
-        hydrate(
-          store.universes.find((universe) =>
-            where.id ? universe.id === where.id : universe.ownerId === where.ownerId,
-          ),
-          include,
-        ),
+      findUnique: async ({ where, include, select }: any) => {
+        const row = store.universes.find((universe) =>
+          where.id ? universe.id === where.id : universe.ownerId === where.ownerId,
+        );
+        if (!row) return null;
+        if (!select) return hydrate(row, include);
+
+        // `select` peut porter une relation, comme `jobs` : on la sert par la
+        // meme hydratation, et les colonnes simples par leur nom.
+        const hydrated = hydrate(row, {
+          character: select.character !== undefined,
+          jobs: typeof select.jobs === 'object' ? select.jobs : undefined,
+        }) as Record<string, unknown>;
+
+        return Object.fromEntries(
+          Object.keys(select).map((key) => [key, hydrated[key]]),
+        );
+      },
       findUniqueOrThrow: async ({ where, include }: any) => {
         const row = hydrate(
           store.universes.find((universe) => universe.id === where.id),

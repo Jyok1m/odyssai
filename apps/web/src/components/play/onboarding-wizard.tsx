@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { OnboardingError, fetchOnboarding, saveOnboarding } from "@/lib/onboarding";
 
 import { CharacterStep } from "./character-step";
+import { GenerationStep } from "./generation-step";
+import { WorldShell } from "./world-shell";
 import { InspirationStep, type SaveStatus } from "./inspiration-step";
 import { StepRail } from "./step-rail";
 import { UsernameStep } from "./username-step";
@@ -160,20 +162,36 @@ export function OnboardingWizard() {
     return <p className="text-ui-sm text-vellum-3">{t("loading")}</p>;
   }
 
+  // Le monde prêt n'est plus un parcours : il prend tout l'écran, sans titre
+  // d'assistant ni fil d'étapes au-dessus de lui.
+  if (state.step === "ready") return <WorldShell />;
+
+  if (state.step === "generating") {
+    return (
+      <div className="space-y-10">
+        {header(t("title"), t("lead"))}
+        <GenerationStep onReady={reload} />
+      </div>
+    );
+  }
+
+  // `failed` rouvre l'inspiration : c'est la seule sortie d'une génération qui
+  // n'a pas abouti, et l'API l'accepte en écriture pour cette raison.
+  const failedRun = state.step === "failed";
+
   return (
     <div className="space-y-10">
-      <StepRail current={state.step} />
+      {header(t("title"), t("lead"))}
+      <StepRail current={failedRun ? "inspiration" : state.step} />
+
+      {failedRun ? (
+        <p className="rounded-card border border-ember/40 bg-ember/8 px-4 py-3 text-ui-sm text-vellum-2">
+          {t("generation.failedLead")}
+        </p>
+      ) : null}
 
       {state.step === "username" ? (
         <UsernameStep onDone={reload} />
-      ) : state.step === "inspiration" ? (
-        <InspirationStep
-          initial={state.inspiration}
-          status={status}
-          error={error}
-          onDraft={onDraft}
-          onAdvance={onAdvance}
-        />
       ) : state.step === "character" ? (
         <CharacterStep
           initial={state.character}
@@ -182,18 +200,28 @@ export function OnboardingWizard() {
           onAdvance={onCharacter}
         />
       ) : (
-        // La génération elle-même arrive avec le worker et son graphe. Le
-        // parcours s'arrête ici pour l'instant, et il le dit plutôt que
-        // d'afficher un écran vide.
-        <div className="max-w-headline">
-          <h2 className="font-voice text-subtitle text-vellum">
-            {t("soon.title")}
-          </h2>
-          <p className="mt-3 text-ui-sm text-pretty text-vellum-2">
-            {t("soon.lead")}
-          </p>
-        </div>
+        <InspirationStep
+          initial={state.inspiration}
+          status={status}
+          error={error}
+          onDraft={onDraft}
+          onAdvance={onAdvance}
+        />
       )}
     </div>
+  );
+}
+
+/** Le titre vit ici et non dans la page : le monde prêt n'en veut pas. */
+function header(title: string, lead: string) {
+  return (
+    <header className="max-w-headline">
+      <h1 className="font-voice text-display-compact text-balance text-vellum">
+        {title}
+      </h1>
+      <p className="mt-6 max-w-measure text-ui text-pretty text-vellum-2">
+        {lead}
+      </p>
+    </header>
   );
 }

@@ -182,6 +182,43 @@
         "personality": "Character traits",
         "attributes": "Attributes"
       }
+    },
+    "generation": {
+      "title": "Your world is being built",
+      "lead": "This takes a few minutes. You can close this tab: nothing stops, and your world will be here when you come back.",
+      "leave": "You can close this tab without losing anything.",
+      "lost": "Connection lost. We retry as soon as it is back.",
+      "failedTitle": "The build did not complete",
+      "failedLead": "Nothing is lost: what you typed and your character are kept. Go back to your inspiration and start again.",
+      "errorUnknown": "Unknown cause.",
+      "back": "Back to my inspiration",
+      "steps": {
+        "abstraction": "Drawing out the themes",
+        "charter": "Writing the charter",
+        "lore": "Shaping the world",
+        "factions": "Raising the factions",
+        "politics": "Setting the balance",
+        "characters": "Peopling the world",
+        "affinities": "Tying the bonds",
+        "validation": "Reading it all back"
+      }
+    },
+    "world": {
+      "openingTitle": "Here you are",
+      "loading": "Opening the world.",
+      "error": "Cannot open your world right now.",
+      "charterTitle": "This world",
+      "allowed": "What is possible here",
+      "forbidden": "What does not exist here",
+      "factions": "The forces at play",
+      "people": "Those you will meet",
+      "independent": "unaffiliated",
+      "you": "You",
+      "traits": "Traits",
+      "attributes": "Attributes",
+      "soonTitle": "The first turn is not written yet",
+      "soonLead": "Your world exists, and so does your character. What is missing is the play itself, and it is coming.",
+      "placeholder": "The narrator is not listening yet."
     }
   },
   "Concept": {

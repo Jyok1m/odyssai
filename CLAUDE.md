@@ -133,6 +133,16 @@ La garde sur la propriété intellectuelle a trois étages, et aucun ne suffit s
 - Les tables du checkpointer appartiennent à LangGraph, pas à Prisma : `setup()` les crée au démarrage, aucune migration ne les décrit.
 - **`packages/narrator` est en CommonJS**, donc ses déclarations résolvent `@langchain/*` par la condition `require` alors que le worker, en ESM, les résout par `import`. Même classe à l'exécution, deux identités de type : `apps/worker/src/generate.ts` prend le type de narrator pour que la seule conversion reste au point d'entrée.
 
+## Écran de génération et coquille de jeu
+
+- L'avancement se lit dans `generation_jobs` par un `GET /onboarding/generation` en SSE, qui relit la table toutes les deux secondes. **Pas de canal Redis publié par le worker** : la table est déjà la source de vérité, elle survit à un redémarrage, et deux instances d'api y lisent la même chose.
+- Le flux se ferme de lui-même au bout de dix minutes et le navigateur rouvre : une génération peut traîner, pas indéfiniment.
+- `GET /world` sert le monde **par une projection**, `WorldViewSchema`, qui ne porte pas le `secret` des personnages. C'est le schéma qui le garantit, pas un `delete` : un champ qu'un type ne porte pas ne fuite pas par distraction. Un test e2e vérifie que le mot n'apparaît nulle part dans la réponse.
+- L'étape `failed` rouvre l'inspiration dans l'assistant : c'est la seule sortie d'une génération qui n'a pas abouti, et l'API l'accepte en écriture pour cette raison.
+- Le titre de la page est porté par `OnboardingWizard`, pas par `page.tsx` : une fois le monde généré, l'écran n'est plus un parcours et n'en veut plus.
+- La teinte du monde passe par `--world-hue` sous `[data-world]`, comme le kit le prévoit. Ne pas écrire `--accent` à la main : ce serait contourner la règle au lieu de la suivre, et perdre sa transition.
+- Le champ de saisie du tour de jeu est **présent et inerte**, et le dit. Le tour n'existe pas encore, et faire croire l'inverse serait pire qu'une absence.
+
 ## Conventions
 
 - Les schémas Zod sont la source de vérité ; les types en dérivent via `z.infer`.

@@ -280,3 +280,72 @@ export const GenerationJobDataSchema = z.object({
 });
 
 export type GenerationJobData = z.infer<typeof GenerationJobDataSchema>;
+
+/** Evenements du flux d'avancement, un objet JSON par ligne `data:`. */
+export const GenerationStreamEventSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('progress'),
+    status: z.enum(['queued', 'running']),
+    step: z
+      .enum([
+        'abstraction',
+        'charter',
+        'lore',
+        'factions',
+        'politics',
+        'characters',
+        'affinities',
+        'validation',
+      ])
+      .nullable(),
+    attempts: z.number().int().nonnegative(),
+  }),
+  z.object({ type: z.literal('ready'), name: z.string() }),
+  z.object({ type: z.literal('failed'), error: z.string().nullable() }),
+  z.object({
+    type: z.literal('error'),
+    code: z.enum(['internal_error', 'timeout']),
+  }),
+]);
+
+export type GenerationStreamEvent = z.infer<typeof GenerationStreamEventSchema>;
+
+/**
+ * Ce que le navigateur recoit du monde.
+ *
+ * Les secrets des personnages n'y sont pas, et c'est le schema qui le garantit
+ * plutot qu'un `delete` cote serveur : un champ qu'un type ne porte pas ne peut
+ * pas fuiter par distraction. Ils se decouvriront en jeu.
+ */
+export const PublicNpcSchema = NpcSchema.omit({ secret: true });
+
+export type PublicNpc = z.infer<typeof PublicNpcSchema>;
+
+export const WorldViewSchema = z.object({
+  name: z.string(),
+  accentHue: z.number().int().min(0).max(359),
+  charter: WorldCharterSchema,
+  lore: WorldLoreSchema,
+  factions: z.array(FactionSchema),
+  npcs: z.array(PublicNpcSchema),
+  affinities: z.array(AffinitySchema),
+  character: z.object({
+    name: z.string(),
+    gender: z.string(),
+    age: z.number().int(),
+    personality: z.object({
+      traits: z.array(z.string()),
+      summary: z.string(),
+    }),
+    attributes: z.record(z.string(), z.number().int()),
+  }),
+});
+
+export type WorldView = z.infer<typeof WorldViewSchema>;
+
+export const WorldErrorBodySchema = z.object({
+  /** `not_ready` dit que le monde n'est pas encore genere, pas qu'il manque. */
+  code: z.enum(['not_ready', 'not_found']),
+});
+
+export type WorldErrorBody = z.infer<typeof WorldErrorBodySchema>;
