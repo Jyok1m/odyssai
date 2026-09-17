@@ -80,7 +80,9 @@ tunnel: ## Ouvre le tunnel SSH vers le Redis de dev
 # lie meme quand la session derriere est tombee. Seul un PING tranche. On teste
 # REDIS_URL du .env, celle-la meme que l'api utilise, et pas une reconstruite.
 redis-ping: ## Verifie que le tunnel Redis repond vraiment
-	@node -e "process.loadEnvFile('.env'); \
+# Depuis apps/api : pnpm n'installe pas ioredis a la racine, et un require
+# lance d'ici echouerait sur MODULE_NOT_FOUND au lieu de dire l'etat du tunnel.
+	@cd apps/api && node -e "process.loadEnvFile('../../.env'); \
 		const {Redis} = require('ioredis'); \
 		const r = new Redis(process.env.REDIS_URL, {maxRetriesPerRequest: 1, lazyConnect: true}); \
 		r.connect().then(() => r.ping()) \

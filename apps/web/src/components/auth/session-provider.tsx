@@ -16,6 +16,13 @@ export type Session =
   | { status: "anonymous"; user: null }
   | { status: "authenticated"; user: SessionUser };
 
+/**
+ * Next répond avant que Nest ait fini de compiler : environ une seconde et
+ * demie mesurée sur un démarrage à froid. Ces reprises couvrent ce trou sans
+ * faire patienter longtemps quand l'API est vraiment absente.
+ */
+const RETRY_DELAYS_MS = [400, 900, 1800];
+
 const SessionContext = createContext<Session>({ status: "loading", user: null });
 
 /**
@@ -31,21 +38,37 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const controller = new AbortController();
 
-    fetchSession(controller.signal)
-      .then((state) => {
-        setSession(
-          state.authenticated
-            ? { status: "authenticated", user: state.user }
-            : { status: "anonymous", user: null },
-        );
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return;
-        // API injoignable : anonyme, l'interface reste utilisable.
-        console.error("lecture de la session impossible", error);
-        setSession({ status: "anonymous", user: null });
-      });
+    const load = async () => {
+      for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt += 1) {
+        try {
+          const state = await fetchSession(controller.signal);
+          setSession(
+            state.authenticated
+              ? { status: "authenticated", user: state.user }
+              : { status: "anonymous", user: null },
+          );
+          return;
+        } catch (error: unknown) {
+          if (controller.signal.aborted) return;
 
+          // L'échec le plus courant est passager : en développement l'API
+          // compile encore quand Next sert déjà la page, et en production un
+          // hoquet réseau ferait passer un joueur connecté pour un anonyme
+          // jusqu'à ce qu'il recharge.
+          const delay = RETRY_DELAYS_MS[attempt];
+          if (delay !== undefined) {
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            continue;
+          }
+
+          // API toujours injoignable : anonyme, l'interface reste utilisable.
+          console.error("lecture de la session impossible", error);
+          setSession({ status: "anonymous", user: null });
+        }
+      }
+    };
+
+    void load();
     return () => controller.abort();
   }, []);
 
