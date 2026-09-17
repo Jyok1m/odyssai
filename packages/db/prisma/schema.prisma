@@ -201,6 +201,8 @@ model Universe {
   messages   ConversationMessage[]
   jobs       GenerationJob[]
   encounters Encounter[]
+  turns      Turn[]
+  canon      CanonFact[]
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
@@ -304,10 +306,80 @@ model ConversationMessage {
   role    MessageRole
   content String
 
+  /// Rang explicite dans son canal. L'ordre d'un journal de partie ne peut pas
+  /// dependre d'une horloge a la milliseconde : le message du joueur et la
+  /// reponse du meneur s'ecrivent dans la meme transaction, et rien ne les
+  /// departagerait. Zero pour les conversations anterieures a cette colonne.
+  seq Int @default(0)
+
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
+  @@unique([universeId, channel, seq])
   @@index([universeId, channel, createdAt])
   @@map("conversation_messages")
+}
+
+/// Ce que le code a decide a un tour, a cote de ce qui s'y est dit, comme
+/// `guide_questions` vit a cote des reponses du guide.
+///
+/// Le jet y est conserve alors que le joueur ne le verra jamais : c'est ce qui
+/// permet de verifier apres coup qu'un de n'etait pas truque, et de diagnostiquer
+/// un tour qui a mal tourne.
+model Turn {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  universeId String   @map("universe_id") @db.Uuid
+  universe   Universe @relation(fields: [universeId], references: [id], onDelete: Cascade)
+
+  /// Le rang du message du joueur qui a ouvert ce tour.
+  seq Int
+
+  /// Le jet brut, de 1 a 20, et la bande qu'il donne. Le modele n'a recu que
+  /// la bande.
+  die  Int
+  band String @db.VarChar(20)
+
+  /// Vrai si le meneur a dit s'en etre servi : une question sur le monde ne se
+  /// tranche pas au de, et le jet reste alors sans effet.
+  usedDie Boolean @default(false) @map("used_die")
+
+  kind String @db.VarChar(16)
+
+  /// Faits entres au canon a ce tour.
+  learned Int @default(0)
+
+  provider     String?
+  model        String?
+  inputTokens  Int?    @map("input_tokens")
+  outputTokens Int?    @map("output_tokens")
+  costUsd      Float?  @map("cost_usd")
+
+  /// Metadonnee `turn_id` cote LangSmith, pour retrouver la trace.
+  traceId String? @map("trace_id")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([universeId, seq])
+  @@map("turns")
+}
+
+/// Ce que le meneur a invente en repondant a une question que le lore ne
+/// couvrait pas. Une fois ecrit, c'est vrai pour toujours : le canon nourrit
+/// tous les tours suivants.
+model CanonFact {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  universeId String   @map("universe_id") @db.Uuid
+  universe   Universe @relation(fields: [universeId], references: [id], onDelete: Cascade)
+
+  subject   String @db.VarChar(80)
+  statement String @db.VarChar(400)
+
+  /// Le tour qui l'a fait naitre.
+  seq Int
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([universeId, createdAt])
+  @@map("canon_facts")
 }
 
 enum GenerationStatus {
