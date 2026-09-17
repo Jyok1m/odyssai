@@ -4,9 +4,8 @@ import {
   Module,
   type OnApplicationShutdown,
 } from '@nestjs/common';
-import { PrismaPg } from '@prisma/adapter-pg';
 import { AppConfig } from '../config/app-config.js';
-import { PrismaClient } from '@odyssai/db';
+import { createPrismaClient, PrismaClient } from '@odyssai/db';
 
 export const PRISMA = Symbol('PRISMA');
 
@@ -17,10 +16,9 @@ export const PRISMA = Symbol('PRISMA');
       provide: PRISMA,
       inject: [AppConfig],
       useFactory: (config: AppConfig) => {
-        // Prisma 7 n'embarque plus de moteur : la connexion passe par un
-        // adaptateur, qui detient l'URL a l'execution.
-        const adapter = new PrismaPg({ connectionString: config.postgresUrl });
-        return new PrismaClient({ adapter });
+        // L'adaptateur vit dans @odyssai/db : c'est lui qui sait comment on
+        // se connecte a cette base, et le worker s'y branchera pareil.
+        return createPrismaClient(config.postgresUrl);
       },
     },
   ],

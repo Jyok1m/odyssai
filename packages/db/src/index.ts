@@ -8,9 +8,26 @@
  * n'est perdu, seuls des consommateurs ESM le lisent.
  */
 export { PrismaClient, Prisma } from './generated/prisma/client.js';
+export { createPrismaClient } from './client.js';
+
 export type {
   User,
   GuideQuestion,
+  Universe,
+  Character,
+  ConversationMessage,
+  GenerationJob,
 } from './generated/prisma/client.js';
-export { Locale, GuideSource } from './generated/prisma/enums.js';
+
+export {
+  Locale,
+  GuideSource,
+  OnboardingStep,
+  InspirationMode,
+  ConversationChannel,
+  MessageRole,
+  GenerationStatus,
+  GenerationStep,
+} from './generated/prisma/enums.js';
+
 export { loadRootEnvFile } from './env.js';

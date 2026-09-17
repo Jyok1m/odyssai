@@ -34,8 +34,6 @@
     "@odyssai/llm": "workspace:*",
     "@odyssai/narrator": "workspace:*",
     "@odyssai/schemas": "workspace:*",
-    "@prisma/adapter-pg": "^7.10.0",
-    "@prisma/client": "^7.10.0",
     "cookie-parser": "^1.4.7",
     "ioredis": "^6.0.0",
     "ipaddr.js": "^2.5.0",

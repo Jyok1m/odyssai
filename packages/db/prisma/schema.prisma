@@ -71,6 +71,8 @@ model User {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
+  universe Universe?
+
   @@index([email])
   @@map("users")
 }
@@ -123,4 +125,181 @@ model GuideQuestion {
   @@index([createdAt])
   @@index([normalizedHash])
   @@map("guide_questions")
+}
+
+/// Ou en est le joueur dans son entree en jeu. L'etape du pseudo n'y figure
+/// pas : elle se deduit de users.username, et la stocker ici en ferait une
+/// seconde verite qui finirait par contredire la premiere.
+enum OnboardingStep {
+  inspiration
+  character
+  generating
+  ready
+  failed
+
+  @@map("onboarding_step")
+}
+
+/// Les deux facons de nourrir la generation, exclusives.
+enum InspirationMode {
+  /// Des oeuvres citees, converties en themes avant toute generation.
+  works
+  /// Un monde decrit par le joueur lui-meme.
+  own
+
+  @@map("inspiration_mode")
+}
+
+/// Un univers par joueur. Il nait des la premiere entree dans le parcours, bien
+/// avant d'avoir un monde : c'est lui qui porte la reprise.
+model Universe {
+  id      String @id @default(uuid(7)) @db.Uuid
+  ownerId String @unique @map("owner_id") @db.Uuid
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  step OnboardingStep @default(inspiration)
+
+  mode InspirationMode?
+
+  /// Les oeuvres citees, telles que saisies. Conservees pour la reprise, mais
+  /// elles ne quittent jamais la passe d'abstraction : la generation ne voit
+  /// que `themes`. Cinq au plus, borne par le schema Zod partage.
+  works String[] @default([])
+
+  /// Le monde decrit par le joueur, quand il choisit ce mode.
+  ownDescription String? @map("own_description")
+
+  /// Sortie de la passe d'abstraction : des themes sans aucun nom propre.
+  /// C'est la seule chose que les etapes suivantes recoivent.
+  themes Json?
+
+  /// Ce qui existe ou non dans ce monde, le ton, les interdits. Le narrateur
+  /// la respecte en toutes circonstances.
+  charter Json?
+
+  /// Le monde genere : lore, factions, politique, affinites. En JSON valide par
+  /// Zod a l'ecriture comme a la lecture, plutot qu'en tables : les sortir
+  /// demanderait de dessiner tout le schema du jeu.
+  bible Json?
+
+  name String? @db.VarChar(80)
+
+  /// Teinte de l'accent, que l'interface applique en entrant dans ce monde.
+  accentHue Int? @map("accent_hue")
+
+  character Character?
+  messages  ConversationMessage[]
+  jobs      GenerationJob[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("universes")
+}
+
+/// Le personnage du joueur. Un seul par univers pour l'instant, d'ou l'unicite
+/// sur universe_id : c'est celui qu'il incarne.
+model Character {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  universeId String   @unique @map("universe_id") @db.Uuid
+  universe   Universe @relation(fields: [universeId], references: [id], onDelete: Cascade)
+
+  name String @db.VarChar(60)
+
+  /// Texte borne par le schema Zod plutot qu'enum : le vocabulaire du genre
+  /// n'a pas a etre fige par une migration.
+  gender String? @db.VarChar(40)
+  age    Int?
+
+  /// Traits choisis et texte libre, puis attributs chiffres. Le modele propose,
+  /// le schema tranche, le joueur corrige.
+  personality Json?
+  attributes  Json?
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("characters")
+}
+
+/// Ce qui distingue la creation de personnage du tour de jeu a venir. Les deux
+/// vivent dans la meme table : le chat du jeu lira exactement la meme chose.
+enum ConversationChannel {
+  character_creation
+  game_turn
+
+  @@map("conversation_channel")
+}
+
+enum MessageRole {
+  user
+  assistant
+
+  @@map("message_role")
+}
+
+model ConversationMessage {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  universeId String   @map("universe_id") @db.Uuid
+  universe   Universe @relation(fields: [universeId], references: [id], onDelete: Cascade)
+
+  channel ConversationChannel
+  role    MessageRole
+  content String
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([universeId, channel, createdAt])
+  @@map("conversation_messages")
+}
+
+enum GenerationStatus {
+  queued
+  running
+  done
+  failed
+
+  @@map("generation_status")
+}
+
+/// Les noeuds du graphe, dans l'ordre. `step` dit ou en est la generation, ce
+/// qui sert autant a l'ecran d'attente qu'au diagnostic.
+enum GenerationStep {
+  abstraction
+  charter
+  lore
+  factions
+  politics
+  characters
+  affinities
+  validation
+
+  @@map("generation_step")
+}
+
+/// Une ligne par generation. BullMQ suit le travail dans Redis ; cette table le
+/// rend interrogeable, et garde l'identifiant de trace pour retrouver l'appel
+/// dans LangSmith quand une generation tourne mal.
+model GenerationJob {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  universeId String   @map("universe_id") @db.Uuid
+  universe   Universe @relation(fields: [universeId], references: [id], onDelete: Cascade)
+
+  status   GenerationStatus @default(queued)
+  step     GenerationStep?
+  attempts Int              @default(0)
+
+  /// Message d'erreur borne : de quoi diagnostiquer, jamais un prompt entier
+  /// ni une cle.
+  error String? @db.VarChar(500)
+
+  /// Metadonnee `generation_job_id` cote LangSmith, pour retrouver la trace.
+  traceId String? @map("trace_id")
+
+  startedAt  DateTime? @map("started_at") @db.Timestamptz(3)
+  finishedAt DateTime? @map("finished_at") @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([universeId, createdAt])
+  @@map("generation_jobs")
 }
