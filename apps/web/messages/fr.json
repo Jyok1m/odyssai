@@ -369,9 +369,18 @@
 				]
 			},
 			{
+				"title": "Le guide du site",
+				"body": [
+					"La page d'accueil propose un guide qui répond aux questions sur le jeu. Chaque question posée est enregistrée pendant trente jours, pour mesurer l'usage du service et repérer les questions qui reviennent. Cet enregistrement ne contient ni ton adresse IP, ni ton identifiant de compte : rien ne le relie à toi.",
+					"Une question qui ne trouve pas sa réponse dans la foire aux questions du guide est transmise à un fournisseur de modèle de langage, par l'intermédiaire d'OpenRouter, pour y répondre. Le service est configuré pour n'accepter que des fournisseurs qui ne conservent pas les échanges.",
+					"Un échantillon des échanges est conservé sous forme de traces techniques chez LangSmith, sur son infrastructure européenne, pour diagnostiquer les réponses de mauvaise qualité. Le guide n'a besoin d'aucune donnée personnelle pour répondre : n'en mets pas dans tes questions."
+				]
+			},
+			{
 				"title": "Durée de conservation",
 				"body": [
 					"Les données de compte sont conservées tant que le compte existe, puis effacées dans les trente jours suivant sa suppression.",
+					"Les questions posées au guide sont effacées au bout de trente jours.",
 					"Les journaux techniques du serveur sont conservés douze mois au plus."
 				]
 			},
@@ -379,7 +388,8 @@
 				"title": "Qui y a accès",
 				"body": [
 					"Personne d'autre que l'éditeur. Les services techniques sont auto-hébergés sur le serveur du projet : le serveur d'identité, le serveur de courriel et la base de données.",
-					"Deux prestataires interviennent sur l'infrastructure : OVH SAS pour l'hébergement, en France, et Cloudflare, Inc. pour la distribution et la protection réseau. Cloudflare est une société américaine ; les transferts éventuels sont encadrés par les clauses contractuelles types de la Commission européenne."
+					"Deux prestataires interviennent sur l'infrastructure : OVH SAS pour l'hébergement, en France, et Cloudflare, Inc. pour la distribution et la protection réseau. Cloudflare est une société américaine ; les transferts éventuels sont encadrés par les clauses contractuelles types de la Commission européenne.",
+					"Le guide fait appel à deux prestataires de plus : OpenRouter, Inc. pour l'accès aux modèles de langage, et LangChain, Inc. pour les traces techniques de LangSmith, sur son infrastructure européenne. Les deux sont des sociétés américaines, encadrées par les mêmes clauses contractuelles types."
 				]
 			},
 			{
@@ -404,7 +414,9 @@
 				"body": [
 					"Une préférence de langue, qui retient ton choix entre français et anglais. Conservée un an.",
 					"Un identifiant de session, déposé à la connexion. Il est opaque : aucune donnée te concernant n'y figure, seulement une référence que le serveur sait relire. Il disparaît à la déconnexion.",
-					"Les cookies de notre serveur d'identité, sur le sous-domaine sso, le temps de la connexion et de la session."
+					"Les cookies de notre serveur d'identité, sur le sous-domaine sso, le temps de la connexion et de la session.",
+					"Un cookie de guide, déposé quand tu poses ta première question et valable une heure. Comme celui de session, il est opaque, et il n'autorise qu'un nombre limité de questions.",
+					"Les cookies du service anti-abus Turnstile, de Cloudflare. Il n'est chargé qu'au moment où tu envoies une question au guide, jamais à l'ouverture de la page, et sert à vérifier que la demande ne vient pas d'un robot."
 				]
 			},
 			{

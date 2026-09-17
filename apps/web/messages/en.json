@@ -369,9 +369,18 @@
 				]
 			},
 			{
+				"title": "The site guide",
+				"body": [
+					"The home page offers a guide that answers questions about the game. Every question asked is recorded for thirty days, to measure how the service is used and to spot the questions that keep coming back. That record holds neither your IP address nor your account identifier: nothing ties it to you.",
+					"A question that finds no answer in the guide's FAQ is passed to a language model provider, through OpenRouter, to be answered. The service is configured to accept only providers that do not retain the exchanges.",
+					"A sample of the exchanges is kept as technical traces with LangSmith, on its European infrastructure, to diagnose poor answers. The guide needs no personal data to answer: do not put any in your questions."
+				]
+			},
+			{
 				"title": "How long",
 				"body": [
 					"Account data is kept for as long as the account exists, then erased within thirty days of its deletion.",
+					"Questions asked to the guide are erased after thirty days.",
 					"Server technical logs are kept for at most twelve months."
 				]
 			},
@@ -379,7 +388,8 @@
 				"title": "Who has access",
 				"body": [
 					"Nobody but the publisher. The technical services are self-hosted on the project's server: the identity server, the mail server and the database.",
-					"Two providers are involved in the infrastructure: OVH SAS for hosting, in France, and Cloudflare, Inc. for delivery and network protection. Cloudflare is a US company; any transfers are covered by the European Commission's standard contractual clauses."
+					"Two providers are involved in the infrastructure: OVH SAS for hosting, in France, and Cloudflare, Inc. for delivery and network protection. Cloudflare is a US company; any transfers are covered by the European Commission's standard contractual clauses.",
+					"The guide relies on two further providers: OpenRouter, Inc. for access to language models, and LangChain, Inc. for LangSmith technical traces, on its European infrastructure. Both are US companies, covered by the same standard contractual clauses."
 				]
 			},
 			{
@@ -404,7 +414,9 @@
 				"body": [
 					"A language preference, remembering your choice between French and English. Kept for one year.",
 					"A session identifier, set when you sign in. It is opaque: it holds no data about you, only a reference the server knows how to read. It disappears when you sign out.",
-					"Our identity server's cookies, on the sso subdomain, for the duration of the sign-in and the session."
+					"Our identity server's cookies, on the sso subdomain, for the duration of the sign-in and the session.",
+					"A guide cookie, set when you ask your first question and valid for one hour. Like the session one it is opaque, and it allows only a limited number of questions.",
+					"The cookies of Cloudflare's Turnstile anti-abuse service. It is loaded only when you send a question to the guide, never when the page opens, and checks that the request does not come from a bot."
 				]
 			},
 			{
