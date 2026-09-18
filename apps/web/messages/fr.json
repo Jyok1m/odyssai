@@ -107,6 +107,7 @@
     "title": "Ta réserve",
     "loading": "Lecture de ta réserve.",
     "balance": "{credits, plural, =0 {Aucun crédit} one {# crédit} other {# crédits}} sur {monthly} pour ce mois.",
+    "balanceWelcome": "{credits, plural, one {# crédit} other {# crédits}}, bienvenue comprise. La dotation est de {monthly} par mois.",
     "planLabel": "Plan",
     "renewsLabel": "Renouvelée le",
     "endsLabel": "Prend fin le",

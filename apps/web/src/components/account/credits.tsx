@@ -94,20 +94,25 @@ export function Credits() {
     ? Math.min(100, Math.round((summary.credits / summary.monthly) * 100))
     : 0;
 
+  // Tant que le solde dépasse la dotation, « 55 sur 30 » se lit comme une
+  // incohérence. Le surplus ne peut venir que de la bienvenue, autant le dire.
+  // Sa part exacte n'est pas affichée : dès la première dépense, le grand
+  // livre ne sait plus quel crédit a été consommé, et « dont 25 de bienvenue »
+  // deviendrait faux.
+  const balance = t(
+    summary.credits > summary.monthly ? "balanceWelcome" : "balance",
+    { credits: summary.credits, monthly: summary.monthly },
+  );
+
   return (
     <section>
       <Heading />
 
-      <p className="mt-3 text-ui-sm text-vellum">
-        {t("balance", { credits: summary.credits, monthly: summary.monthly })}
-      </p>
+      <p className="mt-3 text-ui-sm text-vellum">{balance}</p>
 
       <div
         role="img"
-        aria-label={t("balance", {
-          credits: summary.credits,
-          monthly: summary.monthly,
-        })}
+        aria-label={balance}
         className="mt-3 h-1.5 w-full max-w-sm overflow-hidden rounded-full bg-mist"
       >
         <div

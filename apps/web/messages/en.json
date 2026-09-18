@@ -107,6 +107,7 @@
     "title": "Your reserve",
     "loading": "Reading your reserve.",
     "balance": "{credits, plural, =0 {No credits} one {# credit} other {# credits}} out of {monthly} this month.",
+    "balanceWelcome": "{credits, plural, one {# credit} other {# credits}}, welcome bonus included. The monthly allowance is {monthly}.",
     "planLabel": "Plan",
     "renewsLabel": "Renews on",
     "endsLabel": "Ends on",
