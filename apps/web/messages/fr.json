@@ -21,7 +21,8 @@
     "rights": "Tous droits réservés.",
     "manageCookies": "Gérer les cookies",
     "onThisPage": "Sur cette page",
-    "pricing": "Tarifs"
+    "pricing": "Tarifs",
+    "terms": "Conditions générales"
   },
   "Hero": {
     "badge": "Alpha privée en préparation.",
@@ -66,7 +67,8 @@
   "Alpha": {
     "closed": "L'alpha privée n'est pas encore ouverte. Reviens bientôt.",
     "preRegister": "L'alpha n'est pas ouverte. Créer un compte te place sur la liste des premiers joueurs : tu recevras l'invitation et les nouvelles du multivers, rien d'autre.",
-    "preRegisterShort": "Rejoindre la liste des premiers joueurs"
+    "preRegisterShort": "Rejoindre la liste des premiers joueurs",
+    "terms": "En créant un compte, tu acceptes les <terms>conditions générales</terms> et la <privacy>politique de confidentialité</privacy>."
   },
   "Auth": {
     "signOut": "Se déconnecter",
@@ -581,6 +583,130 @@
         "body": [
           "Le code, les textes, l'identité visuelle et les univers publiés ici sont protégés par le droit d'auteur. La publication ouverte du code n'emporte aucune cession : voir le fichier LICENSE du dépôt.",
           "Les mondes créés par les joueurs restent la propriété de leurs auteurs. Les publier sur OdyssAI n'accorde qu'une licence limitée au fonctionnement du service."
+        ]
+      }
+    ]
+  },
+  "Terms": {
+    "metaTitle": "Conditions générales",
+    "metaDescription": "Conditions d'utilisation et de vente d'OdyssAI : accès à l'alpha, compte, contenus générés par IA, crédits, abonnements et résiliation.",
+    "lead": "Ce à quoi tu t'engages en jouant, et ce à quoi nous nous engageons en retour.",
+    "intro": [
+      "Ces conditions régissent l'utilisation d'OdyssAI et la vente des abonnements qui s'y rattachent. Elles s'appliquent dès la création d'un compte.",
+      "OdyssAI est édité par Joachim Alexandre Jasmin, entrepreneur individuel, dont les coordonnées figurent aux mentions légales.",
+      "Dernière mise à jour : 18 septembre 2026."
+    ],
+    "sections": [
+      {
+        "title": "Objet",
+        "body": [
+          "OdyssAI est un jeu de rôle narratif en ligne dont le meneur est un modèle de langage. Le service comprend la création d'univers, la conduite de parties, et les fonctions qui les accompagnent.",
+          "Créer un compte vaut acceptation de ces conditions. Qui ne les accepte pas ne doit pas créer de compte."
+        ]
+      },
+      {
+        "title": "Accès pendant l'alpha",
+        "body": [
+          "Le service est en alpha fermée, limitée à cent joueurs. Au delà, l'inscription est refusée jusqu'à une ouverture plus large.",
+          "Une alpha est par nature instable : des fonctions peuvent changer, être retirées, ou cesser de marcher sans préavis. Les univers et les parties peuvent être perdus lors d'une évolution technique. N'y confie rien que tu ne supporterais pas de perdre.",
+          "L'accès peut être suspendu pour maintenance, sans indemnité."
+        ]
+      },
+      {
+        "title": "Compte et identité",
+        "body": [
+          "L'identité est gérée par un serveur Keycloak que nous administrons. L'adresse électronique, le mot de passe et l'authentification à deux facteurs y vivent ; le profil de jeu vit dans la base applicative.",
+          "Un compte est personnel. Tu réponds de ce qui se fait avec le tien, et tu dois nous signaler tout usage que tu n'as pas autorisé.",
+          "Le service est réservé aux personnes de quinze ans révolus."
+        ]
+      },
+      {
+        "title": "Ce que le narrateur écrit",
+        "body": [
+          "Les textes du narrateur sont produits par un modèle de langage. Ils peuvent être inexacts, incohérents, ou heurter malgré les garde-fous en place. Ils ne constituent ni un conseil, ni une information de référence, et n'engagent pas notre responsabilité sur leur contenu.",
+          "Le code décide de l'état du jeu, jamais le texte produit : un récit qui affirmerait quelque chose de contraire aux règles ne le rend pas vrai dans la partie.",
+          "Aucune réponse générée n'est mise en cache pour être resservie à quelqu'un d'autre."
+        ]
+      },
+      {
+        "title": "Ce que tu écris",
+        "body": [
+          "Tu restes propriétaire des textes que tu écris et des univers que tu crées. Tu nous accordes seulement la licence nécessaire au fonctionnement du service : stocker, afficher, transmettre aux modèles, et présenter aux autres joueurs quand tu ouvres ton monde.",
+          "Tu garantis avoir le droit d'écrire ce que tu écris. Tu ne dois pas reproduire l'oeuvre d'autrui : les titres que tu cites comme inspiration servent à en dégager des thèmes, et le monde produit ne doit rien leur emprunter.",
+          "Ce que le modèle écrit à partir de tes saisies n'est pas garanti original ni protégeable, le droit sur les productions automatiques restant incertain."
+        ]
+      },
+      {
+        "title": "Conduite et modération",
+        "body": [
+          "Sont interdits les contenus illicites, haineux, sexuels impliquant des mineurs, incitant à la violence ou au harcèlement, ainsi que les tentatives de contourner les protections du service.",
+          "Tout ce qu'un joueur écrit passe par deux couches de modération, l'une lexicale et l'autre par classificateur. Un message refusé n'est pas transmis au narrateur.",
+          "Un manquement peut entraîner la suspension ou la fermeture du compte, sans remboursement des crédits consommés."
+        ]
+      },
+      {
+        "title": "Crédits",
+        "body": [
+          "Le jeu se consomme en crédits. Un tour de jeu en vaut un, un message de création de personnage un, et la génération d'un monde vingt-cinq. Le barème est publié sur la page des tarifs et peut évoluer ; un changement ne s'applique jamais rétroactivement aux crédits déjà consommés.",
+          "Les crédits n'ont aucune valeur monétaire, ne se revendent pas, ne s'échangent pas entre comptes et ne se remboursent pas en argent.",
+          "Sur un abonnement, la réserve repart à la dotation du palier à chaque période et ne se reporte pas. Sur le palier offert, qui ne reverse rien, ce qui n'a pas été dépensé reste tant que le compte existe.",
+          "La modération et la mémoire du narrateur ne sont jamais facturées."
+        ]
+      },
+      {
+        "title": "Abonnements, prix et paiement",
+        "body": [
+          "Les paliers et leurs prix figurent sur la page des tarifs. Les prix sont en euros, toutes taxes comprises le cas échéant.",
+          "Le paiement est traité par Stripe Payments Europe. Aucune donnée de carte n'est saisie ni conservée sur OdyssAI. La souscription et la gestion passent par les pages hébergées par Stripe.",
+          "L'abonnement est mensuel et se renouvelle par tacite reconduction jusqu'à résiliation. La dotation de crédits est versée à chaque paiement constaté.",
+          "Un changement de prix ne s'applique qu'à compter de l'échéance suivante et t'est annoncé avant."
+        ]
+      },
+      {
+        "title": "Résiliation",
+        "body": [
+          "Tu peux résilier à tout moment depuis le portail Stripe, accessible depuis ton compte. La résiliation prend effet à la fin de la période déjà payée : ton palier reste actif jusque là.",
+          "Après la résiliation, les crédits restants sont conservés et restent dépensables ; aucune nouvelle dotation n'est versée.",
+          "Supprimer ton compte résilie l'abonnement immédiatement, sans remboursement de la période en cours.",
+          "Nous pouvons résilier un abonnement en cas de manquement à ces conditions ou d'arrêt du service, avec remboursement au prorata de la période non consommée dans le second cas."
+        ]
+      },
+      {
+        "title": "Droit de rétractation",
+        "body": [
+          "Tu disposes d'un délai de quatorze jours pour te rétracter d'une souscription, conformément à l'article L221-18 du code de la consommation.",
+          "En demandant l'accès immédiat au service, tu consens à ce que son exécution commence avant la fin de ce délai et renonces à ton droit de rétractation, comme le prévoit l'article L221-28 du même code. Cette renonciation t'est demandée au moment du paiement.",
+          "Tant que tu n'as consommé aucun crédit de la période souscrite, nous t'en remboursons le montant sur simple demande."
+        ]
+      },
+      {
+        "title": "Données personnelles",
+        "body": [
+          "Le traitement des données est décrit à la page Confidentialité, qui fait partie intégrante de ces conditions.",
+          "Tu peux effacer ton compte de jeu depuis ton espace personnel. L'identité, elle, se supprime depuis la console de ton compte, le serveur d'identité en restant la source."
+        ]
+      },
+      {
+        "title": "Responsabilité",
+        "body": [
+          "Le service est fourni en l'état, sans garantie de disponibilité continue ni d'absence d'erreur, ce qui est la nature d'une alpha.",
+          "Notre responsabilité ne peut être engagée au delà des sommes que tu as effectivement versées au cours des douze derniers mois, hors dommage corporel ou faute lourde, que la loi exclut de toute limitation.",
+          "Aucune clause ne prive un consommateur des droits que la loi lui reconnaît."
+        ]
+      },
+      {
+        "title": "Évolution des conditions",
+        "body": [
+          "Ces conditions peuvent changer. Une modification substantielle est annoncée sur le site avant de prendre effet, et pour un abonné, au plus tard à son échéance suivante.",
+          "Poursuivre l'utilisation après l'entrée en vigueur vaut acceptation. À défaut, la résiliation reste ouverte à tout moment."
+        ]
+      },
+      {
+        "title": "Droit applicable et litiges",
+        "body": [
+          "Ces conditions sont régies par le droit français.",
+          "En cas de différend, une solution amiable est recherchée d'abord : écris à joachim.jasmin-dev@proton.me.",
+          "Un consommateur peut recourir gratuitement à un médiateur de la consommation, ou saisir la plateforme européenne de règlement en ligne des litiges. À défaut d'accord, les tribunaux français sont compétents."
         ]
       }
     ]

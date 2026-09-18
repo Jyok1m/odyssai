@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { key: "multiverse", href: "/multivers" },
   { key: "lore", href: "/lore" },
   { key: "glossary", href: "/glossaire" },
+  { key: "terms", href: "/conditions" },
   { key: "legal", href: "/mentions-legales" },
   { key: "privacy", href: "/confidentialite" },
   { key: "cookies", href: "/cookies" },

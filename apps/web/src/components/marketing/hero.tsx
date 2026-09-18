@@ -2,6 +2,7 @@ import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import { SignupCta } from "@/components/auth/signup-cta";
+import { SignupTerms } from "@/components/auth/signup-terms";
 import { Link } from "@/i18n/navigation";
 
 import { Constellation } from "./constellation";
@@ -59,6 +60,11 @@ export function Hero({ children }: { children?: ReactNode }) {
               {t("secondaryCta")} <span aria-hidden="true">&rarr;</span>
             </Link>
           </div>
+
+          {/* Sous les boutons et non dans SignupCta : le groupe est en flex
+              horizontal, et un paragraphe a l'interieur casserait l'alignement
+              du bouton avec le lien qui le suit. */}
+          <SignupTerms />
 
           {/* text-left : la conversation ne se lit pas centrée. */}
           {children ? (

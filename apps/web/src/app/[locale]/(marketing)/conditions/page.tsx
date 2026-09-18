@@ -1,0 +1,49 @@
+import type { Metadata } from "next";
+import { hasLocale, useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
+
+import { ProsePage, type ProseSection } from "@/components/marketing/prose-page";
+import { routing } from "@/i18n/routing";
+import { pageMetadata } from "@/lib/page-metadata";
+
+const HREF = "/conditions" as const;
+const NS = "Terms" as const;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) return {};
+
+  const t = await getTranslations({ locale, namespace: NS });
+
+  return pageMetadata({
+    locale,
+    href: HREF,
+    title: t("metaTitle"),
+    description: t("metaDescription"),
+  });
+}
+
+/**
+ * Conditions d'utilisation et de vente, en un seul document.
+ *
+ * Les séparer en deux pages obligerait à décider, pour chaque règle, si elle
+ * relève de l'usage ou de la vente. Les crédits sont les deux à la fois : une
+ * règle de jeu et l'objet du contrat.
+ */
+export default function Page() {
+  const t = useTranslations(NS);
+
+  return (
+    <ProsePage
+      href={HREF}
+      title={t("metaTitle")}
+      lead={t("lead")}
+      intro={t.raw("intro") as string[]}
+      sections={t.raw("sections") as ProseSection[]}
+    />
+  );
+}

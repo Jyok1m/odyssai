@@ -21,6 +21,7 @@ const PATHS: { href: Pathname; priority: number }[] = [
   { href: "/tarifs", priority: 0.8 },
   { href: "/glossaire", priority: 0.5 },
   // Faible priorite, mais presentes : elles sont obligatoires.
+  { href: "/conditions", priority: 0.3 },
   { href: "/mentions-legales", priority: 0.2 },
   { href: "/confidentialite", priority: 0.2 },
   { href: "/cookies", priority: 0.2 },

@@ -316,6 +316,16 @@ La clé et le secret de webhook sont les seules variables d'environnement. Les p
 - Les puces disent « un monde, puis N tours » et non « N mondes » : soixante mondes est juste et ne veut rien dire, personne n'en crée soixante.
 - Elle entre dans le corpus du guide, qui sait donc expliquer ce qu'est un crédit. Il **n'annonce jamais un prix** : les montants vivent chez Stripe et les dotations en base, rien de tout cela n'est dans les messages, et un prix récité par un modèle serait la mauvaise source.
 
+## Conditions générales
+
+`/conditions` en français, `/terms` en anglais. Utilisation et vente dans **un seul document** : les séparer obligerait à trancher, pour chaque règle, si elle relève de l'usage ou de la vente, alors que les crédits sont les deux à la fois.
+
+- Le texte décrit le fonctionnement **réel** : deux couches de modération, le code qui décide de l'état et non le récit, la réserve qui ne se reporte pas sauf sur le palier offert, la résiliation à la fin de période, la suppression de compte qui résilie tout de suite. Une clause qui ne correspondrait plus au code serait pire qu'une clause absente.
+- La mention d'acceptation est sur la page d'accueil (`SignupTerms`), sous les boutons. C'est le **dernier écran qui nous appartient** : l'inscription part ensuite chez Keycloak, dont les pages vivent dans le dépôt d'infrastructure. Elle disparaît pour un joueur déjà connecté, qui a accepté en s'inscrivant.
+- Elle est posée dans le hero et non dans `SignupCta` : le groupe de boutons est en flex horizontal, et un paragraphe à l'intérieur casserait l'alignement du bouton avec le lien qui le suit.
+- La page n'entre **pas** dans le corpus du guide. Un modèle qui paraphrase des conditions générales invente des engagements, et c'est le texte qui fait foi, pas son résumé.
+- **Ce texte n'a pas été relu par un juriste.** Le droit de rétractation et la renonciation de l'article L221-28 sont les deux points à faire valider avant d'encaisser un premier paiement en production.
+
 ## Les réglages vivent dans un index
 
 `packages/engine/src/tuning.ts` rassemble ce qui se tourne sans changer de logique : le barème en crédits, les bornes des paliers, le dé, les bornes de l'inspiration et de la fiche, les essais et reprises du graphe, la mémoire du meneur. Avant lui il fallait connaître cinq fichiers dans trois paquets pour savoir où était un bouton.

@@ -21,7 +21,8 @@
     "rights": "All rights reserved.",
     "manageCookies": "Manage cookies",
     "onThisPage": "On this page",
-    "pricing": "Pricing"
+    "pricing": "Pricing",
+    "terms": "Terms and conditions"
   },
   "Hero": {
     "badge": "Private alpha in the works.",
@@ -66,7 +67,8 @@
   "Alpha": {
     "closed": "The private alpha is not open yet. Come back soon.",
     "preRegister": "The alpha is not open yet. Creating an account puts you on the first-players list: you will get the invitation and news from the multiverse, nothing else.",
-    "preRegisterShort": "Join the first-players list"
+    "preRegisterShort": "Join the first-players list",
+    "terms": "By creating an account, you accept the <terms>terms and conditions</terms> and the <privacy>privacy policy</privacy>."
   },
   "Auth": {
     "signOut": "Log out",
@@ -581,6 +583,130 @@
         "body": [
           "The code, texts, visual identity and universes published here are protected by copyright. Publishing the code openly grants no rights: see the repository's LICENSE file.",
           "Worlds created by players remain the property of their authors. Publishing them on OdyssAI grants only a licence limited to running the service."
+        ]
+      }
+    ]
+  },
+  "Terms": {
+    "metaTitle": "Terms and conditions",
+    "metaDescription": "OdyssAI terms of use and sale: alpha access, accounts, AI-generated content, credits, subscriptions and cancellation.",
+    "lead": "What you commit to by playing, and what we commit to in return.",
+    "intro": [
+      "These terms govern the use of OdyssAI and the sale of the subscriptions attached to it. They apply from the moment an account is created.",
+      "OdyssAI is published by Joachim Alexandre Jasmin, sole trader, whose details appear in the legal notice.",
+      "Last updated: 18 September 2026."
+    ],
+    "sections": [
+      {
+        "title": "Purpose",
+        "body": [
+          "OdyssAI is an online narrative role-playing game whose game master is a language model. The service covers creating universes, running sessions, and the features around them.",
+          "Creating an account means accepting these terms. Anyone who does not accept them should not create an account."
+        ]
+      },
+      {
+        "title": "Access during the alpha",
+        "body": [
+          "The service is in closed alpha, limited to one hundred players. Beyond that, registration is refused until a wider opening.",
+          "An alpha is unstable by nature: features may change, be removed, or stop working without notice. Universes and sessions may be lost during a technical change. Do not entrust anything to it you could not bear to lose.",
+          "Access may be suspended for maintenance, without compensation."
+        ]
+      },
+      {
+        "title": "Account and identity",
+        "body": [
+          "Identity is handled by a Keycloak server we administer. Email address, password and two-factor authentication live there; the game profile lives in the application database.",
+          "An account is personal. You are responsible for what is done with yours, and must report any use you did not authorise.",
+          "The service is reserved for people aged fifteen and over."
+        ]
+      },
+      {
+        "title": "What the narrator writes",
+        "body": [
+          "The narrator's text is produced by a language model. It may be inaccurate, inconsistent, or upsetting despite the safeguards in place. It is neither advice nor reference information, and we accept no liability for its content.",
+          "Game state is decided by code, never by the generated text: a story that claims something contrary to the rules does not make it true in the session.",
+          "No generated answer is cached to be served again to someone else."
+        ]
+      },
+      {
+        "title": "What you write",
+        "body": [
+          "You keep ownership of the text you write and the universes you create. You grant us only the licence needed to run the service: to store, display, transmit to the models, and show to other players when you open your world.",
+          "You warrant that you have the right to write what you write. You must not reproduce someone else's work: the titles you cite as inspiration serve to extract themes, and the resulting world must borrow nothing from them.",
+          "What the model writes from your input is not guaranteed to be original or protectable, the law on automated output remaining unsettled."
+        ]
+      },
+      {
+        "title": "Conduct and moderation",
+        "body": [
+          "Unlawful, hateful, sexual content involving minors, content inciting violence or harassment, and attempts to bypass the service's safeguards are all forbidden.",
+          "Everything a player writes passes through two moderation layers, one lexical and one classifier. A rejected message is not passed to the narrator.",
+          "A breach may lead to suspension or closure of the account, with no refund of credits already spent."
+        ]
+      },
+      {
+        "title": "Credits",
+        "body": [
+          "Play is consumed in credits. A game turn costs one, a character-creation message one, and generating a world twenty-five. The scale is published on the pricing page and may change; a change never applies retroactively to credits already spent.",
+          "Credits have no monetary value, cannot be resold, cannot be transferred between accounts, and are not refundable in cash.",
+          "On a subscription, the reserve returns to the tier's grant each period and does not roll over. On the free tier, which grants nothing monthly, whatever you have not spent stays as long as the account exists.",
+          "Moderation and the narrator's memory are never charged."
+        ]
+      },
+      {
+        "title": "Subscriptions, prices and payment",
+        "body": [
+          "Tiers and their prices appear on the pricing page. Prices are in euros, inclusive of tax where applicable.",
+          "Payment is handled by Stripe Payments Europe. No card details are entered or stored on OdyssAI. Subscribing and managing go through pages hosted by Stripe.",
+          "The subscription is monthly and renews automatically until cancelled. The credit grant is issued on each confirmed payment.",
+          "A price change applies only from the next renewal and is announced beforehand."
+        ]
+      },
+      {
+        "title": "Cancellation",
+        "body": [
+          "You may cancel at any time from the Stripe portal, reachable from your account. Cancellation takes effect at the end of the period already paid for: your tier stays active until then.",
+          "After cancellation, remaining credits are kept and can still be spent; no new grant is issued.",
+          "Deleting your account cancels the subscription immediately, with no refund of the current period.",
+          "We may cancel a subscription for a breach of these terms or if the service shuts down, with a pro-rata refund of the unused period in the latter case."
+        ]
+      },
+      {
+        "title": "Right of withdrawal",
+        "body": [
+          "You have fourteen days to withdraw from a subscription, under article L221-18 of the French consumer code.",
+          "By requesting immediate access to the service, you agree that performance begins before the end of that period and waive your right of withdrawal, as provided by article L221-28 of the same code. This waiver is requested at the time of payment.",
+          "As long as you have spent no credit from the period subscribed, we refund it on request."
+        ]
+      },
+      {
+        "title": "Personal data",
+        "body": [
+          "Data processing is described on the Privacy page, which forms part of these terms.",
+          "You can erase your game account from your personal space. Identity itself is deleted from your account console, the identity server remaining the source."
+        ]
+      },
+      {
+        "title": "Liability",
+        "body": [
+          "The service is provided as is, with no guarantee of continuous availability or freedom from error, which is the nature of an alpha.",
+          "Our liability cannot exceed the amounts you actually paid over the last twelve months, excluding personal injury or gross negligence, which the law excludes from any limitation.",
+          "No clause deprives a consumer of the rights the law grants them."
+        ]
+      },
+      {
+        "title": "Changes to these terms",
+        "body": [
+          "These terms may change. A substantial change is announced on the site before taking effect, and for a subscriber, at the latest at their next renewal.",
+          "Continuing to use the service after it takes effect means accepting it. Otherwise, cancellation remains open at any time."
+        ]
+      },
+      {
+        "title": "Governing law and disputes",
+        "body": [
+          "These terms are governed by French law.",
+          "In case of a dispute, an amicable solution is sought first: write to joachim.jasmin-dev@proton.me.",
+          "A consumer may use a consumer mediator free of charge, or refer the matter to the European online dispute resolution platform. Failing agreement, the French courts have jurisdiction."
         ]
       }
     ]
