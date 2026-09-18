@@ -124,7 +124,10 @@
     "errorUnreachable": "L'API ne répond pas. Vérifie qu'elle tourne, et que tu es bien sur l'adresse habituelle du site.",
     "errorSignedOut": "Ta session a expiré. Reconnecte-toi.",
     "balanceStandalone": "{credits, plural, =0 {Aucun crédit} one {# crédit} other {# crédits}} en réserve.",
-    "noRenewal": "Ces crédits ne se renouvellent pas, mais ils restent tant que ton compte existe."
+    "noRenewal": "Ces crédits ne se renouvellent pas, mais ils restent tant que ton compte existe.",
+    "balanceUnlimited": "Réserve illimitée.",
+    "unlimitedNote": "Ce compte administre OdyssAI : ses parties ne débitent aucun crédit. L'écran de réserve épuisée ne s'affichera donc jamais ici.",
+    "changePlan": "Changer de palier"
   },
   "Pricing": {
     "metaTitle": "Tarifs",
@@ -137,8 +140,6 @@
     "perMonth": "par mois",
     "grantMonthly": "{credits, number} crédits chaque mois.",
     "grantOnce": "{credits, number} crédits à l'inscription, une seule fois.",
-    "highlightWorlds": "{worlds, plural, =0 {Aucun monde} one {# monde à faire naître} other {# mondes à faire naître}}",
-    "highlightTurns": "{turns, plural, =0 {Aucun tour ensuite} one {# tour ensuite} other {# tours ensuite}}",
     "highlightRenews": "Réserve remise à neuf chaque mois",
     "highlightOnce": "Pas de renouvellement",
     "choose": "Choisir ce palier",
@@ -155,31 +156,39 @@
     "faqTitle": "Questions fréquentes",
     "faq": [
       {
-        "question": "Qu'est-ce qu'un crédit, exactement ?",
+        "question": "Qu'est-ce qu'un crédit, exactement ?",
         "answer": "Une action. Un tour de jeu en vaut un, un message à ton personnage pendant sa création aussi, et faire naître un monde en vaut vingt-cinq. Le barème est le même pour tout le monde et ne dépend pas de la longueur de ce que le narrateur écrit."
       },
       {
-        "question": "Pourquoi un monde coûte-t-il vingt-cinq crédits ?",
+        "question": "Pourquoi un monde coûte-t-il vingt-cinq crédits ?",
         "answer": "Parce qu'il s'écrit en sept passages au moins : une charte, un lore, des factions, une politique, des personnages, leurs liens, puis un contrôle qui relit le tout et peut demander une réécriture. C'est le geste le plus cher du jeu, et le seul qui ne se répète pas."
       },
       {
-        "question": "Mes crédits se reportent-ils d'un mois sur l'autre ?",
+        "question": "Mes crédits se reportent-ils d'un mois sur l'autre ?",
         "answer": "Sur un abonnement, non : chaque mois ta réserve repart à la dotation de ton palier, ni plus ni moins, sinon six mois d'absence donneraient six mois d'avance. Sur le palier Rider, qui ne reverse rien, la question ne se pose pas : ce que tu n'as pas dépensé reste tant que ton compte existe."
       },
       {
-        "question": "Que se passe-t-il si je n'ai plus de crédits ?",
+        "question": "Que se passe-t-il si je n'ai plus de crédits ?",
         "answer": "Tes mondes restent, tes parties aussi. Tu ne peux simplement plus jouer de tour jusqu'au renouvellement, ou jusqu'à ce que tu prennes un palier au dessus."
       },
       {
-        "question": "Qu'est-ce que le bonus des cent premiers ?",
+        "question": "Qu'est-ce que le bonus des cent premiers ?",
         "answer": "Les cent premiers inscrits reçoivent trente crédits en plus de leur réserve de départ, une seule fois et sans rien demander. Ce n'est pas un palier à choisir : c'est un supplément posé sur le compte, et il se lit dans le grand livre comme n'importe quelle attribution."
       },
       {
-        "question": "Où se règle mon abonnement ?",
+        "question": "Où se règle mon abonnement ?",
         "answer": "Chez Stripe, jamais ici : aucune carte bancaire n'est saisie sur OdyssAI. La résiliation passe par le même portail, et ton palier reste actif jusqu'à la fin de la période déjà payée."
       }
     ],
-    "costsNote": "Un tour coûte {turn, number} crédit, la création d'un monde {world, number}."
+    "costsNote": "Un tour coûte {turn, number} crédit, la création d'un monde {world, number}.",
+    "highlightWorldThenTurns": "Un monde, puis {turns, plural, =0 {aucun tour} one {# tour} other {# tours}}",
+    "highlightTurnsOnly": "{turns, plural, =0 {Aucun tour} one {# tour} other {# tours}}",
+    "recommended": "Recommandé",
+    "yourPlan": "Ton palier",
+    "currentNote": "C'est ton palier actuel.",
+    "leaving": "Ouverture du paiement.",
+    "checkoutError": "Le paiement n'a pas pu s'ouvrir. Réessaie dans un instant.",
+    "checkoutDisabled": "La vente n'est pas encore ouverte."
   },
   "Play": {
     "title": "Entrer en jeu",
@@ -199,11 +208,11 @@
     "locked": "Ton monde est déjà en construction.",
     "errorGeneric": "Impossible d'enregistrer pour le moment.",
     "username": {
-      "title": "Comment veux-tu qu'on t'appelle ?",
+      "title": "Comment veux-tu qu'on t'appelle ?",
       "lead": "Ce nom sera vu par les autres joueurs quand vos univers se croiseront."
     },
     "inspiration": {
-      "title": "D'où vient ton monde ?",
+      "title": "D'où vient ton monde ?",
       "lead": "Cite jusqu'à cinq œuvres qui t'inspirent, ou décris toi-même le monde que tu veux.",
       "privacy": "Les titres servent à dégager des thèmes, rien de plus : ton monde n'empruntera ni leurs noms, ni leurs personnages, ni leurs lieux.",
       "mode": {
@@ -226,7 +235,7 @@
     },
     "enter": "Entrer en jeu",
     "character": {
-      "title": "Qui vas-tu incarner ?",
+      "title": "Qui vas-tu incarner ?",
       "lead": "Réponds simplement. Quand il y aura de quoi, tu dresseras la fiche et tu pourras la corriger.",
       "you": "Toi",
       "guide": "Guide",
@@ -362,7 +371,7 @@
       {
         "title": "La charte du monde",
         "body": [
-          "Chaque univers a une charte. C'est son ADN : ce qui existe ou non (la magie, la technologie, les dieux), le ton, les règles qui ne se discutent pas, ce qui est interdit, le niveau de contenu. La mort est-elle définitive ? Les machines peuvent-elles rêver ? C'est toi qui décides. Le narrateur respecte la charte en toutes circonstances, y compris face aux voyageurs venus d'ailleurs."
+          "Chaque univers a une charte. C'est son ADN : ce qui existe ou non (la magie, la technologie, les dieux), le ton, les règles qui ne se discutent pas, ce qui est interdit, le niveau de contenu. La mort est-elle définitive ? Les machines peuvent-elles rêver ? C'est toi qui décides. Le narrateur respecte la charte en toutes circonstances, y compris face aux voyageurs venus d'ailleurs."
         ]
       },
       {
@@ -712,7 +721,7 @@
     "narrator": "Le meneur",
     "thinking": "Il réfléchit.",
     "inputLabel": "Ce que tu fais, ou ce que tu demandes",
-    "placeholder": "Que fais-tu ?",
+    "placeholder": "Que fais-tu ?",
     "send": "Envoyer",
     "rollDie": "Lancer un d20",
     "dieHint": "Quand tu ne sais pas quoi faire, laisse le sort décider.",

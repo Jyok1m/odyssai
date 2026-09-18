@@ -124,7 +124,10 @@
     "errorUnreachable": "The API is not answering. Check that it is running, and that you are on the site's usual address.",
     "errorSignedOut": "Your session has expired. Sign in again.",
     "balanceStandalone": "{credits, plural, =0 {No credits} one {# credit} other {# credits}} left.",
-    "noRenewal": "These credits do not renew, but they stay as long as your account does."
+    "noRenewal": "These credits do not renew, but they stay as long as your account does.",
+    "balanceUnlimited": "Unlimited reserve.",
+    "unlimitedNote": "This account administers OdyssAI: its games spend no credits. The out-of-credits screen will therefore never show here.",
+    "changePlan": "Change tier"
   },
   "Pricing": {
     "metaTitle": "Pricing",
@@ -137,8 +140,6 @@
     "perMonth": "per month",
     "grantMonthly": "{credits, number} credits every month.",
     "grantOnce": "{credits, number} credits when you sign up, once.",
-    "highlightWorlds": "{worlds, plural, =0 {No world} one {# world to bring to life} other {# worlds to bring to life}}",
-    "highlightTurns": "{turns, plural, =0 {No turn after that} one {# turn after that} other {# turns after that}}",
     "highlightRenews": "Reserve refilled every month",
     "highlightOnce": "No renewal",
     "choose": "Choose this tier",
@@ -179,7 +180,15 @@
         "answer": "At Stripe, never here: no card details are ever entered on OdyssAI. Cancelling goes through the same portal, and your tier stays active until the end of the period you already paid for."
       }
     ],
-    "costsNote": "A turn costs {turn, number} credit, creating a world {world, number}."
+    "costsNote": "A turn costs {turn, number} credit, creating a world {world, number}.",
+    "highlightWorldThenTurns": "One world, then {turns, plural, =0 {no turns} one {# turn} other {# turns}}",
+    "highlightTurnsOnly": "{turns, plural, =0 {No turns} one {# turn} other {# turns}}",
+    "recommended": "Recommended",
+    "yourPlan": "Your tier",
+    "currentNote": "This is your current tier.",
+    "leaving": "Opening checkout.",
+    "checkoutError": "Checkout could not be opened. Try again in a moment.",
+    "checkoutDisabled": "Sales are not open yet."
   },
   "Play": {
     "title": "Enter the game",

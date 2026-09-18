@@ -79,6 +79,23 @@ export class CreditsService {
     const cost = creditsFor(action);
     if (cost === 0) return null;
 
+    /**
+     * Un administrateur n'a pas de reserve a epuiser.
+     *
+     * Il doit pouvoir jouer autant qu'il faut pour verifier ce qu'il livre, et
+     * sa consommation n'est facturee a personne. Rien n'est debite, donc rien
+     * ne s'ecrit au grand livre : une ligne raconterait une depense qui n'a
+     * pas eu lieu.
+     *
+     * Ce que ses parties coutent en modeles reste compte : `llm_usage`
+     * journalise chaque appel quel qu'en soit le point de depart, et c'est lui
+     * la comptabilite. Seule la reserve ne bouge pas.
+     *
+     * Contrepartie a garder en tete : l'ecran de reserve epuisee ne
+     * s'affichera jamais pour lui. Le verifier demande un compte ordinaire.
+     */
+    if (await this.unlimited(userId)) return null;
+
     const subscription = await this.ensure(userId);
     if (subscription.credits < cost) {
       throw new OutOfCreditsError(cost, subscription.credits);
@@ -177,21 +194,36 @@ export class CreditsService {
    * compteur se desynchronise d'une suppression de compte ou d'une reprise,
    * une date se relit, et le calcul rejoue rend la meme reponse.
    *
-   * Un administrateur y a droit sans occuper une des cent places. Il doit
-   * pouvoir jouer pour verifier ce qu'il livre, et prendre la place d'un
-   * joueur serait se servir.
+   * Un administrateur n'y a pas droit et n'occupe pas une des cent places : sa
+   * reserve n'est jamais debitee, lui donner trente credits de plus ne
+   * changerait rien et prendrait la place d'un joueur.
    *
    * Contrepartie assumee : un compte supprime libere sa place, le rang etant
    * le nombre de joueurs inscrits avant et non un numero attribue. Tant que
    * personne ne s'est vu promettre un numero, c'est le moins surprenant.
    */
+  /**
+   * Vrai quand la reserve de ce compte ne se debite pas.
+   *
+   * Une lecture indexee de plus par action payante, negligeable devant l'appel
+   * au modele qui suit. La mettre en cache ferait jouer un compte sur un droit
+   * que l'administrateur croirait avoir retire.
+   */
+  private async unlimited(userId: string): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { isAdmin: true },
+    });
+
+    return user?.isAdmin ?? false;
+  }
+
   private async founderBonus(userId: string): Promise<number> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { isAdmin: true, createdAt: true },
     });
-    if (!user) return 0;
-    if (user.isAdmin) return FOUNDER_BONUS.credits;
+    if (!user || user.isAdmin) return 0;
 
     const before = await this.prisma.user.count({
       where: { isAdmin: false, createdAt: { lt: user.createdAt } },

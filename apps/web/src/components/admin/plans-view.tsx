@@ -110,9 +110,18 @@ export function PlansView() {
                 <tr key={plan.id} className={plan.archived ? "opacity-60" : ""}>
                   <Td>
                     <span className="flex flex-col">
-                      <span className="flex items-center gap-2 text-vellum">
+                      <span className="flex flex-wrap items-center gap-2 text-vellum">
                         {plan.name}
                         {plan.archived ? <Badge>archivé</Badge> : null}
+                        {/* Les deux états que la page de tarifs montre au
+                            visiteur, rappelés ici pour qu'on sache ce qu'il
+                            voit sans quitter le tableau de bord. */}
+                        {plan.recommended ? (
+                          <Badge tone="accent">mis en avant</Badge>
+                        ) : null}
+                        {plan.comingSoon ? (
+                          <Badge tone="warn">bientôt</Badge>
+                        ) : null}
                       </span>
                       <span className="text-caption text-vellum-3">{plan.slug}</span>
                     </span>

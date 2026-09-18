@@ -27,6 +27,10 @@ const PAGES = [
   'Multiverse',
   'Lore',
   'Glossary',
+  // Les tarifs sont la premiere question d'un visiteur. Seul l'editorial y est
+  // lu : les montants vivent chez Stripe et les dotations en base, donc le
+  // guide explique ce qu'est un credit sans jamais annoncer un prix.
+  'Pricing',
 ] as const;
 
 const PAGE_TITLES: Record<Locale, Record<(typeof PAGES)[number], string>> = {
@@ -36,6 +40,7 @@ const PAGE_TITLES: Record<Locale, Record<(typeof PAGES)[number], string>> = {
     Multiverse: 'Multivers',
     Lore: 'Lore General',
     Glossary: 'Glossaire',
+    Pricing: 'Tarifs',
   },
   en: {
     Concept: 'Concept',
@@ -43,6 +48,7 @@ const PAGE_TITLES: Record<Locale, Record<(typeof PAGES)[number], string>> = {
     Multiverse: 'Multiverse',
     Lore: 'General Lore',
     Glossary: 'Glossary',
+    Pricing: 'Pricing',
   },
 };
 
@@ -59,11 +65,23 @@ interface Entry {
   meaning?: string;
 }
 
+interface Faq {
+  question?: string;
+  answer?: string;
+}
+
+/**
+ * Seules ces cles sont lues. Tout le reste d'un namespace, libelles de boutons
+ * et messages d'attente compris, est ignore sans avoir a etre liste : une page
+ * qui melange contenu et interface, comme celle des tarifs, n'apporte au guide
+ * que ce qui apprend quelque chose.
+ */
 interface Page {
   lead?: string;
   intro?: unknown;
   sections?: Section[];
   entries?: Entry[];
+  faq?: Faq[];
 }
 
 /**
@@ -104,6 +122,12 @@ function renderPage(locale: Locale, name: (typeof PAGES)[number], page: Page): s
     const term = entry.term ? clean(entry.term) : '';
     const meaning = entry.meaning ? clean(entry.meaning) : '';
     if (term && meaning) lines.push(`${term} : ${meaning}`);
+  }
+
+  for (const entry of page.faq ?? []) {
+    const question = entry.question ? clean(entry.question) : '';
+    const answer = entry.answer ? clean(entry.answer) : '';
+    if (question && answer) lines.push(`${question} ${answer}`);
   }
 
   return lines.join('\n');

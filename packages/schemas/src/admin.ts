@@ -96,6 +96,8 @@ export const AdminPlanSchema = z.object({
   stripeProductId: z.string().nullable(),
   stripePriceId: z.string().nullable(),
   archived: z.boolean(),
+  recommended: z.boolean(),
+  comingSoon: z.boolean(),
   sortOrder: z.number().int(),
   /** Combien de joueurs le portent. Un palier porte ne se supprime pas. */
   subscriberCount: z.number().int().nonnegative(),
@@ -121,6 +123,7 @@ export const CreatePlanRequestSchema = z.object({
   amountCents: z.number().int().min(50).max(1_000_000).nullable().default(null),
   currency: z.string().length(3).default('eur'),
   sortOrder: z.number().int().min(0).max(999).default(0),
+  comingSoon: z.boolean().default(false),
 });
 
 export type CreatePlanRequest = z.infer<typeof CreatePlanRequestSchema>;
@@ -140,6 +143,13 @@ export const UpdatePlanRequestSchema = z.object({
   amountCents: z.number().int().min(50).max(1_000_000).nullable().optional(),
   sortOrder: z.number().int().min(0).max(999).optional(),
   archived: z.boolean().optional(),
+  /**
+   * Un seul palier recommande a la fois : poser celui-ci retire le precedent,
+   * dans la meme transaction. La base porte la contrainte, le service se
+   * contente de ne pas la heurter.
+   */
+  recommended: z.boolean().optional(),
+  comingSoon: z.boolean().optional(),
 });
 
 export type UpdatePlanRequest = z.infer<typeof UpdatePlanRequestSchema>;

@@ -54,7 +54,10 @@ export class BillingService {
         welcome: plan.welcomeCredits,
         amountCents: plan.amountCents,
         currency: plan.currency,
-        purchasable: this.config.enabled && plan.stripePriceId !== null,
+        purchasable:
+          this.config.enabled && plan.stripePriceId !== null && !plan.comingSoon,
+        recommended: plan.recommended,
+        comingSoon: plan.comingSoon,
       })),
     };
   }
@@ -79,6 +82,7 @@ export class BillingService {
       renewsAt: subscription.periodEnd.toISOString(),
       cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
       purchasable: this.config.enabled,
+      unlimited: user.isAdmin,
     };
   }
 

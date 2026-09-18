@@ -31,6 +31,8 @@ export function PlanForm({ plan, onCancel, onSubmit }: Props) {
       : "",
   );
   const [order, setOrder] = useState(String(plan?.sortOrder ?? 0));
+  const [recommended, setRecommended] = useState(plan?.recommended ?? false);
+  const [comingSoon, setComingSoon] = useState(plan?.comingSoon ?? false);
   const [busy, setBusy] = useState(false);
 
   const creating = plan === null;
@@ -52,12 +54,13 @@ export function PlanForm({ plan, onCancel, onSubmit }: Props) {
         welcomeCredits: Number.parseInt(welcome, 10),
         amountCents,
         sortOrder: Number.parseInt(order, 10),
+        comingSoon,
       };
 
       await onSubmit(
         creating
           ? { ...shared, slug: slug.trim(), currency: "eur" }
-          : shared,
+          : { ...shared, recommended },
       );
     } finally {
       setBusy(false);
@@ -160,6 +163,29 @@ export function PlanForm({ plan, onCancel, onSubmit }: Props) {
         </Field>
       </div>
 
+      <div className="mt-5 space-y-3 border-t border-line pt-5">
+        {/* La recommandation ne se pose qu'a la modification : un palier tout
+            juste cree n'a pas encore de prix, et la mettre en avant enverrait
+            les visiteurs sur une offre qui repond « bientot ». */}
+        {!creating ? (
+          <Toggle
+            id="recommended"
+            checked={recommended}
+            onChange={setRecommended}
+            label="Mis en avant sur la page de tarifs"
+            hint="Un seul palier a la fois : le poser ici retire le precedent."
+          />
+        ) : null}
+
+        <Toggle
+          id="coming-soon"
+          checked={comingSoon}
+          onChange={setComingSoon}
+          label="Bientot en vente"
+          hint="Le palier s'affiche mais ne se vend pas. Un palier archive, lui, disparait."
+        />
+      </div>
+
       {priced ? (
         <p className="mt-4 max-w-prose text-caption text-brass">
           {creating
@@ -177,6 +203,42 @@ export function PlanForm({ plan, onCancel, onSubmit }: Props) {
         </Button>
       </div>
     </form>
+  );
+}
+
+/**
+ * Une case a cocher avec son explication.
+ *
+ * `peer` et non un etat React pour le style : la case reste la source de
+ * verite de son propre aspect, et le focus se voit sans JavaScript.
+ */
+function Toggle({
+  id,
+  checked,
+  onChange,
+  label,
+  hint,
+}: {
+  id: string;
+  checked: boolean;
+  onChange: (value: boolean) => void;
+  label: string;
+  hint: string;
+}) {
+  return (
+    <div className="flex gap-3">
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        className="mt-1 size-4 shrink-0 accent-accent"
+      />
+      <label htmlFor={id} className="text-ui-sm text-vellum">
+        {label}
+        <span className="mt-0.5 block text-caption text-vellum-3">{hint}</span>
+      </label>
+    </div>
   );
 }
 

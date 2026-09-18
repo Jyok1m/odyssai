@@ -8,7 +8,7 @@ import {
   creditsFor,
   nextPeriod,
 } from '@odyssai/engine';
-import { CreditsService } from './credits.service.js';
+import { CreditsService, OutOfCreditsError } from './credits.service.js';
 import type { PlansService } from '../plans/plans.service.js';
 
 describe('bareme', () => {
@@ -139,13 +139,57 @@ describe('bonus des cent premiers', () => {
     expect(entries.map((entry) => entry.reason)).toEqual(['welcome']);
   });
 
-  // Il doit pouvoir jouer pour verifier ce qu'il livre, et prendre la place
-  // d'un joueur serait se servir : il recoit le bonus sans etre compte.
-  it('le donne a un administrateur sans consulter le rang', async () => {
-    const { service, created } = serviceFor({ isAdmin: true }, 5_000);
+  // Sa reserve n'est jamais debitee : trente credits de plus ne changeraient
+  // rien et prendraient la place d'un joueur.
+  it('ne le donne pas a un administrateur', async () => {
+    const { service, created } = serviceFor({ isAdmin: true }, 0);
     await service.ensure('u1');
 
-    expect(created.credits).toBe(plan.welcomeCredits + FOUNDER_BONUS.credits);
+    expect(created.credits).toBe(plan.welcomeCredits);
+  });
+});
+
+/**
+ * Un administrateur joue sans limite.
+ *
+ * Ce que ses parties coutent reste compte par `llm_usage` : c'est la reserve
+ * qui ne bouge pas, pas la comptabilite.
+ */
+describe('reserve illimitee', () => {
+  function serviceFor(isAdmin: boolean, credits: number) {
+    const prisma = {
+      user: { findUnique: vi.fn().mockResolvedValue({ isAdmin }) },
+      subscription: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: 's1',
+          plan: FREE_PLAN_SLUG,
+          status: 'active',
+          credits,
+          periodStart: new Date(),
+          periodEnd: new Date(Date.now() + 86_400_000),
+        }),
+      },
+      $transaction: vi.fn(),
+    };
+
+    return new CreditsService(
+      prisma as unknown as PrismaClient,
+      { free: vi.fn() } as unknown as PlansService,
+    );
+  }
+
+  it('ne debite rien pour un administrateur, meme a zero', async () => {
+    const service = serviceFor(true, 0);
+
+    // Aucune ecriture, donc rien a rembourser : l'appelant recoit null, comme
+    // pour une action gratuite.
+    await expect(service.spend('turn', 'u1')).resolves.toBeNull();
+  });
+
+  it('refuse un joueur ordinaire dont la reserve est vide', async () => {
+    const service = serviceFor(false, 0);
+
+    await expect(service.spend('turn', 'u1')).rejects.toThrow(OutOfCreditsError);
   });
 });
 
@@ -220,5 +264,74 @@ describe('roulement de periode', () => {
     expect(state.credits).toBe(43);
     // Rien n'a bouge : le grand livre raconte des mouvements, pas des dates.
     expect(entries).toHaveLength(0);
+  });
+});
+
+/**
+ * Apres une resiliation chez Stripe.
+ *
+ * Le webhook `customer.subscription.deleted` fait retomber la ligne au palier
+ * libre avec le statut `canceled`, sans toucher a la reserve. Reste le
+ * roulement de periode : il ne doit plus rien verser, et surtout rien
+ * reprendre. Les credits sont payes, ils ne s'evaporent pas parce que
+ * l'abonnement s'arrete.
+ */
+describe('apres une resiliation', () => {
+  it('garde les credits et n en verse plus', async () => {
+    const passed = new Date(Date.now() - 40 * 24 * 3600 * 1000);
+    const state: { credits?: number; plan?: string } = {};
+    const entries: unknown[] = [];
+
+    const tx = {
+      subscription: {
+        update: vi.fn(({ data }: { data: { credits: number; plan: string } }) => {
+          state.credits = data.credits;
+          state.plan = data.plan;
+          return Promise.resolve({ id: 's1', ...data });
+        }),
+      },
+      creditEntry: { create: vi.fn((data: unknown) => {
+        entries.push(data);
+        return Promise.resolve(data);
+      }) },
+    };
+
+    const prisma = {
+      subscription: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: 's1',
+          plan: FREE_PLAN_SLUG,
+          status: 'canceled',
+          credits: 412,
+          periodStart: passed,
+          periodEnd: passed,
+        }),
+      },
+      $transaction: vi.fn((run: (client: typeof tx) => unknown) => run(tx)),
+    };
+
+    const plans = {
+      free: vi.fn().mockResolvedValue({
+        slug: FREE_PLAN_SLUG,
+        monthlyCredits: 0,
+        welcomeCredits: 50,
+      }),
+      bySlug: vi.fn(),
+    };
+
+    const service = new CreditsService(
+      prisma as unknown as PrismaClient,
+      plans as unknown as PlansService,
+    );
+
+    await service.ensure('u1');
+
+    expect(state.credits).toBe(412);
+    expect(state.plan).toBe(FREE_PLAN_SLUG);
+    // La bienvenue ne se rejoue pas non plus : elle appartient a l'ouverture
+    // du compte, pas au retour au palier libre.
+    expect(entries).toHaveLength(0);
+    // Un abonnement resilie ne relit pas son ancien palier.
+    expect(plans.bySlug).not.toHaveBeenCalled();
   });
 });

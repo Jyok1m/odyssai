@@ -34,6 +34,16 @@ export const BillingSummarySchema = z.object({
    * lieu de proposer un bouton qui repondrait 503.
    */
   purchasable: z.boolean(),
+  /**
+   * Vrai pour un administrateur, dont la reserve ne se debite jamais.
+   *
+   * Sans ce champ l'ecran afficherait un solde immobile et une jauge pleine,
+   * ce qui se lit comme un compteur casse. Il ne donne aucun droit : c'est
+   * `CreditsService` qui n'en preleve pas, et `AdminGuard` qui refuse.
+   *
+   * Absent, il vaut faux : les deux images basculent l'une apres l'autre.
+   */
+  unlimited: z.boolean().default(false),
 });
 
 export type BillingSummary = z.infer<typeof BillingSummarySchema>;
@@ -68,11 +78,21 @@ export const PlanOfferSchema = z.object({
   amountCents: z.number().int().nonnegative().nullable(),
   currency: z.string().length(3),
   /**
-   * Faux tant que le prix du plan n'est pas configure chez Stripe. L'ecran
-   * cache alors l'offre plutot que de proposer un bouton qui echouerait : un
-   * plan sans prix n'existe pas.
+   * Faux tant que le prix du plan n'est pas configure chez Stripe, et faux
+   * aussi quand l'administrateur l'a mis en attente. L'ecran annonce alors le
+   * palier sans proposer un bouton qui echouerait.
    */
   purchasable: z.boolean(),
+  /**
+   * Le palier mis en avant. Un seul a la fois, la base le garantit.
+   *
+   * Une donnee et non un calcul : « celui du milieu parmi les payants » etait
+   * juste avec trois paliers et faux au quatrieme, et personne ne pouvait le
+   * changer sans deploiement.
+   */
+  recommended: z.boolean().default(false),
+  /** Annonce mais pas encore en vente, par decision et non par defaut de configuration. */
+  comingSoon: z.boolean().default(false),
 });
 
 export type PlanOffer = z.infer<typeof PlanOfferSchema>;

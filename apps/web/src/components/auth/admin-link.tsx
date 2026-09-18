@@ -34,16 +34,20 @@ export function AdminLink({
 
   if (session.status !== "authenticated" || !session.user.isAdmin) return null;
 
+  // Le texte complet dans le panneau mobile, l'icone seule dans la barre : un
+  // mot de treize lettres dans une navigation publique concurrence les pages
+  // du site, alors que le tableau de bord ne s'adresse qu'a une personne.
   return (
     <Button
       as={Link}
       href="/admin"
       variant={stacked ? "secondary" : "ghost"}
       size={size}
-      className={stacked ? "w-full" : undefined}
+      title={stacked ? undefined : t("admin")}
+      className={stacked ? "w-full" : "px-2"}
     >
-      <ChartBarSquareIcon aria-hidden="true" className="size-4 shrink-0" />
-      {t("admin")}
+      <ChartBarSquareIcon aria-hidden="true" className="size-4.5 shrink-0" />
+      <span className={stacked ? undefined : "sr-only"}>{t("admin")}</span>
     </Button>
   );
 }

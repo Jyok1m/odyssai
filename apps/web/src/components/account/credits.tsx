@@ -6,12 +6,12 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 import {
   BillingError,
   fetchBillingSummary,
   fetchCatalog,
   openPortal,
-  startCheckout,
 } from "@/lib/billing";
 
 /**
@@ -83,16 +83,11 @@ export function Credits() {
     (plan) => plan.purchasable && plan.id !== summary.plan,
   );
 
-  const price = (cents: number | null, currency: string) =>
-    cents === null
-      ? null
-      : format.number(cents / 100, { style: "currency", currency });
-
   // Un palier sans dotation mensuelle n'a pas de dénominateur, donc pas de
   // jauge : diviser par zéro affichait une barre vide et annonçait « une
   // dotation de 0 par mois », ce qui ne veut rien dire pour une réserve qui ne
   // se remplit jamais.
-  const renews = summary.monthly > 0;
+  const renews = summary.monthly > 0 && !summary.unlimited;
 
   // La jauge peut dépasser sa dotation le premier mois, la bienvenue s'y
   // ajoutant : elle se borne à cent pour cent plutôt que de déborder.
@@ -105,12 +100,16 @@ export function Credits() {
   // Sa part exacte n'est pas affichée : dès la première dépense, le grand
   // livre ne sait plus quel crédit a été consommé, et « dont 25 de bienvenue »
   // deviendrait faux.
-  const balance = renews
-    ? t(summary.credits > summary.monthly ? "balanceWelcome" : "balance", {
-        credits: summary.credits,
-        monthly: summary.monthly,
-      })
-    : t("balanceStandalone", { credits: summary.credits });
+  // Un administrateur ne consomme rien : afficher son solde donnerait un
+  // compteur immobile, et une jauge pleine se lirait comme un compteur cassé.
+  const balance = summary.unlimited
+    ? t("balanceUnlimited")
+    : renews
+      ? t(summary.credits > summary.monthly ? "balanceWelcome" : "balance", {
+          credits: summary.credits,
+          monthly: summary.monthly,
+        })
+      : t("balanceStandalone", { credits: summary.credits });
 
   return (
     <section>
@@ -130,7 +129,9 @@ export function Credits() {
           />
         </div>
       ) : (
-        <p className="mt-2 text-caption text-vellum-3">{t("noRenewal")}</p>
+        <p className="mt-2 text-caption text-vellum-3">
+          {summary.unlimited ? t("unlimitedNote") : t("noRenewal")}
+        </p>
       )}
 
       <dl className="mt-4 space-y-2">
@@ -169,23 +170,15 @@ export function Credits() {
 
       {offers.length > 0 || summary.purchasable ? (
         <div className="mt-5 flex flex-wrap items-center gap-3">
-          {offers.map((plan) => (
-            <Button
-              key={plan.id}
-              disabled={leaving}
-              onClick={() => void leave(() => startCheckout(plan.id))}
-            >
-              {t("upgradeTo", { plan: plan.name, credits: plan.monthly })}
-              {/* Le montant vient de Stripe, recopie a l'affichage : le
-                  bouton ne doit pas envoyer sur une page de paiement dont le
-                  prix serait une surprise. */}
-              {price(plan.amountCents, plan.currency) ? (
-                <span className="text-vellum-2">
-                  {price(plan.amountCents, plan.currency)}
-                </span>
-              ) : null}
+          {/* Un seul bouton vers la page de tarifs, et non un par palier.
+              Empilés, les paliers se comparaient mal et l'écran de compte
+              devenait une page de vente ; la comparaison est le travail de
+              /tarifs, qui la fait déjà en colonnes. */}
+          {offers.length > 0 ? (
+            <Button as={Link} href="/tarifs">
+              {t("changePlan")}
             </Button>
-          ))}
+          ) : null}
 
           {/* Le portail n'a de sens qu'avec un abonnement à gérer. */}
           {summary.plan !== "free" ? (
@@ -198,10 +191,6 @@ export function Credits() {
             </Button>
           ) : null}
         </div>
-      ) : null}
-
-      {offers.length > 0 ? (
-        <p className="mt-3 text-caption text-vellum-3">{t("priceAtCheckout")}</p>
       ) : null}
     </section>
   );

@@ -117,6 +117,7 @@ export class AdminPlansService {
         stripeProductId: productId,
         stripePriceId: priceId,
         sortOrder: request.sortOrder,
+        comingSoon: request.comingSoon,
       },
     });
 
@@ -142,6 +143,8 @@ export class AdminPlansService {
         : {}),
       ...(request.sortOrder !== undefined ? { sortOrder: request.sortOrder } : {}),
       ...(request.archived !== undefined ? { archived: request.archived } : {}),
+      ...(request.recommended !== undefined ? { recommended: request.recommended } : {}),
+      ...(request.comingSoon !== undefined ? { comingSoon: request.comingSoon } : {}),
     };
 
     if (request.name !== undefined && plan.stripeProductId) {
@@ -150,10 +153,21 @@ export class AdminPlansService {
       );
     }
 
-    // Le montant change : un prix Stripe etant immuable, on en cree un et on
-    // desactive l'ancien. Sans cela le tableau de bord mentirait, affichant un
-    // montant que Stripe ne facture pas.
-    if (request.amountCents !== undefined && request.amountCents !== plan.amountCents) {
+    /**
+     * Le montant change : un prix Stripe etant immuable, on en cree un et on
+     * desactive l'ancien. Sans cela le tableau de bord mentirait, affichant un
+     * montant que Stripe ne facture pas.
+     *
+     * Le montant inchange passe aussi quand aucun prix n'existe. Un palier
+     * peut porter un montant sans prix : une migration l'a pose, ou un appel
+     * a Stripe a echoue apres l'ecriture. Comparer les seuls montants le
+     * laissait invendable a vie, et le remettre en vente demandait de changer
+     * le prix puis de le remettre.
+     */
+    if (
+      request.amountCents !== undefined &&
+      (request.amountCents !== plan.amountCents || (await this.unusable(plan)))
+    ) {
       Object.assign(data, await this.reprice(plan, request.amountCents));
     }
 
@@ -163,7 +177,20 @@ export class AdminPlansService {
       await this.deactivate(plan.stripePriceId);
     }
 
-    const updated = await this.prisma.plan.update({ where: { id }, data });
+    const updated = await this.prisma.$transaction(async (tx) => {
+      // Un seul palier recommande a la fois. L'index partiel unique de la base
+      // refuserait le second : on retire le precedent dans la meme
+      // transaction, sinon l'ecriture echouerait sans rien dire d'utile.
+      if (request.recommended === true) {
+        await tx.plan.updateMany({
+          where: { recommended: true, id: { not: id } },
+          data: { recommended: false },
+        });
+      }
+
+      return tx.plan.update({ where: { id }, data });
+    });
+
     const subscribers = await this.countSubscribers(updated.slug);
 
     this.logger.log(`palier modifie : ${updated.slug}`);
@@ -238,6 +265,28 @@ export class AdminPlansService {
   }
 
   /** Nouveau prix sur le meme produit, ancien desactive. */
+  /**
+   * Vrai quand le palier porte un montant qu'aucun prix actif ne facture.
+   *
+   * Un prix absent, une migration l'ayant pose sans passer par Stripe, ou un
+   * prix desactive par un aller-retour de montant : dans les deux cas le
+   * paiement echouerait, et il faut le refaire. La lecture chez Stripe ne coute
+   * qu'a la modification d'un palier, ce qui arrive quelques fois par an.
+   */
+  private async unusable(plan: Plan): Promise<boolean> {
+    if (plan.amountCents === null) return false;
+    // Sans cle, il n'y a rien a reparer et rien a interroger : renommer un
+    // palier payant ne doit pas echouer parce que Stripe est absent.
+    if (!this.stripe) return false;
+    if (plan.stripePriceId === null) return true;
+
+    const price = await this.callStripe(() =>
+      this.client().prices.retrieve(plan.stripePriceId!),
+    );
+
+    return !price.active;
+  }
+
   private async reprice(
     plan: Plan,
     amountCents: number | null,
@@ -262,7 +311,7 @@ export class AdminPlansService {
       };
     }
 
-    const price = await this.callStripe(() =>
+    const created = await this.callStripe(() =>
       this.client().prices.create(
         {
           product: plan.stripeProductId!,
@@ -277,7 +326,26 @@ export class AdminPlansService {
       ),
     );
 
-    if (plan.stripePriceId) await this.deactivate(plan.stripePriceId);
+    /**
+     * La cle d'idempotence rend le prix deja cree pour ce montant, dans l'etat
+     * ou il est. Un aller-retour de montant le laisse desactive, et Stripe
+     * refuse un prix inactif au paiement : « The price specified is inactive ».
+     * On le remet en service plutot que d'ecrire en base un prix invendable.
+     */
+    const price = created.active
+      ? created
+      : await this.callStripe(() =>
+          this.client().prices.update(created.id, { active: true }),
+        );
+
+    /**
+     * Ne pas desactiver ce qu'on vient de remettre en service. Avec la meme
+     * cle d'idempotence, l'ancien prix et le nouveau sont le meme objet, et
+     * l'ordre « creer puis desactiver l'ancien » se retournait contre lui.
+     */
+    if (plan.stripePriceId && plan.stripePriceId !== price.id) {
+      await this.deactivate(plan.stripePriceId);
+    }
 
     return { amountCents, stripePriceId: price.id };
   }
@@ -322,6 +390,8 @@ export class AdminPlansService {
       stripeProductId: plan.stripeProductId,
       stripePriceId: plan.stripePriceId,
       archived: plan.archived,
+      recommended: plan.recommended,
+      comingSoon: plan.comingSoon,
       sortOrder: plan.sortOrder,
       subscriberCount: subscribers,
       removable: plan.slug !== FREE_PLAN_SLUG && subscribers === 0,

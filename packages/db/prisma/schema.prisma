@@ -298,6 +298,16 @@ model Plan {
   /// la fin de la periode payee.
   archived Boolean @default(false)
 
+  /// Le palier mis en avant sur la page de tarifs. Un index partiel unique
+  /// n'en laisse qu'un a la fois : deux ecritures concurrentes passeraient si
+  /// la regle ne vivait que dans le service.
+  recommended Boolean @default(false)
+
+  /// Annonce sans vendre. Un palier archive disparait, celui-ci s'affiche et
+  /// dit qu'il arrive. A distinguer d'un palier sans prix Stripe, qui n'est
+  /// pas vendable faute de configuration : ici c'est une decision.
+  comingSoon Boolean @default(false) @map("coming_soon")
+
   /// L'ordre d'affichage, choisi a la main : ni le prix ni la dotation ne
   /// donnent l'ordre voulu quand un plan est offert.
   sortOrder Int @default(0) @map("sort_order")
