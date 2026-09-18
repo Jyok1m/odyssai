@@ -61,7 +61,51 @@
       "When does the game come out?",
       "How do I sign up to play?"
     ],
-    "answer": "OdyssAI is still in development: the game is not playable yet, and no date has been announced. In the meantime, the Concept, Universes, Multiverse and Lore pages describe in detail how it will work.",
+    "answer": "OdyssAI is in closed alpha, limited to a hundred players. Pre-registration opens and closes with the seats available: the banner at the top of the site shows how many are left. Once registered, you create your world and play. No date for a wider opening is announced, it would be made up.",
+    "suggested": true,
+    "validated": false
+  },
+  {
+    "id": "combien-ca-coute",
+    "questions": [
+      "How much does it cost?",
+      "Is it paid?",
+      "What are the prices?"
+    ],
+    "answer": "Play is consumed in credits: a game turn costs one, creating a world twenty-five. A free tier lets you try without paying, and monthly subscriptions give a larger grant. The exact amounts are on the Pricing page, which keeps them up to date.",
+    "suggested": true,
+    "validated": false
+  },
+  {
+    "id": "qui-fait-odyssai",
+    "questions": [
+      "Who makes OdyssAI?",
+      "Who is behind this site?",
+      "Is there a team?"
+    ],
+    "answer": "OdyssAI is designed and built by Joachim Alexandre Jasmin, an independent software engineer, alone. No team, no funding round. He writes the code, the texts and the infrastructure, and answers messages sent from the Contact page himself. The About page tells the rest.",
+    "suggested": true,
+    "validated": false
+  },
+  {
+    "id": "oeuvres-citees",
+    "questions": [
+      "Can I cite an existing work?",
+      "Will my world copy my inspirations?",
+      "What happens to the titles I cite?"
+    ],
+    "answer": "The titles you cite serve to extract themes, and that is the only step in the chain that sees them. Everything after works on those themes alone, and three independent checks keep a borrowed name from surviving into the generated world. Your world resembles what you love without taking anything from it.",
+    "suggested": true,
+    "validated": false
+  },
+  {
+    "id": "mes-donnees",
+    "questions": [
+      "What do you do with my data?",
+      "Can I delete my account?",
+      "Do my worlds belong to you?"
+    ],
+    "answer": "You keep ownership of what you write and the worlds you create. You can erase your account whenever you want from your personal space, and whatever would be kept is described on the Privacy page. Identity itself is deleted from your account console.",
     "suggested": true,
     "validated": false
   }
