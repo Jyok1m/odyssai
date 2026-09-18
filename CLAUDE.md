@@ -250,6 +250,7 @@ La clé et le secret de webhook sont les seules variables d'environnement. Les p
 - Un prix inconnu est ignoré, jamais deviné : le prendre pour le palier libre ferait retomber un abonné payant.
 - `invoice.payment_failed` ne coupe rien. Stripe relance plusieurs jours, et c'est `customer.subscription.deleted` qui tranche.
 - Le garde est posé **méthode par méthode** sur `BillingController` : le webhook n'a pas de session.
+- Le portail s'ouvre **dès qu'un espace de facturation existe**, et non sur le seul palier payant : un joueur revenu au palier libre après une résiliation garde ses factures et doit pouvoir les relire. C'est `manageable` qui le dit, distinct de `purchasable`.
 - Checkout Session pour souscrire, Customer Portal pour gérer et résilier. Aucune saisie de carte chez nous : l'héberger ferait entrer le projet dans le périmètre PCI sans rien apporter.
 - En développement : `stripe listen --forward-to localhost:3001/billing/webhook` donne le secret à mettre dans `STRIPE_WEBHOOK_SECRET`.
 - **Un prix désactivé est refusé au paiement** : « The price specified is inactive ». Le piège vient de la clé d'idempotence, qui rend le prix déjà créé pour ce montant, dans l'état où il est : l'ancien et le nouveau sont alors le même objet, et « créer puis désactiver l'ancien » se retournait contre lui-même. `reprice` réactive donc un prix rendu inactif, et ne désactive l'ancien que s'il diffère du nouveau.
@@ -315,6 +316,18 @@ La clé et le secret de webhook sont les seules variables d'environnement. Les p
 - L'écran de compte, lui, ne propose **qu'un lien vers cette page**. Empilés, les paliers s'y comparaient mal et le compte devenait une page de vente ; la comparaison se fait en colonnes, ici.
 - Les puces disent « un monde, puis N tours » et non « N mondes » : soixante mondes est juste et ne veut rien dire, personne n'en crée soixante.
 - Elle entre dans le corpus du guide, qui sait donc expliquer ce qu'est un crédit. Il **n'annonce jamais un prix** : les montants vivent chez Stripe et les dotations en base, rien de tout cela n'est dans les messages, et un prix récité par un modèle serait la mauvaise source.
+
+## Contact et messagerie sortante
+
+`/contact`, ouvert sans session : c'est souvent celui qui n'a pas de compte qui a le plus besoin d'écrire, et exiger une session ferait taire un visiteur qui n'arrive pas à s'inscrire.
+
+- **Le message s'écrit en base avant l'envoi**, jamais l'inverse : un serveur de messagerie qui refuse ne doit pas faire perdre ce que quelqu'un a pris le temps d'écrire. `delivered` dit si le courriel est parti, et le tableau de bord montre le message dans tous les cas, `/admin/messages`.
+- Le formulaire ne dit jamais si le courriel est parti. Ce n'est pas l'affaire de celui qui écrit, et le message est enregistré de toute façon.
+- `MailConfig` est **entièrement facultative**, comme Stripe : sans configuration, `enabled` est faux et seul l'envoi se tait. On développe sans serveur de messagerie.
+- Le compte dépend de la copie du site, `no-reply-dev@` sur celle de développement et `no-reply@` en production : les deux images étant identiques, c'est l'environnement qui les distingue. Le serveur est le mailcow qui porte déjà le MX du domaine, en **587 avec STARTTLS exigé** (`requireTLS`), sans quoi nodemailer poursuivrait en clair si le serveur ne l'annonçait pas.
+- L'adresse du visiteur va dans `replyTo`, **jamais dans `from`** : expédier sous une adresse qu'on ne contrôle pas ferait échouer SPF et DKIM, et le message finirait en indésirable.
+- `pnpm --filter @odyssai/api mail:smoke` envoie un message réel de contrôle, comme `llm:smoke`.
+- **Une valeur d'environnement contenant une espace se quote.** `SMTP_FROM_NAME="Message @ Odyssai"` : sans les guillemets, tout `set -a && . ./.env` casse sur le `@`, ce que le Makefile documente déjà pour `.env.local`.
 
 ## Conditions générales
 

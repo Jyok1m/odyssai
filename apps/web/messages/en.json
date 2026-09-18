@@ -22,7 +22,8 @@
     "manageCookies": "Manage cookies",
     "onThisPage": "On this page",
     "pricing": "Pricing",
-    "terms": "Terms and conditions"
+    "terms": "Terms and conditions",
+    "contact": "Contact"
   },
   "Hero": {
     "badge": "Private alpha in the works.",
@@ -710,6 +711,24 @@
         ]
       }
     ]
+  },
+  "Contact": {
+    "metaTitle": "Contact",
+    "metaDescription": "Write to the OdyssAI team: a question, a bug, a suggestion, or a request about your data.",
+    "lead": "A question, a bug, an idea, or a request about your data. Write, we read everything.",
+    "name": "Your name",
+    "nameHint": "Optional.",
+    "email": "Your email address",
+    "emailHint": "So we can reply. Nothing else is done with it.",
+    "subject": "Subject",
+    "message": "Message",
+    "messageHint": "{max, number} characters at most.",
+    "send": "Send",
+    "sending": "Sending.",
+    "failed": "The message could not be sent. Try again in a moment.",
+    "sentTitle": "On its way.",
+    "sentBody": "We will reply to the address you gave. Thank you for taking the time to write.",
+    "privacy": "Your message and your address are kept for as long as it takes to reply."
   },
   "Privacy": {
     "metaTitle": "Privacy policy",

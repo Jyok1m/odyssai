@@ -5,6 +5,7 @@ import {
   ArrowLeftStartOnRectangleIcon,
   ChartBarSquareIcon,
   CreditCardIcon,
+  EnvelopeIcon,
   UsersIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -24,6 +25,7 @@ const NAVIGATION = [
   { name: "Vue d'ensemble", href: "/admin", icon: ChartBarSquareIcon },
   { name: "Joueurs", href: "/admin/joueurs", icon: UsersIcon },
   { name: "Abonnements", href: "/admin/abonnements", icon: CreditCardIcon },
+  { name: "Messages", href: "/admin/messages", icon: EnvelopeIcon },
 ] as const;
 
 /**

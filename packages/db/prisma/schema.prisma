@@ -265,6 +265,34 @@ model Character {
 /// environnement) ne tient pas : les deux copies du site ont deja leur propre
 /// Postgres, et un prix du mode test n'a de sens que dans la base de dev.
 /**
+ * Un message du formulaire de contact.
+ *
+ * Ecrit avant l'envoi du courriel : un serveur de messagerie qui refuse ne
+ * doit pas faire perdre le message de quelqu'un qui a pris le temps de
+ * l'ecrire. Sans relation vers `users` : le formulaire est ouvert a qui n'a
+ * pas de compte, et c'est souvent lui qui a le plus besoin d'ecrire.
+ */
+model ContactMessage {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  name    String? @db.VarChar(80)
+  email   String  @db.VarChar(254)
+  subject String  @db.VarChar(120)
+  message String
+
+  /// Faux quand l'envoi a echoue. Le message reste lisible au tableau de bord.
+  delivered Boolean @default(false)
+
+  /// Pose quand l'administrateur l'a marque traite.
+  handledAt DateTime? @map("handled_at") @db.Timestamptz(3)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([handledAt, createdAt(sort: Desc)])
+  @@map("contact_messages")
+}
+
+/**
  * Les reglages du site, en une seule ligne.
  *
  * `id` vaut toujours vrai : une contrainte de verification empeche la seconde

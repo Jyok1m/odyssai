@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AlphaModule } from '../alpha/alpha.module.js';
 import { AuthModule } from '../auth/auth.module.js';
+import { ContactModule } from '../contact/contact.module.js';
 import { BillingModule } from '../billing/billing.module.js';
 import { AdminController } from './admin.controller.js';
 import { AdminGuard } from './admin.guard.js';
@@ -14,7 +15,7 @@ import { AdminService } from './admin.service.js';
  * lecture est publique et l'ecriture reservee.
  */
 @Module({
-  imports: [AuthModule, BillingModule, AlphaModule],
+  imports: [AuthModule, BillingModule, AlphaModule, ContactModule],
   controllers: [AdminController],
   providers: [AdminService, AdminPlansService, AdminGuard],
 })

@@ -25,6 +25,8 @@ export type {
   Subscription,
   CreditEntry,
   StripeEvent,
+  SiteSettings,
+  ContactMessage,
 } from './generated/prisma/client.js';
 
 export {

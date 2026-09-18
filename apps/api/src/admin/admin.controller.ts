@@ -25,8 +25,12 @@ import {
   type AdminUserDetail,
   type AdminUserPage,
   type AlphaStatus,
+  type ContactMessage,
+  type ContactPage,
 } from '@odyssai/schemas';
+import { z } from 'zod';
 import { AlphaService } from '../alpha/alpha.service.js';
+import { ContactService } from '../contact/contact.service.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
 import { BillingService } from '../billing/billing.service.js';
@@ -57,6 +61,7 @@ export class AdminController {
     private readonly plans: AdminPlansService,
     private readonly billing: BillingService,
     private readonly alpha: AlphaService,
+    private readonly contact: ContactService,
   ) {}
 
   @Get('overview')
@@ -125,6 +130,30 @@ export class AdminController {
   @Patch('alpha')
   updateAlpha(@Body() body: unknown): Promise<AlphaStatus> {
     return this.alpha.update(UpdateAlphaRequestSchema.parse(body));
+  }
+
+  /**
+   * Les messages du formulaire de contact. Ils partent aussi par courriel,
+   * mais restent lisibles ici : un envoi peut echouer, et une boite peut se
+   * perdre.
+   */
+  @Get('contact')
+  contactMessages(
+    @Query('cursor') cursor?: string,
+    @Query('pending') pending?: string,
+  ): Promise<ContactPage> {
+    return this.contact.list(cursor, pending === 'true');
+  }
+
+  @Patch('contact/:id')
+  setContactHandled(
+    @Param('id') id: string,
+    @Body() body: unknown,
+  ): Promise<ContactMessage> {
+    const parsed = z.object({ handled: z.boolean() }).safeParse(body);
+    if (!parsed.success) throw new BadRequestException({ code: 'invalid_request' });
+
+    return this.contact.setHandled(id, parsed.data.handled);
   }
 
   @Get('plans')
