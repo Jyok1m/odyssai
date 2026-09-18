@@ -20,7 +20,8 @@
     "footerLegal": "Legal information",
     "rights": "All rights reserved.",
     "manageCookies": "Manage cookies",
-    "onThisPage": "On this page"
+    "onThisPage": "On this page",
+    "pricing": "Pricing"
   },
   "Hero": {
     "badge": "Private alpha in the works.",
@@ -121,7 +122,64 @@
     "errorDisabled": "Subscriptions are not open at the moment.",
     "errorGeneric": "Cannot read your reserve right now.",
     "errorUnreachable": "The API is not answering. Check that it is running, and that you are on the site's usual address.",
-    "errorSignedOut": "Your session has expired. Sign in again."
+    "errorSignedOut": "Your session has expired. Sign in again.",
+    "balanceStandalone": "{credits, plural, =0 {No credits} one {# credit} other {# credits}} left.",
+    "noRenewal": "These credits do not renew, but they stay as long as your account does."
+  },
+  "Pricing": {
+    "metaTitle": "Pricing",
+    "metaDescription": "What a game costs on OdyssAI: credits, one per turn, twenty-five to build a world. A free tier to try it, three subscriptions to keep going.",
+    "title": "A world is not billed by the hour",
+    "lead": "You buy credits, not time. A turn costs one, the birth of a world twenty-five. What is left waits for you, and nothing runs while you are away.",
+    "loading": "Reading the tiers.",
+    "error": "Pricing could not be loaded. Try again in a moment.",
+    "freePrice": "Free",
+    "perMonth": "per month",
+    "grantMonthly": "{credits, number} credits every month.",
+    "grantOnce": "{credits, number} credits when you sign up, once.",
+    "highlightWorlds": "{worlds, plural, =0 {No world} one {# world to bring to life} other {# worlds to bring to life}}",
+    "highlightTurns": "{turns, plural, =0 {No turn after that} one {# turn after that} other {# turns after that}}",
+    "highlightRenews": "Reserve refilled every month",
+    "highlightOnce": "No renewal",
+    "choose": "Choose this tier",
+    "start": "Get started",
+    "soon": "On sale soon",
+    "compareTitle": "What sets them apart",
+    "rowWelcome": "Credits on sign-up",
+    "rowMonthly": "Credits every month",
+    "rowWorlds": "Worlds the grant covers",
+    "rowRenews": "Monthly renewal",
+    "rowCancel": "Cancel any time",
+    "yes": "Yes",
+    "no": "No",
+    "faqTitle": "Frequently asked questions",
+    "faq": [
+      {
+        "question": "What exactly is a credit?",
+        "answer": "One action. A game turn costs one, a message to your character during its creation costs one too, and bringing a world to life costs twenty-five. The scale is the same for everyone and does not depend on how much the narrator writes."
+      },
+      {
+        "question": "Why does a world cost twenty-five credits?",
+        "answer": "Because it takes at least seven passes to write: a charter, a lore, factions, a political order, characters, their ties, then a check that reads it all back and may ask for a rewrite. It is the most expensive move in the game, and the only one you make once."
+      },
+      {
+        "question": "Do my credits roll over?",
+        "answer": "On a subscription, no: every month your reserve goes back to your tier's grant, no more and no less, otherwise six months away would buy six months ahead. On the Rider tier, which grants nothing monthly, the question does not arise: whatever you have not spent stays as long as your account does."
+      },
+      {
+        "question": "What happens when I run out?",
+        "answer": "Your worlds stay, your games too. You simply cannot play a turn until the renewal, or until you move up a tier."
+      },
+      {
+        "question": "What is the first-hundred bonus?",
+        "answer": "The first hundred sign-ups get thirty credits on top of their starting reserve, once, without asking. It is not a tier you pick: it is a bonus added to the account, and it shows in the ledger like any other grant."
+      },
+      {
+        "question": "Where is my subscription handled?",
+        "answer": "At Stripe, never here: no card details are ever entered on OdyssAI. Cancelling goes through the same portal, and your tier stays active until the end of the period you already paid for."
+      }
+    ],
+    "costsNote": "A turn costs {turn, number} credit, creating a world {world, number}."
   },
   "Play": {
     "title": "Enter the game",

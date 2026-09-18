@@ -44,6 +44,24 @@ export function creditsFor(action: CreditAction): number {
 export const FREE_PLAN_SLUG = 'free';
 
 /**
+ * Le bonus des premiers arrives.
+ *
+ * Ce n'est pas un palier : un palier se choisit, celui-ci s'attribue. Le
+ * mettre dans `plans` obligeait la page de tarifs a montrer une offre que
+ * personne ne pouvait prendre.
+ *
+ * Le rang se lit sur la date d'inscription, et non sur un compteur : un
+ * compteur se desynchronise, une date se relit. Les administrateurs ne sont
+ * pas comptes dans les cent places, ils n'ont pas a prendre la place d'un
+ * joueur.
+ */
+export const FOUNDER_BONUS = {
+  /** Les cent premiers joueurs, administrateurs non compris. */
+  rank: 100,
+  credits: 30,
+} as const;
+
+/**
  * Bornes d'un palier, appliquees a la creation comme a la modification.
  *
  * Une dotation negative rendrait un solde negatif ; une dotation demesuree

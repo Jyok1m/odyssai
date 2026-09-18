@@ -51,6 +51,7 @@ export class BillingService {
         id: plan.slug,
         name: plan.name,
         monthly: plan.monthlyCredits,
+        welcome: plan.welcomeCredits,
         amountCents: plan.amountCents,
         currency: plan.currency,
         purchasable: this.config.enabled && plan.stripePriceId !== null,

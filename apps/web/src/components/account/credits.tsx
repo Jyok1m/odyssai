@@ -88,9 +88,15 @@ export function Credits() {
       ? null
       : format.number(cents / 100, { style: "currency", currency });
 
+  // Un palier sans dotation mensuelle n'a pas de dénominateur, donc pas de
+  // jauge : diviser par zéro affichait une barre vide et annonçait « une
+  // dotation de 0 par mois », ce qui ne veut rien dire pour une réserve qui ne
+  // se remplit jamais.
+  const renews = summary.monthly > 0;
+
   // La jauge peut dépasser sa dotation le premier mois, la bienvenue s'y
   // ajoutant : elle se borne à cent pour cent plutôt que de déborder.
-  const filled = summary.monthly
+  const filled = renews
     ? Math.min(100, Math.round((summary.credits / summary.monthly) * 100))
     : 0;
 
@@ -99,10 +105,12 @@ export function Credits() {
   // Sa part exacte n'est pas affichée : dès la première dépense, le grand
   // livre ne sait plus quel crédit a été consommé, et « dont 25 de bienvenue »
   // deviendrait faux.
-  const balance = t(
-    summary.credits > summary.monthly ? "balanceWelcome" : "balance",
-    { credits: summary.credits, monthly: summary.monthly },
-  );
+  const balance = renews
+    ? t(summary.credits > summary.monthly ? "balanceWelcome" : "balance", {
+        credits: summary.credits,
+        monthly: summary.monthly,
+      })
+    : t("balanceStandalone", { credits: summary.credits });
 
   return (
     <section>
@@ -110,16 +118,20 @@ export function Credits() {
 
       <p className="mt-3 text-ui-sm text-vellum">{balance}</p>
 
-      <div
-        role="img"
-        aria-label={balance}
-        className="mt-3 h-1.5 w-full max-w-sm overflow-hidden rounded-full bg-mist"
-      >
+      {renews ? (
         <div
-          className="h-full rounded-full bg-accent transition-[width] duration-500"
-          style={{ width: `${filled}%` }}
-        />
-      </div>
+          role="img"
+          aria-label={balance}
+          className="mt-3 h-1.5 w-full max-w-sm overflow-hidden rounded-full bg-mist"
+        >
+          <div
+            className="h-full rounded-full bg-accent transition-[width] duration-500"
+            style={{ width: `${filled}%` }}
+          />
+        </div>
+      ) : (
+        <p className="mt-2 text-caption text-vellum-3">{t("noRenewal")}</p>
+      )}
 
       <dl className="mt-4 space-y-2">
         <div className="flex gap-2">
@@ -129,18 +141,23 @@ export function Credits() {
               traduction. */}
           <dd className="text-ui-sm text-vellum">{summary.planName}</dd>
         </div>
-        <div className="flex gap-2">
-          <dt className="text-caption text-vellum-3">
-            {summary.cancelAtPeriodEnd ? t("endsLabel") : t("renewsLabel")}
-          </dt>
-          <dd className="text-ui-sm text-vellum">
-            {format.dateTime(new Date(summary.renewsAt), {
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })}
-          </dd>
-        </div>
+        {/* Une date n'a de sens que si quelque chose arrive a echeance. Sur un
+            palier sans dotation, plus rien ne change ce jour la : la reserve
+            reste, et annoncer une date ferait craindre de la perdre. */}
+        {renews || summary.cancelAtPeriodEnd ? (
+          <div className="flex gap-2">
+            <dt className="text-caption text-vellum-3">
+              {summary.cancelAtPeriodEnd ? t("endsLabel") : t("renewsLabel")}
+            </dt>
+            <dd className="text-ui-sm text-vellum">
+              {format.dateTime(new Date(summary.renewsAt), {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </dd>
+          </div>
+        ) : null}
       </dl>
 
       <p className="mt-4 text-ui-sm text-vellum-3">

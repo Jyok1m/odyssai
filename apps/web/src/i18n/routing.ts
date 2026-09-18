@@ -20,6 +20,7 @@ export const routing = defineRouting({
     "/univers": { fr: "/univers", en: "/universes" },
     "/multivers": { fr: "/multivers", en: "/multiverse" },
     "/lore": { fr: "/lore", en: "/lore" },
+    "/tarifs": { fr: "/tarifs", en: "/pricing" },
     "/glossaire": { fr: "/glossaire", en: "/glossary" },
     "/mentions-legales": { fr: "/mentions-legales", en: "/legal-notice" },
     "/confidentialite": { fr: "/confidentialite", en: "/privacy" },

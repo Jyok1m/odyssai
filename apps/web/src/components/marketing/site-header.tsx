@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { key: "universes", href: "/univers" },
   { key: "multiverse", href: "/multivers" },
   { key: "lore", href: "/lore" },
+  { key: "pricing", href: "/tarifs" },
 ] as const;
 
 export function SiteHeader() {

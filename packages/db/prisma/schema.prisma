@@ -359,7 +359,7 @@ model CreditEntry {
   /// Negatif pour un debit, positif pour une attribution ou un remboursement.
   delta Int
 
-  /// grant, welcome, turn, character, world, refund, adjustment.
+  /// grant, welcome, founder, turn, character, world, refund, adjustment.
   reason String @db.VarChar(24)
 
   /// Ce a quoi l'ecriture se rattache : un univers, un tour, une facture.

@@ -20,7 +20,8 @@
     "footerLegal": "Informations légales",
     "rights": "Tous droits réservés.",
     "manageCookies": "Gérer les cookies",
-    "onThisPage": "Sur cette page"
+    "onThisPage": "Sur cette page",
+    "pricing": "Tarifs"
   },
   "Hero": {
     "badge": "Alpha privée en préparation.",
@@ -121,7 +122,64 @@
     "errorDisabled": "La vente n'est pas ouverte pour le moment.",
     "errorGeneric": "Impossible de lire ta réserve pour le moment.",
     "errorUnreachable": "L'API ne répond pas. Vérifie qu'elle tourne, et que tu es bien sur l'adresse habituelle du site.",
-    "errorSignedOut": "Ta session a expiré. Reconnecte-toi."
+    "errorSignedOut": "Ta session a expiré. Reconnecte-toi.",
+    "balanceStandalone": "{credits, plural, =0 {Aucun crédit} one {# crédit} other {# crédits}} en réserve.",
+    "noRenewal": "Ces crédits ne se renouvellent pas, mais ils restent tant que ton compte existe."
+  },
+  "Pricing": {
+    "metaTitle": "Tarifs",
+    "metaDescription": "Ce que coûte une partie sur OdyssAI : des crédits, un tour en vaut un, la création d'un monde vingt-cinq. Un palier libre pour essayer, trois abonnements pour continuer.",
+    "title": "Un monde ne se paie pas à l'heure",
+    "lead": "Tu achètes des crédits, pas du temps. Un tour en consomme un, la naissance d'un monde vingt-cinq. Ce qui reste t'attend, et rien ne tourne pendant que tu ne joues pas.",
+    "loading": "Lecture des paliers.",
+    "error": "Les tarifs n'ont pas pu être lus. Réessaie dans un instant.",
+    "freePrice": "Offert",
+    "perMonth": "par mois",
+    "grantMonthly": "{credits, number} crédits chaque mois.",
+    "grantOnce": "{credits, number} crédits à l'inscription, une seule fois.",
+    "highlightWorlds": "{worlds, plural, =0 {Aucun monde} one {# monde à faire naître} other {# mondes à faire naître}}",
+    "highlightTurns": "{turns, plural, =0 {Aucun tour ensuite} one {# tour ensuite} other {# tours ensuite}}",
+    "highlightRenews": "Réserve remise à neuf chaque mois",
+    "highlightOnce": "Pas de renouvellement",
+    "choose": "Choisir ce palier",
+    "start": "Commencer",
+    "soon": "Bientôt en vente",
+    "compareTitle": "Ce qui les sépare",
+    "rowWelcome": "Crédits à l'inscription",
+    "rowMonthly": "Crédits chaque mois",
+    "rowWorlds": "Mondes que la dotation paie",
+    "rowRenews": "Renouvellement mensuel",
+    "rowCancel": "Résiliable à tout moment",
+    "yes": "Oui",
+    "no": "Non",
+    "faqTitle": "Questions fréquentes",
+    "faq": [
+      {
+        "question": "Qu'est-ce qu'un crédit, exactement ?",
+        "answer": "Une action. Un tour de jeu en vaut un, un message à ton personnage pendant sa création aussi, et faire naître un monde en vaut vingt-cinq. Le barème est le même pour tout le monde et ne dépend pas de la longueur de ce que le narrateur écrit."
+      },
+      {
+        "question": "Pourquoi un monde coûte-t-il vingt-cinq crédits ?",
+        "answer": "Parce qu'il s'écrit en sept passages au moins : une charte, un lore, des factions, une politique, des personnages, leurs liens, puis un contrôle qui relit le tout et peut demander une réécriture. C'est le geste le plus cher du jeu, et le seul qui ne se répète pas."
+      },
+      {
+        "question": "Mes crédits se reportent-ils d'un mois sur l'autre ?",
+        "answer": "Sur un abonnement, non : chaque mois ta réserve repart à la dotation de ton palier, ni plus ni moins, sinon six mois d'absence donneraient six mois d'avance. Sur le palier Rider, qui ne reverse rien, la question ne se pose pas : ce que tu n'as pas dépensé reste tant que ton compte existe."
+      },
+      {
+        "question": "Que se passe-t-il si je n'ai plus de crédits ?",
+        "answer": "Tes mondes restent, tes parties aussi. Tu ne peux simplement plus jouer de tour jusqu'au renouvellement, ou jusqu'à ce que tu prennes un palier au dessus."
+      },
+      {
+        "question": "Qu'est-ce que le bonus des cent premiers ?",
+        "answer": "Les cent premiers inscrits reçoivent trente crédits en plus de leur réserve de départ, une seule fois et sans rien demander. Ce n'est pas un palier à choisir : c'est un supplément posé sur le compte, et il se lit dans le grand livre comme n'importe quelle attribution."
+      },
+      {
+        "question": "Où se règle mon abonnement ?",
+        "answer": "Chez Stripe, jamais ici : aucune carte bancaire n'est saisie sur OdyssAI. La résiliation passe par le même portail, et ton palier reste actif jusqu'à la fin de la période déjà payée."
+      }
+    ],
+    "costsNote": "Un tour coûte {turn, number} crédit, la création d'un monde {world, number}."
   },
   "Play": {
     "title": "Entrer en jeu",

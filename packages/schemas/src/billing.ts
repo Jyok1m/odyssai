@@ -50,8 +50,17 @@ export type CreditCosts = z.infer<typeof CreditCostsSchema>;
 export const PlanOfferSchema = z.object({
   id: PlanSlugSchema,
   name: z.string(),
-  /** Credits rendus a chaque periode. */
+  /** Credits rendus a chaque periode. Zero sur un palier qui ne renouvelle pas. */
   monthly: z.number().int().nonnegative(),
+  /**
+   * Credits accordes une seule fois, a l'ouverture du compte.
+   *
+   * Publie parce que les paliers offerts ne tiennent que par lui : Founder et
+   * Rider ont une dotation mensuelle nulle, et une page de tarifs qui ne
+   * lirait que `monthly` annoncerait zero credit sur les deux seuls paliers
+   * qu'un visiteur peut essayer.
+   */
+  welcome: z.number().int().nonnegative(),
   /**
    * Ce que Stripe facture, en centimes, ou null pour un palier offert. Copie
    * pour l'affichage : la verite du montant reste le prix Stripe.

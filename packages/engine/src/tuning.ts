@@ -42,7 +42,12 @@ import {
   WORK_TITLE_MAX,
 } from '@odyssai/schemas';
 
-import { CREDIT_COSTS, FREE_PLAN_SLUG, PLAN_LIMITS } from './credits.js';
+import {
+  CREDIT_COSTS,
+  FOUNDER_BONUS,
+  FREE_PLAN_SLUG,
+  PLAN_LIMITS,
+} from './credits.js';
 import { DIE_FACES } from './die.js';
 
 /**
@@ -71,6 +76,9 @@ export const TUNING = {
 
   /** Bornes d'un palier, appliquees a la creation comme a la modification. */
   plans: { ...PLAN_LIMITS, freeSlug: FREE_PLAN_SLUG },
+
+  /** Ce que recoivent les premiers arrives, en plus de leur palier. */
+  founder: FOUNDER_BONUS,
 
   /** Le de du meneur. Le joueur ne voit jamais le chiffre, seulement la bande. */
   die: { faces: DIE_FACES },

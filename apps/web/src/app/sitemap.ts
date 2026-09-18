@@ -16,6 +16,9 @@ const PATHS: { href: Pathname; priority: number }[] = [
   { href: "/univers", priority: 0.8 },
   { href: "/multivers", priority: 0.8 },
   { href: "/lore", priority: 0.8 },
+  // Une page de tarifs se cherche par son nom : elle merite la meme priorite
+  // que les pages de contenu, pas celle des mentions legales.
+  { href: "/tarifs", priority: 0.8 },
   { href: "/glossaire", priority: 0.5 },
   // Faible priorite, mais presentes : elles sont obligatoires.
   { href: "/mentions-legales", priority: 0.2 },
