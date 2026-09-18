@@ -87,14 +87,40 @@ export class CharacterService {
     const turns = await this.turnsUsed(universeId);
     if (turns >= CHARACTER_TURNS_MAX) throw new ConversationOverError();
 
-    await this.prisma.conversationMessage.create({
-      data: { universeId, channel: CHANNEL, role: 'user', content },
-    });
+    await this.record(universeId, 'user', content);
   }
 
   async recordAssistant(universeId: string, content: string): Promise<void> {
+    await this.record(universeId, 'assistant', content);
+  }
+
+  /**
+   * Ecrit un message avec son rang.
+   *
+   * `seq` a un defaut a zero et une contrainte d'unicite par canal : ne pas le
+   * renseigner faisait passer le premier message et echouer tous les suivants,
+   * puisqu'ils visaient tous le rang zero. Le tour de jeu le calculait deja,
+   * cette conversation ne l'avait jamais fait.
+   */
+  private async record(
+    universeId: string,
+    role: 'user' | 'assistant',
+    content: string,
+  ): Promise<void> {
+    const last = await this.prisma.conversationMessage.findFirst({
+      where: { universeId, channel: CHANNEL },
+      orderBy: { seq: 'desc' },
+      select: { seq: true },
+    });
+
     await this.prisma.conversationMessage.create({
-      data: { universeId, channel: CHANNEL, role: 'assistant', content },
+      data: {
+        universeId,
+        channel: CHANNEL,
+        role,
+        content,
+        seq: last ? last.seq + 1 : 0,
+      },
     });
   }
 

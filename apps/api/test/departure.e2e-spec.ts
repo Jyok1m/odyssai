@@ -95,6 +95,7 @@ async function boot(
         channel: 'character_creation',
         role: 'user',
         content: 'Elle s appelle Ael.',
+        seq: 0,
         createdAt: new Date(),
       },
     ],

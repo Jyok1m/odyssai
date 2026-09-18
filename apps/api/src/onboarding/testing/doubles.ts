@@ -149,6 +149,8 @@ interface MessageRow {
   channel: string;
   role: 'user' | 'assistant';
   content: string;
+  /** Rang dans son canal, unique par univers : la base le contraint. */
+  seq: number;
   createdAt: Date;
 }
 
@@ -437,18 +439,52 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         );
       },
       create: async ({ data }: any) => {
+        const seq = data.seq ?? 0;
+
+        // La contrainte d'unicite est reproduite ici : sans elle, le double
+        // acceptait ce que la base refuse, et le defaut a zero passait tous
+        // les tests avant d'echouer au premier vrai second message.
+        const clash = store.messages.some(
+          (row) =>
+            row.universeId === data.universeId &&
+            row.channel === data.channel &&
+            row.seq === seq,
+        );
+        if (clash) {
+          throw Object.assign(new Error('Unique constraint failed'), {
+            code: 'P2002',
+          });
+        }
+
         const row: MessageRow = {
           id: randomUUID(),
           universeId: data.universeId,
           channel: data.channel,
           role: data.role,
           content: data.content,
+          seq,
           // Les messages d'un meme test naissent dans la meme milliseconde :
           // sans ce decalage, leur ordre de lecture serait indefini.
           createdAt: new Date(Date.now() + store.messages.length),
         };
         store.messages.push(row);
         return { ...row };
+      },
+      findFirst: async ({ where, orderBy, select }: any) => {
+        const rows = store.messages
+          .filter(
+            (row) =>
+              row.universeId === where.universeId &&
+              row.channel === where.channel,
+          )
+          .sort((a, b) => (orderBy?.seq === 'desc' ? b.seq - a.seq : a.seq - b.seq));
+
+        const row = rows[0];
+        if (!row) return null;
+        if (!select) return { ...row };
+        return Object.fromEntries(
+          Object.keys(select).map((key) => [key, (row as any)[key]]),
+        );
       },
       count: async ({ where }: any) =>
         store.messages.filter(
