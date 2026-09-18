@@ -263,6 +263,22 @@ export function bibleProse(charter: WorldCharter, bible: WorldBible): string {
 }
 
 /**
+ * Essais par noeud du graphe de generation. Un modele rate rarement deux fois
+ * de la meme facon, et un troisieme essai coute plus qu'il ne rattrape.
+ *
+ * Ici plutot que dans narrator : c'est un reglage, et `@odyssai/engine` en
+ * tient l'index pour qu'aucun bouton ne se cache dans un paquet.
+ */
+export const GENERATION_ATTEMPTS_PER_NODE = 2;
+
+/**
+ * Reprises du lore apres un nom emprunte detecte par le controle final. Au
+ * dela, la generation echoue : une boucle qui insiste couterait sept appels de
+ * plus sans garantie de converger.
+ */
+export const GENERATION_REWRITES_MAX = 1;
+
+/**
  * File de generation, partagee par l'api qui publie et le worker qui consomme.
  * Le nom et la forme du travail sont un contrat : les laisser chacun de son
  * cote ferait deux verites, et une faute de frappe passerait inapercue.

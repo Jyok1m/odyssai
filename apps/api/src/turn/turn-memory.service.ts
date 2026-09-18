@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
+import { TUNING } from '@odyssai/engine';
 import type { LlmClient } from '@odyssai/llm';
 import {
   CanonFactSchema,
@@ -16,11 +17,9 @@ import { NarratorConfig } from '../config/narrator-config.js';
 import { NARRATOR_LLM } from '../onboarding/narrator-llm.provider.js';
 import { UsageService } from '../usage/usage.service.js';
 
-/** Les tours rendus mot pour mot. Au dela, c'est le rappel qui prend le relais. */
-const RECENT_TURNS = 12;
-
-/** Ce qu'une recherche par similarite ramene au plus. */
-const RECALLED_MAX = 6;
+// Les deux bornes viennent de l'index de reglages : c'est `recentTurns` qui
+// decide de ce que coute un tour, et le curseur doit se voir avec les autres.
+const { recentTurns: RECENT_TURNS, recalledMax: RECALLED_MAX } = TUNING.turn;
 
 const CHANNEL = 'game_turn' as const;
 

@@ -157,6 +157,15 @@ export class NarratorConfig {
       // Un verdict n'a pas a etre cree : zero pour qu'il soit reproductible.
       temperature: 0,
       maxOutputTokens: this.env.MODERATION_MAX_OUTPUT_TOKENS,
+      /**
+       * Le meme corps que la narration, et non une variable de plus : c'est le
+       * meme fournisseur et ce sont les memes exigences. Sans lui, le
+       * classificateur facturait 140 a 178 jetons de raisonnement au tarif de
+       * sortie pour rendre un verdict d'une ligne, soit les deux tiers de ce
+       * que coute une moderation, et le texte du joueur partait sans
+       * `data_collection: deny`.
+       */
+      extraBody: this.extraBody,
     };
   }
 

@@ -194,6 +194,7 @@ Deux couches, dans cet ordre, sur tout ce qu'un joueur écrit.
 - La comparaison est **toujours sur des mots entiers**, jamais en sous-chaîne, et l'écrasement des répétitions ne touche que les étirements de trois lettres ou plus : à deux, `faggot` devenait `fagot`. Un mot épelé (« c.o.n.n.a.r.d ») n'est recollé que sur une suite d'au moins quatre lettres isolées, signature d'un contournement et non d'une phrase.
 - **Le mot reconnu ne repart jamais au joueur**, seulement la raison : le renvoyer reviendrait à le republier.
 - La réponse du meneur est relue par la couche lexicale seule. Un second appel de classification retarderait un récit déjà parti.
+- Le classificateur reçoit **le même `extraBody` que la narration**, et non une variable à lui : même fournisseur, mêmes exigences. Sans lui il facturait 140 à 178 jetons de raisonnement au tarif de sortie pour rendre un verdict d'une ligne, soit les deux tiers du coût d'une modération, et le message du joueur partait sans `data_collection: deny`. Mesuré : 0,000133 $ avant, 0,0000513 $ après.
 
 ## Ce que les modèles coûtent
 
@@ -205,6 +206,10 @@ Deux couches, dans cet ordre, sur tout ce qu'un joueur écrit.
 - Une écriture ratée est journalisée, jamais relancée : le joueur a déjà reçu sa réponse, et la comptabilité ne vaut pas de casser un tour. Même règle que le journal du guide.
 - `guide_questions` garde son propre journal et **reste anonyme** : il n'a aucun joueur à rattacher, et c'est une décision de conception, pas un oubli.
 - Le coût rendu par le fournisseur prime ; sinon il se calcule depuis les jetons, en facturant les jetons de raisonnement au tarif de sortie, ce que font les deux fournisseurs.
+- Attention aux deux `LLM_NARRATOR_PRICE_*` : **à zéro, le repli calculé écrit une gratuité fausse** le jour où OpenRouter cesse de rendre le coût. Ce sont des valeurs de barème, pas un interrupteur.
+- Mesuré sur `qwen/qwen3.5-35b-a3b` : un tour **0,0012 $** en moyenne, une génération de monde **0,0040 $** sans rejeu. Un monde vaut donc trois tours, pas vingt-cinq. Les 25 crédits qu'il coûte sont une assurance contre les rejeux du graphe et un levier d'abonnement, **pas le reflet d'un coût**, et ça s'assume comme tel.
+- L'entrée d'un tour monte de 3 800 à 6 900 jetons entre le premier et le douzième, puis se stabilise : c'est `recentTurns` qui se remplit. C'est le curseur qui pèse le plus sur le coût d'un tour.
+- Le coût d'un même tour varie **du simple au quadruple** à taille égale, selon le fournisseur vers lequel OpenRouter route. Tarifer sur une seule mesure n'a donc aucun sens : il faut une moyenne et un pire cas.
 
 ### `prisma generate` est une tâche turbo à part
 
@@ -212,7 +217,7 @@ Deux couches, dans cet ordre, sur tout ce qu'un joueur écrit.
 
 ## Crédits et abonnements
 
-Le joueur achète des **crédits**, tarifés par action : un tour en vaut un, un monde vingt-cinq. Le barème est dans `packages/engine/src/credits.ts`, en constantes, et le rapport entre un crédit et son coût réel se règle là sans toucher à Stripe.
+Le joueur achète des **crédits**, tarifés par action : un tour en vaut un, un monde vingt-cinq. Le barème est dans `packages/engine/src/credits.ts`, en constantes que `tuning.ts` réexporte, et le rapport entre un crédit et son coût réel se règle là sans toucher à Stripe.
 
 - **Postgres est la vérité des crédits, pas Redis.** Le budget du guide vit en Redis parce qu'il est anonyme, très fréquent et approximatif : une éviction y coûte une estimation. Un crédit est facturé, et une éviction effacerait la consommation d'un mois payé.
 - **On débite avant l'appel et on rembourse s'il échoue.** Le prix d'une action est connu d'avance, contrairement au budget en dollars du guide : il n'y a pas de danse réserver puis régler à reproduire.
@@ -268,6 +273,15 @@ La clé et le secret de webhook sont les seules variables d'environnement. Les p
 - Les écritures chez Stripe passent **avant** l'écriture en base : un produit créé sans ligne chez nous se voit et se nettoie, une ligne qui pointe un prix inexistant ferait échouer un paiement. Les créations portent une clé d'idempotence dérivée du slug.
 - Un prix n'est jamais supprimé chez Stripe, seulement désactivé : les factures passées y renvoient.
 - Un seul client Stripe, fourni par `StripeModule` : trois `new Stripe(...)` finiraient par diverger sur la version d'API, ce qui se verrait au pire moment.
+
+## Les réglages vivent dans un index
+
+`packages/engine/src/tuning.ts` rassemble ce qui se tourne sans changer de logique : le barème en crédits, les bornes des paliers, le dé, les bornes de l'inspiration et de la fiche, les essais et reprises du graphe, la mémoire du meneur. Avant lui il fallait connaître cinq fichiers dans trois paquets pour savoir où était un bouton.
+
+- **Une valeur n'a qu'une définition.** Le fichier est un index, pas une copie : quand la valeur appartient à un schéma, il la réexporte depuis `@odyssai/schemas`, où le schéma Zod qui la fait respecter la lit déjà. La recopier ferait deux vérités, et la fausse serait celle qu'on aurait pris l'habitude de lire.
+- `GENERATION_ATTEMPTS_PER_NODE` et `GENERATION_REWRITES_MAX` vivent dans `schemas/world.ts` et non dans `narrator`, que l'index ne peut pas lire : faire dépendre `narrator` d'`engine` pour deux entiers coûtait plus cher que de les déplacer. Un bouton qui ne se voit que dans le fichier qui s'en sert ne se tourne jamais.
+- `recentTurns` et `recalledMax` ont quitté `turn-memory.service.ts` pour la même raison, et parce que le premier décide de ce que coûte un tour.
+- Ce qui **n'y est pas** : les paliers, dotations et prix compris, qui vivent en base et s'éditent au tableau de bord ; le choix des modèles et leurs plafonds, qui restent dans l'environnement ; la liste lexicale de modération, qui n'est pas un curseur mais une décision par mot.
 
 ## Conventions
 
