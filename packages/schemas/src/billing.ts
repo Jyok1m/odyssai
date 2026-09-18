@@ -35,6 +35,15 @@ export const BillingSummarySchema = z.object({
    */
   purchasable: z.boolean(),
   /**
+   * Vrai des qu'un espace de facturation existe chez Stripe.
+   *
+   * Distinct de `purchasable`, qui dit si l'on peut acheter : un joueur
+   * revenu au palier libre apres une resiliation n'a plus d'abonnement mais
+   * garde ses factures, et doit pouvoir les relire. Lier le bouton au palier
+   * courant les lui cachait.
+   */
+  manageable: z.boolean().default(false),
+  /**
    * Vrai pour un administrateur, dont la reserve ne se debite jamais.
    *
    * Sans ce champ l'ecran afficherait un solde immobile et une jauge pleine,

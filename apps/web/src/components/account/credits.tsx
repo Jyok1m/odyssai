@@ -168,7 +168,7 @@ export function Credits() {
         })}
       </p>
 
-      {offers.length > 0 || summary.purchasable ? (
+      {offers.length > 0 || summary.manageable ? (
         <div className="mt-5 flex flex-wrap items-center gap-3">
           {/* Un seul bouton vers la page de tarifs, et non un par palier.
               Empilés, les paliers se comparaient mal et l'écran de compte
@@ -180,8 +180,10 @@ export function Credits() {
             </Button>
           ) : null}
 
-          {/* Le portail n'a de sens qu'avec un abonnement à gérer. */}
-          {summary.plan !== "free" ? (
+          {/* Dès qu'un espace de facturation existe, et non seulement sur un
+              palier payant : un joueur revenu au palier libre garde ses
+              factures et son moyen de paiement, et doit pouvoir les relire. */}
+          {summary.manageable ? (
             <Button
               variant="secondary"
               disabled={leaving}

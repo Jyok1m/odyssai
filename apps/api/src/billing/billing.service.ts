@@ -82,6 +82,7 @@ export class BillingService {
       renewsAt: subscription.periodEnd.toISOString(),
       cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
       purchasable: this.config.enabled,
+      manageable: this.config.enabled && subscription.stripeCustomerId !== null,
       unlimited: user.isAdmin,
     };
   }
