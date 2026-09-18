@@ -149,26 +149,30 @@ export class AuthController {
       return { authenticated: false };
     }
 
-    // Les sessions ouvertes avant le provisionnement ne portent pas d'id
-    // applicatif : on le resout une fois plutot que de renvoyer le sub, que le
-    // front ne doit jamais confondre avec l'identifiant de la ligne.
-    const userId =
-      session.userId ??
-      (
-        await this.users.resolve({
-          keycloakId: session.sub,
-          email: session.email,
-          emailVerified: session.emailVerified,
-        })
-      ).id;
+    // La ligne est relue a chaque lecture de session, meme quand la session
+    // porte deja l'id applicatif : `isAdmin` vit en base et s'y pose avec
+    // admin:grant, hors de tout flot de connexion. Le garder dans la session
+    // Redis le figerait jusqu'a la prochaine reconnexion, donc un droit retire
+    // continuerait d'ouvrir la porte du tableau de bord a l'ecran. C'est la
+    // meme lecture indexee que fait deja chaque route protegee.
+    //
+    // La resolution couvre au passage les sessions ouvertes avant le
+    // provisionnement, qui ne portent pas d'id applicatif : le front ne doit
+    // jamais confondre le sub du realm avec l'identifiant de la ligne.
+    const user = await this.users.resolve({
+      keycloakId: session.sub,
+      email: session.email,
+      emailVerified: session.emailVerified,
+    });
 
     return {
       authenticated: true,
       user: {
-        id: userId,
+        id: user.id,
         email: session.email,
         emailVerified: session.emailVerified,
         roles: session.roles,
+        isAdmin: user.isAdmin,
       },
     };
   }

@@ -5,6 +5,7 @@ import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { AdminLink } from "@/components/auth/admin-link";
 import { AuthMenu } from "@/components/auth/auth-menu";
 import { OdyssaiLogo } from "@/components/brand/odyssai-logo";
 import { Link } from "@/i18n/navigation";
@@ -59,6 +60,7 @@ export function SiteHeader() {
         </div>
 
         <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:gap-x-4">
+          <AdminLink />
           <LocaleSwitcher />
           <AuthMenu />
         </div>
@@ -104,8 +106,9 @@ export function SiteHeader() {
                   </Link>
                 ))}
               </div>
-              <div className="py-6">
+              <div className="space-y-3 py-6">
                 <AuthMenu size="md" stacked />
+                <AdminLink size="md" stacked />
               </div>
               <div className="py-6">
                 <LocaleSwitcher
