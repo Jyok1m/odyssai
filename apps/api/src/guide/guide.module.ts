@@ -7,6 +7,7 @@ import { GuideFaqService } from './guide-faq.service.js';
 import { GuideJournalService } from './guide-journal.service.js';
 import { GuideLimitsService } from './guide-limits.service.js';
 import { GuidePassService } from './guide-pass.service.js';
+import { GuidePricingService } from './guide-pricing.service.js';
 import { GUIDE_LLM, guideLlmProvider } from './guide-llm.provider.js';
 
 @Module({
@@ -18,6 +19,7 @@ import { GUIDE_LLM, guideLlmProvider } from './guide-llm.provider.js';
     GuideJournalService,
     GuideLimitsService,
     GuidePassService,
+    GuidePricingService,
     guideLlmProvider,
   ],
 })

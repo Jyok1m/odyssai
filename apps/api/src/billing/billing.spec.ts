@@ -1,14 +1,50 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import Stripe from 'stripe';
-import type { PrismaClient } from '@odyssai/db';
-import { planOf } from '@odyssai/engine';
+import type { Plan, PrismaClient } from '@odyssai/db';
 import { AppConfig } from '../config/app-config.js';
 import { BillingConfig } from '../config/billing-config.js';
 import type { CreditsService } from '../credits/credits.service.js';
+import { PlansService } from '../plans/plans.service.js';
 import { BillingService } from './billing.service.js';
 
 const SECRET = 'whsec_secret_de_test';
 const KEPT = { ...process.env };
+
+/** Les paliers vivent en base : le double en porte trois, comme la migration. */
+const PLANS: Plan[] = [
+  plan('free', 'Libre', 30, 25, null, null),
+  plan('apprenti', 'Apprenti', 300, 0, 500, 'price_apprenti'),
+  plan('arpenteur', 'Arpenteur', 1000, 0, 1200, 'price_arpenteur'),
+];
+
+const APPRENTI = PLANS[1]!;
+
+function plan(
+  slug: string,
+  name: string,
+  monthlyCredits: number,
+  welcomeCredits: number,
+  amountCents: number | null,
+  stripePriceId: string | null,
+): Plan {
+  return {
+    id: `plan-${slug}`,
+    slug,
+    name,
+    monthlyCredits,
+    welcomeCredits,
+    amountCents,
+    currency: 'eur',
+    stripeProductId: stripePriceId ? `prod_${slug}` : null,
+    stripePriceId,
+    archived: false,
+    recommended: false,
+    comingSoon: false,
+    sortOrder: 0,
+    createdAt: new Date('2026-01-01T00:00:00Z'),
+    updatedAt: new Date('2026-01-01T00:00:00Z'),
+  };
+}
 
 /**
  * La ligne d'abonnement, telle qu'elle vit en base. Un double en memoire
@@ -61,6 +97,18 @@ function fakePrisma(row: Row) {
         return data;
       },
     },
+    plan: {
+      findUnique: async ({ where }: { where: Record<string, unknown> }) => {
+        const found = PLANS.find((row) =>
+          'slug' in where
+            ? row.slug === where.slug
+            : row.stripePriceId === where.stripePriceId,
+        );
+        return found ? { ...found } : null;
+      },
+      findMany: async () => PLANS.map((row) => ({ ...row })),
+    },
+
     stripeEvent: {
       create: async ({ data }: { data: { id: string } }) => {
         // La contrainte de cle primaire, qui est tout le mecanisme
@@ -87,7 +135,20 @@ function billing(prisma: PrismaClient) {
   };
 
   const credits = {} as CreditsService;
-  return new BillingService(prisma, new BillingConfig(), {} as AppConfig, credits);
+
+  // Un vrai client Stripe, mais aucune requete ne part : seules la
+  // verification de signature et l'idempotence sont exercees, et toutes deux
+  // sont locales.
+  const stripe = new Stripe('sk_test_factice', { apiVersion: '2026-08-26.dahlia' });
+
+  return new BillingService(
+    prisma,
+    stripe,
+    new BillingConfig(),
+    {} as AppConfig,
+    credits,
+    new PlansService(prisma),
+  );
 }
 
 /** Signe comme Stripe signe : meme HMAC, sans le moindre appel reseau. */
@@ -253,14 +314,14 @@ describe('renouvellement', () => {
 
     await service.handle(body, signature);
 
-    expect(fake.row.credits).toBe(planOf('apprenti').monthly);
+    expect(fake.row.credits).toBe(APPRENTI.monthlyCredits);
     expect(fake.entries).toHaveLength(1);
     expect(fake.entries[0]!.reason).toBe('grant');
     expect(fake.entries[0]!.ref).toBe('in_1');
     // Le solde est fige dans l'ecriture : relire le grand livre des annees
     // plus tard doit donner ce que le joueur a vu.
-    expect(fake.entries[0]!.balance).toBe(planOf('apprenti').monthly);
-    expect(fake.entries[0]!.delta).toBe(planOf('apprenti').monthly - 12);
+    expect(fake.entries[0]!.balance).toBe(APPRENTI.monthlyCredits);
+    expect(fake.entries[0]!.delta).toBe(APPRENTI.monthlyCredits - 12);
   });
 
   /** Un abonne du 20 ne doit pas voir sa reserve repartir le 1er. */
@@ -285,7 +346,7 @@ describe('renouvellement', () => {
     await service.handle(body, signature);
 
     expect(fake.entries).toHaveLength(1);
-    expect(fake.row.credits).toBe(planOf('apprenti').monthly);
+    expect(fake.row.credits).toBe(APPRENTI.monthlyCredits);
   });
 
   it('ignore une facture d un client qu on ne connait pas', async () => {

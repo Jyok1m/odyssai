@@ -15,6 +15,7 @@ import type { Run, Example } from 'langsmith/schemas';
 import { createLlmClient } from '@odyssai/llm';
 import {
   GUIDE_CORPUS_VERSION,
+  GUIDE_PROMPT_VERSION,
   OFF_TOPIC_SENTINEL,
   guide,
   normalizeQuestion,
@@ -191,7 +192,7 @@ const results = await evaluate(target, {
   data: DATASET,
   evaluators,
   client,
-  experimentPrefix: `guide/v1 ${GUIDE_CORPUS_VERSION}`,
+  experimentPrefix: `${GUIDE_PROMPT_VERSION} ${GUIDE_CORPUS_VERSION}`,
   maxConcurrency: 4,
 });
 

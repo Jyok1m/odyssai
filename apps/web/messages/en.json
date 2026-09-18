@@ -10,6 +10,7 @@
     "multiverse": "Multiverse",
     "lore": "Lore",
     "login": "Log in",
+    "admin": "Admin",
     "openMenu": "Open main menu",
     "closeMenu": "Close menu",
     "glossary": "Glossary",
@@ -19,7 +20,11 @@
     "footerLegal": "Legal information",
     "rights": "All rights reserved.",
     "manageCookies": "Manage cookies",
-    "onThisPage": "On this page"
+    "onThisPage": "On this page",
+    "pricing": "Pricing",
+    "terms": "Terms and conditions",
+    "contact": "Contact",
+    "about": "About"
   },
   "Hero": {
     "badge": "Private alpha in the works.",
@@ -64,7 +69,8 @@
   "Alpha": {
     "closed": "The private alpha is not open yet. Come back soon.",
     "preRegister": "The alpha is not open yet. Creating an account puts you on the first-players list: you will get the invitation and news from the multiverse, nothing else.",
-    "preRegisterShort": "Join the first-players list"
+    "preRegisterShort": "Join the first-players list",
+    "terms": "By creating an account, you accept the <terms>terms and conditions</terms> and the <privacy>privacy policy</privacy>."
   },
   "Auth": {
     "signOut": "Log out",
@@ -75,8 +81,18 @@
       "invalid_request": "The login could not complete. Try again from the home page.",
       "provider_error": "The identity service refused the login. Try again in a moment.",
       "session_failed": "The session could not be opened. Try again in a moment.",
+      "alpha_full": "Alpha pre-registration is closed: all hundred seats are taken.",
       "unknown": "The login failed. Try again."
-    }
+    },
+    "alphaFullTitle": "Pre-registration is closed.",
+    "alphaFullBody": "All hundred alpha seats are taken. No game account was created, and there is nothing to retry: a wider opening will come, and it will be announced here.",
+    "alphaFullClose": "Dismiss this message",
+    "noticePreTitle": "Pre-registration is open.",
+    "noticePreBody": "{remaining, plural, =0 {no seats remain} one {one seat remains} other {# seats remaining}}.",
+    "noticeOpenTitle": "The alpha is open.",
+    "noticeOpenBody": "{remaining, plural, =0 {no seats remain} one {one seat remains} other {# seats remaining}}.",
+    "noticeFullTitle": "The alpha is full.",
+    "noticeFullBody": "All {seats} seats are taken. A wider opening will come, and it will be announced here."
   },
   "Account": {
     "title": "My account",
@@ -101,20 +117,20 @@
     "signedOut": "Sign in to see your account.",
     "loading": "Loading.",
     "errorUnreachable": "The API is not answering. Check that it is running, and that you are on the usual address of the site.",
-    "errorSignedOut": "Your session has expired. Sign in again, what you typed is kept."
+    "errorSignedOut": "Your session has expired. Sign in again, what you typed is kept.",
+    "optInTitle": "Hear about what is next",
+    "optInLabel": "I want to be told when OdyssAI moves forward.",
+    "optInHint": "A few messages a year at most: an opening, a milestone. You can untick this at any time, and your address is used for nothing else. See the <privacy>privacy policy</privacy>.",
+    "optInFailed": "Your choice could not be saved. Try again in a moment."
   },
   "Billing": {
     "title": "Your reserve",
     "loading": "Reading your reserve.",
     "balance": "{credits, plural, =0 {No credits} one {# credit} other {# credits}} out of {monthly} this month.",
+    "balanceWelcome": "{credits, plural, one {# credit} other {# credits}}, welcome bonus included. The monthly allowance is {monthly}.",
     "planLabel": "Plan",
     "renewsLabel": "Renews on",
     "endsLabel": "Ends on",
-    "plan": {
-      "free": "Free",
-      "apprenti": "Apprentice",
-      "arpenteur": "Wayfarer"
-    },
     "costs": "A turn costs {turn, plural, one {# credit} other {# credits}}, creating a world {world}.",
     "upgradeTo": "Move to {plan}: {credits} credits a month",
     "manage": "Manage my subscription",
@@ -124,7 +140,73 @@
     "errorDisabled": "Subscriptions are not open at the moment.",
     "errorGeneric": "Cannot read your reserve right now.",
     "errorUnreachable": "The API is not answering. Check that it is running, and that you are on the site's usual address.",
-    "errorSignedOut": "Your session has expired. Sign in again."
+    "errorSignedOut": "Your session has expired. Sign in again.",
+    "balanceStandalone": "{credits, plural, =0 {No credits} one {# credit} other {# credits}} left.",
+    "noRenewal": "These credits do not renew, but they stay as long as your account does.",
+    "balanceUnlimited": "Unlimited reserve.",
+    "unlimitedNote": "This account administers OdyssAI: its games spend no credits. The out-of-credits screen will therefore never show here.",
+    "changePlan": "Change tier"
+  },
+  "Pricing": {
+    "metaTitle": "Pricing",
+    "metaDescription": "What a game costs on OdyssAI: credits, one per turn, twenty-five to build a world. A free tier to try it, three subscriptions to keep going.",
+    "title": "A world is not billed by the hour",
+    "lead": "You buy credits, not time. A turn costs one, the birth of a world twenty-five. What is left waits for you, and nothing runs while you are away.",
+    "loading": "Reading the tiers.",
+    "error": "Pricing could not be loaded. Try again in a moment.",
+    "freePrice": "Free",
+    "perMonth": "per month",
+    "grantMonthly": "{credits, number} credits every month.",
+    "grantOnce": "{credits, number} credits when you sign up, once.",
+    "highlightRenews": "Reserve refilled every month",
+    "highlightOnce": "No renewal",
+    "choose": "Choose this tier",
+    "start": "Get started",
+    "soon": "On sale soon",
+    "compareTitle": "What sets them apart",
+    "rowWelcome": "Credits on sign-up",
+    "rowMonthly": "Credits every month",
+    "rowWorlds": "Worlds the grant covers",
+    "rowRenews": "Monthly renewal",
+    "rowCancel": "Cancel any time",
+    "yes": "Yes",
+    "no": "No",
+    "faqTitle": "Frequently asked questions",
+    "faq": [
+      {
+        "question": "What exactly is a credit?",
+        "answer": "One action. A game turn costs one, a message to your character during its creation costs one too, and bringing a world to life costs twenty-five. The scale is the same for everyone and does not depend on how much the narrator writes."
+      },
+      {
+        "question": "Why does a world cost twenty-five credits?",
+        "answer": "Because it takes at least seven passes to write: a charter, a lore, factions, a political order, characters, their ties, then a check that reads it all back and may ask for a rewrite. It is the most expensive move in the game, and the only one you make once."
+      },
+      {
+        "question": "Do my credits roll over?",
+        "answer": "On a subscription, no: every month your reserve goes back to your tier's grant, no more and no less, otherwise six months away would buy six months ahead. On the Rider tier, which grants nothing monthly, the question does not arise: whatever you have not spent stays as long as your account does."
+      },
+      {
+        "question": "What happens when I run out?",
+        "answer": "Your worlds stay, your games too. You simply cannot play a turn until the renewal, or until you move up a tier."
+      },
+      {
+        "question": "What is the first-hundred bonus?",
+        "answer": "The first hundred sign-ups get thirty credits on top of their starting reserve, once, without asking. It is not a tier you pick: it is a bonus added to the account, and it shows in the ledger like any other grant."
+      },
+      {
+        "question": "Where is my subscription handled?",
+        "answer": "At Stripe, never here: no card details are ever entered on OdyssAI. Cancelling goes through the same portal, and your tier stays active until the end of the period you already paid for."
+      }
+    ],
+    "costsNote": "A turn costs {turn, number} credit, creating a world {world, number}.",
+    "highlightWorldThenTurns": "One world, then {turns, plural, =0 {no turns} one {# turn} other {# turns}}",
+    "highlightTurnsOnly": "{turns, plural, =0 {No turns} one {# turn} other {# turns}}",
+    "recommended": "Recommended",
+    "yourPlan": "Your tier",
+    "currentNote": "This is your current tier.",
+    "leaving": "Opening checkout.",
+    "checkoutError": "Checkout could not be opened. Try again in a moment.",
+    "checkoutDisabled": "Sales are not open yet."
   },
   "Play": {
     "title": "Enter the game",
@@ -473,6 +555,54 @@
       }
     ]
   },
+  "About": {
+    "metaTitle": "About",
+    "metaDescription": "Who makes OdyssAI, why, and where the project stands: a closed alpha for a hundred players, built by an independent engineer.",
+    "lead": "A game made by one person, not a studio. Here is who, why, and where things stand.",
+    "intro": [
+      "OdyssAI is designed and built by Joachim Alexandre Jasmin, an independent software engineer, alone. No team, no funding round, no roadmap imposed from outside."
+    ],
+    "sections": [
+      {
+        "title": "Who makes OdyssAI",
+        "body": [
+          "Joachim Alexandre Jasmin is an independent software engineer. His daily work covers full-stack development, infrastructure and applied AI, and he teaches those subjects to beginners and experienced developers alike.",
+          "OdyssAI is a personal project. He writes the code, the texts and the infrastructure, and he answers the messages sent from the Contact page himself.",
+          "The site's publisher, legal status and contact details are in the legal notice."
+        ]
+      },
+      {
+        "title": "Why this game",
+        "body": [
+          "Role-playing needs a table, a game master, and an evening when everyone is free. Plenty of people have carried a world in their head for years without ever lining up those three things.",
+          "OdyssAI starts there: a game master always available, a world that belongs to you, and sessions that remember what you did. The multiverse comes next, when your character crosses a rift and goes to live in someone else's world."
+        ]
+      },
+      {
+        "title": "How it is built",
+        "body": [
+          "Three principles guide the code, and they show in the pages of this site.",
+          "The model tells, the code decides. No state change comes from the generated text: a story claiming the opposite of a rule does not change it.",
+          "Your world owes nothing to anyone. The works you cite as inspiration serve to extract themes, and three independent checks keep a borrowed name from surviving into the generated world.",
+          "What you write is yours. You can erase your account and your worlds whenever you want, and whatever would be kept is described on the Privacy page."
+        ]
+      },
+      {
+        "title": "Where the project stands",
+        "body": [
+          "OdyssAI is in closed alpha, limited to a hundred players. Pre-registration opens and closes with the seats available, and the banner at the top of the site shows how many are left.",
+          "An alpha is unstable by nature: features change, others disappear, and a technical change can lose a universe. That is the price of coming in early, and it is stated in the terms and conditions.",
+          "There is no release date. It would be made up."
+        ]
+      },
+      {
+        "title": "Writing to us",
+        "body": [
+          "The Contact page sends a message straight through, with or without an account. A question, a bug, an idea, a request about your data: everything is read."
+        ]
+      }
+    ]
+  },
   "LegalNotice": {
     "metaTitle": "Legal notice",
     "metaDescription": "Publisher, publication director and hosting of the OdyssAI site.",
@@ -510,6 +640,148 @@
         ]
       }
     ]
+  },
+  "Terms": {
+    "metaTitle": "Terms and conditions",
+    "metaDescription": "OdyssAI terms of use and sale: alpha access, accounts, AI-generated content, credits, subscriptions and cancellation.",
+    "lead": "What you commit to by playing, and what we commit to in return.",
+    "intro": [
+      "These terms govern the use of OdyssAI and the sale of the subscriptions attached to it. They apply from the moment an account is created.",
+      "OdyssAI is published by Joachim Alexandre Jasmin, sole trader, whose details appear in the legal notice.",
+      "Last updated: 18 September 2026."
+    ],
+    "sections": [
+      {
+        "title": "Purpose",
+        "body": [
+          "OdyssAI is an online narrative role-playing game whose game master is a language model. The service covers creating universes, running sessions, and the features around them.",
+          "Creating an account means accepting these terms. Anyone who does not accept them should not create an account."
+        ]
+      },
+      {
+        "title": "Access during the alpha",
+        "body": [
+          "The service is in closed alpha, limited to one hundred players. Beyond that, registration is refused until a wider opening.",
+          "An alpha is unstable by nature: features may change, be removed, or stop working without notice. Universes and sessions may be lost during a technical change. Do not entrust anything to it you could not bear to lose.",
+          "Access may be suspended for maintenance, without compensation."
+        ]
+      },
+      {
+        "title": "Account and identity",
+        "body": [
+          "Identity is handled by a Keycloak server we administer. Email address, password and two-factor authentication live there; the game profile lives in the application database.",
+          "An account is personal. You are responsible for what is done with yours, and must report any use you did not authorise.",
+          "The service is reserved for people aged fifteen and over."
+        ]
+      },
+      {
+        "title": "What the narrator writes",
+        "body": [
+          "The narrator's text is produced by a language model. It may be inaccurate, inconsistent, or upsetting despite the safeguards in place. It is neither advice nor reference information, and we accept no liability for its content.",
+          "Game state is decided by code, never by the generated text: a story that claims something contrary to the rules does not make it true in the session.",
+          "No generated answer is cached to be served again to someone else."
+        ]
+      },
+      {
+        "title": "What you write",
+        "body": [
+          "You keep ownership of the text you write and the universes you create. You grant us only the licence needed to run the service: to store, display, transmit to the models, and show to other players when you open your world.",
+          "You warrant that you have the right to write what you write. You must not reproduce someone else's work: the titles you cite as inspiration serve to extract themes, and the resulting world must borrow nothing from them.",
+          "What the model writes from your input is not guaranteed to be original or protectable, the law on automated output remaining unsettled."
+        ]
+      },
+      {
+        "title": "Conduct and moderation",
+        "body": [
+          "Unlawful, hateful, sexual content involving minors, content inciting violence or harassment, and attempts to bypass the service's safeguards are all forbidden.",
+          "Everything a player writes passes through two moderation layers, one lexical and one classifier. A rejected message is not passed to the narrator.",
+          "A breach may lead to suspension or closure of the account, with no refund of credits already spent."
+        ]
+      },
+      {
+        "title": "Credits",
+        "body": [
+          "Play is consumed in credits. A game turn costs one, a character-creation message one, and generating a world twenty-five. The scale is published on the pricing page and may change; a change never applies retroactively to credits already spent.",
+          "Credits have no monetary value, cannot be resold, cannot be transferred between accounts, and are not refundable in cash.",
+          "On a subscription, the reserve returns to the tier's grant each period and does not roll over. On the free tier, which grants nothing monthly, whatever you have not spent stays as long as the account exists.",
+          "Moderation and the narrator's memory are never charged."
+        ]
+      },
+      {
+        "title": "Subscriptions, prices and payment",
+        "body": [
+          "Tiers and their prices appear on the pricing page. Prices are in euros, inclusive of tax where applicable.",
+          "Payment is handled by Stripe Payments Europe. No card details are entered or stored on OdyssAI. Subscribing and managing go through pages hosted by Stripe.",
+          "The subscription is monthly and renews automatically until cancelled. The credit grant is issued on each confirmed payment.",
+          "A price change applies only from the next renewal and is announced beforehand."
+        ]
+      },
+      {
+        "title": "Cancellation",
+        "body": [
+          "You may cancel at any time from the Stripe portal, reachable from your account. Cancellation takes effect at the end of the period already paid for: your tier stays active until then.",
+          "After cancellation, remaining credits are kept and can still be spent; no new grant is issued.",
+          "Deleting your account cancels the subscription immediately, with no refund of the current period.",
+          "We may cancel a subscription for a breach of these terms or if the service shuts down, with a pro-rata refund of the unused period in the latter case."
+        ]
+      },
+      {
+        "title": "Right of withdrawal",
+        "body": [
+          "You have fourteen days to withdraw from a subscription, under article L221-18 of the French consumer code.",
+          "By requesting immediate access to the service, you agree that performance begins before the end of that period and waive your right of withdrawal, as provided by article L221-28 of the same code. This waiver is requested at the time of payment.",
+          "As long as you have spent no credit from the period subscribed, we refund it on request."
+        ]
+      },
+      {
+        "title": "Personal data",
+        "body": [
+          "Data processing is described on the Privacy page, which forms part of these terms.",
+          "You can erase your game account from your personal space. Identity itself is deleted from your account console, the identity server remaining the source."
+        ]
+      },
+      {
+        "title": "Liability",
+        "body": [
+          "The service is provided as is, with no guarantee of continuous availability or freedom from error, which is the nature of an alpha.",
+          "Our liability cannot exceed the amounts you actually paid over the last twelve months, excluding personal injury or gross negligence, which the law excludes from any limitation.",
+          "No clause deprives a consumer of the rights the law grants them."
+        ]
+      },
+      {
+        "title": "Changes to these terms",
+        "body": [
+          "These terms may change. A substantial change is announced on the site before taking effect, and for a subscriber, at the latest at their next renewal.",
+          "Continuing to use the service after it takes effect means accepting it. Otherwise, cancellation remains open at any time."
+        ]
+      },
+      {
+        "title": "Governing law and disputes",
+        "body": [
+          "These terms are governed by French law.",
+          "In case of a dispute, an amicable solution is sought first: write to joachim.jasmin-dev@proton.me.",
+          "A consumer may use a consumer mediator free of charge, or refer the matter to the European online dispute resolution platform. Failing agreement, the French courts have jurisdiction."
+        ]
+      }
+    ]
+  },
+  "Contact": {
+    "metaTitle": "Contact",
+    "metaDescription": "Write to the OdyssAI team: a question, a bug, a suggestion, or a request about your data.",
+    "lead": "A question, a bug, an idea, or a request about your data. Write, we read everything.",
+    "name": "Your name",
+    "nameHint": "Optional.",
+    "email": "Your email address",
+    "emailHint": "So we can reply. Nothing else is done with it.",
+    "subject": "Subject",
+    "message": "Message",
+    "messageHint": "{max, number} characters at most.",
+    "send": "Send",
+    "sending": "Sending.",
+    "failed": "The message could not be sent. Try again in a moment.",
+    "sentTitle": "On its way.",
+    "sentBody": "We will reply to the address you gave. Thank you for taking the time to write.",
+    "privacy": "Your message and your address are kept for as long as it takes to reply."
   },
   "Privacy": {
     "metaTitle": "Privacy policy",

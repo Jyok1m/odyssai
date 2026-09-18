@@ -7,7 +7,18 @@ export const MODERATION_PROMPT_VERSION = MODERATION_PROMPT.id;
 
 export interface ModerateRequest {
   llm: LlmClient;
-  config: { model: string; temperature: number; maxOutputTokens: number };
+  config: {
+    model: string;
+    temperature: number;
+    maxOutputTokens: number;
+    /**
+     * Meme role que pour la narration : couper le raisonnement, refuser la
+     * collecte. Un verdict d'une ligne n'a rien a deliberer, et le texte qui
+     * arrive ici est precisement celui qu'on ne veut pas voir servir de
+     * donnee d'entrainement.
+     */
+    extraBody?: Record<string, unknown>;
+  };
   locale: UiLocale;
   text: string;
   signal?: AbortSignal;
@@ -41,6 +52,7 @@ export async function moderate(
     messages: MODERATION_PROMPT.build(request.locale, request.text),
     maxOutputTokens: request.config.maxOutputTokens,
     temperature: request.config.temperature,
+    extraBody: request.config.extraBody,
     signal: request.signal,
   })) {
     if (event.type === 'text') text += event.text;

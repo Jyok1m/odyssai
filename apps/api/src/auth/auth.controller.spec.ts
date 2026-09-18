@@ -45,6 +45,7 @@ describe('AuthController', () => {
   let users: {
     signIn: ReturnType<typeof vi.fn>;
     resolve: ReturnType<typeof vi.fn>;
+    alphaFull: ReturnType<typeof vi.fn>;
   };
   let controller: AuthController;
 
@@ -73,7 +74,8 @@ describe('AuthController', () => {
 
     users = {
       signIn: vi.fn().mockResolvedValue({ id: USER_ID }),
-      resolve: vi.fn().mockResolvedValue({ id: USER_ID }),
+      resolve: vi.fn().mockResolvedValue({ id: USER_ID, isAdmin: false }),
+      alphaFull: vi.fn().mockResolvedValue(false),
     };
 
     controller = new AuthController(
@@ -85,6 +87,18 @@ describe('AuthController', () => {
   });
 
   describe('signin et signup', () => {
+    // Laisser creer une identite qui n'aura jamais de joueur derriere elle est
+    // un cadeau empoisonne : l'api n'a aucun droit sur le realm.
+    it('refuse l inscription avant le realm quand l alpha est complete', async () => {
+      users.alphaFull.mockResolvedValue(true);
+      const res = makeResponse();
+
+      const redirection = await controller.signUp(undefined, undefined, res.response);
+
+      expect(redirection.url).toContain('auth_error=alpha_full');
+      expect(oidc.registrationUrl).not.toHaveBeenCalled();
+    });
+
     it('redirige vers la page de connexion et lie la transaction au navigateur', async () => {
       const res = makeResponse();
 
@@ -260,9 +274,38 @@ describe('AuthController', () => {
           email: 'joueur@odyssai.test',
           emailVerified: true,
           roles: ['player'],
+          isAdmin: false,
         },
       });
       expect(JSON.stringify(state)).not.toContain('refresh');
+    });
+
+    // Le droit vient de la ligne et non de la session : admin:grant l'accorde
+    // sans que le joueur se reconnecte, et le retirer doit faire disparaitre
+    // l'entree du tableau de bord sans attendre non plus.
+    it('lit le droit d administration en base a chaque lecture', async () => {
+      const stored: StoredSession = {
+        ...IDENTITY,
+        userId: USER_ID,
+        accessToken: 'access',
+        refreshToken: 'refresh',
+        idToken: 'id',
+        accessExpiresAt: Date.now() + 300_000,
+        refreshExpiresAt: Date.now() + 1_800_000,
+      };
+      sessions.read.mockResolvedValue(stored);
+      users.resolve.mockResolvedValue({ id: USER_ID, isAdmin: true });
+      const res = makeResponse();
+      const req = makeRequest({ [config.cookies.session]: 'session-1' });
+
+      const state = await controller.session(req, res.response);
+
+      expect(users.resolve).toHaveBeenCalledWith({
+        keycloakId: IDENTITY.sub,
+        email: IDENTITY.email,
+        emailVerified: IDENTITY.emailVerified,
+      });
+      expect(state).toMatchObject({ authenticated: true, user: { isAdmin: true } });
     });
   });
 

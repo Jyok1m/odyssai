@@ -33,6 +33,7 @@ export function GameChat() {
 
   const thread = useRef<HTMLOListElement>(null);
   const streamed = useRef("");
+  const opened = useRef(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -57,6 +58,7 @@ export function GameChat() {
     if (element) element.scrollTop = element.scrollHeight;
   }, [messages]);
 
+
   const play = async (request: Parameters<typeof playTurn>[0]) => {
     if (busy) return;
 
@@ -68,19 +70,28 @@ export function GameChat() {
     const now = new Date().toISOString();
     const seq = messages.length;
 
+    // À l'ouverture, le joueur n'a rien dit : seule la réponse du meneur
+    // s'ajoute, et elle prend le premier rang.
+    const said: TurnMessage[] =
+      request.kind === "open"
+        ? []
+        : [
+            {
+              id: `local-${now}`,
+              seq,
+              role: "user",
+              content: request.kind === "fate" ? t("fateSaid") : request.content,
+              outcome: null,
+              createdAt: now,
+            },
+          ];
+
     setMessages((current) => [
       ...current,
-      {
-        id: `local-${now}`,
-        seq,
-        role: "user",
-        content: request.kind === "fate" ? t("fateSaid") : request.content,
-        outcome: null,
-        createdAt: now,
-      },
+      ...said,
       {
         id: `local-${now}-reply`,
-        seq: seq + 1,
+        seq: request.kind === "open" ? seq : seq + 1,
         role: "assistant",
         content: "",
         outcome: null,
@@ -115,6 +126,26 @@ export function GameChat() {
     }
   };
 
+  /**
+   * La première scène, jouée dès l'arrivée si rien n'a encore été joué.
+   *
+   * C'est le meneur qui ouvre une partie, pas celui qui la joue : sans cela le
+   * joueur arrive devant un champ vide et doit deviner qu'il commence.
+   *
+   * `opened` et non l'état des messages : le fil se remplit pendant l'appel, et
+   * une condition qui le lirait relancerait une seconde ouverture. L'API refuse
+   * de toute façon dès qu'un tour existe, mais le lui demander deux fois serait
+   * déjà de trop.
+   */
+  useEffect(() => {
+    if (!loaded || opened.current || messages.length > 0) return;
+    opened.current = true;
+    void play({ kind: "open" });
+    // `play` change à chaque rendu et n'a pas à relancer cet effet : c'est
+    // l'arrivée sur une partie vide qui le déclenche, une seule fois.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, messages.length]);
+
   if (!loaded) {
     return <p className="text-ui-sm text-vellum-3">{t("loading")}</p>;
   }
@@ -142,8 +173,12 @@ export function GameChat() {
                   {t("narrator")}
                   {message.outcome ? <Verdict outcome={message.outcome} /> : null}
                 </p>
-                {/* font-voice : c'est de la narration, pas de l'interface. */}
-                <p className="mt-1.5 font-voice text-narration whitespace-pre-wrap text-vellum">
+                {/* `font-voice` reste : c'est la voix du meneur, pas de
+                    l'interface. La taille, elle, est celle de la conversation
+                    et non `text-narration` : dans un fil, le recit et ce que
+                    le joueur repond se lisent l'un apres l'autre, et deux
+                    echelles y font deux polices. */}
+                <p className="mt-1.5 font-voice text-ui-sm whitespace-pre-wrap text-vellum">
                   {message.content || t("thinking")}
                 </p>
               </div>

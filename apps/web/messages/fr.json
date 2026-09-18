@@ -10,6 +10,7 @@
     "multiverse": "Multivers",
     "lore": "Lore",
     "login": "Se connecter",
+    "admin": "Administration",
     "openMenu": "Ouvrir le menu principal",
     "closeMenu": "Fermer le menu",
     "glossary": "Glossaire",
@@ -19,7 +20,11 @@
     "footerLegal": "Informations légales",
     "rights": "Tous droits réservés.",
     "manageCookies": "Gérer les cookies",
-    "onThisPage": "Sur cette page"
+    "onThisPage": "Sur cette page",
+    "pricing": "Tarifs",
+    "terms": "Conditions générales",
+    "contact": "Contact",
+    "about": "À propos"
   },
   "Hero": {
     "badge": "Alpha privée en préparation.",
@@ -64,7 +69,8 @@
   "Alpha": {
     "closed": "L'alpha privée n'est pas encore ouverte. Reviens bientôt.",
     "preRegister": "L'alpha n'est pas ouverte. Créer un compte te place sur la liste des premiers joueurs : tu recevras l'invitation et les nouvelles du multivers, rien d'autre.",
-    "preRegisterShort": "Rejoindre la liste des premiers joueurs"
+    "preRegisterShort": "Rejoindre la liste des premiers joueurs",
+    "terms": "En créant un compte, tu acceptes les <terms>conditions générales</terms> et la <privacy>politique de confidentialité</privacy>."
   },
   "Auth": {
     "signOut": "Se déconnecter",
@@ -75,8 +81,18 @@
       "invalid_request": "La connexion n'a pas pu aboutir. Réessaie depuis l'accueil.",
       "provider_error": "Le service d'identité a refusé la connexion. Réessaie dans un instant.",
       "session_failed": "La session n'a pas pu être ouverte. Réessaie dans un instant.",
+      "alpha_full": "Les pré-inscriptions à l'alpha sont closes : les cent places sont prises.",
       "unknown": "La connexion a échoué. Réessaie."
-    }
+    },
+    "alphaFullTitle": "Les pré-inscriptions sont closes.",
+    "alphaFullBody": "Les cent places de l'alpha sont prises. Ton compte n'a pas été créé côté jeu, et il n'y a rien à réessayer : une ouverture plus large viendra, et elle sera annoncée ici.",
+    "alphaFullClose": "Fermer ce message",
+    "noticePreTitle": "Pré-inscriptions ouvertes.",
+    "noticePreBody": "Il reste {remaining, plural, =0 {aucune place} one {une place} other {# places}} pour l'Alpha.",
+    "noticeOpenTitle": "L'alpha est ouverte.",
+    "noticeOpenBody": "Il reste {remaining, plural, =0 {aucune place} one {une place} other {# places}} pour l'Alpha.",
+    "noticeFullTitle": "L'alpha est complète.",
+    "noticeFullBody": "Les {seats} places sont prises. Une ouverture plus large viendra, et elle sera annoncée ici."
   },
   "Account": {
     "title": "Mon compte",
@@ -101,20 +117,20 @@
     "signedOut": "Connecte-toi pour voir ton compte.",
     "loading": "Chargement.",
     "errorUnreachable": "L'API ne répond pas. Vérifie qu'elle tourne, et que tu es bien sur l'adresse habituelle du site.",
-    "errorSignedOut": "Ta session a expiré. Reconnecte-toi, ta saisie est gardée."
+    "errorSignedOut": "Ta session a expiré. Reconnecte-toi, ta saisie est gardée.",
+    "optInTitle": "Recevoir des nouvelles",
+    "optInLabel": "Je veux être prévenu des avancées d'OdyssAI.",
+    "optInHint": "Quelques messages par an, au plus : une ouverture, une grande étape. Tu peux décocher à tout moment, et ton adresse ne sert à rien d'autre. Voir la <privacy>politique de confidentialité</privacy>.",
+    "optInFailed": "Ton choix n'a pas pu être enregistré. Réessaie dans un instant."
   },
   "Billing": {
     "title": "Ta réserve",
     "loading": "Lecture de ta réserve.",
     "balance": "{credits, plural, =0 {Aucun crédit} one {# crédit} other {# crédits}} sur {monthly} pour ce mois.",
+    "balanceWelcome": "{credits, plural, one {# crédit} other {# crédits}}, bienvenue comprise. La dotation est de {monthly} par mois.",
     "planLabel": "Plan",
     "renewsLabel": "Renouvelée le",
     "endsLabel": "Prend fin le",
-    "plan": {
-      "free": "Libre",
-      "apprenti": "Apprenti",
-      "arpenteur": "Arpenteur"
-    },
     "costs": "Un tour coûte {turn, plural, one {# crédit} other {# crédits}}, la création d'un monde {world}.",
     "upgradeTo": "Passer à {plan} : {credits} crédits par mois",
     "manage": "Gérer mon abonnement",
@@ -124,7 +140,73 @@
     "errorDisabled": "La vente n'est pas ouverte pour le moment.",
     "errorGeneric": "Impossible de lire ta réserve pour le moment.",
     "errorUnreachable": "L'API ne répond pas. Vérifie qu'elle tourne, et que tu es bien sur l'adresse habituelle du site.",
-    "errorSignedOut": "Ta session a expiré. Reconnecte-toi."
+    "errorSignedOut": "Ta session a expiré. Reconnecte-toi.",
+    "balanceStandalone": "{credits, plural, =0 {Aucun crédit} one {# crédit} other {# crédits}} en réserve.",
+    "noRenewal": "Ces crédits ne se renouvellent pas, mais ils restent tant que ton compte existe.",
+    "balanceUnlimited": "Réserve illimitée.",
+    "unlimitedNote": "Ce compte administre OdyssAI : ses parties ne débitent aucun crédit. L'écran de réserve épuisée ne s'affichera donc jamais ici.",
+    "changePlan": "Changer de palier"
+  },
+  "Pricing": {
+    "metaTitle": "Tarifs",
+    "metaDescription": "Ce que coûte une partie sur OdyssAI : des crédits, un tour en vaut un, la création d'un monde vingt-cinq. Un palier libre pour essayer, trois abonnements pour continuer.",
+    "title": "Un monde ne se paie pas à l'heure",
+    "lead": "Tu achètes des crédits, pas du temps. Un tour en consomme un, la naissance d'un monde vingt-cinq. Ce qui reste t'attend, et rien ne tourne pendant que tu ne joues pas.",
+    "loading": "Lecture des paliers.",
+    "error": "Les tarifs n'ont pas pu être lus. Réessaie dans un instant.",
+    "freePrice": "Offert",
+    "perMonth": "par mois",
+    "grantMonthly": "{credits, number} crédits chaque mois.",
+    "grantOnce": "{credits, number} crédits à l'inscription, une seule fois.",
+    "highlightRenews": "Réserve remise à neuf chaque mois",
+    "highlightOnce": "Pas de renouvellement",
+    "choose": "Choisir ce palier",
+    "start": "Commencer",
+    "soon": "Bientôt en vente",
+    "compareTitle": "Ce qui les sépare",
+    "rowWelcome": "Crédits à l'inscription",
+    "rowMonthly": "Crédits chaque mois",
+    "rowWorlds": "Mondes que la dotation paie",
+    "rowRenews": "Renouvellement mensuel",
+    "rowCancel": "Résiliable à tout moment",
+    "yes": "Oui",
+    "no": "Non",
+    "faqTitle": "Questions fréquentes",
+    "faq": [
+      {
+        "question": "Qu'est-ce qu'un crédit, exactement ?",
+        "answer": "Une action. Un tour de jeu en vaut un, un message à ton personnage pendant sa création aussi, et faire naître un monde en vaut vingt-cinq. Le barème est le même pour tout le monde et ne dépend pas de la longueur de ce que le narrateur écrit."
+      },
+      {
+        "question": "Pourquoi un monde coûte-t-il vingt-cinq crédits ?",
+        "answer": "Parce qu'il s'écrit en sept passages au moins : une charte, un lore, des factions, une politique, des personnages, leurs liens, puis un contrôle qui relit le tout et peut demander une réécriture. C'est le geste le plus cher du jeu, et le seul qui ne se répète pas."
+      },
+      {
+        "question": "Mes crédits se reportent-ils d'un mois sur l'autre ?",
+        "answer": "Sur un abonnement, non : chaque mois ta réserve repart à la dotation de ton palier, ni plus ni moins, sinon six mois d'absence donneraient six mois d'avance. Sur le palier Rider, qui ne reverse rien, la question ne se pose pas : ce que tu n'as pas dépensé reste tant que ton compte existe."
+      },
+      {
+        "question": "Que se passe-t-il si je n'ai plus de crédits ?",
+        "answer": "Tes mondes restent, tes parties aussi. Tu ne peux simplement plus jouer de tour jusqu'au renouvellement, ou jusqu'à ce que tu prennes un palier au dessus."
+      },
+      {
+        "question": "Qu'est-ce que le bonus des cent premiers ?",
+        "answer": "Les cent premiers inscrits reçoivent trente crédits en plus de leur réserve de départ, une seule fois et sans rien demander. Ce n'est pas un palier à choisir : c'est un supplément posé sur le compte, et il se lit dans le grand livre comme n'importe quelle attribution."
+      },
+      {
+        "question": "Où se règle mon abonnement ?",
+        "answer": "Chez Stripe, jamais ici : aucune carte bancaire n'est saisie sur OdyssAI. La résiliation passe par le même portail, et ton palier reste actif jusqu'à la fin de la période déjà payée."
+      }
+    ],
+    "costsNote": "Un tour coûte {turn, number} crédit, la création d'un monde {world, number}.",
+    "highlightWorldThenTurns": "Un monde, puis {turns, plural, =0 {aucun tour} one {# tour} other {# tours}}",
+    "highlightTurnsOnly": "{turns, plural, =0 {Aucun tour} one {# tour} other {# tours}}",
+    "recommended": "Recommandé",
+    "yourPlan": "Ton palier",
+    "currentNote": "C'est ton palier actuel.",
+    "leaving": "Ouverture du paiement.",
+    "checkoutError": "Le paiement n'a pas pu s'ouvrir. Réessaie dans un instant.",
+    "checkoutDisabled": "La vente n'est pas encore ouverte."
   },
   "Play": {
     "title": "Entrer en jeu",
@@ -144,11 +226,11 @@
     "locked": "Ton monde est déjà en construction.",
     "errorGeneric": "Impossible d'enregistrer pour le moment.",
     "username": {
-      "title": "Comment veux-tu qu'on t'appelle ?",
+      "title": "Comment veux-tu qu'on t'appelle ?",
       "lead": "Ce nom sera vu par les autres joueurs quand vos univers se croiseront."
     },
     "inspiration": {
-      "title": "D'où vient ton monde ?",
+      "title": "D'où vient ton monde ?",
       "lead": "Cite jusqu'à cinq œuvres qui t'inspirent, ou décris toi-même le monde que tu veux.",
       "privacy": "Les titres servent à dégager des thèmes, rien de plus : ton monde n'empruntera ni leurs noms, ni leurs personnages, ni leurs lieux.",
       "mode": {
@@ -171,7 +253,7 @@
     },
     "enter": "Entrer en jeu",
     "character": {
-      "title": "Qui vas-tu incarner ?",
+      "title": "Qui vas-tu incarner ?",
       "lead": "Réponds simplement. Quand il y aura de quoi, tu dresseras la fiche et tu pourras la corriger.",
       "you": "Toi",
       "guide": "Guide",
@@ -307,7 +389,7 @@
       {
         "title": "La charte du monde",
         "body": [
-          "Chaque univers a une charte. C'est son ADN : ce qui existe ou non (la magie, la technologie, les dieux), le ton, les règles qui ne se discutent pas, ce qui est interdit, le niveau de contenu. La mort est-elle définitive ? Les machines peuvent-elles rêver ? C'est toi qui décides. Le narrateur respecte la charte en toutes circonstances, y compris face aux voyageurs venus d'ailleurs."
+          "Chaque univers a une charte. C'est son ADN : ce qui existe ou non (la magie, la technologie, les dieux), le ton, les règles qui ne se discutent pas, ce qui est interdit, le niveau de contenu. La mort est-elle définitive ? Les machines peuvent-elles rêver ? C'est toi qui décides. Le narrateur respecte la charte en toutes circonstances, y compris face aux voyageurs venus d'ailleurs."
         ]
       },
       {
@@ -473,6 +555,54 @@
       }
     ]
   },
+  "About": {
+    "metaTitle": "À propos",
+    "metaDescription": "Qui fait OdyssAI, pourquoi, et où en est le projet : une alpha fermée à cent joueurs, développée par un ingénieur indépendant.",
+    "lead": "Un jeu fait par une personne, pas par un studio. Voici qui, pourquoi, et où on en est.",
+    "intro": [
+      "OdyssAI est conçu et développé par Joachim Alexandre Jasmin, ingénieur logiciel indépendant, seul. Pas d'équipe, pas de levée de fonds, pas de feuille de route imposée."
+    ],
+    "sections": [
+      {
+        "title": "Qui fait OdyssAI",
+        "body": [
+          "Joachim Alexandre Jasmin est ingénieur logiciel indépendant. Il travaille au quotidien sur du développement full-stack, de l'infrastructure et de l'IA appliquée, et il enseigne ces sujets à des personnes qui débutent comme à des profils confirmés.",
+          "OdyssAI est un projet personnel. Il en écrit le code, les textes et l'infrastructure, et il répond lui-même aux messages envoyés depuis la page Contact.",
+          "L'éditeur du site, son statut et ses coordonnées figurent aux mentions légales."
+        ]
+      },
+      {
+        "title": "Pourquoi ce jeu",
+        "body": [
+          "Le jeu de rôle demande une table, un meneur, et une soirée où tout le monde est libre. Beaucoup de gens ont un monde dans la tête depuis des années sans avoir jamais réuni ces trois conditions.",
+          "OdyssAI part de là : un meneur toujours disponible, un monde qui t'appartient, et des parties qui se souviennent de ce que tu as fait. Le multivers vient ensuite, quand ton personnage franchit une faille et va vivre dans le monde de quelqu'un d'autre."
+        ]
+      },
+      {
+        "title": "Comment il est construit",
+        "body": [
+          "Trois principes guident le code, et ils se vérifient dans les pages du site.",
+          "Le modèle raconte, le code décide. Aucun changement d'état ne vient du texte produit : un récit qui affirmerait le contraire d'une règle ne la change pas.",
+          "Ton monde ne doit rien à personne. Les œuvres que tu cites en inspiration servent à en dégager des thèmes, et trois contrôles indépendants empêchent qu'un nom emprunté survive dans le monde généré.",
+          "Ce que tu écris t'appartient. Tu peux effacer ton compte et tes mondes quand tu veux, et ce qui serait conservé est décrit à la page Confidentialité."
+        ]
+      },
+      {
+        "title": "Où en est le projet",
+        "body": [
+          "OdyssAI est en alpha fermée, limitée à cent joueurs. Les pré-inscriptions ouvrent et se ferment au fil des places disponibles, et le bandeau en haut du site indique ce qu'il en reste.",
+          "Une alpha est instable par nature : des fonctions changent, d'autres disparaissent, et une évolution technique peut faire perdre un univers. C'est le prix d'entrer tôt, et il est annoncé dans les conditions générales.",
+          "Il n'y a pas de date de sortie. Elle serait inventée."
+        ]
+      },
+      {
+        "title": "Nous écrire",
+        "body": [
+          "La page Contact envoie un message directement, avec ou sans compte. Une question, un bug, une idée, une demande sur tes données : tout est lu."
+        ]
+      }
+    ]
+  },
   "LegalNotice": {
     "metaTitle": "Mentions légales",
     "metaDescription": "Éditeur, direction de la publication et hébergement du site OdyssAI.",
@@ -510,6 +640,148 @@
         ]
       }
     ]
+  },
+  "Terms": {
+    "metaTitle": "Conditions générales",
+    "metaDescription": "Conditions d'utilisation et de vente d'OdyssAI : accès à l'alpha, compte, contenus générés par IA, crédits, abonnements et résiliation.",
+    "lead": "Ce à quoi tu t'engages en jouant, et ce à quoi nous nous engageons en retour.",
+    "intro": [
+      "Ces conditions régissent l'utilisation d'OdyssAI et la vente des abonnements qui s'y rattachent. Elles s'appliquent dès la création d'un compte.",
+      "OdyssAI est édité par Joachim Alexandre Jasmin, entrepreneur individuel, dont les coordonnées figurent aux mentions légales.",
+      "Dernière mise à jour : 18 septembre 2026."
+    ],
+    "sections": [
+      {
+        "title": "Objet",
+        "body": [
+          "OdyssAI est un jeu de rôle narratif en ligne dont le meneur est un modèle de langage. Le service comprend la création d'univers, la conduite de parties, et les fonctions qui les accompagnent.",
+          "Créer un compte vaut acceptation de ces conditions. Qui ne les accepte pas ne doit pas créer de compte."
+        ]
+      },
+      {
+        "title": "Accès pendant l'alpha",
+        "body": [
+          "Le service est en alpha fermée, limitée à cent joueurs. Au delà, l'inscription est refusée jusqu'à une ouverture plus large.",
+          "Une alpha est par nature instable : des fonctions peuvent changer, être retirées, ou cesser de marcher sans préavis. Les univers et les parties peuvent être perdus lors d'une évolution technique. N'y confie rien que tu ne supporterais pas de perdre.",
+          "L'accès peut être suspendu pour maintenance, sans indemnité."
+        ]
+      },
+      {
+        "title": "Compte et identité",
+        "body": [
+          "L'identité est gérée par un serveur Keycloak que nous administrons. L'adresse électronique, le mot de passe et l'authentification à deux facteurs y vivent ; le profil de jeu vit dans la base applicative.",
+          "Un compte est personnel. Tu réponds de ce qui se fait avec le tien, et tu dois nous signaler tout usage que tu n'as pas autorisé.",
+          "Le service est réservé aux personnes de quinze ans révolus."
+        ]
+      },
+      {
+        "title": "Ce que le narrateur écrit",
+        "body": [
+          "Les textes du narrateur sont produits par un modèle de langage. Ils peuvent être inexacts, incohérents, ou heurter malgré les garde-fous en place. Ils ne constituent ni un conseil, ni une information de référence, et n'engagent pas notre responsabilité sur leur contenu.",
+          "Le code décide de l'état du jeu, jamais le texte produit : un récit qui affirmerait quelque chose de contraire aux règles ne le rend pas vrai dans la partie.",
+          "Aucune réponse générée n'est mise en cache pour être resservie à quelqu'un d'autre."
+        ]
+      },
+      {
+        "title": "Ce que tu écris",
+        "body": [
+          "Tu restes propriétaire des textes que tu écris et des univers que tu crées. Tu nous accordes seulement la licence nécessaire au fonctionnement du service : stocker, afficher, transmettre aux modèles, et présenter aux autres joueurs quand tu ouvres ton monde.",
+          "Tu garantis avoir le droit d'écrire ce que tu écris. Tu ne dois pas reproduire l'oeuvre d'autrui : les titres que tu cites comme inspiration servent à en dégager des thèmes, et le monde produit ne doit rien leur emprunter.",
+          "Ce que le modèle écrit à partir de tes saisies n'est pas garanti original ni protégeable, le droit sur les productions automatiques restant incertain."
+        ]
+      },
+      {
+        "title": "Conduite et modération",
+        "body": [
+          "Sont interdits les contenus illicites, haineux, sexuels impliquant des mineurs, incitant à la violence ou au harcèlement, ainsi que les tentatives de contourner les protections du service.",
+          "Tout ce qu'un joueur écrit passe par deux couches de modération, l'une lexicale et l'autre par classificateur. Un message refusé n'est pas transmis au narrateur.",
+          "Un manquement peut entraîner la suspension ou la fermeture du compte, sans remboursement des crédits consommés."
+        ]
+      },
+      {
+        "title": "Crédits",
+        "body": [
+          "Le jeu se consomme en crédits. Un tour de jeu en vaut un, un message de création de personnage un, et la génération d'un monde vingt-cinq. Le barème est publié sur la page des tarifs et peut évoluer ; un changement ne s'applique jamais rétroactivement aux crédits déjà consommés.",
+          "Les crédits n'ont aucune valeur monétaire, ne se revendent pas, ne s'échangent pas entre comptes et ne se remboursent pas en argent.",
+          "Sur un abonnement, la réserve repart à la dotation du palier à chaque période et ne se reporte pas. Sur le palier offert, qui ne reverse rien, ce qui n'a pas été dépensé reste tant que le compte existe.",
+          "La modération et la mémoire du narrateur ne sont jamais facturées."
+        ]
+      },
+      {
+        "title": "Abonnements, prix et paiement",
+        "body": [
+          "Les paliers et leurs prix figurent sur la page des tarifs. Les prix sont en euros, toutes taxes comprises le cas échéant.",
+          "Le paiement est traité par Stripe Payments Europe. Aucune donnée de carte n'est saisie ni conservée sur OdyssAI. La souscription et la gestion passent par les pages hébergées par Stripe.",
+          "L'abonnement est mensuel et se renouvelle par tacite reconduction jusqu'à résiliation. La dotation de crédits est versée à chaque paiement constaté.",
+          "Un changement de prix ne s'applique qu'à compter de l'échéance suivante et t'est annoncé avant."
+        ]
+      },
+      {
+        "title": "Résiliation",
+        "body": [
+          "Tu peux résilier à tout moment depuis le portail Stripe, accessible depuis ton compte. La résiliation prend effet à la fin de la période déjà payée : ton palier reste actif jusque là.",
+          "Après la résiliation, les crédits restants sont conservés et restent dépensables ; aucune nouvelle dotation n'est versée.",
+          "Supprimer ton compte résilie l'abonnement immédiatement, sans remboursement de la période en cours.",
+          "Nous pouvons résilier un abonnement en cas de manquement à ces conditions ou d'arrêt du service, avec remboursement au prorata de la période non consommée dans le second cas."
+        ]
+      },
+      {
+        "title": "Droit de rétractation",
+        "body": [
+          "Tu disposes d'un délai de quatorze jours pour te rétracter d'une souscription, conformément à l'article L221-18 du code de la consommation.",
+          "En demandant l'accès immédiat au service, tu consens à ce que son exécution commence avant la fin de ce délai et renonces à ton droit de rétractation, comme le prévoit l'article L221-28 du même code. Cette renonciation t'est demandée au moment du paiement.",
+          "Tant que tu n'as consommé aucun crédit de la période souscrite, nous t'en remboursons le montant sur simple demande."
+        ]
+      },
+      {
+        "title": "Données personnelles",
+        "body": [
+          "Le traitement des données est décrit à la page Confidentialité, qui fait partie intégrante de ces conditions.",
+          "Tu peux effacer ton compte de jeu depuis ton espace personnel. L'identité, elle, se supprime depuis la console de ton compte, le serveur d'identité en restant la source."
+        ]
+      },
+      {
+        "title": "Responsabilité",
+        "body": [
+          "Le service est fourni en l'état, sans garantie de disponibilité continue ni d'absence d'erreur, ce qui est la nature d'une alpha.",
+          "Notre responsabilité ne peut être engagée au delà des sommes que tu as effectivement versées au cours des douze derniers mois, hors dommage corporel ou faute lourde, que la loi exclut de toute limitation.",
+          "Aucune clause ne prive un consommateur des droits que la loi lui reconnaît."
+        ]
+      },
+      {
+        "title": "Évolution des conditions",
+        "body": [
+          "Ces conditions peuvent changer. Une modification substantielle est annoncée sur le site avant de prendre effet, et pour un abonné, au plus tard à son échéance suivante.",
+          "Poursuivre l'utilisation après l'entrée en vigueur vaut acceptation. À défaut, la résiliation reste ouverte à tout moment."
+        ]
+      },
+      {
+        "title": "Droit applicable et litiges",
+        "body": [
+          "Ces conditions sont régies par le droit français.",
+          "En cas de différend, une solution amiable est recherchée d'abord : écris à joachim.jasmin-dev@proton.me.",
+          "Un consommateur peut recourir gratuitement à un médiateur de la consommation, ou saisir la plateforme européenne de règlement en ligne des litiges. À défaut d'accord, les tribunaux français sont compétents."
+        ]
+      }
+    ]
+  },
+  "Contact": {
+    "metaTitle": "Contact",
+    "metaDescription": "Écrire à l'équipe d'OdyssAI : question, bug, suggestion ou demande sur tes données.",
+    "lead": "Une question, un bug, une idée, ou une demande sur tes données. Écris, on lit tout.",
+    "name": "Ton nom",
+    "nameHint": "Facultatif.",
+    "email": "Ton adresse électronique",
+    "emailHint": "Pour te répondre. Rien d'autre n'en sera fait.",
+    "subject": "Sujet",
+    "message": "Message",
+    "messageHint": "{max, number} caractères au plus.",
+    "send": "Envoyer",
+    "sending": "Envoi.",
+    "failed": "Le message n'a pas pu partir. Réessaie dans un instant.",
+    "sentTitle": "C'est parti.",
+    "sentBody": "On te répondra à l'adresse que tu as donnée. Merci d'avoir pris le temps d'écrire.",
+    "privacy": "Ton message et ton adresse sont conservés le temps d'y répondre."
   },
   "Privacy": {
     "metaTitle": "Politique de confidentialité",
@@ -657,7 +929,7 @@
     "narrator": "Le meneur",
     "thinking": "Il réfléchit.",
     "inputLabel": "Ce que tu fais, ou ce que tu demandes",
-    "placeholder": "Que fais-tu ?",
+    "placeholder": "Que fais-tu ?",
     "send": "Envoyer",
     "rollDie": "Lancer un d20",
     "dieHint": "Quand tu ne sais pas quoi faire, laisse le sort décider.",

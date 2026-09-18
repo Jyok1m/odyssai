@@ -17,6 +17,11 @@ export const PlayerProfile = z.object({
   lastLoginAt: z.iso.datetime().nullable(),
   createdAt: z.iso.datetime(),
   /**
+   * Consentement a recevoir des nouvelles. Faux par defaut, et jamais bascule
+   * a la place du joueur : un opt-in pre-coche n'est pas un consentement.
+   */
+  marketingOptIn: z.boolean().default(false),
+  /**
    * Console de compte du realm, ou se changent l'email et le mot de passe.
    * Construite par l'API : le navigateur n'a pas a connaitre l'URL du realm,
    * et elle change d'un environnement a l'autre.
@@ -48,7 +53,24 @@ export const Username = z
 
 export type Username = z.infer<typeof Username>;
 
-export const UpdateProfileRequestSchema = z.object({ username: Username });
+/**
+ * Ce qu'un joueur change sur son profil.
+ *
+ * Les deux champs sont facultatifs et independants : le pseudo ne se pose
+ * qu'une fois, le consentement se retire autant de fois qu'on veut. Un corps
+ * vide est refuse plutot qu'ignore, sans quoi une requete sans effet
+ * repondrait comme une reussite.
+ */
+export const UpdateProfileRequestSchema = z
+  .object({
+    username: Username.optional(),
+    marketingOptIn: z.boolean().optional(),
+  })
+  .refine(
+    (value) =>
+      value.username !== undefined || value.marketingOptIn !== undefined,
+    { message: 'rien a mettre a jour' },
+  );
 
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequestSchema>;
 

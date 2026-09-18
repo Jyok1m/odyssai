@@ -1,5 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { ALPHA_SEATS } from '@odyssai/engine';
 import { PRISMA } from '../prisma/prisma.module.js';
+import { isUniqueViolation } from '../prisma/unique-violation.js';
 import { Prisma, PrismaClient, type User } from '@odyssai/db';
 
 /** Le pseudo du joueur est deja pose : il ne se choisit qu'une fois. */
@@ -15,6 +17,23 @@ export class UsernameTakenError extends Error {
   constructor() {
     super('pseudo deja pris');
     this.name = 'UsernameTakenError';
+  }
+}
+
+/**
+ * L'alpha est complete : ce compte n'aura pas de joueur derriere lui.
+ *
+ * Une fermeture, pas une panne. L'ecran doit le dire autrement qu'un echec
+ * technique : proposer de reessayer a quelqu'un qui n'entrera jamais serait
+ * lui mentir.
+ */
+export class AlphaFullError extends Error {
+  readonly seats: number;
+
+  constructor(seats: number) {
+    super(`les ${seats} places de l'alpha sont prises`);
+    this.name = 'AlphaFullError';
+    this.seats = seats;
   }
 }
 
@@ -36,6 +55,15 @@ export class UsersService {
    */
   async signIn(identity: RealmIdentity): Promise<User> {
     const lastLoginAt = new Date();
+
+    // Une lecture de plus par connexion, et seulement la : c'est ici que la
+    // ligne d'un joueur nait, donc le seul endroit ou une place se prend.
+    const known = await this.prisma.user.findUnique({
+      where: { keycloakId: identity.keycloakId },
+      select: { id: true },
+    });
+    if (!known) await this.assertSeat();
+
     return this.upsert(identity.keycloakId, {
       create: {
         keycloakId: identity.keycloakId,
@@ -97,6 +125,42 @@ export class UsersService {
     }
   }
 
+  /**
+   * Pose ou retire le consentement, en horodatant le changement.
+   *
+   * La date est ecrite dans les deux sens : un retrait doit se prouver aussi
+   * bien qu'un accord, et c'est la meme colonne qui les porte.
+   */
+  async setMarketingOptIn(userId: string, optIn: boolean): Promise<User> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { marketingOptIn: optIn, marketingOptInAt: new Date() },
+    });
+  }
+
+  /** Vrai quand plus aucune place n'est libre. Lecture seule, sans effet. */
+  async alphaFull(): Promise<boolean> {
+    const taken = await this.prisma.user.count({ where: { isAdmin: false } });
+    return taken >= ALPHA_SEATS;
+  }
+
+  /**
+   * Refuse la centieme et unieme inscription.
+   *
+   * Les administrateurs ne sont pas comptes : ils doivent pouvoir entrer pour
+   * verifier ce qu'ils livrent, et prendre la place d'un joueur serait se
+   * servir.
+   *
+   * Le compte est lu, pas verrouille : deux inscriptions arrivees dans la
+   * meme milliseconde a la centieme place passeraient toutes les deux. Une
+   * contrainte en base demanderait un declencheur ou une table de compteur,
+   * pour un depassement d'une unite sur une alpha qu'on ouvre a la main. Le
+   * jour ou la place se vend, ce raisonnement ne tiendra plus.
+   */
+  private async assertSeat(): Promise<void> {
+    if (await this.alphaFull()) throw new AlphaFullError(ALPHA_SEATS);
+  }
+
   private async upsert(
     keycloakId: string,
     args: { create: Prisma.UserCreateInput; update: Prisma.UserUpdateInput },
@@ -114,11 +178,4 @@ export class UsersService {
       return user;
     }
   }
-}
-
-function isUniqueViolation(error: unknown): boolean {
-  return (
-    error instanceof Prisma.PrismaClientKnownRequestError &&
-    error.code === 'P2002'
-  );
 }

@@ -61,6 +61,25 @@ export async function updateUsername(username: string): Promise<PlayerProfile> {
   return PlayerProfile.parse(await response.json());
 }
 
+/** Pose ou retire le consentement. Le retour porte le profil à jour. */
+export async function updateMarketingOptIn(
+  marketingOptIn: boolean,
+): Promise<PlayerProfile> {
+  const response = await send(
+    `${API_BASE_URL}/me`,
+    {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ marketingOptIn }),
+    },
+    () => new ProfileError("unreachable"),
+  );
+
+  if (!response.ok) throw await toProfileError(response);
+  return PlayerProfile.parse(await response.json());
+}
+
 /**
  * Le départ. Efface les données de jeu et ferme la session ; l'identité reste
  * chez Keycloak, et `accountUrl` mène là où le joueur la supprimera lui-même.

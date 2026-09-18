@@ -1,7 +1,7 @@
 import type { LlmClient, LlmTrace } from '@odyssai/llm';
 import type { UiLocale } from '@odyssai/schemas';
 import { GUIDE_CORPUS, GUIDE_CORPUS_VERSION } from '../generated/guide-corpus.js';
-import { GUIDE_PROMPT, type PromptMessage } from '../prompts/guide/v1.js';
+import { GUIDE_PROMPT, type PromptMessage } from '../prompts/guide/v2.js';
 import { splitOffTopic, type OffTopicSplit } from './off-topic.js';
 
 export interface GuideModelConfig {
@@ -14,6 +14,13 @@ export interface GuideModelConfig {
 export interface GuideInput {
   question: string;
   locale: UiLocale;
+  /**
+   * Ce que le corpus ne peut pas porter : les paliers et leurs montants, qui
+   * vivent en base et chez Stripe. Le corpus est genere depuis les messages du
+   * site, ou aucun prix ne figure, et c'est voulu : les recopier ferait deux
+   * verites. Releve a chaque question, donc toujours juste.
+   */
+  live?: string;
 }
 
 export interface GuideRequest {
@@ -42,6 +49,7 @@ export function buildGuideMessages(input: GuideInput): PromptMessage[] {
     input.locale,
     GUIDE_CORPUS[input.locale],
     input.question,
+    input.live,
   );
 }
 

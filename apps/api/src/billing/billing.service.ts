@@ -1,18 +1,14 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
 import { PrismaClient, type User } from '@odyssai/db';
-import {
-  CREDIT_COSTS,
-  PLANS,
-  nextPeriod,
-  planOf,
-  type PlanId,
-} from '@odyssai/engine';
+import { CREDIT_COSTS, FREE_PLAN_SLUG, nextPeriod } from '@odyssai/engine';
 import type { BillingCatalog, BillingSummary } from '@odyssai/schemas';
 import { AppConfig } from '../config/app-config.js';
 import { BillingConfig } from '../config/billing-config.js';
 import { CreditsService } from '../credits/credits.service.js';
+import { PlansService } from '../plans/plans.service.js';
 import { PRISMA } from '../prisma/prisma.module.js';
+import { STRIPE } from '../stripe/stripe.module.js';
 
 /** Stripe n'est pas configure : rien a vendre, et le palier libre suffit. */
 export class BillingDisabledError extends Error {
@@ -25,18 +21,15 @@ export class BillingDisabledError extends Error {
 @Injectable()
 export class BillingService {
   private readonly logger = new Logger(BillingService.name);
-  private readonly stripe: Stripe | null;
 
   constructor(
     @Inject(PRISMA) private readonly prisma: PrismaClient,
+    @Inject(STRIPE) private readonly stripe: Stripe | null,
     private readonly config: BillingConfig,
     private readonly app: AppConfig,
     private readonly credits: CreditsService,
-  ) {
-    this.stripe = config.enabled
-      ? new Stripe(config.secretKey, { apiVersion: '2026-08-26.dahlia' })
-      : null;
-  }
+    private readonly plans: PlansService,
+  ) {}
 
   /**
    * Ce qui se vend et ce que cela coute.
@@ -45,22 +38,27 @@ export class BillingService {
    * Stripe : l'ecran cache alors l'offre plutot que de proposer un bouton qui
    * repondrait 503.
    */
-  catalog(): BillingCatalog {
+  async catalog(): Promise<BillingCatalog> {
+    const plans = await this.plans.all();
+
     return {
       costs: {
         turn: CREDIT_COSTS.turn,
         characterMessage: CREDIT_COSTS.characterMessage,
         worldGeneration: CREDIT_COSTS.worldGeneration,
       },
-      plans: PLANS.map((id) => {
-        const plan = planOf(id);
-        return {
-          id: plan.id,
-          monthly: plan.monthly,
-          purchasable:
-            plan.billed && this.config.enabled && this.config.priceOf(plan.id) !== '',
-        };
-      }),
+      plans: plans.map((plan) => ({
+        id: plan.slug,
+        name: plan.name,
+        monthly: plan.monthlyCredits,
+        welcome: plan.welcomeCredits,
+        amountCents: plan.amountCents,
+        currency: plan.currency,
+        purchasable:
+          this.config.enabled && plan.stripePriceId !== null && !plan.comingSoon,
+        recommended: plan.recommended,
+        comingSoon: plan.comingSoon,
+      })),
     };
   }
 
@@ -73,16 +71,19 @@ export class BillingService {
    */
   async summary(user: User): Promise<BillingSummary> {
     const subscription = await this.credits.ensure(user.id);
-    const plan = planOf(subscription.plan);
+    const plan = await this.plans.bySlug(subscription.plan);
 
     return {
-      plan: plan.id,
+      plan: plan.slug,
+      planName: plan.name,
       status: subscription.status,
       credits: subscription.credits,
-      monthly: plan.monthly,
+      monthly: plan.monthlyCredits,
       renewsAt: subscription.periodEnd.toISOString(),
       cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
       purchasable: this.config.enabled,
+      manageable: this.config.enabled && subscription.stripeCustomerId !== null,
+      unlimited: user.isAdmin,
     };
   }
 
@@ -115,10 +116,17 @@ export class BillingService {
     return customer.id;
   }
 
-  /** Une session de paiement. La saisie de carte reste chez Stripe. */
-  async checkout(user: User, plan: PlanId): Promise<string> {
-    const price = this.config.priceOf(plan);
-    if (!price) throw new BillingDisabledError();
+  /**
+   * Une session de paiement. La saisie de carte reste chez Stripe.
+   *
+   * Un palier archive ne se souscrit plus, meme si quelqu'un a garde l'onglet
+   * ouvert : le retirer de la vente doit vraiment le retirer.
+   */
+  async checkout(user: User, slug: string): Promise<string> {
+    const plan = await this.plans.bySlug(slug);
+    if (plan.archived || !plan.stripePriceId) throw new BillingDisabledError();
+
+    const price = plan.stripePriceId;
 
     const account = this.accountUrl(user);
 
@@ -162,6 +170,22 @@ export class BillingService {
   private accountUrl(user: User): string {
     const path = user.locale === 'en' ? '/en/account' : '/fr/compte';
     return new URL(path, this.app.webBaseUrl).toString();
+  }
+
+  /**
+   * Resilie l'abonnement d'un joueur, immediatement.
+   *
+   * Reserve au tableau de bord : un joueur passe par le portail de Stripe,
+   * qui lui propose de resilier a la fin de la periode payee. Ici c'est une
+   * intervention, donc elle coupe tout de suite et le webhook
+   * `customer.subscription.deleted` fera retomber la ligne au palier libre.
+   *
+   * Aucun remboursement n'est demande : ce qui a ete facture l'a ete, et le
+   * rendre est une decision commerciale qui se prend chez Stripe.
+   */
+  async cancelSubscription(stripeSubscriptionId: string): Promise<void> {
+    await this.client().subscriptions.cancel(stripeSubscriptionId);
+    this.logger.warn(`abonnement resilie par un administrateur : ${stripeSubscriptionId}`);
   }
 
   /**
@@ -248,7 +272,7 @@ export class BillingService {
     if (!local) return;
 
     const priceId = subscription.items.data[0]?.price.id ?? '';
-    const plan = this.config.planOfPrice(priceId);
+    const plan = await this.plans.byPriceId(priceId);
 
     if (!plan) {
       this.logger.warn(`prix inconnu, abonnement ignore : ${priceId}`);
@@ -258,7 +282,7 @@ export class BillingService {
     await this.prisma.subscription.update({
       where: { id: local.id },
       data: {
-        plan,
+        plan: plan.slug,
         // `trialing` vaut `active` pour nous : la seule question que le statut
         // tranche ici est celle du droit a la dotation.
         status: subscription.status === 'trialing' ? 'active' : subscription.status,
@@ -275,7 +299,11 @@ export class BillingService {
 
     await this.prisma.subscription.update({
       where: { id: local.id },
-      data: { plan: 'free', status: 'canceled', stripeSubscriptionId: null },
+      data: {
+        plan: FREE_PLAN_SLUG,
+        status: 'canceled',
+        stripeSubscriptionId: null,
+      },
     });
 
     this.logger.log(`retour au palier libre : ${local.userId}`);
@@ -297,7 +325,7 @@ export class BillingService {
     const local = await this.find(String(invoice.customer));
     if (!local) return;
 
-    const plan = planOf(local.plan);
+    const plan = await this.plans.bySlug(local.plan);
     const start = new Date((invoice.period_start ?? Date.now() / 1000) * 1000);
 
     // Lu avant la transaction : le grand livre enregistre le mouvement, donc
@@ -308,7 +336,7 @@ export class BillingService {
       const updated = await tx.subscription.update({
         where: { id: local.id },
         data: {
-          credits: plan.monthly,
+          credits: plan.monthlyCredits,
           status: 'active',
           periodStart: start,
           periodEnd: nextPeriod(start),
@@ -318,14 +346,14 @@ export class BillingService {
       await tx.creditEntry.create({
         data: {
           subscriptionId: updated.id,
-          delta: plan.monthly - before,
+          delta: plan.monthlyCredits - before,
           reason: 'grant',
           ref: invoice.id,
-          balance: plan.monthly,
+          balance: plan.monthlyCredits,
         },
       });
     });
 
-    this.logger.log(`reserve renouvelee, plan ${plan.id} : ${local.userId}`);
+    this.logger.log(`reserve renouvelee, plan ${plan.slug} : ${local.userId}`);
   }
 }

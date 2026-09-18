@@ -1,7 +1,15 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { PrismaClient, type Subscription } from '@odyssai/db';
-import { creditsFor, nextPeriod, planOf, type CreditAction } from '@odyssai/engine';
+import { PrismaClient, type Plan, type Subscription } from '@odyssai/db';
+import {
+  FOUNDER_BONUS,
+  FREE_PLAN_SLUG,
+  creditsFor,
+  nextPeriod,
+  type CreditAction,
+} from '@odyssai/engine';
+import { PlansService } from '../plans/plans.service.js';
 import { PRISMA } from '../prisma/prisma.module.js';
+import { isUniqueViolation } from '../prisma/unique-violation.js';
 
 /** La reserve est vide : l'action est refusee avant tout appel au modele. */
 export class OutOfCreditsError extends Error {
@@ -32,7 +40,10 @@ export class OutOfCreditsError extends Error {
 export class CreditsService {
   private readonly logger = new Logger(CreditsService.name);
 
-  constructor(@Inject(PRISMA) private readonly prisma: PrismaClient) {}
+  constructor(
+    @Inject(PRISMA) private readonly prisma: PrismaClient,
+    private readonly plans: PlansService,
+  ) {}
 
   /**
    * L'abonnement du joueur, cree au besoin et roule si sa periode est passee.
@@ -68,6 +79,23 @@ export class CreditsService {
   ): Promise<string | null> {
     const cost = creditsFor(action);
     if (cost === 0) return null;
+
+    /**
+     * Un administrateur n'a pas de reserve a epuiser.
+     *
+     * Il doit pouvoir jouer autant qu'il faut pour verifier ce qu'il livre, et
+     * sa consommation n'est facturee a personne. Rien n'est debite, donc rien
+     * ne s'ecrit au grand livre : une ligne raconterait une depense qui n'a
+     * pas eu lieu.
+     *
+     * Ce que ses parties coutent en modeles reste compte : `llm_usage`
+     * journalise chaque appel quel qu'en soit le point de depart, et c'est lui
+     * la comptabilite. Seule la reserve ne bouge pas.
+     *
+     * Contrepartie a garder en tete : l'ecran de reserve epuisee ne
+     * s'affichera jamais pour lui. Le verifier demande un compte ordinaire.
+     */
+    if (await this.unlimited(userId)) return null;
 
     const subscription = await this.ensure(userId);
     if (subscription.credits < cost) {
@@ -124,25 +152,107 @@ export class CreditsService {
   }
 
   private async open(userId: string, now: Date): Promise<Subscription> {
-    const plan = planOf('free');
-    const credits = plan.monthly + plan.welcome;
+    const plan = await this.plans.free();
+    const welcome = plan.monthlyCredits + plan.welcomeCredits;
+    const bonus = await this.founderBonus(userId);
 
-    const subscription = await this.prisma.subscription.create({
-      data: {
-        userId,
-        plan: plan.id,
-        credits,
-        welcomed: true,
-        periodStart: now,
-        periodEnd: nextPeriod(now),
-      },
-    });
+    /**
+     * Deux requetes du meme joueur arrivent souvent ensemble : l'ecran de
+     * compte lit sa reserve pendant que la page de tarifs lit son palier.
+     * Toutes les deux voient une ligne absente, toutes les deux l'ouvrent, et
+     * `subscriptions.user_id` etant unique, la seconde echouait en cinq cents.
+     *
+     * Celle qui perd relit plutot que de jeter. Rien n'est ecrit deux fois :
+     * la bienvenue appartient a la ligne creee, pas a la tentative.
+     */
+    let subscription: Subscription;
 
+    try {
+      subscription = await this.prisma.subscription.create({
+        data: {
+          userId,
+          plan: plan.slug,
+          credits: welcome + bonus,
+          welcomed: true,
+          periodStart: now,
+          periodEnd: nextPeriod(now),
+        },
+      });
+    } catch (error: unknown) {
+      if (!isUniqueViolation(error)) throw error;
+
+      const existing = await this.prisma.subscription.findUnique({
+        where: { userId },
+      });
+      if (!existing) throw error;
+
+      return existing;
+    }
+
+    // Deux ecritures plutot qu'une somme : le grand livre est en ajout seul et
+    // se relit des annees apres, quand le bonus n'existera plus. « 80 credits »
+    // ne dirait pas pourquoi ce joueur en a recu trente de plus que le suivant.
     await this.prisma.creditEntry.create({
-      data: { subscriptionId: subscription.id, delta: credits, reason: 'welcome', balance: credits },
+      data: { subscriptionId: subscription.id, delta: welcome, reason: 'welcome', balance: welcome },
     });
+
+    if (bonus > 0) {
+      await this.prisma.creditEntry.create({
+        data: {
+          subscriptionId: subscription.id,
+          delta: bonus,
+          reason: 'founder',
+          balance: welcome + bonus,
+        },
+      });
+    }
 
     return subscription;
+  }
+
+  /**
+   * Le bonus des premiers arrives, zero pour ceux d'apres.
+   *
+   * Le rang se lit sur la date d'inscription et non sur un compteur : un
+   * compteur se desynchronise d'une suppression de compte ou d'une reprise,
+   * une date se relit, et le calcul rejoue rend la meme reponse.
+   *
+   * Un administrateur n'y a pas droit et n'occupe pas une des cent places : sa
+   * reserve n'est jamais debitee, lui donner trente credits de plus ne
+   * changerait rien et prendrait la place d'un joueur.
+   *
+   * Contrepartie assumee : un compte supprime libere sa place, le rang etant
+   * le nombre de joueurs inscrits avant et non un numero attribue. Tant que
+   * personne ne s'est vu promettre un numero, c'est le moins surprenant.
+   */
+  /**
+   * Vrai quand la reserve de ce compte ne se debite pas.
+   *
+   * Une lecture indexee de plus par action payante, negligeable devant l'appel
+   * au modele qui suit. La mettre en cache ferait jouer un compte sur un droit
+   * que l'administrateur croirait avoir retire.
+   */
+  private async unlimited(userId: string): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { isAdmin: true },
+    });
+
+    return user?.isAdmin ?? false;
+  }
+
+  private async founderBonus(userId: string): Promise<number> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { isAdmin: true, createdAt: true },
+    });
+    if (!user || user.isAdmin) return 0;
+
+    const before = await this.prisma.user.count({
+      where: { isAdmin: false, createdAt: { lt: user.createdAt } },
+    });
+
+    return before < FOUNDER_BONUS.rank ? FOUNDER_BONUS.credits : 0;
   }
 
   /**
@@ -150,13 +260,30 @@ export class CreditsService {
    * remise a la dotation du plan, pas augmentee. Sans cela un joueur absent
    * six mois reviendrait avec six mois d'avance, et le plan ne bornerait plus
    * rien.
+   *
+   * La dotation est relue en base a chaque roulement : un palier modifie au
+   * tableau de bord s'applique donc a la periode suivante, jamais a celle que
+   * le joueur est en train de vivre.
    */
   private async roll(subscription: Subscription, now: Date): Promise<Subscription> {
-    const plan = planOf(subscription.plan);
-
     // Un abonnement resilie ou impaye retombe au palier libre plutot que de
     // renouveler une dotation qui n'est plus payee.
-    const granted = subscription.status === 'active' ? plan.monthly : planOf('free').monthly;
+    const entitled = subscription.status === 'active';
+    const plan: Plan = entitled
+      ? await this.plans.bySlug(subscription.plan)
+      : await this.plans.free();
+
+    /**
+     * Un palier sans dotation ne reverse rien, donc il ne reprend rien : le
+     * joueur garde ce qu'il n'a pas depense tant que son compte existe.
+     *
+     * La regle « les credits ne se reportent pas » borne un abonne qui en
+     * recoit de nouveaux chaque mois, sans quoi six mois d'absence donneraient
+     * six mois d'avance. Appliquee a une dotation nulle elle ne borne plus
+     * rien : elle confisque une reserve offerte que personne n'a remplacee.
+     */
+    const granted =
+      plan.monthlyCredits > 0 ? plan.monthlyCredits : subscription.credits;
 
     let start = subscription.periodEnd;
     while (nextPeriod(start) <= now) start = nextPeriod(start);
@@ -168,19 +295,24 @@ export class CreditsService {
           credits: granted,
           periodStart: start,
           periodEnd: nextPeriod(start),
-          plan: subscription.status === 'active' ? subscription.plan : 'free',
+          plan: entitled ? subscription.plan : FREE_PLAN_SLUG,
         },
       });
 
-      await tx.creditEntry.create({
-        data: {
-          subscriptionId: rolled.id,
-          delta: granted - subscription.credits,
-          reason: 'grant',
-          ref: start.toISOString(),
-          balance: granted,
-        },
-      });
+      // Rien ne s'ecrit quand rien ne bouge : le grand livre raconte des
+      // mouvements, et une ligne a zero pour chaque mois d'un joueur inactif
+      // le rendrait illisible sans rien y ajouter.
+      if (granted !== subscription.credits) {
+        await tx.creditEntry.create({
+          data: {
+            subscriptionId: rolled.id,
+            delta: granted - subscription.credits,
+            reason: 'grant',
+            ref: start.toISOString(),
+            balance: granted,
+          },
+        });
+      }
 
       return rolled;
     });

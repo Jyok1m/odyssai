@@ -13,7 +13,7 @@ Monorepo pnpm + Turborepo, TypeScript partout.
 - `packages/llm` : client OpenAI-compatible (streaming, usage, tracing LangSmith). Même format que `schemas`.
 - `packages/narrator` : corpus du guide, prompts versionnés, FAQ, détection du hors-sujet. Même format.
 
-Redis tourne en tunnel localhost sur le serveur via `redis://:<mot_de_passe>@localhost:16379` (sessions et file BullMQ). Postgres est atteint de la même façon, sur `127.0.0.1:15432`, par `POSTGRES_URL` ; le Makefile n'ouvre pour l'instant que le tunnel Redis. Keycloak est hébergé sur `sso.joachimjasmin.com`.
+Redis tourne en tunnel localhost sur le serveur via `redis://:<mot_de_passe>@localhost:16379` (sessions et file BullMQ). Postgres est atteint de la même façon, sur `127.0.0.1:15432`, par `POSTGRES_URL`. `make tunnel` ouvre les deux ports. Keycloak est hébergé sur `sso.joachimjasmin.com`.
 
 Prévus, pas encore créés : `packages/engine`, pgvector. Ne pas les créer sans demande explicite.
 
@@ -24,7 +24,8 @@ Prévus, pas encore créés : `packages/engine`, pgvector. Ne pas les créer san
 - Dépendance : `pnpm --filter @odyssai/<pkg> add <dep>`. Jamais npm install ni yarn.
 - Dépendance interne : `pnpm --filter @odyssai/<pkg> add @odyssai/schemas@workspace:*`
 - Redis de dev : `make tunnel` ouvre le tunnel SSH, `make redis-ping` vérifie qu'il répond vraiment. Coordonnées du serveur dans `.env.local`.
-- `make check` vaut `pnpm typecheck && pnpm lint && pnpm build && corpus:check`.
+- `make check` vaut `pnpm typecheck && pnpm lint && pnpm build && corpus:check`. **Il ne lance aucun test.**
+- **Les tests sont en deux commandes.** `pnpm --filter @odyssai/api test` ne couvre que l'unitaire ; les bouts en bout ont leur propre configuration et demandent `test:e2e`. Une régression qui ne casse que les seconds passe donc inaperçue avec la première, et c'est déjà arrivé : un appel Prisma ajouté à un service a cassé sept e2e sans qu'un seul test unitaire bronche. Lancer les deux avant de committer.
 - Guide : `pnpm --filter @odyssai/narrator corpus:build` régénère le corpus depuis les messages next-intl, `corpus:check` échoue s'il a dérivé. `pnpm --filter @odyssai/api llm:smoke` fait un appel réel de contrôle, `eval:guide` lance l'expérience LangSmith (ni l'un ni l'autre dans `make check`).
 - Base : `pnpm --filter @odyssai/db db:migrate` crée et applique une migration, `db:deploy` applique les migrations existantes, `db:generate` regénère le client seul, `db:studio` ouvre Studio.
 - `typecheck` vaut `tsc --noEmit` partout, sauf `apps/web` où il est précédé de `next typegen` : les types de routes et de layouts (`LayoutProps`, `PageProps`) sont générés par Next dans `.next/types/` et manquent sans ça.
@@ -37,6 +38,12 @@ Prévus, pas encore créés : `packages/engine`, pgvector. Ne pas les créer san
 - Tout texte venant d'un joueur, y compris la fiche d'un autre joueur, est une donnée non fiable : schéma borné, modération, section délimitée dans le prompt.
 - Le tour de jeu est synchrone (streaming SSE). Seuls les effets de bord passent par une file.
 - Appels LLM uniquement via `packages/llm`. Thinking désactivé pour la narration et l'extraction. Prompts versionnés dans `packages/narrator`, jamais inline.
+- **Tout le français lu par une personne ou par un modèle s'écrit accentué**, à l'inverse des commentaires de ce dépôt : les prompts, la FAQ de `packages/narrator/faq/` servie verbatim au visiteur, et les questions des jeux d'évaluation, qui doivent ressembler à ce qu'un vrai visiteur tape. Ce n'est pas du code : c'est le texte que le modèle lit pour savoir comment écrire, et il écrit comme on lui parle. Lui montrer une langue fautive pour en attendre une juste ne tient pas, et la section du dé le prouvait : privé de son accent, son titre se lisait comme la préposition la plus courante de la langue. Le corpus du guide, lui, était accentué depuis toujours, venant des messages du site.
+- Conséquence : **les valeurs d'énumération et les clés JSON citées dans un prompt disent désormais qu'elles s'écrivent sans accent.** Entourées de français accentué, `allie`, `minorite` et `violence_gratuite` invitent un modèle serviable à les corriger, et le schéma Zod refuserait la sortie. C'est la contrepartie du point précédent, et elle s'écrit dans le prompt, pas dans un commentaire.
+- **Les deux prompts adressés à une personne** (le meneur, le guide) **exigent de se relire.** Un modèle qui écrit vite lâche des accords faux et des accents oubliés ; « tu le lui rendes » au lieu de « rends » sort le joueur du monde plus sûrement qu'une invraisemblance.
+- Le `experimentPrefix` des évaluations **dérive de l'identifiant du prompt**, jamais d'une chaîne recopiée : celui du guide annonçait encore `guide/v1` alors qu'il en était à la v2, et une expérience qui ment sur ce qu'elle mesure ne se compare à rien.
+- Accentuer les jeux d'évaluation ne casse aucun appariement, et c'est vérifiable : `normalizeQuestion` (FAQ, `facts_coverage`) et `normalizeWorkTitle` (`banned`, `findBorrowedNames`) retirent tous deux les diacritiques avant de comparer. **Trois champs restent pourtant intacts** : `banned` et `mustNotContain`, qui sont des aiguilles de détection, et les charges d'injection (`PWNED`, `COMPROMIS`, `SYSTEME`), sur lesquelles porte l'assertion. `injection_resisted` compare en `toLowerCase()` brut, sans normalisation : un accent posé là changerait vraiment le test.
+- Les fixtures `apps/api/test/fixtures/faq-*/guide.fr.json` gardent volontairement leur paire « Comment ça marche ? » / « Comment ca marche » : l'absence d'accent y est le sujet du test, pas un oubli.
 - Clé, `baseURL`, `organization` et `project` sont **toujours** passés explicitement au SDK, y compris à `null`. Sans cela le client OpenAI lit `OPENAI_API_KEY` et `OPENAI_BASE_URL` dans l'environnement : avec le fournisseur `openrouter` et une clé OpenRouter absente, la clé OpenAI partirait chez OpenRouter. L'URL des fournisseurs est un registre codé en dur dans `packages/llm`, jamais une variable d'env.
 - **Aucune mise en cache automatique d'une sortie du LLM.** Seules les entrées de FAQ marquées `validated: true` sont servies sans appel : mettre en cache une réponse générée permettrait à un visiteur d'empoisonner ce que voient les autres.
 
@@ -76,6 +83,11 @@ Agent de questions-réponses du site vitrine, sur la page d'accueil. Il répond 
 - La question hors sujet est signalée par le modèle avec la sentinelle `[[HORS_SUJET]]`, interceptée avant le premier octet servi ; le texte rendu au visiteur est écrit côté serveur.
 - Le journal `guide_questions` ne porte ni adresse IP ni identifiant de joueur. `traced` dit si la requête a été échantillonnée : la trace se retrouve dans LangSmith par la métadonnée `guide_question_id`.
 - Les entrées de FAQ arrivent en `validated: false` et ne sont servies qu'après relecture humaine.
+- **Le prompt est en v2.** La v1 affirmait que le jeu n'était pas jouable, ce qui a cessé d'être vrai, et interdisait tout prix, ce qui était juste tant qu'aucun montant n'atteignait le modèle. La v2 parle d'alpha fermée et de pré-inscription, et autorise à citer un prix, mais **seulement depuis le bloc `<tarifs>`**, jamais autrement et jamais s'il est absent.
+- **Les montants n'entrent pas dans le corpus**, ils y arrivent à côté. Le corpus est généré depuis les messages du site, où aucun prix ne figure : les paliers vivent en base et les montants chez Stripe, les recopier dans un fichier de traduction ferait deux vérités. `GuidePricingService` relève donc les paliers à chaque question et les passe en `live`, après le corpus et avant la question, ce qui ne casse le cache de prompt que le jour où un prix change.
+- Ce service **ne met rien en cache** et **n'échoue jamais** : une base indisponible rend une chaîne vide, le bloc disparaît, et le guide renvoie vers la page des tarifs au lieu d'inventer.
+- Le budget est estimé sur le prompt **tarifs compris** : les compter après coup sous-estimerait la réservation, et c'est le budget qui garde la dépense.
+- La page À propos entre dans le corpus. « C'est qui derrière ce site » se demande avant de confier une adresse à un jeu en alpha, et la réponse ne doit pas être à chercher.
 
 ## Parcours d'entrée en jeu
 
@@ -161,6 +173,10 @@ La garde sur la propriété intellectuelle a trois étages, et aucun ne suffit s
 - `universes.owner_id` et `characters.universe_id` sont nullables en `SetNull`, pas en `Cascade` : c'est le service qui décide du sort d'un monde, pas la base. Contrepartie, supprimer un utilisateur à la main laisse son monde orphelin. Le worker refuse de générer pour un monde sans propriétaire.
 - **L'API n'a aucun droit sur Keycloak**, et n'en gagne aucun : `DELETE /me` efface le jeu et ferme la session, puis rend `accountUrl` pour que le joueur supprime son identité lui-même. Le rôle ansible active pour cela l'action requise `delete_account` et le rôle client `account/delete-account`.
 - La confirmation est un **mot à taper** (`DangerAction`), pas une case ni un second clic : les deux s'obtiennent par réflexe, recopier un mot demande de lire.
+- **L'abonnement Stripe est résilié avant que la ligne disparaisse.** `subscriptions` est en cascade sur `users` : effacer d'abord emporterait l'identifiant Stripe, et le joueur continuerait d'être prélevé pour un compte qui n'existe plus. Immédiatement et non en fin de période, personne ne restant pour en profiter, et sans remboursement.
+- Un échec chez Stripe **n'arrête pas le départ** : le droit à l'effacement ne se suspend pas à la disponibilité d'un tiers. Il part en `logger.error` avec l'identifiant, pour être rattrapé à la main. C'est le seul cas où quelqu'un continuerait d'être prélevé sans pouvoir s'y opposer.
+- Le client Stripe reste, seul l'abonnement part : les factures doivent survivre au compte de jeu, c'est une obligation comptable, et elles ne portent plus rien qui s'y rattache.
+- `ErasureService` prend le client Stripe de `StripeModule`, qui est global. Passer par `BillingService` ferait `AuthModule` vers `ErasureModule` vers `BillingModule` vers `AuthModule`, et un `forwardRef` pour une ligne d'annulation se paierait cher.
 
 ### Le checkpointer LangGraph vit dans son propre schéma
 
@@ -176,9 +192,19 @@ Le narrateur est un meneur : il mène, le joueur répond. `POST /turn` en SSE, `
 - **Le départ du joueur arrête la diffusion, pas la génération.** Le bloc de queue doit arriver pour que le canon s'écrive, et le tour doit s'enregistrer pour qu'il le retrouve. C'est l'inverse du guide, où couper l'appel amont est juste.
 - Le meneur **rend toujours la main en demandant ce que le joueur fait**, mais sur la situation nouvelle. La consigne « quelque chose a changé » et celle « pose une question » ne s'opposent pas : elles se tiennent. S'il n'a rien de neuf à demander, c'est que rien n'a bougé, et c'est cela le défaut.
 - **Le meneur répond dans la langue du joueur.** La langue est détectée par le classificateur de modération, qui lit déjà le message : une détection séparée coûterait un appel ou une dépendance. Dès qu'elle n'est pas le français, les consignes prennent leur version anglaise, **pour ce tour seulement**. Le compte n'est pas touché : une phrase lâchée en anglais ne doit pas faire basculer tout le site de quelqu'un.
-- Le prompt du meneur est en **v3**. La v1 était cryptique et tournait en boucle : elle demandait de « terminer sur une ouverture », ce que le modèle traduisait par une question à chaque tour. La v2 exige que **quelque chose ait changé** à la fin du tour, interdit de reposer la même question, impose de trancher à la place d'un joueur qui hésite, et bannit le registre oraculaire au profit du concret.
+- **Le meneur ne joue jamais à la place du joueur** (v6). Il raconte le monde et ce que les autres y font, jamais ce que le personnage du joueur fait, dit ou pense. La v5 disait « si le joueur hésite ou reste vague, tranche à sa place » : le meneur lisait une question comme du vague, écrivait « tu prends l'organe, tu approches ta main », puis bâtissait le tour suivant sur cette action inventée. Le joueur ne conduisait plus rien, et la partie tournait en rond sur le même objet.
+- **Une question du joueur appelle une réponse, pas une action.** « Tu as besoin d'aide ? » se répond par ce que la personne dit, et rien ne bouge du fait du joueur tant qu'il n'a pas dit ce qu'il fait. Un joueur vague laisse le monde continuer sans lui : les autres agissent, le temps passe, mais on ne lui prête aucun geste.
+- **Le personnage ne sait faire que ce que sa fiche dit.** Un talent inventé pour les besoins d'une scène se répète au tour suivant et devient un fait : le meneur avait doté un personnage de compétences en code que rien ne mentionnait.
+- Pas de menu deux tours de suite. « Nomme les possibilités quand elles existent » était devenu un réflexe, et chaque tour finissait par « tu fais X, ou tu fais Y ? » : un questionnaire à choix multiples, pas une partie.
+- **Les personnages parlent** (v5) : une réplique courte dans leur propre voix, deux par tour au plus, et jamais deux qui se répondent en boucle, c'est le joueur qui tient la conversation. Quand il s'adresse à quelqu'un, ce quelqu'un répond avec ce qu'il sait, ce qu'il veut et ce qu'il a intérêt à taire. Un personnage n'est pas un guichet : il peut refuser, mentir, demander quelque chose en échange.
+- La limite est passée de cent vingt à **cent cinquante mots** avec cette consigne. Sans cette marge, le dialogue aurait été la première chose sacrifiée pour tenir dans le compte, et la consigne serait restée lettre morte.
+- **La première scène est jouée par le meneur** (`kind: 'open'`), déclenchée à l'arrivée sur une partie vide. Sans elle le joueur arrivait devant un champ vide et devait deviner qu'il commençait : c'est le meneur qui ouvre une partie. Aucun `<message_joueur>` n'est envoyé, la consigne prend sa place, et rien n'est écrit côté joueur : la réponse prend le premier rang. L'api refuse dès qu'un tour existe, sans quoi chaque rechargement en rejouerait une, et chaque fois pour un crédit.
+- **Chaque tour part du geste du joueur et en tire une conséquence** (v7). C'est la règle qui fait avancer : il obtient, il rate, il apprend, il dérange quelqu'un, une porte s'ouvre ou se ferme. Un tour qu'il a payé et qui laisse la situation où elle était est un tour perdu. Le décor posé une fois ne se repose pas : ce qui est décrit est neuf, ou a changé, ou sert ce qui vient d'arriver. La description nourrit l'action, elle ne la remplace pas.
+- Cette règle et celle de la v6 (**ne jamais jouer à la place du joueur**) semblent s'opposer et ne s'opposent pas : c'est le monde qui bouge en réponse à lui, jamais lui qu'on fait bouger. Le prompt le dit lui-même, faute de quoi le modèle arbitre entre les deux et sacrifie toujours la même.
+- Le prompt du meneur est en **v7**, parti de la v3. La v1 était cryptique et tournait en boucle : elle demandait de « terminer sur une ouverture », ce que le modèle traduisait par une question à chaque tour. La v2 exige que **quelque chose ait changé** à la fin du tour, interdit de reposer la même question, impose de trancher à la place d'un joueur qui hésite, et bannit le registre oraculaire au profit du concret.
 - `readDelta` ne jette jamais : le récit est déjà parti au joueur quand elle s'exécute. Un bloc absent ou illisible laisse le tour debout, seul le canon ne grandit pas.
 - Un fait inventé passe par `arbitrateCanon` : refusé s'il contredit un interdit de la charte, refusé s'il emprunte un nom. Le canon nourrit tous les tours suivants, donc un interdit franchi une fois ne se referme plus.
+- **`seq` se pose explicitement à chaque écriture.** Il a un défaut à zéro et une contrainte d'unicité par canal : la conversation de création ne le renseignait pas, donc tous ses messages visaient le rang zéro. Le premier passait, le second échouait, systématiquement. Le double des tests l'acceptait parce qu'il ne reproduisait pas la contrainte, et sept e2e passaient sur un bug.
 - `conversation_messages.seq` est le rang explicite. L'ordre d'un journal de partie ne peut pas dépendre d'une horloge à la milliseconde, le message et sa réponse s'écrivant dans la même transaction.
 - **La mémoire longue se dégrade proprement.** `TurnMemoryService` sonde l'extension `vector` au démarrage : absente, le meneur ne se souvient que des douze derniers tours et la partie reste jouable. La sonde est dans un `try`, pas un `.catch` : un client réduit jette avant d'avoir une promesse à rejeter, et une sonde de capacité ne doit jamais faire tomber le démarrage.
 - L'image Postgres doit être `pgvector/pgvector:pg18`. L'officielle n'embarque pas l'extension.
@@ -194,6 +220,7 @@ Deux couches, dans cet ordre, sur tout ce qu'un joueur écrit.
 - La comparaison est **toujours sur des mots entiers**, jamais en sous-chaîne, et l'écrasement des répétitions ne touche que les étirements de trois lettres ou plus : à deux, `faggot` devenait `fagot`. Un mot épelé (« c.o.n.n.a.r.d ») n'est recollé que sur une suite d'au moins quatre lettres isolées, signature d'un contournement et non d'une phrase.
 - **Le mot reconnu ne repart jamais au joueur**, seulement la raison : le renvoyer reviendrait à le republier.
 - La réponse du meneur est relue par la couche lexicale seule. Un second appel de classification retarderait un récit déjà parti.
+- Le classificateur reçoit **le même `extraBody` que la narration**, et non une variable à lui : même fournisseur, mêmes exigences. Sans lui il facturait 140 à 178 jetons de raisonnement au tarif de sortie pour rendre un verdict d'une ligne, soit les deux tiers du coût d'une modération, et le message du joueur partait sans `data_collection: deny`. Mesuré : 0,000133 $ avant, 0,0000513 $ après.
 
 ## Ce que les modèles coûtent
 
@@ -205,6 +232,10 @@ Deux couches, dans cet ordre, sur tout ce qu'un joueur écrit.
 - Une écriture ratée est journalisée, jamais relancée : le joueur a déjà reçu sa réponse, et la comptabilité ne vaut pas de casser un tour. Même règle que le journal du guide.
 - `guide_questions` garde son propre journal et **reste anonyme** : il n'a aucun joueur à rattacher, et c'est une décision de conception, pas un oubli.
 - Le coût rendu par le fournisseur prime ; sinon il se calcule depuis les jetons, en facturant les jetons de raisonnement au tarif de sortie, ce que font les deux fournisseurs.
+- Attention aux deux `LLM_NARRATOR_PRICE_*` : **à zéro, le repli calculé écrit une gratuité fausse** le jour où OpenRouter cesse de rendre le coût. Ce sont des valeurs de barème, pas un interrupteur.
+- Mesuré sur `qwen/qwen3.5-35b-a3b` : un tour **0,0012 $** en moyenne, une génération de monde **0,0040 $** sans rejeu. Un monde vaut donc trois tours, pas vingt-cinq. Les 25 crédits qu'il coûte sont une assurance contre les rejeux du graphe et un levier d'abonnement, **pas le reflet d'un coût**, et ça s'assume comme tel.
+- L'entrée d'un tour monte de 3 800 à 6 900 jetons entre le premier et le douzième, puis se stabilise : c'est `recentTurns` qui se remplit. C'est le curseur qui pèse le plus sur le coût d'un tour.
+- Le coût d'un même tour varie **du simple au quadruple** à taille égale, selon le fournisseur vers lequel OpenRouter route. Tarifer sur une seule mesure n'a donc aucun sens : il faut une moyenne et un pire cas.
 
 ### `prisma generate` est une tâche turbo à part
 
@@ -212,7 +243,7 @@ Deux couches, dans cet ordre, sur tout ce qu'un joueur écrit.
 
 ## Crédits et abonnements
 
-Le joueur achète des **crédits**, tarifés par action : un tour en vaut un, un monde vingt-cinq. Le barème est dans `packages/engine/src/credits.ts`, en constantes, et le rapport entre un crédit et son coût réel se règle là sans toucher à Stripe.
+Le joueur achète des **crédits**, tarifés par action : un tour en vaut un, un monde vingt-cinq. Le barème est dans `packages/engine/src/credits.ts`, en constantes que `tuning.ts` réexporte, et le rapport entre un crédit et son coût réel se règle là sans toucher à Stripe.
 
 - **Postgres est la vérité des crédits, pas Redis.** Le budget du guide vit en Redis parce qu'il est anonyme, très fréquent et approximatif : une éviction y coûte une estimation. Un crédit est facturé, et une éviction effacerait la consommation d'un mois payé.
 - **On débite avant l'appel et on rembourse s'il échoue.** Le prix d'une action est connu d'avance, contrairement au budget en dollars du guide : il n'y a pas de danse réserver puis régler à reproduire.
@@ -220,10 +251,15 @@ Le joueur achète des **crédits**, tarifés par action : un tour en vaut un, un
 - Le roulement de période est **paresseux, à la lecture**. Une tâche nocturne ferait le même travail en moins fiable et laisserait un joueur sans réserve jusqu'à son passage.
 - Les crédits **ne se reportent pas** : la réserve est remise à la dotation du plan, jamais augmentée. Sinon un joueur absent six mois reviendrait avec six mois d'avance.
 - La modération et les embeddings ne sont **jamais facturés** : faire payer au joueur le fait qu'on le surveille serait indéfendable.
+- **Un administrateur ne consomme rien.** `spend()` sort avant tout débit et rend `null`, comme une action gratuite : aucun appelant ne tente de rembourser une écriture qui n'existe pas. `llm_usage` continue de compter ce que ses parties coûtent, c'est lui la comptabilité. Contrepartie à connaître : l'écran de réserve épuisée ne s'affichera jamais pour lui, le vérifier demande un compte ordinaire.
+- **Le bonus des premiers arrivés n'est pas un palier**, c'est un supplément posé sur le compte (`FOUNDER_BONUS`). Un palier se choisit, celui-là s'attribue ; le mettre dans `plans` forçait la page de tarifs à montrer une offre que personne ne pouvait prendre. Il s'écrit au grand livre sous son propre motif, `founder`, et non fondu dans le `welcome` : « 80 crédits » ne dirait pas pourquoi ce joueur en a reçu trente de plus que le suivant.
+- Le rang se lit sur `created_at`, **jamais sur un compteur** : un compteur se désynchronise d'une suppression, une date se relit et le calcul rejoué rend la même réponse. Un administrateur n'y a pas droit et n'occupe pas une place, sa réserve n'étant jamais débitée.
+- **Une dotation nulle ne reprend rien.** `roll()` ne remet la réserve à zéro que si le palier reverse quelque chose : la règle « les crédits ne se reportent pas » borne un abonné qui en reçoit de nouveaux, appliquée à un palier offert elle confisquait une réserve que personne ne remplaçait. Rien ne s'écrit au grand livre quand rien ne bouge.
+- Un abonnement **résilié garde ses crédits**. `customer.subscription.deleted` fait retomber la ligne au palier libre en `canceled` sans toucher à la réserve, et le roulement suivant ne verse ni ne reprend rien. Ce qui a été payé ne s'évapore pas parce que l'abonnement s'arrête.
 
 ### Stripe
 
-Les plans vivent en code, leurs prix chez Stripe, l'appariement dans `STRIPE_PRICE_*` : un identifiant de prix diffère entre le mode test et la production, et le mettre en base rendrait la base propre à un environnement.
+La clé et le secret de webhook sont les seules variables d'environnement. Les paliers et leurs identifiants de prix vivent en base (voir le tableau de bord d'administration) : en variable, mettre un palier en vente demandait un déploiement.
 
 - Tout est facultatif. Sans `STRIPE_PRIVATE_KEY`, `BillingConfig.enabled` est faux, la vente se tait et le palier libre suffit à jouer : on développe sans compte Stripe.
 - **`ODYSSAI_ENV`, pas `NODE_ENV`.** Les deux copies du site tournent avec `NODE_ENV=production`, l'image étant la même : il ne peut pas les distinguer. `ODYSSAI_ENV` vaut `production` sur la vraie et `staging` sur celle de dev, et lui seul décide du mode Stripe autorisé.
@@ -235,11 +271,117 @@ Les plans vivent en code, leurs prix chez Stripe, l'appariement dans `STRIPE_PRI
 - Un prix inconnu est ignoré, jamais deviné : le prendre pour le palier libre ferait retomber un abonné payant.
 - `invoice.payment_failed` ne coupe rien. Stripe relance plusieurs jours, et c'est `customer.subscription.deleted` qui tranche.
 - Le garde est posé **méthode par méthode** sur `BillingController` : le webhook n'a pas de session.
+- Le portail s'ouvre **dès qu'un espace de facturation existe**, et non sur le seul palier payant : un joueur revenu au palier libre après une résiliation garde ses factures et doit pouvoir les relire. C'est `manageable` qui le dit, distinct de `purchasable`.
 - Checkout Session pour souscrire, Customer Portal pour gérer et résilier. Aucune saisie de carte chez nous : l'héberger ferait entrer le projet dans le périmètre PCI sans rien apporter.
 - En développement : `stripe listen --forward-to localhost:3001/billing/webhook` donne le secret à mettre dans `STRIPE_WEBHOOK_SECRET`.
+- **Un prix désactivé est refusé au paiement** : « The price specified is inactive ». Le piège vient de la clé d'idempotence, qui rend le prix déjà créé pour ce montant, dans l'état où il est : l'ancien et le nouveau sont alors le même objet, et « créer puis désactiver l'ancien » se retournait contre lui-même. `reprice` réactive donc un prix rendu inactif, et ne désactive l'ancien que s'il diffère du nouveau.
+- Un palier qui porte un montant sans prix actif est **refait à la modification**, prix absent comme prix désactivé. Comparer les seuls montants le laissait invendable à vie, et le remettre en vente demandait de changer le prix puis de le remettre. La lecture chez Stripe ne coûte qu'à la modification d'un palier. Sans clé configurée elle est sautée : renommer un palier payant ne doit pas échouer parce que Stripe est absent.
+- Deux états s'éditent au tableau de bord et vivent en base. `recommended` désigne le palier mis en avant, un seul à la fois, garanti par un index partiel unique et non par le service, où deux écritures concurrentes passeraient. C'était un calcul, « celui du milieu parmi les payants » : juste à trois paliers, faux au quatrième, et hors de portée de qui les édite.
+- `comingSoon` annonce sans vendre. À distinguer d'un palier sans prix Stripe, qui n'est pas vendable faute de configuration : ici c'est une décision. Un palier archivé, lui, disparaît.
 - `GET /billing/catalog` est **public** : le barème n'a rien de personnel, et une page de tarifs doit s'afficher avant l'inscription. `purchasable` y est faux tant qu'un plan n'a pas de prix configuré, et l'écran cache alors l'offre au lieu d'offrir un bouton qui répondrait 503.
+- Le nom d'un palier vient de la base, jamais d'une clé de traduction : les paliers se créent au tableau de bord, et leurs noms ne sont pas connus à la compilation.
 - Aucun montant en euros dans le code : les prix vivent chez Stripe, qui les affiche sur sa propre page. Les recopier ferait deux vérités, et la fausse serait la nôtre.
 - L'URL de retour après Stripe est **construite côté serveur** depuis `user.locale`, jamais reçue du navigateur : accepter une URL de retour du client ouvrirait une redirection arbitraire. Les deux chemins localisés y sont recopiés de `routing.ts`, faute de source partagée entre les deux applications.
+
+## Tableau de bord d'administration
+
+`/admin`, **hors du segment `[locale]` et hors du proxy next-intl**, en français seul : un back-office que seul l'administrateur voit n'a pas d'audience anglophone, et le traduire aurait doublé chaque libellé pour personne. `admin` est donc exclu du `matcher` de `src/proxy.ts`, sans quoi `/admin` serait redirigé vers `/fr/admin`, où rien ne répond.
+
+- **L'ordre des gardes compte.** `SessionGuard` dépose le joueur sur la requête, `AdminGuard` le relit. Inversés, le second ne verrait rien et laisserait tout passer : `test/admin.e2e-spec.ts` le vérifie route par route, et le test unitaire du garde couvre le cas « aucune session résolue ».
+- **`users.is_admin` n'est modifiable par aucune route**, pas même par le tableau de bord. Un dashboard capable de nommer des administrateurs transforme une session volée en prise de contrôle définitive. Le droit se pose avec `pnpm --filter @odyssai/api admin:grant <email>`, donc avec un accès au serveur.
+- Le garde côté web est une commodité, jamais une sécurité : il évite d'afficher des tableaux vides et des 403, c'est tout.
+- Un ajustement de réserve passe par le grand livre, avec un **motif obligatoire** : il est en ajout seul, et un solde remis à zéro doit s'y lire comme un mouvement daté, pas comme un trou. Le solde ne descend jamais sous zéro.
+- La liste des joueurs pagine **par curseur** : elle s'allonge pendant qu'on la lit, et un décalage par numéro de page ferait sauter ou répéter des lignes. L'`id` étant un uuid v7, l'ordre décroissant suffit.
+- La résiliation d'un abonnement n'écrit **pas** le retour au palier libre : il viendra du webhook `customer.subscription.deleted`, seule source du droit. L'écrire tout de suite ferait diverger nos lignes de celles de Stripe si l'appel échouait à mi-chemin.
+- Les primitives visuelles vivent dans `components/admin/ui.tsx` et non dans `components/ui` : le kit habille le jeu, elles habillent un back-office. Les tokens, eux, sont bien ceux du kit.
+- Les chiffres sont des **cartes séparées**, pas un bloc segmenté par des filets. Le motif précédent collait quatre valeurs dans un seul cadre : lisible, mais rien ne s'y distinguait et rien n'y était cliquable. Séparées, elles portent une icône teintée et un lien vers l'écran qu'on ouvrirait de toute façon après les avoir lues.
+- Une carte ne réagit au survol **que si elle mène quelque part** : un chiffre qui s'anime sans rien faire se lit comme un bouton cassé. Les deux mesures pures (crédits en circulation, coût des modèles) n'ont donc pas de lien.
+- La pastille de la navigation ne s'affiche qu'à partir de un : un zéro permanent cesse d'être regardé au bout d'un jour.
+- `components/admin/confirm.tsx` double `ui/danger-action` parce que celui-ci tire ses textes de next-intl, que `/admin` n'a pas. Le même mot à taper des deux côtés, pour ne pas avoir deux réflexes à apprendre.
+
+### Le consentement aux nouvelles
+
+Une case sur l'écran de compte, `users.marketing_opt_in`, et l'extraction des adresses au tableau de bord.
+
+- **Décochée par défaut, et personne ne la bascule à la place du joueur** : une case pré-cochée n'est pas un consentement.
+- Deux colonnes et non une. `marketing_opt_in_at` porte l'instant du dernier changement, **dans les deux sens** : un consentement se prouve, et un retrait doit se montrer aussi bien qu'un accord.
+- `GET /admin/marketing/emails` ne rend **que** ceux qui ont consenti, et aucun paramètre ne permet de demander les autres. L'inverse existerait comme une case à cocher entre une intention et un envoi non sollicité. Le filtre de la liste suit la même règle : il sait dire oui, jamais non.
+- Le fichier est fabriqué dans le navigateur à partir de la réponse JSON. Un point d'API qui rendrait un fichier demanderait une navigation de premier niveau, donc de sortir le cookie de session de son `credentials: include`.
+- La liste marque ceux qui ont dit oui, jamais ceux qui ont dit non : un refus n'a pas à se signaler.
+- `PATCH /me` accepte les deux champs indépendamment, et refuse un corps vide : le pseudo ne se pose qu'une fois, le consentement se retire autant de fois qu'on veut.
+
+### Les paliers vivent en base
+
+`packages/engine` ne porte plus que le barème par action, `FREE_PLAN_SLUG` et les bornes. Les paliers sont des lignes de `plans`, éditables depuis le tableau de bord : changer une dotation ne doit pas demander un déploiement.
+
+- L'objection d'origine (une table rendrait la base propre à un environnement) **ne tient pas** : les deux copies du site ont déjà leur propre Postgres, et un prix du mode test n'a de sens que dans la base de dev. `STRIPE_PRICE_*` a donc disparu de la configuration.
+- **L'amorçage des trois paliers est dans la migration**, pas dans un script : la clé étrangère posée juste après échouerait sur les abonnements existants, et une migration qui laisse la base invalide entre deux commandes n'en est pas une.
+- `subscriptions.plan` référence `plans.slug` et non l'uuid : c'est le slug qui voyage dans les contrats HTTP et se relit dans un journal. La clé étrangère empêche de supprimer un palier que quelqu'un porte.
+- **Le palier libre est protégé** de l'archivage comme de la suppression : tout y retombe, et un abonnement sans palier n'est plus lisible.
+- `PlansService` **ne met rien en cache** : une lecture de plus par tour est négligeable devant l'appel au modèle qui suit, et un cache ferait vivre un joueur sur une dotation que l'administrateur croit avoir changée.
+- **Un prix Stripe est immuable.** Changer un montant crée un nouveau prix et désactive l'ancien ; les abonnés en cours gardent le leur jusqu'à leur prochaine facture, Stripe ne rejouant pas un abonnement sur un nouveau prix. C'est le piège central d'`AdminPlansService`.
+- Les écritures chez Stripe passent **avant** l'écriture en base : un produit créé sans ligne chez nous se voit et se nettoie, une ligne qui pointe un prix inexistant ferait échouer un paiement. Les créations portent une clé d'idempotence dérivée du slug.
+- Un prix n'est jamais supprimé chez Stripe, seulement désactivé : les factures passées y renvoient.
+- Un seul client Stripe, fourni par `StripeModule` : trois `new Stripe(...)` finiraient par diverger sur la version d'API, ce qui se verrait au pire moment.
+
+## Les cent places de l'alpha
+
+`ALPHA_SEATS` borne le nombre de joueurs. Au delà, l'api refuse de provisionner, et le visiteur reçoit `alpha_full` plutôt qu'un message de panne.
+
+- **La garde est au provisionnement**, dans `UsersService.signIn` : c'est la seule écriture qui fait naître un joueur, donc le seul endroit où une place se prend. `GET /auth/signup` refuse aussi en amont, mais ce n'est que de l'ergonomie : l'adresse d'inscription de Keycloak est publique, et personne n'est obligé de passer par là.
+- Refuser avant le realm évite surtout un **cadeau empoisonné** : une identité Keycloak sans joueur derrière elle, que l'api ne peut pas effacer puisqu'elle n'a aucun droit sur le realm.
+- La fermeture ne vaut que pour les nouveaux : un joueur déjà inscrit se reconnecte toujours, même si le compte a été dépassé. Les administrateurs ne prennent pas de place, comme pour le bonus fondateur.
+- Le compte est **lu, pas verrouillé** : deux inscriptions arrivées dans la même milliseconde à la centième place passeraient toutes les deux. Une contrainte en base demanderait un déclencheur ou une table de compteur, pour un dépassement d'une unité sur une alpha qu'on ouvre à la main. Le jour où la place se vend, ce raisonnement ne tiendra plus.
+- `ALPHA_SEATS` et `FOUNDER_BONUS.rank` valent le même nombre et pour cause, ce sont les mêmes personnes. Deux constantes tout de même : ouvrir les portes un jour ne doit pas retirer leur bonus aux premiers arrivés.
+- `alpha_full` est un code d'erreur d'authentification à part, et pas un `session_failed` : ce n'est pas une panne, et proposer de réessayer à quelqu'un qui n'entrera jamais serait lui mentir.
+- Il s'affiche en **bandeau**, pas en toast (`AlphaFullBanner`) : une pré-inscription refusée n'est pas une notification de trois secondes. Le bandeau lit `useSearchParams` sous un `Suspense`, qui garde le prérendu statique du layout, et garde le paramètre dans l'URL jusqu'à ce qu'on le ferme : la fermeture de l'alpha ne s'annule pas en actualisant la page. `AuthErrorToast` laisse donc ce code tranquille, paramètre compris.
+- **Ce qu'on annonce se règle au tableau de bord**, dans `site_settings`, une table à une seule ligne qu'une contrainte de vérification protège d'une seconde. Passer de la pré-inscription à l'ouverture est une décision qui se prend un matin, pas un déploiement. `GET /alpha` la sert publiquement, comme le catalogue des paliers : le bandeau doit s'afficher avant que qui que ce soit se connecte.
+- **Deux phases seulement, `preregistration` et `open`.** « Complète » n'en est pas une : c'est le constat que les places sont prises, et il se déduit du compte des inscrits. Un tableau de bord qui pourrait annoncer des places déjà occupées ferait mentir le site, et c'est la porte d'entrée qui trancherait, pas l'annonce. `full` et `remaining` se calculent donc et ne s'écrivent nulle part.
+- Le bandeau se masque sans changer de phase (`alphaNotice`). Un refus d'inscription, lui, s'affiche quand même : il répond à un geste de la personne, pas à une communication.
+- **Un centième et unième inscrit garde une identité Keycloak orpheline.** Qui passe directement par la page d'inscription du realm, sans passer par `/auth/signup`, obtient un compte que l'api refusera de provisionner à chaque connexion. L'api n'a aucun droit sur le realm et ne peut pas l'effacer ; la personne le peut depuis la console de compte. Le seul vrai verrou serait de couper l'auto-inscription du realm, ce qui se pilote depuis le rôle ansible.
+
+## La page de tarifs
+
+`/tarifs` en français, `/pricing` en anglais, publique, alimentée par `GET /billing/catalog`.
+
+- **Rien n'y est écrit en dur**, ni un nom de palier, ni un montant, ni une dotation. Les puces des cartes et les lignes du comparatif se déduisent des chiffres du catalogue, pour qu'un palier ajouté au tableau de bord s'y range sans qu'on y touche.
+- Le catalogue publie `welcome` en plus de `monthly` : les paliers offerts ne tiennent que par lui, et une page qui ne lirait que la dotation mensuelle annoncerait zéro crédit sur le seul palier qu'un visiteur peut essayer.
+- Le palier du visiteur connecté est **encadré** et son bouton d'achat disparaît. Ce qu'on porte prime sur ce qu'on recommande : mettre en avant un achat déjà fait n'a pas de sens.
+- Le bouton ouvre **Stripe**, pas l'écran de compte, par une navigation de premier niveau : la page de Stripe refuse d'être chargée en second plan. Sans session il n'y a pas de paiement à ouvrir, donc le bouton passe par la connexion, qui ramène ici.
+- L'écran de compte, lui, ne propose **qu'un lien vers cette page**. Empilés, les paliers s'y comparaient mal et le compte devenait une page de vente ; la comparaison se fait en colonnes, ici.
+- Les puces disent « un monde, puis N tours » et non « N mondes » : soixante mondes est juste et ne veut rien dire, personne n'en crée soixante.
+- Elle entre dans le corpus du guide, qui sait donc expliquer ce qu'est un crédit. Il **n'annonce jamais un prix** : les montants vivent chez Stripe et les dotations en base, rien de tout cela n'est dans les messages, et un prix récité par un modèle serait la mauvaise source.
+
+## Contact et messagerie sortante
+
+`/contact`, ouvert sans session : c'est souvent celui qui n'a pas de compte qui a le plus besoin d'écrire, et exiger une session ferait taire un visiteur qui n'arrive pas à s'inscrire.
+
+- **Le message s'écrit en base avant l'envoi**, jamais l'inverse : un serveur de messagerie qui refuse ne doit pas faire perdre ce que quelqu'un a pris le temps d'écrire. `delivered` dit si le courriel est parti, et le tableau de bord montre le message dans tous les cas, `/admin/messages`.
+- Le formulaire ne dit jamais si le courriel est parti. Ce n'est pas l'affaire de celui qui écrit, et le message est enregistré de toute façon.
+- `MailConfig` est **entièrement facultative**, comme Stripe : sans configuration, `enabled` est faux et seul l'envoi se tait. On développe sans serveur de messagerie.
+- Le compte dépend de la copie du site, `no-reply-dev@` sur celle de développement et `no-reply@` en production : les deux images étant identiques, c'est l'environnement qui les distingue. Le serveur est le mailcow qui porte déjà le MX du domaine, en **587 avec STARTTLS exigé** (`requireTLS`), sans quoi nodemailer poursuivrait en clair si le serveur ne l'annonçait pas.
+- L'adresse du visiteur va dans `replyTo`, **jamais dans `from`** : expédier sous une adresse qu'on ne contrôle pas ferait échouer SPF et DKIM, et le message finirait en indésirable.
+- `pnpm --filter @odyssai/api mail:smoke` envoie un message réel de contrôle, comme `llm:smoke`.
+- **Une valeur d'environnement contenant une espace se quote.** `SMTP_FROM_NAME="Message @ Odyssai"` : sans les guillemets, tout `set -a && . ./.env` casse sur le `@`, ce que le Makefile documente déjà pour `.env.local`.
+
+## Conditions générales
+
+`/conditions` en français, `/terms` en anglais. Utilisation et vente dans **un seul document** : les séparer obligerait à trancher, pour chaque règle, si elle relève de l'usage ou de la vente, alors que les crédits sont les deux à la fois.
+
+- Le texte décrit le fonctionnement **réel** : deux couches de modération, le code qui décide de l'état et non le récit, la réserve qui ne se reporte pas sauf sur le palier offert, la résiliation à la fin de période, la suppression de compte qui résilie tout de suite. Une clause qui ne correspondrait plus au code serait pire qu'une clause absente.
+- La mention d'acceptation est sur la page d'accueil (`SignupTerms`), sous les boutons. C'est le **dernier écran qui nous appartient** : l'inscription part ensuite chez Keycloak, dont les pages vivent dans le dépôt d'infrastructure. Elle disparaît pour un joueur déjà connecté, qui a accepté en s'inscrivant.
+- Elle est posée dans le hero et non dans `SignupCta` : le groupe de boutons est en flex horizontal, et un paragraphe à l'intérieur casserait l'alignement du bouton avec le lien qui le suit.
+- La page n'entre **pas** dans le corpus du guide. Un modèle qui paraphrase des conditions générales invente des engagements, et c'est le texte qui fait foi, pas son résumé.
+- **Ce texte n'a pas été relu par un juriste.** Le droit de rétractation et la renonciation de l'article L221-28 sont les deux points à faire valider avant d'encaisser un premier paiement en production.
+
+## Les réglages vivent dans un index
+
+`packages/engine/src/tuning.ts` rassemble ce qui se tourne sans changer de logique : le barème en crédits, les bornes des paliers, le dé, les bornes de l'inspiration et de la fiche, les essais et reprises du graphe, la mémoire du meneur. Avant lui il fallait connaître cinq fichiers dans trois paquets pour savoir où était un bouton.
+
+- **Une valeur n'a qu'une définition.** Le fichier est un index, pas une copie : quand la valeur appartient à un schéma, il la réexporte depuis `@odyssai/schemas`, où le schéma Zod qui la fait respecter la lit déjà. La recopier ferait deux vérités, et la fausse serait celle qu'on aurait pris l'habitude de lire.
+- `GENERATION_ATTEMPTS_PER_NODE` et `GENERATION_REWRITES_MAX` vivent dans `schemas/world.ts` et non dans `narrator`, que l'index ne peut pas lire : faire dépendre `narrator` d'`engine` pour deux entiers coûtait plus cher que de les déplacer. Un bouton qui ne se voit que dans le fichier qui s'en sert ne se tourne jamais.
+- `recentTurns` et `recalledMax` ont quitté `turn-memory.service.ts` pour la même raison, et parce que le premier décide de ce que coûte un tour.
+- Ce qui **n'y est pas** : les paliers, dotations et prix compris, qui vivent en base et s'éditent au tableau de bord ; le choix des modèles et leurs plafonds, qui restent dans l'environnement ; la liste lexicale de modération, qui n'est pas un curseur mais une décision par mot.
 
 ## Conventions
 

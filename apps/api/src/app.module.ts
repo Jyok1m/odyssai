@@ -1,14 +1,20 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
+import { AdminModule } from './admin/admin.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { BillingModule } from './billing/billing.module.js';
 import { ConfigModule } from './config/config.module.js';
+import { AlphaModule } from './alpha/alpha.module.js';
+import { ContactModule } from './contact/contact.module.js';
+import { MailModule } from './mail/mail.module.js';
 import { ErasureModule } from './erasure/erasure.module.js';
 import { ModerationModule } from './moderation/moderation.module.js';
 import { GuideModule } from './guide/guide.module.js';
 import { OnboardingModule } from './onboarding/onboarding.module.js';
+import { PlansModule } from './plans/plans.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
+import { StripeModule } from './stripe/stripe.module.js';
 import { RedisModule } from './redis/redis.module.js';
 import { TurnModule } from './turn/turn.module.js';
 import { CreditsModule } from './credits/credits.module.js';
@@ -20,8 +26,14 @@ import { UsageModule } from './usage/usage.module.js';
     RedisModule,
     PrismaModule,
     UsageModule,
+    PlansModule,
+    StripeModule,
     CreditsModule,
     BillingModule,
+    AdminModule,
+    AlphaModule,
+    MailModule,
+    ContactModule,
     ErasureModule,
     AuthModule,
     GuideModule,

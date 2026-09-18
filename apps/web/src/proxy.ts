@@ -8,5 +8,8 @@ export default createMiddleware(routing);
 
 export const config = {
   // Tout sauf les routes d'API, les internals Next et les fichiers statiques.
-  matcher: "/((?!api|_next|_vercel|.*\\..*).*)",
+  //
+  // `admin` en est exclu : le tableau de bord n'est pas traduit, et sans cette
+  // exception next-intl redirigerait /admin vers /fr/admin, où rien ne répond.
+  matcher: "/((?!api|admin|_next|_vercel|.*\\..*).*)",
 };

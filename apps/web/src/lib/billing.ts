@@ -53,9 +53,7 @@ export async function fetchCatalog(signal?: AbortSignal): Promise<BillingCatalog
  * premier niveau : la page de Stripe refuse d'être chargée en second plan, et
  * c'est elle, jamais nous, qui reçoit le numéro de carte.
  */
-export async function startCheckout(
-  plan: "apprenti" | "arpenteur",
-): Promise<string> {
+export async function startCheckout(plan: string): Promise<string> {
   return redirect(`${API_BASE_URL}/billing/checkout`, JSON.stringify({ plan }));
 }
 

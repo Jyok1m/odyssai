@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Instrument_Sans, Literata } from "next/font/google";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations } from "next-intl/server";
 
+import { AlphaNotice } from "@/components/auth/alpha-notice";
 import { AuthErrorToast } from "@/components/auth/auth-error-toast";
 import { CookieBanner } from "@/components/legal/cookie-banner";
 import { SessionProvider } from "@/components/auth/session-provider";
@@ -134,7 +136,19 @@ export default async function LocaleLayout({
     >
       <body className="min-h-full bg-ink text-vellum">
         <NextIntlClientProvider>
-          <SessionProvider>{children}</SessionProvider>
+          {/* Sous Suspense : `useSearchParams` ferait basculer tout le layout
+              du prerendu statique au rendu dynamique sans lui. */}
+          <Suspense fallback={null}>
+            <AlphaNotice />
+          </Suspense>
+
+          {/* `relative` pour que le bandeau pousse le site vers le bas : le
+              header du site est en `absolute top-0`, donc il se cale sur
+              l'ancetre positionne le plus proche. Sans ce conteneur il prenait
+              le document et se posait par dessus le bandeau. */}
+          <div className="relative">
+            <SessionProvider>{children}</SessionProvider>
+          </div>
           <AuthErrorToast />
           <CookieBanner />
         </NextIntlClientProvider>

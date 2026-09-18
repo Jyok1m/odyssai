@@ -304,7 +304,7 @@ for (const model of candidates) {
     data: DATASET,
     evaluators,
     client,
-    experimentPrefix: `abstraction/v1 ${model}`,
+    experimentPrefix: `${ABSTRACTION_PROMPT_VERSION} ${model}`,
     // Un seul a la fois : comparer des modeles sous des limites de debit
     // differentes mesurerait le fournisseur, pas le modele.
     maxConcurrency: 2,

@@ -21,7 +21,7 @@ import {
 import type { CookieOptions, Request, Response } from 'express';
 import { z } from 'zod';
 import { AppConfig } from '../config/app-config.js';
-import { UsersService } from '../users/users.service.js';
+import { AlphaFullError, UsersService } from '../users/users.service.js';
 import { OidcService } from './oidc.service.js';
 import { SessionService, refreshLifetimeSeconds, safeCompare } from './session.service.js';
 
@@ -69,6 +69,20 @@ export class AuthController {
     @Query('locale') locale: string | undefined,
     @Res({ passthrough: true }) res: Response,
   ): Promise<Redirection> {
+    /**
+     * Refuse avant d'envoyer vers le realm.
+     *
+     * La garde qui compte est celle du provisionnement, au retour : l'adresse
+     * d'inscription de Keycloak est publique et personne ne passe forcement
+     * par ici. Mais laisser creer une identite qui n'aura jamais de joueur
+     * derriere elle est un cadeau empoisonne : l'api n'a aucun droit sur le
+     * realm et ne pourra pas l'effacer.
+     */
+    if (await this.users.alphaFull()) {
+      this.logger.warn("inscription refusee avant le realm : alpha complete");
+      return this.failure('alpha_full');
+    }
+
     return this.beginFlow('signup', redirect, locale, res);
   }
 
@@ -128,6 +142,13 @@ export class AuthController {
         statusCode: HttpStatus.FOUND,
       };
     } catch (error: unknown) {
+      // Une alpha complete n'est pas une panne : l'ecran doit le dire
+      // autrement, et les journaux n'ont pas a s'en alarmer.
+      if (error instanceof AlphaFullError) {
+        this.logger.warn(`inscription refusee, alpha complete : ${error.seats} places`);
+        return this.failure('alpha_full');
+      }
+
       this.logger.error(`ouverture de session en echec : ${String(error)}`);
       return this.failure('session_failed');
     }
@@ -149,26 +170,30 @@ export class AuthController {
       return { authenticated: false };
     }
 
-    // Les sessions ouvertes avant le provisionnement ne portent pas d'id
-    // applicatif : on le resout une fois plutot que de renvoyer le sub, que le
-    // front ne doit jamais confondre avec l'identifiant de la ligne.
-    const userId =
-      session.userId ??
-      (
-        await this.users.resolve({
-          keycloakId: session.sub,
-          email: session.email,
-          emailVerified: session.emailVerified,
-        })
-      ).id;
+    // La ligne est relue a chaque lecture de session, meme quand la session
+    // porte deja l'id applicatif : `isAdmin` vit en base et s'y pose avec
+    // admin:grant, hors de tout flot de connexion. Le garder dans la session
+    // Redis le figerait jusqu'a la prochaine reconnexion, donc un droit retire
+    // continuerait d'ouvrir la porte du tableau de bord a l'ecran. C'est la
+    // meme lecture indexee que fait deja chaque route protegee.
+    //
+    // La resolution couvre au passage les sessions ouvertes avant le
+    // provisionnement, qui ne portent pas d'id applicatif : le front ne doit
+    // jamais confondre le sub du realm avec l'identifiant de la ligne.
+    const user = await this.users.resolve({
+      keycloakId: session.sub,
+      email: session.email,
+      emailVerified: session.emailVerified,
+    });
 
     return {
       authenticated: true,
       user: {
-        id: userId,
+        id: user.id,
         email: session.email,
         emailVerified: session.emailVerified,
         roles: session.roles,
+        isAdmin: user.isAdmin,
       },
     };
   }

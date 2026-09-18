@@ -43,6 +43,7 @@ import { GuideFaqService } from './guide-faq.service.js';
 import { GuideJournalService } from './guide-journal.service.js';
 import { GuideLimitsService } from './guide-limits.service.js';
 import { GuidePassService } from './guide-pass.service.js';
+import { GuidePricingService } from './guide-pricing.service.js';
 import { GUIDE_LLM } from './guide-llm.provider.js';
 
 const PING_INTERVAL_MS = 15_000;
@@ -61,6 +62,7 @@ export class GuideController {
     private readonly budget: GuideBudgetService,
     private readonly passes: GuidePassService,
     private readonly journal: GuideJournalService,
+    private readonly pricing: GuidePricingService,
     @Inject(GUIDE_LLM) private readonly llm: LlmClient,
   ) {}
 
@@ -174,7 +176,10 @@ export class GuideController {
     }
 
     // 8. Budget, estime sur le prompt complet.
-    const promptChars = buildGuideMessages({ question, locale }).reduce(
+    // Les tarifs en font partie : les compter apres coup sous-estimerait la
+    // reservation, et c'est le budget qui garde la depense.
+    const live = await this.pricing.block(locale);
+    const promptChars = buildGuideMessages({ question, locale, live }).reduce(
       (total, message) => total + message.content.length,
       0,
     );
@@ -219,7 +224,7 @@ export class GuideController {
       const result = await guide({
         llm: this.llm,
         config: this.guideConfig.model,
-        input: { question, locale },
+        input: { question, locale, live },
         signal: controller.signal,
         onTraced: (value) => {
           traced = value;

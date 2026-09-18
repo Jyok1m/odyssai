@@ -4,6 +4,8 @@ import type { LlmClient } from '@odyssai/llm';
 import {
   AffinitySchema,
   FactionSchema,
+  GENERATION_ATTEMPTS_PER_NODE,
+  GENERATION_REWRITES_MAX,
   NpcSchema,
   PoliticsSchema,
   WorldBibleSchema,
@@ -31,14 +33,13 @@ import { callJson, type JsonModelConfig, type JsonUsage } from './json.js';
 
 export const GENERATION_PROMPT_VERSION = GENERATION_PROMPT.id;
 
-/** Deux essais par noeud : un modele rate rarement deux fois de la meme facon. */
-const ATTEMPTS_PER_NODE = 2;
-
 /**
- * Une seule reprise apres un rejet du controle. Au dela, on rend la main : une
- * boucle qui insiste couterait sept appels par tour sans garantie de converger.
+ * Les deux reglages du graphe viennent de `@odyssai/schemas`, ou
+ * `@odyssai/engine` les reexporte dans son index de reglages : un bouton qui
+ * ne se voit que dans le fichier qui s'en sert ne se tourne jamais.
  */
-const REWRITES_MAX = 1;
+const ATTEMPTS_PER_NODE = GENERATION_ATTEMPTS_PER_NODE;
+const REWRITES_MAX = GENERATION_REWRITES_MAX;
 
 export class GenerationFailure extends Error {
   readonly step: GenerationNode | 'validation';

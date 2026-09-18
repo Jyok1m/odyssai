@@ -73,6 +73,62 @@ interface CreditEntryRow {
   createdAt: Date;
 }
 
+/**
+ * Les paliers, en base depuis qu'ils s'editent au tableau de bord. Le double
+ * en porte les trois que la migration amorce : sans eux, ouvrir un abonnement
+ * n'aurait aucune dotation a servir.
+ */
+interface PlanRow {
+  id: string;
+  slug: string;
+  name: string;
+  monthlyCredits: number;
+  welcomeCredits: number;
+  amountCents: number | null;
+  currency: string;
+  stripeProductId: string | null;
+  stripePriceId: string | null;
+  archived: boolean;
+  sortOrder: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const SEEDED_PLANS: PlanRow[] = [
+  seedPlan('free', 'Libre', 30, 25, null, null, 0),
+  seedPlan('apprenti', 'Apprenti', 300, 0, 500, 'price_apprenti', 1),
+  seedPlan('arpenteur', 'Arpenteur', 1000, 0, 1200, 'price_arpenteur', 2),
+];
+
+function seedPlan(
+  slug: string,
+  name: string,
+  monthlyCredits: number,
+  welcomeCredits: number,
+  amountCents: number | null,
+  stripePriceId: string | null,
+  sortOrder: number,
+): PlanRow {
+  return {
+    id: `plan-${slug}`,
+    slug,
+    name,
+    monthlyCredits,
+    welcomeCredits,
+    amountCents,
+    currency: 'eur',
+    stripeProductId: stripePriceId ? `prod_${slug}` : null,
+    stripePriceId,
+    archived: false,
+    sortOrder,
+    createdAt: new Date('2026-01-01T00:00:00Z'),
+    updatedAt: new Date('2026-01-01T00:00:00Z'),
+  };
+}
+
+/** Sert aux tests qui veulent affirmer une dotation sans la recopier. */
+export const PLAN_FIXTURES = SEEDED_PLANS;
+
 interface StripeEventRow {
   id: string;
   type: string;
@@ -93,6 +149,7 @@ interface MessageRow {
   channel: string;
   role: 'user' | 'assistant';
   content: string;
+  /** Rang dans son canal, unique par univers : la base le contraint. */
   seq: number;
   createdAt: Date;
 }
@@ -120,6 +177,8 @@ export interface OnboardingStore {
   subscriptions?: SubscriptionRow[];
   creditEntries?: CreditEntryRow[];
   stripeEvents?: StripeEventRow[];
+  /** Absent, les trois paliers amorces par la migration sont servis. */
+  plans?: PlanRow[];
 }
 
 function matchMessages(store: OnboardingStore, where: any): MessageRow[] {
@@ -205,6 +264,21 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
 
   const double = {
     user: {
+      /**
+       * Deux filtres suffisent, ce sont les seuls que le code pose : le droit
+       * d'administration pour les places de l'alpha, et l'anteriorite pour le
+       * rang des premiers arrives.
+       */
+      count: async ({ where }: any) =>
+        store.users.filter((user) => {
+          if (where?.isAdmin !== undefined && user.isAdmin !== where.isAdmin) {
+            return false;
+          }
+          if (where?.createdAt?.lt && !(user.createdAt < where.createdAt.lt)) {
+            return false;
+          }
+          return true;
+        }).length,
       findUnique: async ({ where, select }: any) => {
         const row = store.users.find((user) =>
           where.id ? user.id === where.id : user.keycloakId === where.keycloakId,
@@ -381,9 +455,10 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
       },
       create: async ({ data }: any) => {
         const seq = data.seq ?? 0;
-        // La vraie table porte une contrainte d'unicite sur (univers, canal,
-        // rang). Sans elle ici, un appelant qui oublie le rang ecrit autant de
-        // lignes a zero qu'il veut, et le test passe la ou la base refuse.
+
+        // La contrainte d'unicite est reproduite ici : sans elle, le double
+        // acceptait ce que la base refuse, et le defaut a zero passait tous
+        // les tests avant d'echouer au premier vrai second message.
         const clash = store.messages.some(
           (row) =>
             row.universeId === data.universeId &&
@@ -391,10 +466,9 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
             row.seq === seq,
         );
         if (clash) {
-          throw new Prisma.PrismaClientKnownRequestError(
-            'Unique constraint failed on the constraint: `conversation_messages_universe_id_channel_seq_key`',
-            { code: 'P2002', clientVersion: 'test' },
-          );
+          throw Object.assign(new Error('Unique constraint failed'), {
+            code: 'P2002',
+          });
         }
 
         const row: MessageRow = {
@@ -411,6 +485,22 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         };
         store.messages.push(row);
         return { ...row };
+      },
+      findFirst: async ({ where, orderBy, select }: any) => {
+        const rows = store.messages
+          .filter(
+            (row) =>
+              row.universeId === where.universeId &&
+              row.channel === where.channel,
+          )
+          .sort((a, b) => (orderBy?.seq === 'desc' ? b.seq - a.seq : a.seq - b.seq));
+
+        const row = rows[0];
+        if (!row) return null;
+        if (!select) return { ...row };
+        return Object.fromEntries(
+          Object.keys(select).map((key) => [key, (row as any)[key]]),
+        );
       },
       count: async ({ where }: any) =>
         store.messages.filter(
@@ -518,6 +608,29 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
 
     /** La cle primaire porte l'idempotence des webhooks : un meme identifiant
      * deux fois doit echouer, comme en base. */
+    plan: {
+      findUnique: async ({ where }: any) => {
+        const rows = store.plans ?? SEEDED_PLANS;
+        const found = rows.find((row) =>
+          where.slug !== undefined
+            ? row.slug === where.slug
+            : where.stripePriceId !== undefined
+              ? row.stripePriceId === where.stripePriceId
+              : row.id === where.id,
+        );
+        return found ? { ...found } : null;
+      },
+      findMany: async ({ where }: any = {}) => {
+        const rows = store.plans ?? SEEDED_PLANS;
+        return rows
+          .filter((row) => (where?.archived === false ? !row.archived : true))
+          .filter((row) =>
+            where?.stripePriceId?.not === null ? row.stripePriceId !== null : true,
+          )
+          .map((row) => ({ ...row }));
+      },
+    },
+
     stripeEvent: {
       create: async ({ data }: any) => {
         store.stripeEvents = store.stripeEvents ?? [];

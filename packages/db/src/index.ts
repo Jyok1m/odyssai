@@ -21,9 +21,12 @@ export type {
   Turn,
   CanonFact,
   LlmUsage,
+  Plan,
   Subscription,
   CreditEntry,
   StripeEvent,
+  SiteSettings,
+  ContactMessage,
 } from './generated/prisma/client.js';
 
 export {

@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
 
+import { ALPHA_FULL_CODE } from "@/components/auth/alpha-notice";
+
 const PARAM = "auth_error";
 
 /**
@@ -20,6 +22,11 @@ export function AuthErrorToast() {
     const url = new URL(window.location.href);
     const raw = url.searchParams.get(PARAM);
     if (raw === null) return;
+
+    // L'alpha complete appartient au bandeau, qui lit le meme parametre et le
+    // garde tant que la personne ne l'a pas ferme. Le retirer ici ferait
+    // disparaitre le message avant qu'il s'affiche.
+    if (raw === ALPHA_FULL_CODE) return;
 
     url.searchParams.delete(PARAM);
     window.history.replaceState(null, "", url.toString());

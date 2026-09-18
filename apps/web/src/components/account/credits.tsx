@@ -6,12 +6,12 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 import {
   BillingError,
   fetchBillingSummary,
   fetchCatalog,
   openPortal,
-  startCheckout,
 } from "@/lib/billing";
 
 /**
@@ -83,51 +83,82 @@ export function Credits() {
     (plan) => plan.purchasable && plan.id !== summary.plan,
   );
 
+  // Un palier sans dotation mensuelle n'a pas de dénominateur, donc pas de
+  // jauge : diviser par zéro affichait une barre vide et annonçait « une
+  // dotation de 0 par mois », ce qui ne veut rien dire pour une réserve qui ne
+  // se remplit jamais.
+  const renews = summary.monthly > 0 && !summary.unlimited;
+
   // La jauge peut dépasser sa dotation le premier mois, la bienvenue s'y
   // ajoutant : elle se borne à cent pour cent plutôt que de déborder.
-  const filled = summary.monthly
+  const filled = renews
     ? Math.min(100, Math.round((summary.credits / summary.monthly) * 100))
     : 0;
+
+  // Tant que le solde dépasse la dotation, « 55 sur 30 » se lit comme une
+  // incohérence. Le surplus ne peut venir que de la bienvenue, autant le dire.
+  // Sa part exacte n'est pas affichée : dès la première dépense, le grand
+  // livre ne sait plus quel crédit a été consommé, et « dont 25 de bienvenue »
+  // deviendrait faux.
+  // Un administrateur ne consomme rien : afficher son solde donnerait un
+  // compteur immobile, et une jauge pleine se lirait comme un compteur cassé.
+  const balance = summary.unlimited
+    ? t("balanceUnlimited")
+    : renews
+      ? t(summary.credits > summary.monthly ? "balanceWelcome" : "balance", {
+          credits: summary.credits,
+          monthly: summary.monthly,
+        })
+      : t("balanceStandalone", { credits: summary.credits });
 
   return (
     <section>
       <Heading />
 
-      <p className="mt-3 text-ui-sm text-vellum">
-        {t("balance", { credits: summary.credits, monthly: summary.monthly })}
-      </p>
+      <p className="mt-3 text-ui-sm text-vellum">{balance}</p>
 
-      <div
-        role="img"
-        aria-label={t("balance", {
-          credits: summary.credits,
-          monthly: summary.monthly,
-        })}
-        className="mt-3 h-1.5 w-full max-w-sm overflow-hidden rounded-full bg-mist"
-      >
+      {renews ? (
         <div
-          className="h-full rounded-full bg-accent transition-[width] duration-500"
-          style={{ width: `${filled}%` }}
-        />
-      </div>
+          role="img"
+          aria-label={balance}
+          className="mt-3 h-1.5 w-full max-w-sm overflow-hidden rounded-full bg-mist"
+        >
+          <div
+            className="h-full rounded-full bg-accent transition-[width] duration-500"
+            style={{ width: `${filled}%` }}
+          />
+        </div>
+      ) : (
+        <p className="mt-2 text-caption text-vellum-3">
+          {summary.unlimited ? t("unlimitedNote") : t("noRenewal")}
+        </p>
+      )}
 
       <dl className="mt-4 space-y-2">
         <div className="flex gap-2">
           <dt className="text-caption text-vellum-3">{t("planLabel")}</dt>
-          <dd className="text-ui-sm text-vellum">{t(`plan.${summary.plan}`)}</dd>
+          {/* Le nom vient de la base : les paliers se creent au tableau de
+              bord, leurs noms ne peuvent donc pas etre des cles de
+              traduction. */}
+          <dd className="text-ui-sm text-vellum">{summary.planName}</dd>
         </div>
-        <div className="flex gap-2">
-          <dt className="text-caption text-vellum-3">
-            {summary.cancelAtPeriodEnd ? t("endsLabel") : t("renewsLabel")}
-          </dt>
-          <dd className="text-ui-sm text-vellum">
-            {format.dateTime(new Date(summary.renewsAt), {
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })}
-          </dd>
-        </div>
+        {/* Une date n'a de sens que si quelque chose arrive a echeance. Sur un
+            palier sans dotation, plus rien ne change ce jour la : la reserve
+            reste, et annoncer une date ferait craindre de la perdre. */}
+        {renews || summary.cancelAtPeriodEnd ? (
+          <div className="flex gap-2">
+            <dt className="text-caption text-vellum-3">
+              {summary.cancelAtPeriodEnd ? t("endsLabel") : t("renewsLabel")}
+            </dt>
+            <dd className="text-ui-sm text-vellum">
+              {format.dateTime(new Date(summary.renewsAt), {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </dd>
+          </div>
+        ) : null}
       </dl>
 
       <p className="mt-4 text-ui-sm text-vellum-3">
@@ -137,27 +168,22 @@ export function Credits() {
         })}
       </p>
 
-      {offers.length > 0 || summary.purchasable ? (
+      {offers.length > 0 || summary.manageable ? (
         <div className="mt-5 flex flex-wrap items-center gap-3">
-          {offers.map((plan) => (
-            <Button
-              key={plan.id}
-              disabled={leaving}
-              onClick={() =>
-                void leave(() =>
-                  startCheckout(plan.id as "apprenti" | "arpenteur"),
-                )
-              }
-            >
-              {t("upgradeTo", {
-                plan: t(`plan.${plan.id}`),
-                credits: plan.monthly,
-              })}
+          {/* Un seul bouton vers la page de tarifs, et non un par palier.
+              Empilés, les paliers se comparaient mal et l'écran de compte
+              devenait une page de vente ; la comparaison est le travail de
+              /tarifs, qui la fait déjà en colonnes. */}
+          {offers.length > 0 ? (
+            <Button as={Link} href="/tarifs">
+              {t("changePlan")}
             </Button>
-          ))}
+          ) : null}
 
-          {/* Le portail n'a de sens qu'avec un abonnement à gérer. */}
-          {summary.plan !== "free" ? (
+          {/* Dès qu'un espace de facturation existe, et non seulement sur un
+              palier payant : un joueur revenu au palier libre garde ses
+              factures et son moyen de paiement, et doit pouvoir les relire. */}
+          {summary.manageable ? (
             <Button
               variant="secondary"
               disabled={leaving}
@@ -167,10 +193,6 @@ export function Credits() {
             </Button>
           ) : null}
         </div>
-      ) : null}
-
-      {offers.length > 0 ? (
-        <p className="mt-3 text-caption text-vellum-3">{t("priceAtCheckout")}</p>
       ) : null}
     </section>
   );

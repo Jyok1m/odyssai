@@ -8,6 +8,10 @@
  *
  * Le rapport entre un credit et son cout reel se regle ici, sans toucher a
  * Stripe : les prix vendus ne bougent pas quand le modele change.
+ *
+ * Le bareme reste en code parce que c'est une regle de jeu : ce qu'un tour
+ * coute en credits ne se negocie pas par client. Les paliers, eux, vivent en
+ * base et s'editent depuis le tableau de bord d'administration.
  */
 export const CREDIT_COSTS = {
   /** L'unite de reference. */
@@ -31,42 +35,62 @@ export function creditsFor(action: CreditAction): number {
   return CREDIT_COSTS[action];
 }
 
-export const PLANS = ['free', 'apprenti', 'arpenteur'] as const;
-
-export type PlanId = (typeof PLANS)[number];
-
-export interface Plan {
-  id: PlanId;
-  /** Credits rendus a chaque periode. */
-  monthly: number;
-  /**
-   * Accorde une seule fois, a l'ouverture du compte. Couvre la generation du
-   * premier monde : c'est ce qui permet de voir ce qu'on achete avant de
-   * payer.
-   */
-  welcome: number;
-  /** Faux pour le palier libre, qui n'a pas de prix chez Stripe. */
-  billed: boolean;
-}
+/**
+ * Le palier offert. Son slug est une constante du moteur et non une donnee :
+ * c'est celui sur lequel un joueur retombe quand son abonnement s'arrete, et
+ * il doit exister meme si le tableau de bord d'administration a fait le
+ * menage. La table le protege donc de l'archivage et de la suppression.
+ */
+export const FREE_PLAN_SLUG = 'free';
 
 /**
- * Les plans vivent en code, leurs prix chez Stripe, et l'appariement passe par
- * des variables d'environnement : les identifiants de prix different entre le
- * mode test et la production, et une table en base rendrait la base propre a
- * un environnement.
+ * Le bonus des premiers arrives.
  *
- * Les montants des plans payants sont des points de depart, a recaler sur ce
- * que `llm_usage` montrera d'un vrai mois de jeu.
+ * Ce n'est pas un palier : un palier se choisit, celui-ci s'attribue. Le
+ * mettre dans `plans` obligeait la page de tarifs a montrer une offre que
+ * personne ne pouvait prendre.
+ *
+ * Le rang se lit sur la date d'inscription, et non sur un compteur : un
+ * compteur se desynchronise, une date se relit. Les administrateurs ne sont
+ * pas comptes dans les cent places, ils n'ont pas a prendre la place d'un
+ * joueur.
  */
-export const PLAN_BY_ID: Record<PlanId, Plan> = {
-  free: { id: 'free', monthly: 30, welcome: CREDIT_COSTS.worldGeneration, billed: false },
-  apprenti: { id: 'apprenti', monthly: 300, welcome: 0, billed: true },
-  arpenteur: { id: 'arpenteur', monthly: 1000, welcome: 0, billed: true },
-};
+export const FOUNDER_BONUS = {
+  /** Les cent premiers joueurs, administrateurs non compris. */
+  rank: 100,
+  credits: 30,
+} as const;
 
-export function planOf(id: string): Plan {
-  return PLAN_BY_ID[id as PlanId] ?? PLAN_BY_ID.free;
-}
+/**
+ * Les places de l'alpha fermee.
+ *
+ * Au dela, l'api refuse de provisionner un joueur. Keycloak peut bien creer
+ * un compte, le realm n'etant pas pilote d'ici : il n'y aura pas de joueur
+ * derriere, et la connexion echouera de la meme facon.
+ *
+ * Le meme nombre que le rang fondateur, et pour cause : ce sont les memes
+ * personnes. Deux constantes tout de meme, parce qu'ouvrir les portes un jour
+ * ne doit pas retirer leur bonus a ceux qui sont arrives les premiers.
+ *
+ * Les administrateurs ne prennent pas de place : ils doivent pouvoir entrer
+ * pour verifier, et prendre celle d'un joueur serait se servir.
+ */
+export const ALPHA_SEATS = 100;
+
+/**
+ * Bornes d'un palier, appliquees a la creation comme a la modification.
+ *
+ * Une dotation negative rendrait un solde negatif ; une dotation demesuree
+ * viderait le budget sans qu'aucune limite ne s'y oppose. Ces bornes ne sont
+ * pas une opinion sur le prix, seulement le domaine de ce qui a un sens.
+ */
+export const PLAN_LIMITS = {
+  monthlyCreditsMax: 1_000_000,
+  welcomeCreditsMax: 1_000_000,
+  /** Cinquante centimes : en dessous, les frais fixes de Stripe mangent tout. */
+  amountCentsMin: 50,
+  amountCentsMax: 1_000_000,
+} as const;
 
 /**
  * La periode suivante, un mois apres celle en cours.

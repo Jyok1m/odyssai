@@ -63,6 +63,14 @@ model User {
   /// l'application decide qui est maitre du jeu.
   isAdmin Boolean @default(false) @map("is_admin")
 
+  /// Consentement a recevoir des nouvelles. Faux par defaut : un opt-in
+  /// pre-coche n'est pas un consentement.
+  marketingOptIn Boolean @default(false) @map("marketing_opt_in")
+
+  /// L'instant du dernier changement, dans les deux sens. Un consentement se
+  /// prouve, et prouver demande une date ; un retrait se montre aussi bien.
+  marketingOptInAt DateTime? @map("marketing_opt_in_at") @db.Timestamptz(3)
+
   /// Renvoyee a Keycloak au prochain signin.
   locale Locale @default(fr)
 
@@ -71,8 +79,8 @@ model User {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  universe   Universe?
-  encounters Encounter[]
+  universe     Universe?
+  encounters   Encounter[]
   llmUsage     LlmUsage[]
   subscription Subscription?
 
@@ -98,7 +106,7 @@ model GuideQuestion {
   id     String @id @default(uuid(7)) @db.Uuid
   locale Locale
 
-  question String
+  question       String
   /// Empreinte de la question normalisee, pour reperer les formulations qui
   /// reviennent et meritent une entree de FAQ.
   normalizedHash String @map("normalized_hash")
@@ -257,12 +265,131 @@ model Character {
 /// tour, et le recalculer par une somme a chaque fois couterait une agregation
 /// sur une table qui ne fait que grandir. Les deux s'ecrivent toujours dans la
 /// meme transaction, donc ils ne peuvent pas diverger.
+/// Un palier d'abonnement, editable depuis le tableau de bord d'administration.
+///
+/// Les plans vivaient en code, leurs prix chez Stripe. Ils passent en base
+/// parce qu'une dotation ne doit pas demander un deploiement pour bouger.
+/// L'objection d'origine (une table rendrait la base propre a un
+/// environnement) ne tient pas : les deux copies du site ont deja leur propre
+/// Postgres, et un prix du mode test n'a de sens que dans la base de dev.
+/**
+ * Un message du formulaire de contact.
+ *
+ * Ecrit avant l'envoi du courriel : un serveur de messagerie qui refuse ne
+ * doit pas faire perdre le message de quelqu'un qui a pris le temps de
+ * l'ecrire. Sans relation vers `users` : le formulaire est ouvert a qui n'a
+ * pas de compte, et c'est souvent lui qui a le plus besoin d'ecrire.
+ */
+model ContactMessage {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  name    String? @db.VarChar(80)
+  email   String  @db.VarChar(254)
+  subject String  @db.VarChar(120)
+  message String
+
+  /// Faux quand l'envoi a echoue. Le message reste lisible au tableau de bord.
+  delivered Boolean @default(false)
+
+  /// Pose quand l'administrateur l'a marque traite.
+  handledAt DateTime? @map("handled_at") @db.Timestamptz(3)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([handledAt, createdAt(sort: Desc)])
+  @@map("contact_messages")
+}
+
+/**
+ * Les reglages du site, en une seule ligne.
+ *
+ * `id` vaut toujours vrai : une contrainte de verification empeche la seconde
+ * ligne, donc personne n'aura a se demander laquelle fait foi. Ce qui vit ici
+ * se decide un matin et doit s'appliquer le matin meme, sans deploiement.
+ */
+model SiteSettings {
+  id Boolean @id @default(true)
+
+  /// `preregistration` ou `open`. « Complete » n'est pas une phase : c'est le
+  /// constat que les places sont prises, et il se lit dans `users`.
+  alphaPhase String @default("preregistration") @map("alpha_phase") @db.VarChar(16)
+
+  /// Faux pour taire l'annonce sans changer la phase.
+  alphaNotice Boolean @default(true) @map("alpha_notice")
+
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("site_settings")
+}
+
+model Plan {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  /// Ce que `subscriptions.plan` porte, et ce qui voyage dans les contrats
+  /// HTTP. Jamais l'uuid : un identifiant lisible se relit dans un journal.
+  slug String @unique @db.VarChar(24)
+
+  /// Affiche au joueur. Le slug est technique, celui-ci ne l'est pas.
+  name String @db.VarChar(64)
+
+  /// Credits rendus a chaque periode.
+  monthlyCredits Int @map("monthly_credits")
+
+  /// Accorde une seule fois, a l'ouverture du compte. Couvre la generation du
+  /// premier monde sur le palier libre.
+  welcomeCredits Int @default(0) @map("welcome_credits")
+
+  /// Ce que Stripe facture, en centimes. Copie pour l'affichage et pour
+  /// l'historique : la verite du montant reste le prix Stripe, immuable.
+  /// NULL pour un palier gratuit, qui n'a pas de prix.
+  amountCents Int?   @map("amount_cents")
+  currency    String @default("eur") @db.VarChar(3)
+
+  /// Vides tant que le plan n'est pas en vente. Un prix Stripe est immuable :
+  /// changer le montant en cree un nouveau et archive l'ancien, ce que le
+  /// tableau de bord fait pour nous.
+  stripeProductId String? @map("stripe_product_id")
+  stripePriceId   String? @unique @map("stripe_price_id")
+
+  /// Archive plutot que supprime des qu'un abonne l'a porte : le grand livre
+  /// doit rester lisible, et un plan retire de la vente reste servi jusqu'a
+  /// la fin de la periode payee.
+  archived Boolean @default(false)
+
+  /// Le palier mis en avant sur la page de tarifs. Un index partiel unique
+  /// n'en laisse qu'un a la fois : deux ecritures concurrentes passeraient si
+  /// la regle ne vivait que dans le service.
+  recommended Boolean @default(false)
+
+  /// Annonce sans vendre. Un palier archive disparait, celui-ci s'affiche et
+  /// dit qu'il arrive. A distinguer d'un palier sans prix Stripe, qui n'est
+  /// pas vendable faute de configuration : ici c'est une decision.
+  comingSoon Boolean @default(false) @map("coming_soon")
+
+  /// L'ordre d'affichage, choisi a la main : ni le prix ni la dotation ne
+  /// donnent l'ordre voulu quand un plan est offert.
+  sortOrder Int @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  subscriptions Subscription[]
+
+  @@index([archived, sortOrder])
+  @@map("plans")
+}
+
 model Subscription {
   id     String @id @default(uuid(7)) @db.Uuid
   userId String @unique @map("user_id") @db.Uuid
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  plan   String @default("free") @db.VarChar(24)
+  /// Le slug du palier, et non son uuid : c'est lui qui voyage dans les
+  /// contrats HTTP et se relit dans un journal. La cle etrangere empeche de
+  /// supprimer un plan que quelqu'un porte encore.
+  plan    String @default("free") @db.VarChar(24)
+  planRef Plan   @relation(fields: [plan], references: [slug], onUpdate: Cascade)
+
   status String @default("active") @db.VarChar(24)
 
   credits Int @default(0)
@@ -300,7 +427,7 @@ model CreditEntry {
   /// Negatif pour un debit, positif pour une attribution ou un remboursement.
   delta Int
 
-  /// grant, welcome, turn, character, world, refund, adjustment.
+  /// grant, welcome, founder, turn, character, world, refund, adjustment.
   reason String @db.VarChar(24)
 
   /// Ce a quoi l'ecriture se rattache : un univers, un tour, une facture.

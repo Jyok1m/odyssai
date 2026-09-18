@@ -5,6 +5,7 @@ import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { AdminLink } from "@/components/auth/admin-link";
 import { AuthMenu } from "@/components/auth/auth-menu";
 import { OdyssaiLogo } from "@/components/brand/odyssai-logo";
 import { Link } from "@/i18n/navigation";
@@ -17,6 +18,7 @@ const NAV_ITEMS = [
   { key: "universes", href: "/univers" },
   { key: "multiverse", href: "/multivers" },
   { key: "lore", href: "/lore" },
+  { key: "pricing", href: "/tarifs" },
 ] as const;
 
 export function SiteHeader() {
@@ -46,7 +48,9 @@ export function SiteHeader() {
           </button>
         </div>
 
-        <div className="hidden lg:flex lg:gap-x-10">
+        {/* Un cran plus serre depuis que Tarifs s'y ajoute : a dix, la
+            navigation touchait le groupe d'actions sur un portable. */}
+        <div className="hidden lg:flex lg:gap-x-7">
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.key}
@@ -58,7 +62,12 @@ export function SiteHeader() {
           ))}
         </div>
 
-        <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:gap-x-4">
+        <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:gap-x-3">
+          <AdminLink />
+          {/* Les actions ne sont pas des pages : sans cette separation, le
+              dernier lien de navigation et le premier bouton se lisaient
+              comme une suite d'onglets. */}
+          <span aria-hidden="true" className="h-5 w-px bg-line" />
           <LocaleSwitcher />
           <AuthMenu />
         </div>
@@ -104,8 +113,9 @@ export function SiteHeader() {
                   </Link>
                 ))}
               </div>
-              <div className="py-6">
+              <div className="space-y-3 py-6">
                 <AuthMenu size="md" stacked />
+                <AdminLink size="md" stacked />
               </div>
               <div className="py-6">
                 <LocaleSwitcher

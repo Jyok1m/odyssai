@@ -4,14 +4,17 @@ import request from 'supertest';
 import { App } from 'supertest/types.js';
 import Stripe from 'stripe';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { CREDIT_COSTS, planOf } from '@odyssai/engine';
+import { CREDIT_COSTS } from '@odyssai/engine';
 import { PRISMA } from './../src/prisma/prisma.module.js';
 import { REDIS } from './../src/redis/redis.module.js';
 import { FakeRedis } from './../src/auth/testing/doubles.js';
 import {
+  PLAN_FIXTURES,
   makeOnboardingPrisma,
   type OnboardingStore,
 } from './../src/onboarding/testing/doubles.js';
+
+const APPRENTI = PLAN_FIXTURES.find((plan) => plan.slug === 'apprenti')!;
 
 const SECRET = 'whsec_secret_e2e';
 
@@ -183,7 +186,7 @@ describe('Facturation (e2e)', () => {
     expect((await send()).status).toBe(200);
 
     const subscription = store.subscriptions![0]!;
-    expect(subscription.credits).toBe(planOf('apprenti').monthly);
+    expect(subscription.credits).toBe(APPRENTI.monthlyCredits);
     expect(subscription.periodEnd.toISOString()).toBe('2026-04-20T09:00:00.000Z');
     expect(store.creditEntries).toHaveLength(1);
   });

@@ -53,8 +53,11 @@ export function LocaleSwitcher({
             onClick={onNavigate}
             className={[
               "rounded-control px-2 py-1 text-ui-sm font-medium transition-colors",
+              // La langue courante se marque par le contraste, pas par un
+              // fond : a cote du bouton du tableau de bord, deux pastilles
+              // pleines se disputaient l'oeil sans rien hierarchiser.
               isActive
-                ? "bg-mist text-vellum"
+                ? "text-vellum"
                 : "text-vellum-3 hover:text-vellum",
             ].join(" ")}
           >

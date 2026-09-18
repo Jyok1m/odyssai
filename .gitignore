@@ -22,3 +22,15 @@ skills-lock.json
 *.log
 .DS_Store
 .idea
+
+# Chiffrage de la tarification, propre au poste : il porte des hypotheses
+# fiscales et une facture de serveur qui n'ont rien a faire dans le depot.
+odyssai-tarifs.xlsx
+
+# Mesure du cout reel d'une generation et de quatorze tours. Il consomme des
+# appels payants a chaque execution, et son entree n'est donc pas dans le
+# package.json : se lance a la main, voir l'en-tete du fichier.
+apps/api/scripts/measure-generation.ts
+
+# HOME du conteneur de test de la CI (corepack, cache pnpm).
+.ci-home/
