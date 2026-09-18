@@ -154,6 +154,25 @@ export class TurnController {
       if (seen.language && seen.language !== 'fr') locale = 'en';
     }
 
+    /**
+     * Une ouverture ne vaut que pour une partie qui n'a pas commence.
+     *
+     * Sans cette garde, un rechargement de page en rejouerait une, et chaque
+     * fois pour un credit. C'est la table qui tranche, pas l'ecran : lui peut
+     * toujours demander, elle seule sait si quelque chose a deja ete joue.
+     */
+    if (request.kind === 'open') {
+      const played = await this.prisma.turn.count({
+        where: { universeId: world.universeId },
+      });
+      if (played > 0) {
+        throw new HttpException(
+          { code: 'already_started' },
+          HttpStatus.CONFLICT,
+        );
+      }
+    }
+
     const verdict = await this.limits.consume(user.id);
     if (!verdict.allowed) {
       res.setHeader('Retry-After', String(verdict.retryAfterSeconds ?? 60));
@@ -164,6 +183,7 @@ export class TurnController {
     }
 
     const fate = request.kind === 'fate';
+    const opening = request.kind === 'open';
     const said = request.kind === 'say' ? request.content : '';
 
     // Debit avant tout appel : une reserve vide refuse le tour sans rien
@@ -190,16 +210,19 @@ export class TurnController {
     const band = bandOf(die);
 
     // Ecrit avant l'appel : une coupure en cours de reponse ne doit pas faire
-    // perdre au joueur ce qu'il a tape.
-    await this.prisma.conversationMessage.create({
-      data: {
-        universeId: world.universeId,
-        channel: CHANNEL,
-        role: 'user',
-        seq,
-        content: fate ? "Je m'en remets au sort." : said,
-      },
-    });
+    // perdre au joueur ce qu'il a tape. Rien a ecrire a l'ouverture, ou la
+    // reponse du meneur prend le premier rang.
+    if (!opening) {
+      await this.prisma.conversationMessage.create({
+        data: {
+          universeId: world.universeId,
+          channel: CHANNEL,
+          role: 'user',
+          seq,
+          content: fate ? "Je m'en remets au sort." : said,
+        },
+      });
+    }
 
     // A partir d'ici, plus aucune exception ne sort : seulement du SSE.
     this.openStream(res);
@@ -227,7 +250,7 @@ export class TurnController {
         llm: this.llm,
         config: this.config.model,
         locale,
-        context: { ...world, ...memory, band, fate },
+        context: { ...world, ...memory, band, fate, opening },
         message: fate ? "Je ne sais pas quoi faire, que le sort decide." : said,
         trace: {
           name: 'turn',
@@ -277,7 +300,7 @@ export class TurnController {
             universeId: world.universeId,
             channel: CHANNEL,
             role: 'assistant',
-            seq: seq + 1,
+            seq: opening ? seq : seq + 1,
             content: answer,
           },
         }),

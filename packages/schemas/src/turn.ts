@@ -28,6 +28,15 @@ export const TurnRequestSchema = z.discriminatedUnion('kind', [
     content: z.string().trim().min(1).max(TURN_MESSAGE_MAX_CHARS),
   }),
   z.object({ kind: z.literal('fate') }),
+  /**
+   * La premiere scene, jouee par le meneur sans que le joueur ait rien dit.
+   *
+   * Sans elle le joueur arrive devant un champ vide et doit deviner qu'il
+   * commence : c'est le meneur qui ouvre une partie, pas celui qui la joue.
+   * L'api la refuse des qu'un tour existe, sinon elle se rejouerait a chaque
+   * rechargement, et chaque fois pour un credit.
+   */
+  z.object({ kind: z.literal('open') }),
 ]);
 
 export type TurnRequest = z.infer<typeof TurnRequestSchema>;
