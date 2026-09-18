@@ -5,6 +5,7 @@ import { AdminModule } from './admin/admin.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { BillingModule } from './billing/billing.module.js';
 import { ConfigModule } from './config/config.module.js';
+import { AlphaModule } from './alpha/alpha.module.js';
 import { ErasureModule } from './erasure/erasure.module.js';
 import { ModerationModule } from './moderation/moderation.module.js';
 import { GuideModule } from './guide/guide.module.js';
@@ -28,6 +29,7 @@ import { UsageModule } from './usage/usage.module.js';
     CreditsModule,
     BillingModule,
     AdminModule,
+    AlphaModule,
     ErasureModule,
     AuthModule,
     GuideModule,

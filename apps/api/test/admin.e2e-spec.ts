@@ -106,6 +106,8 @@ describe('Tableau de bord (e2e)', () => {
     ['get', '/admin/users'],
     ['get', '/admin/plans'],
     ['post', '/admin/plans'],
+    ['get', '/admin/alpha'],
+    ['patch', '/admin/alpha'],
   ])('refuse %s %s a un joueur ordinaire', async (method, path) => {
     harness = await boot(false);
 

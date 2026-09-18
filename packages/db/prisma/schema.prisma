@@ -264,6 +264,28 @@ model Character {
 /// L'objection d'origine (une table rendrait la base propre a un
 /// environnement) ne tient pas : les deux copies du site ont deja leur propre
 /// Postgres, et un prix du mode test n'a de sens que dans la base de dev.
+/**
+ * Les reglages du site, en une seule ligne.
+ *
+ * `id` vaut toujours vrai : une contrainte de verification empeche la seconde
+ * ligne, donc personne n'aura a se demander laquelle fait foi. Ce qui vit ici
+ * se decide un matin et doit s'appliquer le matin meme, sans deploiement.
+ */
+model SiteSettings {
+  id Boolean @id @default(true)
+
+  /// `preregistration` ou `open`. « Complete » n'est pas une phase : c'est le
+  /// constat que les places sont prises, et il se lit dans `users`.
+  alphaPhase String @default("preregistration") @map("alpha_phase") @db.VarChar(16)
+
+  /// Faux pour taire l'annonce sans changer la phase.
+  alphaNotice Boolean @default(true) @map("alpha_notice")
+
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("site_settings")
+}
+
 model Plan {
   id String @id @default(uuid(7)) @db.Uuid
 

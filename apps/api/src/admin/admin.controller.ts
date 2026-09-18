@@ -18,12 +18,15 @@ import type { User } from '@odyssai/db';
 import {
   AdjustCreditsRequestSchema,
   CreatePlanRequestSchema,
+  UpdateAlphaRequestSchema,
   UpdatePlanRequestSchema,
   type AdminOverview,
   type AdminPlan,
   type AdminUserDetail,
   type AdminUserPage,
+  type AlphaStatus,
 } from '@odyssai/schemas';
+import { AlphaService } from '../alpha/alpha.service.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
 import { BillingService } from '../billing/billing.service.js';
@@ -53,6 +56,7 @@ export class AdminController {
     private readonly admin: AdminService,
     private readonly plans: AdminPlansService,
     private readonly billing: BillingService,
+    private readonly alpha: AlphaService,
   ) {}
 
   @Get('overview')
@@ -107,6 +111,20 @@ export class AdminController {
     await this.guarded(() =>
       this.billing.cancelSubscription(user.stripeSubscriptionId!),
     );
+  }
+
+  /**
+   * L'etat de l'alpha. La phase et l'annonce s'ecrivent, les places se lisent :
+   * un administrateur ne doit pas pouvoir annoncer ce qui n'est plus vrai.
+   */
+  @Get('alpha')
+  alphaStatus(): Promise<AlphaStatus> {
+    return this.alpha.status();
+  }
+
+  @Patch('alpha')
+  updateAlpha(@Body() body: unknown): Promise<AlphaStatus> {
+    return this.alpha.update(UpdateAlphaRequestSchema.parse(body));
   }
 
   @Get('plans')
