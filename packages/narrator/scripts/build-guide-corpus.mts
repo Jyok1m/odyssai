@@ -27,6 +27,9 @@ const PAGES = [
   'Multiverse',
   'Lore',
   'Glossary',
+  // « C'est qui derriere ce site » se demande avant de confier une adresse a
+  // un jeu en alpha, et personne ne devrait avoir a chercher la reponse.
+  'About',
   // Les tarifs sont la premiere question d'un visiteur. Seul l'editorial y est
   // lu : les montants vivent chez Stripe et les dotations en base, donc le
   // guide explique ce qu'est un credit sans jamais annoncer un prix.
@@ -40,6 +43,7 @@ const PAGE_TITLES: Record<Locale, Record<(typeof PAGES)[number], string>> = {
     Multiverse: 'Multivers',
     Lore: 'Lore General',
     Glossary: 'Glossaire',
+    About: 'A propos',
     Pricing: 'Tarifs',
   },
   en: {
@@ -48,6 +52,7 @@ const PAGE_TITLES: Record<Locale, Record<(typeof PAGES)[number], string>> = {
     Multiverse: 'Multiverse',
     Lore: 'General Lore',
     Glossary: 'Glossary',
+    About: 'About',
     Pricing: 'Pricing',
   },
 };

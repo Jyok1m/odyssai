@@ -22,6 +22,7 @@ export const routing = defineRouting({
     "/lore": { fr: "/lore", en: "/lore" },
     "/tarifs": { fr: "/tarifs", en: "/pricing" },
     "/glossaire": { fr: "/glossaire", en: "/glossary" },
+    "/a-propos": { fr: "/a-propos", en: "/about" },
     "/conditions": { fr: "/conditions", en: "/terms" },
     "/contact": { fr: "/contact", en: "/contact" },
     "/mentions-legales": { fr: "/mentions-legales", en: "/legal-notice" },

@@ -23,7 +23,8 @@
     "onThisPage": "On this page",
     "pricing": "Pricing",
     "terms": "Terms and conditions",
-    "contact": "Contact"
+    "contact": "Contact",
+    "about": "About"
   },
   "Hero": {
     "badge": "Private alpha in the works.",
@@ -87,9 +88,9 @@
     "alphaFullBody": "All hundred alpha seats are taken. No game account was created, and there is nothing to retry: a wider opening will come, and it will be announced here.",
     "alphaFullClose": "Dismiss this message",
     "noticePreTitle": "Pre-registration is open.",
-    "noticePreBody": "The alpha will start with {seats} players, and {remaining, plural, =0 {no seats remain} one {one seat remains} other {# seats remain}}.",
+    "noticePreBody": "{remaining, plural, =0 {no seats remain} one {one seat remains} other {# seats remaining}}.",
     "noticeOpenTitle": "The alpha is open.",
-    "noticeOpenBody": "It welcomes {seats} players, and {remaining, plural, =0 {no seats remain} one {one seat remains} other {# seats remain}}.",
+    "noticeOpenBody": "{remaining, plural, =0 {no seats remain} one {one seat remains} other {# seats remaining}}.",
     "noticeFullTitle": "The alpha is full.",
     "noticeFullBody": "All {seats} seats are taken. A wider opening will come, and it will be announced here."
   },
@@ -116,7 +117,11 @@
     "signedOut": "Sign in to see your account.",
     "loading": "Loading.",
     "errorUnreachable": "The API is not answering. Check that it is running, and that you are on the usual address of the site.",
-    "errorSignedOut": "Your session has expired. Sign in again, what you typed is kept."
+    "errorSignedOut": "Your session has expired. Sign in again, what you typed is kept.",
+    "optInTitle": "Hear about what is next",
+    "optInLabel": "I want to be told when OdyssAI moves forward.",
+    "optInHint": "A few messages a year at most: an opening, a milestone. You can untick this at any time, and your address is used for nothing else. See the <privacy>privacy policy</privacy>.",
+    "optInFailed": "Your choice could not be saved. Try again in a moment."
   },
   "Billing": {
     "title": "Your reserve",
@@ -547,6 +552,54 @@
       {
         "term": "Great arc",
         "meaning": "An event that touches every world at the same time."
+      }
+    ]
+  },
+  "About": {
+    "metaTitle": "About",
+    "metaDescription": "Who makes OdyssAI, why, and where the project stands: a closed alpha for a hundred players, built by an independent engineer.",
+    "lead": "A game made by one person, not a studio. Here is who, why, and where things stand.",
+    "intro": [
+      "OdyssAI is designed and built by Joachim Alexandre Jasmin, an independent software engineer, alone. No team, no funding round, no roadmap imposed from outside."
+    ],
+    "sections": [
+      {
+        "title": "Who makes OdyssAI",
+        "body": [
+          "Joachim Alexandre Jasmin is an independent software engineer. His daily work covers full-stack development, infrastructure and applied AI, and he teaches those subjects to beginners and experienced developers alike.",
+          "OdyssAI is a personal project. He writes the code, the texts and the infrastructure, and he answers the messages sent from the Contact page himself.",
+          "The site's publisher, legal status and contact details are in the legal notice."
+        ]
+      },
+      {
+        "title": "Why this game",
+        "body": [
+          "Role-playing needs a table, a game master, and an evening when everyone is free. Plenty of people have carried a world in their head for years without ever lining up those three things.",
+          "OdyssAI starts there: a game master always available, a world that belongs to you, and sessions that remember what you did. The multiverse comes next, when your character crosses a rift and goes to live in someone else's world."
+        ]
+      },
+      {
+        "title": "How it is built",
+        "body": [
+          "Three principles guide the code, and they show in the pages of this site.",
+          "The model tells, the code decides. No state change comes from the generated text: a story claiming the opposite of a rule does not change it.",
+          "Your world owes nothing to anyone. The works you cite as inspiration serve to extract themes, and three independent checks keep a borrowed name from surviving into the generated world.",
+          "What you write is yours. You can erase your account and your worlds whenever you want, and whatever would be kept is described on the Privacy page."
+        ]
+      },
+      {
+        "title": "Where the project stands",
+        "body": [
+          "OdyssAI is in closed alpha, limited to a hundred players. Pre-registration opens and closes with the seats available, and the banner at the top of the site shows how many are left.",
+          "An alpha is unstable by nature: features change, others disappear, and a technical change can lose a universe. That is the price of coming in early, and it is stated in the terms and conditions.",
+          "There is no release date. It would be made up."
+        ]
+      },
+      {
+        "title": "Writing to us",
+        "body": [
+          "The Contact page sends a message straight through, with or without an account. A question, a bug, an idea, a request about your data: everything is read."
+        ]
       }
     ]
   },

@@ -20,6 +20,7 @@ const PATHS: { href: Pathname; priority: number }[] = [
   // que les pages de contenu, pas celle des mentions legales.
   { href: "/tarifs", priority: 0.8 },
   { href: "/glossaire", priority: 0.5 },
+  { href: "/a-propos", priority: 0.6 },
   // Faible priorite, mais presentes : elles sont obligatoires.
   { href: "/conditions", priority: 0.3 },
   { href: "/contact", priority: 0.4 },
