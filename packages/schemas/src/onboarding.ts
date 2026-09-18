@@ -264,6 +264,12 @@ export const CharacterStreamEventSchema = z.discriminatedUnion('type', [
     type: z.literal('done'),
     turnsLeft: z.number().int().nonnegative(),
     canExtract: z.boolean(),
+    /**
+     * Le joueur a demande sa fiche : l'ecran la dresse sans attendre un clic.
+     * Jamais vrai tant que `canExtract` est faux, la conversation n'ayant alors
+     * pas de quoi remplir quoi que ce soit.
+     */
+    sheet: z.boolean(),
   }),
   z.object({
     type: z.literal('error'),

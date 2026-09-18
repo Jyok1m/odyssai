@@ -187,10 +187,14 @@ export class CharacterController {
       });
 
       const turns = await this.characters.turnsUsed(universeId);
+      const { canExtract } = await this.characters.conversation(universeId);
       this.write(res, {
         type: 'done',
         turnsLeft: Math.max(0, CHARACTER_TURNS_MAX - turns),
-        canExtract: (await this.characters.conversation(universeId)).canExtract,
+        canExtract,
+        // Le marqueur ne vaut demande que si la fiche est extractible : pose
+        // trop tot, il ferait appeler une extraction que l'api refuserait.
+        sheet: canExtract && turn.sheetRequested(),
       });
     } catch (error: unknown) {
       this.logger.warn(`conversation de personnage en echec : ${String(error)}`);

@@ -6,11 +6,16 @@ import {
 } from '@odyssai/schemas';
 import {
   CHARACTER_PROMPT,
+  CHARACTER_SHEET_MARKER,
   type ConversationTurn,
 } from '../prompts/character/v1.js';
+import { splitTail } from '../turn/split-tail.js';
 import { CHARACTER_EXTRACT_PROMPT } from '../prompts/character-extract/v1.js';
 
-export { CHARACTER_OPENING } from '../prompts/character/v1.js';
+export {
+  CHARACTER_OPENING,
+  CHARACTER_SHEET_MARKER,
+} from '../prompts/character/v1.js';
 export type { ConversationTurn };
 
 export const CHARACTER_PROMPT_VERSION = CHARACTER_PROMPT.id;
@@ -38,6 +43,7 @@ export interface CharacterUsage {
   model?: string;
   inputTokens?: number;
   outputTokens?: number;
+  reasoningTokens?: number;
   costUsd?: number;
 }
 
@@ -52,18 +58,21 @@ export function buildCharacterMessages(
 /**
  * Un tour de conversation. Le texte est rendu au fil de l'eau, l'usage n'est
  * connu qu'a la fin : l'appelant lit `usage()` une fois le flux epuise.
+ *
+ * Le marqueur de fiche est retire du texte par `splitTail`, donc ni diffuse ni
+ * enregistre : ce qui reste est la phrase adressee au joueur, et l'appelant lit
+ * `sheetRequested()` une fois le flux epuise pour savoir s'il faut la dresser.
  */
 export function converseCharacter(request: CharacterTurnRequest): {
   chunks: AsyncIterable<string>;
+  sheetRequested: () => boolean;
   usage: () => CharacterUsage;
 } {
   const { llm, config, locale, history, message, signal, trace, onTraced } =
     request;
 
-  const collected: CharacterUsage = {};
-
-  async function* read(): AsyncIterable<string> {
-    for await (const event of llm.streamChat({
+  const split = splitTail(
+    llm.streamChat({
       model: config.model,
       messages: buildCharacterMessages(locale, history, message),
       maxOutputTokens: config.maxOutputTokens,
@@ -72,13 +81,15 @@ export function converseCharacter(request: CharacterTurnRequest): {
       signal,
       trace,
       onTraced,
-    })) {
-      if (event.type === 'text') yield event.text;
-      if (event.type === 'usage') absorb(collected, event);
-    }
-  }
+    }),
+    CHARACTER_SHEET_MARKER,
+  );
 
-  return { chunks: read(), usage: () => collected };
+  return {
+    chunks: split.chunks,
+    sheetRequested: split.seen,
+    usage: () => split.usage(),
+  };
 }
 
 function absorb(

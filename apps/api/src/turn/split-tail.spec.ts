@@ -10,7 +10,12 @@ async function* stream(...texts: string[]): AsyncIterable<LlmStreamEvent> {
 async function drain(split: ReturnType<typeof splitTail>) {
   let prose = '';
   for await (const chunk of split.chunks) prose += chunk;
-  return { prose, tail: split.tail(), usage: split.usage() };
+  return {
+    prose,
+    tail: split.tail(),
+    seen: split.seen(),
+    usage: split.usage(),
+  };
 }
 
 describe('decoupage en queue', () => {
@@ -83,6 +88,28 @@ describe('decoupage en queue', () => {
 
     expect(prose).toBe('');
     expect(tail).toBe('{}');
+  });
+
+  /**
+   * Le cas du marqueur de fiche : il ne porte rien, il signale. Une queue vide
+   * ne dit donc pas s'il est passe, et c'est `seen` qui tranche.
+   */
+  it('signale un marqueur qui ne laisse rien derriere lui', async () => {
+    const { prose, tail, seen } = await drain(
+      splitTail(stream('Je dresse ta fiche. ', '[[FI', 'CHE]]'), '[[FICHE]]'),
+    );
+
+    expect(prose).toBe('Je dresse ta fiche. ');
+    expect(tail).toBe('');
+    expect(seen).toBe(true);
+  });
+
+  it('ne signale rien quand le marqueur n arrive pas', async () => {
+    const { seen } = await drain(
+      splitTail(stream('Quel age a-t-il ?'), '[[FICHE]]'),
+    );
+
+    expect(seen).toBe(false);
   });
 
   it('remonte l usage, connu seulement a la fin', async () => {

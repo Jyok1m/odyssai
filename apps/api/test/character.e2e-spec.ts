@@ -225,6 +225,50 @@ describe('/onboarding/character (e2e)', () => {
       .expect({ code: 'conversation_over' });
   });
 
+  // Le marqueur est un signal, pas du texte : ni diffuse, ni enregistre.
+  it('demande la fiche sans montrer le marqueur', async () => {
+    const harness = await boot({
+      chunks: ['Je dresse ta fiche. ', '[[FI', 'CHE]]'],
+    });
+
+    let stream: CharacterStreamEvent[] = [];
+    for (let index = 0; index < 3; index += 1) {
+      stream = events((await say(harness.app, `message ${index}`).expect(200)).text);
+    }
+
+    const done = stream.at(-1);
+    expect(done?.type).toBe('done');
+    if (done?.type !== 'done') return;
+    expect(done.sheet).toBe(true);
+
+    const text = stream
+      .filter((event) => event.type === 'delta')
+      .map((event) => event.text)
+      .join('');
+    expect(text).toBe('Je dresse ta fiche. ');
+
+    const last = harness.store.messages.at(-1);
+    expect(last?.role).toBe('assistant');
+    expect(last?.content).toBe('Je dresse ta fiche. ');
+
+    await harness.app.close();
+  });
+
+  // Pose trop tot, il ferait appeler une extraction que l'api refuserait.
+  it('ignore la demande de fiche tant que la conversation est trop courte', async () => {
+    const harness = await boot({ chunks: ['Entendu. ', '[[FICHE]]'] });
+
+    const stream = events((await say(harness.app, 'Vas-y.').expect(200)).text);
+    const done = stream.at(-1);
+
+    expect(done?.type).toBe('done');
+    if (done?.type !== 'done') return;
+    expect(done.canExtract).toBe(false);
+    expect(done.sheet).toBe(false);
+
+    await harness.app.close();
+  });
+
   it('refuse d extraire une conversation trop courte', async () => {
     await say(app, 'Elle s appelle Ael.').expect(200);
 

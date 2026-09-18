@@ -86,6 +86,10 @@ export function CharacterStep({ initial, saving, error, onAdvance }: Props) {
     setStreaming(true);
     streamed.current = "";
 
+    // Le modèle a reconnu une demande de fiche : l'écran la dresse à la fin du
+    // flux plutôt que de renvoyer le joueur au bouton, qu'il vient d'ignorer.
+    let asked = false;
+
     const now = new Date().toISOString();
     setMessages((current) => [
       ...current,
@@ -107,6 +111,7 @@ export function CharacterStep({ initial, saving, error, onAdvance }: Props) {
         if (event.type === "done") {
           setTurnsLeft(event.turnsLeft);
           setCanExtract(event.canExtract);
+          asked = event.sheet;
         }
         if (event.type === "error") setChatError(t("errorGeneric"));
       });
@@ -118,6 +123,10 @@ export function CharacterStep({ initial, saving, error, onAdvance }: Props) {
     } finally {
       setStreaming(false);
     }
+
+    // Après le flux, et non dans son événement : dresser la fiche remplace la
+    // conversation par le formulaire, ce qui n'a de sens qu'une fois lue.
+    if (asked) await draft();
   };
 
   const draft = async () => {

@@ -21,6 +21,12 @@ export interface TailSplit {
   chunks: AsyncIterable<string>;
   /** Ce qui suit le marqueur. Definitif une fois `chunks` epuise. */
   tail: () => string;
+  /**
+   * Vrai si le marqueur est passe. Distinct d'une queue non vide : un marqueur
+   * pose en dernier ne laisse rien derriere lui, et c'est le cas de celui qui
+   * ne sert qu'a signaler, sans rien porter.
+   */
+  seen: () => boolean;
   /** Definitif une fois `chunks` epuise. */
   usage: () => TailUsage;
 }
@@ -61,6 +67,7 @@ export function splitTail(
 ): TailSplit {
   const usage: TailUsage = {};
   let tail = '';
+  let marked = false;
 
   async function* read(): AsyncIterable<string> {
     let buffer = '';
@@ -91,6 +98,7 @@ export function splitTail(
         if (prose) yield prose;
         tail = buffer.slice(at + marker.length);
         past = true;
+        marked = true;
         buffer = '';
         continue;
       }
@@ -107,5 +115,10 @@ export function splitTail(
     if (!past && buffer) yield buffer;
   }
 
-  return { chunks: read(), tail: () => tail, usage: () => usage };
+  return {
+    chunks: read(),
+    tail: () => tail,
+    seen: () => marked,
+    usage: () => usage,
+  };
 }
