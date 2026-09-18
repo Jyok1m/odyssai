@@ -19,6 +19,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useSession } from "@/components/auth/session-provider";
 import { Button } from "@/components/ui/button";
 import { API_BASE_URL } from "@/lib/api";
+import { fetchContactMessages } from "@/lib/contact";
 import { fetchProfile } from "@/lib/profile";
 
 const NAVIGATION = [
@@ -40,6 +41,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
   const [denied, setDenied] = useState(false);
   const [open, setOpen] = useState(false);
+  const [pending, setPending] = useState(0);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -51,6 +53,21 @@ export function AdminShell({ children }: { children: ReactNode }) {
       .catch(() => {
         if (!controller.signal.aborted) setDenied(true);
       });
+
+    return () => controller.abort();
+  }, [session.status]);
+
+  // Le compte des messages a traiter, pour la pastille de la navigation. Un
+  // appel de plus a l'ouverture du tableau de bord : sans lui, il faut entrer
+  // dans l'ecran pour savoir s'il y a quelque chose a lire.
+  useEffect(() => {
+    if (session.status !== "authenticated") return;
+
+    const controller = new AbortController();
+
+    fetchContactMessages({ pending: true }, controller.signal)
+      .then((page) => setPending(page.pending))
+      .catch(() => undefined);
 
     return () => controller.abort();
   }, [session.status]);
@@ -127,6 +144,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <Sidebar
               profile={profile}
               pathname={pathname}
+              pending={pending}
               onNavigate={() => setOpen(false)}
             />
           </DialogPanel>
@@ -134,7 +152,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
       </Dialog>
 
       <div className="hidden xl:fixed xl:inset-y-0 xl:z-50 xl:flex xl:w-72 xl:flex-col">
-        <Sidebar profile={profile} pathname={pathname} />
+        <Sidebar profile={profile} pathname={pathname} pending={pending} />
       </div>
 
       <div className="xl:pl-72">
@@ -167,10 +185,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
 function Sidebar({
   profile,
   pathname,
+  pending,
   onNavigate,
 }: {
   profile: PlayerProfile;
   pathname: string;
+  /** Messages a traiter, pour la pastille. Zero n'en affiche aucune. */
+  pending: number;
   /** Fourni par la version mobile seule : celle de bureau ne se ferme pas. */
   onNavigate?: () => void;
 }) {
@@ -212,7 +233,15 @@ function Sidebar({
                       current ? "text-accent" : "text-vellum-3 group-hover:text-vellum-2",
                     ].join(" ")}
                   />
-                  {item.name}
+                  <span className="flex-1">{item.name}</span>
+
+                  {/* Une pastille seulement quand il y a quelque chose : un
+                      zero permanent cesse d'etre regarde au bout d'un jour. */}
+                  {item.href === "/admin/messages" && pending > 0 ? (
+                    <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-tag font-medium text-on-accent">
+                      {pending}
+                    </span>
+                  ) : null}
                 </Link>
               </li>
             );

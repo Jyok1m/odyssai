@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 /**
@@ -34,31 +35,80 @@ export function Page({
   );
 }
 
+/**
+ * Des cartes separees, et non un bloc segmente par des filets.
+ *
+ * Le motif precedent collait quatre chiffres dans un seul cadre avec un
+ * `gap-px` colore : lisible, mais rien ne s'y distinguait et rien n'y etait
+ * cliquable. Separees, elles peuvent porter une icone, un lien, et reagir au
+ * survol quand elles menent quelque part.
+ */
 export function StatGrid({ children }: { children: ReactNode }) {
   return (
-    <dl className="grid grid-cols-1 gap-px overflow-hidden rounded-card border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
+    <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {children}
     </dl>
   );
 }
 
+/** Les teintes d'icone disponibles. Une par nature de chiffre, pas au hasard. */
+const STAT_TONES = {
+  accent: "bg-accent/12 text-accent",
+  brass: "bg-brass/12 text-brass",
+  arcane: "bg-arcane/12 text-arcane",
+  verdigris: "bg-verdigris/12 text-verdigris",
+} as const;
+
 export function Stat({
   name,
   value,
   unit,
+  icon,
+  tone = "accent",
+  href,
 }: {
   name: string;
   value: string;
   unit?: string;
+  icon?: ReactNode;
+  tone?: keyof typeof STAT_TONES;
+  /** Rend la carte cliquable. Absent, elle reste un simple chiffre. */
+  href?: string;
 }) {
+  const body = (
+    <>
+      {icon ? (
+        <span
+          aria-hidden="true"
+          className={`inline-flex size-9 shrink-0 items-center justify-center rounded-control ${STAT_TONES[tone]}`}
+        >
+          {icon}
+        </span>
+      ) : null}
+
+      <span className="min-w-0">
+        <dt className="text-caption text-vellum-3">{name}</dt>
+        <dd className="mt-1 flex items-baseline gap-x-2">
+          <span className="font-voice text-subtitle text-vellum">{value}</span>
+          {unit ? <span className="text-ui-sm text-vellum-3">{unit}</span> : null}
+        </dd>
+      </span>
+    </>
+  );
+
+  // Une bordure differente au survol seulement quand la carte mene quelque
+  // part : un chiffre qui reagit sans rien faire se lit comme un bouton casse.
+  const shell = "flex items-center gap-4 rounded-card border border-line bg-abyss px-4 py-5 sm:px-6";
+
+  if (!href) return <div className={shell}>{body}</div>;
+
   return (
-    <div className="bg-abyss px-4 py-5 sm:px-6">
-      <dt className="text-caption text-vellum-3">{name}</dt>
-      <dd className="mt-2 flex items-baseline gap-x-2">
-        <span className="font-voice text-subtitle text-vellum">{value}</span>
-        {unit ? <span className="text-ui-sm text-vellum-3">{unit}</span> : null}
-      </dd>
-    </div>
+    <Link
+      href={href}
+      className={`${shell} transition-colors hover:border-accent hover:bg-mist`}
+    >
+      {body}
+    </Link>
   );
 }
 

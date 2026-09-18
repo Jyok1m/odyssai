@@ -1,5 +1,13 @@
 "use client";
 
+import {
+  BanknotesIcon,
+  CpuChipIcon,
+  CreditCardIcon,
+  GlobeAltIcon,
+  SparklesIcon,
+  UsersIcon,
+} from "@heroicons/react/24/outline";
 import type { AdminOverview } from "@odyssai/schemas";
 import { useEffect, useState } from "react";
 
@@ -56,30 +64,54 @@ export function OverviewView() {
       lead="Les trente derniers jours, sauf mention contraire."
       actions={<StripeBadge data={data} />}
     >
+      {/* Les deux premieres menent la ou on ira de toute facon apres les avoir
+          lues. Les deux suivantes sont des mesures : rien a ouvrir derriere. */}
       <StatGrid>
-        <Stat name="Joueurs" value={String(data.users)} />
+        <Stat
+          name="Joueurs"
+          value={String(data.users)}
+          icon={<UsersIcon className="size-5" />}
+          href="/admin/joueurs"
+        />
         <Stat
           name="Abonnés payants"
           value={String(data.paying)}
           unit={data.users ? `sur ${data.users}` : undefined}
+          icon={<CreditCardIcon className="size-5" />}
+          tone="verdigris"
+          href="/admin/abonnements"
         />
-        <Stat name="Mondes générés" value={String(data.worlds)} />
-        <Stat name="Tours joués" value={String(data.turnsLast30Days)} />
+        <Stat
+          name="Mondes générés"
+          value={String(data.worlds)}
+          icon={<GlobeAltIcon className="size-5" />}
+          tone="arcane"
+        />
+        <Stat
+          name="Tours joués"
+          value={String(data.turnsLast30Days)}
+          icon={<SparklesIcon className="size-5" />}
+          tone="brass"
+        />
       </StatGrid>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <StatGrid>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Stat
             name="Crédits en circulation"
             value={String(data.creditsOutstanding)}
             unit="non consommés"
+            icon={<BanknotesIcon className="size-5" />}
+            tone="verdigris"
           />
           <Stat
             name="Coût des modèles"
             value={data.spentUsdLast30Days.toFixed(2)}
             unit="USD"
+            icon={<CpuChipIcon className="size-5" />}
+            tone="brass"
           />
-        </StatGrid>
+        </div>
 
         <Panel title="Répartition par palier">
           {data.byPlan.length === 0 ? (
