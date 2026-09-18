@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CREDIT_COSTS, creditsFor, nextPeriod, planOf } from '@odyssai/engine';
+import { CREDIT_COSTS, FREE_PLAN_SLUG, PLAN_LIMITS, creditsFor, nextPeriod } from '@odyssai/engine';
 
 describe('bareme', () => {
   it('prend le tour pour unite', () => {
@@ -17,15 +17,21 @@ describe('bareme', () => {
     );
   });
 
-  it('retombe sur le palier libre pour un plan inconnu', () => {
-    expect(planOf('inexistant').id).toBe('free');
+  /**
+   * Les paliers vivent en base depuis le tableau de bord d'administration ;
+   * seul le slug du palier offert reste une constante, parce que c'est celui
+   * sur lequel un abonnement resilie retombe.
+   */
+  it('garde le slug du palier offert en code', () => {
+    expect(FREE_PLAN_SLUG).toBe('free');
   });
 
-  // Le palier libre doit couvrir un monde et une vraie session.
-  it('offre de quoi voir ce qu on achete', () => {
-    const free = planOf('free');
-    expect(free.welcome).toBe(CREDIT_COSTS.worldGeneration);
-    expect(free.monthly).toBeGreaterThanOrEqual(30);
+  // Une dotation negative rendrait un solde negatif, une dotation demesuree
+  // viderait le budget sans qu'aucune limite ne s'y oppose.
+  it('borne ce qu un palier peut valoir', () => {
+    expect(PLAN_LIMITS.monthlyCreditsMax).toBeGreaterThan(CREDIT_COSTS.worldGeneration);
+    // Sous cinquante centimes, les frais fixes de Stripe mangent tout.
+    expect(PLAN_LIMITS.amountCentsMin).toBeGreaterThanOrEqual(50);
   });
 });
 

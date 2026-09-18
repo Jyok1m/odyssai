@@ -73,6 +73,62 @@ interface CreditEntryRow {
   createdAt: Date;
 }
 
+/**
+ * Les paliers, en base depuis qu'ils s'editent au tableau de bord. Le double
+ * en porte les trois que la migration amorce : sans eux, ouvrir un abonnement
+ * n'aurait aucune dotation a servir.
+ */
+interface PlanRow {
+  id: string;
+  slug: string;
+  name: string;
+  monthlyCredits: number;
+  welcomeCredits: number;
+  amountCents: number | null;
+  currency: string;
+  stripeProductId: string | null;
+  stripePriceId: string | null;
+  archived: boolean;
+  sortOrder: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const SEEDED_PLANS: PlanRow[] = [
+  seedPlan('free', 'Libre', 30, 25, null, null, 0),
+  seedPlan('apprenti', 'Apprenti', 300, 0, 500, 'price_apprenti', 1),
+  seedPlan('arpenteur', 'Arpenteur', 1000, 0, 1200, 'price_arpenteur', 2),
+];
+
+function seedPlan(
+  slug: string,
+  name: string,
+  monthlyCredits: number,
+  welcomeCredits: number,
+  amountCents: number | null,
+  stripePriceId: string | null,
+  sortOrder: number,
+): PlanRow {
+  return {
+    id: `plan-${slug}`,
+    slug,
+    name,
+    monthlyCredits,
+    welcomeCredits,
+    amountCents,
+    currency: 'eur',
+    stripeProductId: stripePriceId ? `prod_${slug}` : null,
+    stripePriceId,
+    archived: false,
+    sortOrder,
+    createdAt: new Date('2026-01-01T00:00:00Z'),
+    updatedAt: new Date('2026-01-01T00:00:00Z'),
+  };
+}
+
+/** Sert aux tests qui veulent affirmer une dotation sans la recopier. */
+export const PLAN_FIXTURES = SEEDED_PLANS;
+
 interface StripeEventRow {
   id: string;
   type: string;
@@ -119,6 +175,8 @@ export interface OnboardingStore {
   subscriptions?: SubscriptionRow[];
   creditEntries?: CreditEntryRow[];
   stripeEvents?: StripeEventRow[];
+  /** Absent, les trois paliers amorces par la migration sont servis. */
+  plans?: PlanRow[];
 }
 
 /** `Prisma.DbNull` est un marqueur, pas une valeur : la colonne recoit NULL. */
@@ -483,6 +541,29 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
 
     /** La cle primaire porte l'idempotence des webhooks : un meme identifiant
      * deux fois doit echouer, comme en base. */
+    plan: {
+      findUnique: async ({ where }: any) => {
+        const rows = store.plans ?? SEEDED_PLANS;
+        const found = rows.find((row) =>
+          where.slug !== undefined
+            ? row.slug === where.slug
+            : where.stripePriceId !== undefined
+              ? row.stripePriceId === where.stripePriceId
+              : row.id === where.id,
+        );
+        return found ? { ...found } : null;
+      },
+      findMany: async ({ where }: any = {}) => {
+        const rows = store.plans ?? SEEDED_PLANS;
+        return rows
+          .filter((row) => (where?.archived === false ? !row.archived : true))
+          .filter((row) =>
+            where?.stripePriceId?.not === null ? row.stripePriceId !== null : true,
+          )
+          .map((row) => ({ ...row }));
+      },
+    },
+
     stripeEvent: {
       create: async ({ data }: any) => {
         store.stripeEvents = store.stripeEvents ?? [];

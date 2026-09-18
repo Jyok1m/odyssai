@@ -50,7 +50,7 @@ describe('CORS (e2e)', () => {
 
   // Chaque verbe qu'une route expose. En ajouter un ici sans l'ajouter a
   // CORS_METHODS fait echouer ce test, ce qui est tout l'interet.
-  it.each(['GET', 'POST', 'PUT', 'PATCH'])(
+  it.each(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])(
     'autorise %s depuis le front',
     async (method) => {
       const response = await request(app.getHttpServer())

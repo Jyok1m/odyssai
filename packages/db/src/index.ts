@@ -21,6 +21,7 @@ export type {
   Turn,
   CanonFact,
   LlmUsage,
+  Plan,
   Subscription,
   CreditEntry,
   StripeEvent,

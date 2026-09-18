@@ -24,7 +24,8 @@
     "typecheck": "tsc --noEmit",
     "llm:smoke": "pnpm build && node scripts/llm-smoke.ts",
     "eval:guide": "pnpm build && node scripts/eval-guide.ts",
-    "eval:narration": "pnpm build && node scripts/eval-narration.ts"
+    "eval:narration": "pnpm build && node scripts/eval-narration.ts",
+    "admin:grant": "pnpm build && node scripts/grant-admin.ts"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",

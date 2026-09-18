@@ -44,7 +44,7 @@ export class BillingController {
   /** Sans garde : le bareme n'a rien de personnel, et la page de tarifs doit
    * pouvoir s'afficher avant de s'inscrire. */
   @Get('catalog')
-  catalog(): BillingCatalog {
+  catalog(): Promise<BillingCatalog> {
     return this.billing.catalog();
   }
 

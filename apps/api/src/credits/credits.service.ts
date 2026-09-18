@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { PrismaClient, type Subscription } from '@odyssai/db';
-import { creditsFor, nextPeriod, planOf, type CreditAction } from '@odyssai/engine';
+import { PrismaClient, type Plan, type Subscription } from '@odyssai/db';
+import { FREE_PLAN_SLUG, creditsFor, nextPeriod, type CreditAction } from '@odyssai/engine';
+import { PlansService } from '../plans/plans.service.js';
 import { PRISMA } from '../prisma/prisma.module.js';
 
 /** La reserve est vide : l'action est refusee avant tout appel au modele. */
@@ -32,7 +33,10 @@ export class OutOfCreditsError extends Error {
 export class CreditsService {
   private readonly logger = new Logger(CreditsService.name);
 
-  constructor(@Inject(PRISMA) private readonly prisma: PrismaClient) {}
+  constructor(
+    @Inject(PRISMA) private readonly prisma: PrismaClient,
+    private readonly plans: PlansService,
+  ) {}
 
   /**
    * L'abonnement du joueur, cree au besoin et roule si sa periode est passee.
@@ -124,13 +128,13 @@ export class CreditsService {
   }
 
   private async open(userId: string, now: Date): Promise<Subscription> {
-    const plan = planOf('free');
-    const credits = plan.monthly + plan.welcome;
+    const plan = await this.plans.free();
+    const credits = plan.monthlyCredits + plan.welcomeCredits;
 
     const subscription = await this.prisma.subscription.create({
       data: {
         userId,
-        plan: plan.id,
+        plan: plan.slug,
         credits,
         welcomed: true,
         periodStart: now,
@@ -150,13 +154,20 @@ export class CreditsService {
    * remise a la dotation du plan, pas augmentee. Sans cela un joueur absent
    * six mois reviendrait avec six mois d'avance, et le plan ne bornerait plus
    * rien.
+   *
+   * La dotation est relue en base a chaque roulement : un palier modifie au
+   * tableau de bord s'applique donc a la periode suivante, jamais a celle que
+   * le joueur est en train de vivre.
    */
   private async roll(subscription: Subscription, now: Date): Promise<Subscription> {
-    const plan = planOf(subscription.plan);
-
     // Un abonnement resilie ou impaye retombe au palier libre plutot que de
     // renouveler une dotation qui n'est plus payee.
-    const granted = subscription.status === 'active' ? plan.monthly : planOf('free').monthly;
+    const entitled = subscription.status === 'active';
+    const plan: Plan = entitled
+      ? await this.plans.bySlug(subscription.plan)
+      : await this.plans.free();
+
+    const granted = plan.monthlyCredits;
 
     let start = subscription.periodEnd;
     while (nextPeriod(start) <= now) start = nextPeriod(start);
@@ -168,7 +179,7 @@ export class CreditsService {
           credits: granted,
           periodStart: start,
           periodEnd: nextPeriod(start),
-          plan: subscription.status === 'active' ? subscription.plan : 'free',
+          plan: entitled ? subscription.plan : FREE_PLAN_SLUG,
         },
       });
 

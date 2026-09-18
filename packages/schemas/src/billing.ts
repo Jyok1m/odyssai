@@ -1,17 +1,26 @@
 import { z } from 'zod';
 
 /**
- * Les plans, dupliques ici du moteur parce que `packages/schemas` ne depend de
- * rien : c'est le contrat entre l'api et le navigateur, et un contrat ne doit
- * pas trainer derriere lui les regles du jeu.
+ * Le slug d'un palier.
+ *
+ * Plus une enumeration fermee : les paliers se creent depuis le tableau de
+ * bord d'administration, et leurs slugs ne sont donc pas connus a la
+ * compilation. La forme reste bornee, elle voyage dans des URL et se relit
+ * dans des journaux.
  */
-export const PlanIdSchema = z.enum(['free', 'apprenti', 'arpenteur']);
+export const PlanSlugSchema = z
+  .string()
+  .min(2)
+  .max(24)
+  .regex(/^[a-z][a-z0-9-]*$/, 'minuscules, chiffres et tirets, commencant par une lettre');
 
-export type PlanId = z.infer<typeof PlanIdSchema>;
+export type PlanSlug = z.infer<typeof PlanSlugSchema>;
 
 /** Ce que l'ecran de compte affiche de la reserve. */
 export const BillingSummarySchema = z.object({
-  plan: PlanIdSchema,
+  plan: PlanSlugSchema,
+  /** Le nom affiche du palier, choisi par l'administrateur. */
+  planName: z.string(),
   /** active, canceled, past_due, incomplete... tel que Stripe le dit. */
   status: z.string(),
   credits: z.number().int().nonnegative(),
@@ -39,9 +48,16 @@ export const CreditCostsSchema = z.object({
 export type CreditCosts = z.infer<typeof CreditCostsSchema>;
 
 export const PlanOfferSchema = z.object({
-  id: PlanIdSchema,
+  id: PlanSlugSchema,
+  name: z.string(),
   /** Credits rendus a chaque periode. */
   monthly: z.number().int().nonnegative(),
+  /**
+   * Ce que Stripe facture, en centimes, ou null pour un palier offert. Copie
+   * pour l'affichage : la verite du montant reste le prix Stripe.
+   */
+  amountCents: z.number().int().nonnegative().nullable(),
+  currency: z.string().length(3),
   /**
    * Faux tant que le prix du plan n'est pas configure chez Stripe. L'ecran
    * cache alors l'offre plutot que de proposer un bouton qui echouerait : un
@@ -56,9 +72,6 @@ export type PlanOffer = z.infer<typeof PlanOfferSchema>;
  * Ce qui se vend et ce que cela coute, servi sans session : le bareme n'a rien
  * de personnel, et la page de tarifs doit pouvoir s'afficher avant de
  * s'inscrire.
- *
- * Les montants en euros ne sont pas ici : ils vivent chez Stripe, qui les
- * affiche sur sa propre page. Les recopier ferait deux verites.
  */
 export const BillingCatalogSchema = z.object({
   costs: CreditCostsSchema,
@@ -67,9 +80,9 @@ export const BillingCatalogSchema = z.object({
 
 export type BillingCatalog = z.infer<typeof BillingCatalogSchema>;
 
-/** Les plans payants seulement : on ne souscrit pas au palier libre. */
+/** L'API refuse le palier offert et tout palier archive : elle seule sait. */
 export const CheckoutRequestSchema = z.object({
-  plan: z.enum(['apprenti', 'arpenteur']),
+  plan: PlanSlugSchema,
 });
 
 export type CheckoutRequest = z.infer<typeof CheckoutRequestSchema>;

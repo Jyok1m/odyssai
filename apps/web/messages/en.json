@@ -110,11 +110,6 @@
     "planLabel": "Plan",
     "renewsLabel": "Renews on",
     "endsLabel": "Ends on",
-    "plan": {
-      "free": "Free",
-      "apprenti": "Apprentice",
-      "arpenteur": "Wayfarer"
-    },
     "costs": "A turn costs {turn, plural, one {# credit} other {# credits}}, creating a world {world}.",
     "upgradeTo": "Move to {plan}: {credits} credits a month",
     "manage": "Manage my subscription",

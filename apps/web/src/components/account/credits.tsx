@@ -83,6 +83,11 @@ export function Credits() {
     (plan) => plan.purchasable && plan.id !== summary.plan,
   );
 
+  const price = (cents: number | null, currency: string) =>
+    cents === null
+      ? null
+      : format.number(cents / 100, { style: "currency", currency });
+
   // La jauge peut dépasser sa dotation le premier mois, la bienvenue s'y
   // ajoutant : elle se borne à cent pour cent plutôt que de déborder.
   const filled = summary.monthly
@@ -114,7 +119,10 @@ export function Credits() {
       <dl className="mt-4 space-y-2">
         <div className="flex gap-2">
           <dt className="text-caption text-vellum-3">{t("planLabel")}</dt>
-          <dd className="text-ui-sm text-vellum">{t(`plan.${summary.plan}`)}</dd>
+          {/* Le nom vient de la base : les paliers se creent au tableau de
+              bord, leurs noms ne peuvent donc pas etre des cles de
+              traduction. */}
+          <dd className="text-ui-sm text-vellum">{summary.planName}</dd>
         </div>
         <div className="flex gap-2">
           <dt className="text-caption text-vellum-3">
@@ -143,16 +151,17 @@ export function Credits() {
             <Button
               key={plan.id}
               disabled={leaving}
-              onClick={() =>
-                void leave(() =>
-                  startCheckout(plan.id as "apprenti" | "arpenteur"),
-                )
-              }
+              onClick={() => void leave(() => startCheckout(plan.id))}
             >
-              {t("upgradeTo", {
-                plan: t(`plan.${plan.id}`),
-                credits: plan.monthly,
-              })}
+              {t("upgradeTo", { plan: plan.name, credits: plan.monthly })}
+              {/* Le montant vient de Stripe, recopie a l'affichage : le
+                  bouton ne doit pas envoyer sur une page de paiement dont le
+                  prix serait une surprise. */}
+              {price(plan.amountCents, plan.currency) ? (
+                <span className="text-vellum-2">
+                  {price(plan.amountCents, plan.currency)}
+                </span>
+              ) : null}
             </Button>
           ))}
 

@@ -110,11 +110,6 @@
     "planLabel": "Plan",
     "renewsLabel": "Renouvelée le",
     "endsLabel": "Prend fin le",
-    "plan": {
-      "free": "Libre",
-      "apprenti": "Apprenti",
-      "arpenteur": "Arpenteur"
-    },
     "costs": "Un tour coûte {turn, plural, one {# crédit} other {# crédits}}, la création d'un monde {world}.",
     "upgradeTo": "Passer à {plan} : {credits} crédits par mois",
     "manage": "Gérer mon abonnement",

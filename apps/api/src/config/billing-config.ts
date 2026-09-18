@@ -1,13 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { z } from 'zod';
-import { PLANS, type PlanId } from '@odyssai/engine';
 
 /**
  * Stripe, et rien d'autre.
  *
- * Les plans vivent en code, leurs prix chez Stripe, et l'appariement passe par
- * ces variables : un identifiant de prix differe entre le mode test et la
- * production, et le mettre en base rendrait la base propre a un environnement.
+ * La cle et le secret de webhook, rien d'autre. Les identifiants de prix
+ * vivaient ici : ils sont passes dans la table `plans`, ou le tableau de bord
+ * d'administration les ecrit lui-meme en creant le produit chez Stripe. Les
+ * garder en variable d'environnement obligeait a un deploiement pour mettre un
+ * palier en vente.
  *
  * Tout est optionnel : sans cle, la facturation se tait et le palier libre
  * suffit a jouer. C'est ce qui permet de developper sans compte Stripe.
@@ -30,9 +31,6 @@ const EnvSchema = z
     /** Nommee ainsi parce que c'est le nom deja pose dans le .env du projet. */
     STRIPE_PRIVATE_KEY: z.string().default(''),
     STRIPE_WEBHOOK_SECRET: z.string().default(''),
-
-    STRIPE_PRICE_APPRENTI: z.string().default(''),
-    STRIPE_PRICE_ARPENTEUR: z.string().default(''),
   })
   .superRefine((env, ctx) => {
     const fail = (path: string, message: string) =>
@@ -103,20 +101,5 @@ export class BillingConfig {
 
   get webhookSecret(): string {
     return this.env.STRIPE_WEBHOOK_SECRET;
-  }
-
-  /** L'identifiant de prix d'un plan, ou vide s'il n'est pas configure. */
-  priceOf(plan: PlanId): string {
-    if (plan === 'apprenti') return this.env.STRIPE_PRICE_APPRENTI;
-    if (plan === 'arpenteur') return this.env.STRIPE_PRICE_ARPENTEUR;
-    return '';
-  }
-
-  /** Le chemin inverse : du prix rendu par un webhook vers notre plan. */
-  planOfPrice(priceId: string): PlanId | null {
-    if (!priceId) return null;
-    return (
-      PLANS.find((plan) => plan !== 'free' && this.priceOf(plan) === priceId) ?? null
-    );
   }
 }
