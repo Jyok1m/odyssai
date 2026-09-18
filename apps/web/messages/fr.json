@@ -27,7 +27,7 @@
     "about": "À propos"
   },
   "Hero": {
-    "badge": "Alpha privée en préparation.",
+    "badge": "Alpha privée · 100 places",
     "badgeCta": "En savoir plus",
     "title": "Crée n'importe quel monde. Puis pars visiter ceux des autres.",
     "description": "Chaque joueur façonne son propre monde, guidé par un narrateur IA. Les univers se croisent, échangent personnages et événements, et partagent un même Lore Général. L’IA raconte, le moteur décide.",
@@ -68,7 +68,7 @@
   },
   "Alpha": {
     "closed": "L'alpha privée n'est pas encore ouverte. Reviens bientôt.",
-    "preRegister": "L'alpha n'est pas ouverte. Créer un compte te place sur la liste des premiers joueurs : tu recevras l'invitation et les nouvelles du multivers, rien d'autre.",
+    "preRegister": "L'alpha n'est pas encore ouverte. Créer un compte te met sur la liste d'attente et te réserve 30 crédits : tu recevras ton invitation et les nouvelles du multivers si tu opt-in, rien d'autre.",
     "preRegisterShort": "Rejoindre la liste des premiers joueurs",
     "terms": "En créant un compte, tu acceptes les <terms>conditions générales</terms> et la <privacy>politique de confidentialité</privacy>."
   },

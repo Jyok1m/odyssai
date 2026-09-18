@@ -27,7 +27,7 @@
     "about": "About"
   },
   "Hero": {
-    "badge": "Private alpha in the works.",
+    "badge": "Private Alpha· 100 spots",
     "badgeCta": "Learn more",
     "title": "Build any world you want. Then go and visit everyone else's.",
     "description": "Every player shapes their own world, guided by an AI narrator. Universes cross paths, trade characters and events, and share one common General Lore. The AI tells the story, the engine decides what is true.",
@@ -68,7 +68,7 @@
   },
   "Alpha": {
     "closed": "The private alpha is not open yet. Come back soon.",
-    "preRegister": "The alpha is not open yet. Creating an account puts you on the first-players list: you will get the invitation and news from the multiverse, nothing else.",
+    "preRegister": "The alpha isn't open yet. Create an account to join the waitlist and lock in 30 free credits: you'll get your invite and news from the multiverse if you opt-in, nothing else.",
     "preRegisterShort": "Join the first-players list",
     "terms": "By creating an account, you accept the <terms>terms and conditions</terms> and the <privacy>privacy policy</privacy>."
   },
