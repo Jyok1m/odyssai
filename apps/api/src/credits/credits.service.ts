@@ -9,6 +9,7 @@ import {
 } from '@odyssai/engine';
 import { PlansService } from '../plans/plans.service.js';
 import { PRISMA } from '../prisma/prisma.module.js';
+import { isUniqueViolation } from '../prisma/unique-violation.js';
 
 /** La reserve est vide : l'action est refusee avant tout appel au modele. */
 export class OutOfCreditsError extends Error {
@@ -155,16 +156,38 @@ export class CreditsService {
     const welcome = plan.monthlyCredits + plan.welcomeCredits;
     const bonus = await this.founderBonus(userId);
 
-    const subscription = await this.prisma.subscription.create({
-      data: {
-        userId,
-        plan: plan.slug,
-        credits: welcome + bonus,
-        welcomed: true,
-        periodStart: now,
-        periodEnd: nextPeriod(now),
-      },
-    });
+    /**
+     * Deux requetes du meme joueur arrivent souvent ensemble : l'ecran de
+     * compte lit sa reserve pendant que la page de tarifs lit son palier.
+     * Toutes les deux voient une ligne absente, toutes les deux l'ouvrent, et
+     * `subscriptions.user_id` etant unique, la seconde echouait en cinq cents.
+     *
+     * Celle qui perd relit plutot que de jeter. Rien n'est ecrit deux fois :
+     * la bienvenue appartient a la ligne creee, pas a la tentative.
+     */
+    let subscription: Subscription;
+
+    try {
+      subscription = await this.prisma.subscription.create({
+        data: {
+          userId,
+          plan: plan.slug,
+          credits: welcome + bonus,
+          welcomed: true,
+          periodStart: now,
+          periodEnd: nextPeriod(now),
+        },
+      });
+    } catch (error: unknown) {
+      if (!isUniqueViolation(error)) throw error;
+
+      const existing = await this.prisma.subscription.findUnique({
+        where: { userId },
+      });
+      if (!existing) throw error;
+
+      return existing;
+    }
 
     // Deux ecritures plutot qu'une somme : le grand livre est en ajout seul et
     // se relit des annees apres, quand le bonus n'existera plus. « 80 credits »

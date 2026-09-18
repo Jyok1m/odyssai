@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { PrismaClient } from '@odyssai/db';
+import { Prisma, type PrismaClient } from '@odyssai/db';
 import {
   CREDIT_COSTS,
   FOUNDER_BONUS,
@@ -333,5 +333,57 @@ describe('apres une resiliation', () => {
     expect(entries).toHaveLength(0);
     // Un abonnement resilie ne relit pas son ancien palier.
     expect(plans.bySlug).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Deux requetes du meme joueur qui ouvrent sa reserve en meme temps.
+ *
+ * L'ecran de compte lit sa reserve pendant que la page de tarifs lit son
+ * palier : les deux voient une ligne absente, les deux l'ouvrent, et
+ * `subscriptions.user_id` etant unique, l'une des deux perdait en cinq cents.
+ */
+describe('ouverture concurrente', () => {
+  it('relit la ligne plutot que d echouer', async () => {
+    const existing = { id: 's1', plan: FREE_PLAN_SLUG, credits: 50 };
+
+    const conflict = Object.assign(new Error('duplicate'), {
+      code: 'P2002',
+    });
+    Object.setPrototypeOf(conflict, Prisma.PrismaClientKnownRequestError.prototype);
+
+    const prisma = {
+      subscription: {
+        findUnique: vi
+          .fn()
+          // La lecture d'ouverture ne voit rien, celle du rattrapage voit la
+          // ligne que l'autre requete vient d'ecrire.
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce(existing),
+        create: vi.fn().mockRejectedValue(conflict),
+      },
+      creditEntry: { create: vi.fn() },
+      user: {
+        findUnique: vi.fn().mockResolvedValue({ isAdmin: false, createdAt: new Date() }),
+        count: vi.fn().mockResolvedValue(0),
+      },
+    };
+
+    const plans = {
+      free: vi.fn().mockResolvedValue({
+        slug: FREE_PLAN_SLUG,
+        monthlyCredits: 0,
+        welcomeCredits: 50,
+      }),
+    };
+
+    const service = new CreditsService(
+      prisma as unknown as PrismaClient,
+      plans as unknown as PlansService,
+    );
+
+    await expect(service.ensure('u1')).resolves.toEqual(existing);
+    // Rien n'est credite deux fois : la bienvenue appartient a la ligne creee.
+    expect(prisma.creditEntry.create).not.toHaveBeenCalled();
   });
 });

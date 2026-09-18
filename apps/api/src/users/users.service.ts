@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ALPHA_SEATS } from '@odyssai/engine';
 import { PRISMA } from '../prisma/prisma.module.js';
+import { isUniqueViolation } from '../prisma/unique-violation.js';
 import { Prisma, PrismaClient, type User } from '@odyssai/db';
 
 /** Le pseudo du joueur est deja pose : il ne se choisit qu'une fois. */
@@ -124,6 +125,19 @@ export class UsersService {
     }
   }
 
+  /**
+   * Pose ou retire le consentement, en horodatant le changement.
+   *
+   * La date est ecrite dans les deux sens : un retrait doit se prouver aussi
+   * bien qu'un accord, et c'est la meme colonne qui les porte.
+   */
+  async setMarketingOptIn(userId: string, optIn: boolean): Promise<User> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { marketingOptIn: optIn, marketingOptInAt: new Date() },
+    });
+  }
+
   /** Vrai quand plus aucune place n'est libre. Lecture seule, sans effet. */
   async alphaFull(): Promise<boolean> {
     const taken = await this.prisma.user.count({ where: { isAdmin: false } });
@@ -164,11 +178,4 @@ export class UsersService {
       return user;
     }
   }
-}
-
-function isUniqueViolation(error: unknown): boolean {
-  return (
-    error instanceof Prisma.PrismaClientKnownRequestError &&
-    error.code === 'P2002'
-  );
 }
