@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { FIELD } from "@/components/ui/field";
 import { fetchUsers } from "@/lib/admin";
 
+import { MarketingExport } from "./marketing-export";
 import { UserPanel } from "./user-panel";
 
 /** Assez long pour ne pas interroger à chaque touche, assez court pour suivre. */
@@ -31,6 +32,7 @@ export function UsersView() {
   const [rows, setRows] = useState<AdminUserRow[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [optIn, setOptIn] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -38,7 +40,7 @@ export function UsersView() {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inFlight = useRef<AbortController | null>(null);
 
-  const load = useCallback(async (needle: string, after?: string) => {
+  const load = useCallback(async (needle: string, consented: boolean, after?: string) => {
     inFlight.current?.abort();
     const controller = new AbortController();
     inFlight.current = controller;
@@ -48,7 +50,7 @@ export function UsersView() {
 
     try {
       const page = await fetchUsers(
-        { search: needle || undefined, cursor: after },
+        { search: needle || undefined, optIn: consented || undefined, cursor: after },
         controller.signal,
       );
 
@@ -87,10 +89,17 @@ export function UsersView() {
     return () => controller.abort();
   }, []);
 
+  const onOptIn = (value: boolean) => {
+    setOptIn(value);
+    // Sans delai, contrairement a la recherche : une case ne se tape pas, et
+    // attendre trois cents millisecondes apres un clic se voit.
+    void load(search, value);
+  };
+
   const onSearch = (value: string) => {
     setSearch(value);
     if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => void load(value), SEARCH_DELAY_MS);
+    timer.current = setTimeout(() => void load(value, optIn), SEARCH_DELAY_MS);
   };
 
   // Le détail vient de rendre une ligne à jour : on la remplace sur place
@@ -124,6 +133,22 @@ export function UsersView() {
         />
       </div>
 
+      {/* Le filtre et l'extraction se tiennent cote a cote : on coche pour
+          voir qui a consenti, on extrait ce qu'on vient de voir. */}
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+        <label className="flex items-center gap-2 text-ui-sm text-vellum-2">
+          <input
+            type="checkbox"
+            checked={optIn}
+            onChange={(event) => onOptIn(event.target.checked)}
+            className="size-4 accent-accent"
+          />
+          Consentement aux nouvelles seulement
+        </label>
+
+        <MarketingExport />
+      </div>
+
       <Panel>
         {rows.length === 0 ? (
           <Empty>{loading ? "Lecture." : "Aucun joueur ne correspond."}</Empty>
@@ -151,6 +176,11 @@ export function UsersView() {
                       <span className="flex items-center gap-2 text-vellum">
                         {row.username ?? <em className="text-vellum-3">sans pseudo</em>}
                         {row.isAdmin ? <Badge tone="warn">admin</Badge> : null}
+                        {/* Marque ceux qui ont dit oui, jamais ceux qui ont dit
+                            non : un refus n'a pas a se signaler dans une liste. */}
+                        {row.marketingOptIn ? (
+                          <Badge tone="accent">nouvelles</Badge>
+                        ) : null}
                       </span>
                       <span className="text-caption text-vellum-3">
                         {row.email}
@@ -183,7 +213,7 @@ export function UsersView() {
           <Button
             variant="secondary"
             disabled={loading}
-            onClick={() => void load(search, cursor)}
+            onClick={() => void load(search, optIn, cursor)}
           >
             {loading ? "Lecture." : "Charger la suite"}
           </Button>

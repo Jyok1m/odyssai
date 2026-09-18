@@ -19,6 +19,9 @@ export const AdminUserRowSchema = z.object({
   locale: z.enum(['fr', 'en']),
   createdAt: z.iso.datetime(),
   lastLoginAt: z.iso.datetime().nullable(),
+  /** Consentement a recevoir des nouvelles, et la date de ce choix. */
+  marketingOptIn: z.boolean(),
+  marketingOptInAt: z.iso.datetime().nullable(),
 
   plan: PlanSlugSchema,
   planName: z.string(),
@@ -45,6 +48,25 @@ export const AdminUserPageSchema = z.object({
 });
 
 export type AdminUserPage = z.infer<typeof AdminUserPageSchema>;
+
+/**
+ * L'extraction des adresses pour un envoi.
+ *
+ * Elle ne rend **que** les joueurs qui ont consenti, et ce n'est pas un filtre
+ * qu'on choisit : il n'existe aucun moyen de demander les autres. Un
+ * parametre qui les inclurait serait une case a cocher de trop entre une
+ * intention et un envoi non sollicite.
+ */
+export const AdminMarketingListSchema = z.object({
+  emails: z.array(z.email()),
+  /** Combien ont consenti, et combien de comptes au total. */
+  count: z.number().int().nonnegative(),
+  total: z.number().int().nonnegative(),
+  /** L'instant de l'extraction, a reporter dans le registre des traitements. */
+  extractedAt: z.iso.datetime(),
+});
+
+export type AdminMarketingList = z.infer<typeof AdminMarketingListSchema>;
 
 /** Une ligne du grand livre, pour l'historique d'un joueur. */
 export const AdminCreditEntrySchema = z.object({

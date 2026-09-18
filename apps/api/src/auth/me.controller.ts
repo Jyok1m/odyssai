@@ -62,11 +62,22 @@ export class MeController {
     }
 
     try {
-      const updated = await this.users.setUsername(
-        user.id,
-        parsed.data.username,
-      );
-      return this.toProfile(updated);
+      // Les deux champs sont independants : poser un pseudo et retirer son
+      // consentement dans la meme requete doit marcher, et l'ordre importe peu.
+      let current = user;
+
+      if (parsed.data.username !== undefined) {
+        current = await this.users.setUsername(user.id, parsed.data.username);
+      }
+
+      if (parsed.data.marketingOptIn !== undefined) {
+        current = await this.users.setMarketingOptIn(
+          user.id,
+          parsed.data.marketingOptIn,
+        );
+      }
+
+      return this.toProfile(current);
     } catch (error: unknown) {
       // Le pseudo est affiche aux autres joueurs : le conflit est un cas
       // metier, pas une panne, et le front doit pouvoir le dire.
@@ -129,6 +140,7 @@ export class MeController {
       isAdmin: user.isAdmin,
       email: user.email,
       emailVerified: user.emailVerified,
+      marketingOptIn: user.marketingOptIn,
       lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
       createdAt: user.createdAt.toISOString(),
       accountUrl: this.config.accountUrl,

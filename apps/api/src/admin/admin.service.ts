@@ -3,6 +3,7 @@ import { Prisma, PrismaClient, type Subscription, type User } from '@odyssai/db'
 import { FREE_PLAN_SLUG } from '@odyssai/engine';
 import type {
   AdjustCreditsRequest,
+  AdminMarketingList,
   AdminOverview,
   AdminUserDetail,
   AdminUserPage,
@@ -102,6 +103,7 @@ export class AdminService {
     search?: string;
     plan?: string;
     cursor?: string;
+    optIn?: boolean;
   }): Promise<AdminUserPage> {
     const search = query.search?.trim();
 
@@ -115,6 +117,9 @@ export class AdminService {
           }
         : {}),
       ...(query.plan ? { subscription: { plan: query.plan } } : {}),
+      // Le filtre ne sait dire que oui : montrer ceux qui ont refuse en un
+      // clic ferait de leur refus une liste, ce qu'il n'a pas a devenir.
+      ...(query.optIn ? { marketingOptIn: true } : {}),
     };
 
     const rows = await this.prisma.user.findMany({
@@ -133,6 +138,34 @@ export class AdminService {
       // Rendu seulement s'il reste vraiment quelque chose : un curseur servi a
       // vide ferait boucler l'ecran sur une page toujours vide.
       nextCursor: rows.length > PAGE_SIZE ? (page.at(-1)?.id ?? null) : null,
+    };
+  }
+
+  /**
+   * Les adresses de ceux qui ont consenti, et rien d'autre.
+   *
+   * Aucun parametre ne permet de demander les autres : l'inverse existerait
+   * comme une case a cocher entre une intention et un envoi non sollicite.
+   * `total` est rendu a cote pour que la proportion se lise sans avoir a
+   * extraire deux fois.
+   */
+  async marketingList(): Promise<AdminMarketingList> {
+    const [rows, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where: { marketingOptIn: true },
+        select: { email: true },
+        orderBy: { id: 'desc' },
+      }),
+      this.prisma.user.count(),
+    ]);
+
+    this.logger.log(`extraction des adresses consenties : ${rows.length}`);
+
+    return {
+      emails: rows.map((row) => row.email),
+      count: rows.length,
+      total,
+      extractedAt: new Date().toISOString(),
     };
   }
 
@@ -245,6 +278,8 @@ export class AdminService {
       locale: user.locale,
       createdAt: user.createdAt.toISOString(),
       lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
+      marketingOptIn: user.marketingOptIn,
+      marketingOptInAt: user.marketingOptInAt?.toISOString() ?? null,
 
       plan: slug,
       planName: plan?.name ?? slug,

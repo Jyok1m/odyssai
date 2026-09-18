@@ -23,6 +23,7 @@ import {
   type AdminOverview,
   type AdminPlan,
   type AdminUserDetail,
+  type AdminMarketingList,
   type AdminUserPage,
   type AlphaStatus,
   type ContactMessage,
@@ -74,8 +75,20 @@ export class AdminController {
     @Query('search') search?: string,
     @Query('plan') plan?: string,
     @Query('cursor') cursor?: string,
+    @Query('optIn') optIn?: string,
   ): Promise<AdminUserPage> {
-    return this.admin.users({ search, plan, cursor });
+    return this.admin.users({ search, plan, cursor, optIn: optIn === 'true' });
+  }
+
+  /**
+   * Les adresses de ceux qui ont consenti.
+   *
+   * Aucun parametre : il n'existe pas de moyen de demander les autres, et
+   * c'est voulu. Sous /admin, donc derriere les deux gardes.
+   */
+  @Get('marketing/emails')
+  marketingEmails(): Promise<AdminMarketingList> {
+    return this.admin.marketingList();
   }
 
   @Get('users/:id')

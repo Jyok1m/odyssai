@@ -63,6 +63,14 @@ model User {
   /// l'application decide qui est maitre du jeu.
   isAdmin Boolean @default(false) @map("is_admin")
 
+  /// Consentement a recevoir des nouvelles. Faux par defaut : un opt-in
+  /// pre-coche n'est pas un consentement.
+  marketingOptIn Boolean @default(false) @map("marketing_opt_in")
+
+  /// L'instant du dernier changement, dans les deux sens. Un consentement se
+  /// prouve, et prouver demande une date ; un retrait se montre aussi bien.
+  marketingOptInAt DateTime? @map("marketing_opt_in_at") @db.Timestamptz(3)
+
   /// Renvoyee a Keycloak au prochain signin.
   locale Locale @default(fr)
 

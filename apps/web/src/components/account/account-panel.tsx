@@ -10,6 +10,7 @@ import { useSession } from "@/components/auth/session-provider";
 import { Button } from "@/components/ui/button";
 import { FIELD } from "@/components/ui/field";
 import { requestSignOut } from "@/lib/api";
+import { MarketingOptIn } from "@/components/account/marketing-opt-in";
 import { ProfileError, fetchProfile, updateUsername } from "@/lib/profile";
 
 import { Credits } from "./credits";
@@ -210,6 +211,9 @@ export function AccountPanel() {
           </Button>
         ) : null}
       </section>
+
+      {/* Avant la deconnexion : c'est un reglage du compte, pas une sortie. */}
+      <MarketingOptIn profile={profile} onChange={setProfile} />
 
       {/* La deconnexion vit ici et plus dans le bandeau : elle n'a pas a
           occuper une place permanente a cote de la navigation. */}

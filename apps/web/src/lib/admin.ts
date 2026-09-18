@@ -2,11 +2,13 @@ import {
   AdminOverviewSchema,
   AdminPlanSchema,
   AdminUserDetailSchema,
+  AdminMarketingListSchema,
   AdminUserPageSchema,
   type AdjustCreditsRequest,
   type AdminOverview,
   type AdminPlan,
   type AdminUserDetail,
+  type AdminMarketingList,
   type AdminUserPage,
   type CreatePlanRequest,
   type UpdatePlanRequest,
@@ -61,15 +63,29 @@ export async function fetchOverview(signal?: AbortSignal): Promise<AdminOverview
 }
 
 export async function fetchUsers(
-  query: { search?: string; plan?: string; cursor?: string },
+  query: { search?: string; plan?: string; cursor?: string; optIn?: boolean },
   signal?: AbortSignal,
 ): Promise<AdminUserPage> {
   const url = new URL(`${API_BASE_URL}/admin/users`);
   if (query.search) url.searchParams.set("search", query.search);
   if (query.plan) url.searchParams.set("plan", query.plan);
   if (query.cursor) url.searchParams.set("cursor", query.cursor);
+  // Seulement quand il est vrai : le parametre ne sait pas dire « ceux qui ont
+  // refuse », et l'API ne l'entendrait pas non plus.
+  if (query.optIn) url.searchParams.set("optIn", "true");
 
   return read(url.toString(), AdminUserPageSchema, signal);
+}
+
+/** Les adresses de ceux qui ont consenti, et rien d'autre. */
+export async function fetchMarketingEmails(
+  signal?: AbortSignal,
+): Promise<AdminMarketingList> {
+  return read(
+    `${API_BASE_URL}/admin/marketing/emails`,
+    AdminMarketingListSchema,
+    signal,
+  );
 }
 
 export async function fetchUser(
