@@ -29,6 +29,7 @@ Prévus, pas encore créés : `packages/engine`, pgvector. Ne pas les créer san
 - Guide : `pnpm --filter @odyssai/narrator corpus:build` régénère le corpus depuis les messages next-intl, `corpus:check` échoue s'il a dérivé. `pnpm --filter @odyssai/api llm:smoke` fait un appel réel de contrôle, `eval:guide` lance l'expérience LangSmith (ni l'un ni l'autre dans `make check`).
 - Base : `pnpm --filter @odyssai/db db:migrate` crée et applique une migration, `db:deploy` applique les migrations existantes, `db:generate` regénère le client seul, `db:studio` ouvre Studio.
 - `typecheck` vaut `tsc --noEmit` partout, sauf `apps/web` où il est précédé de `next typegen` : les types de routes et de layouts (`LayoutProps`, `PageProps`) sont générés par Next dans `.next/types/` et manquent sans ça.
+- Le `typecheck` d'`apps/api` **dépend de son propre `build`**, déclaré dans `apps/api/turbo.json` : ses scripts (`llm:smoke`, `eval:*`, `admin:grant`) importent `../dist/...`, node ne sachant pas résoudre un spécificateur `.js` vers une source `.ts`. Sans cette dépendance il passe sur une copie déjà construite et échoue sur un clone frais, ce qu'un poste de développement ne voit jamais et qu'une CI voit tout de suite.
 
 ## Règles d'architecture
 
