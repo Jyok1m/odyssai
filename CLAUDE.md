@@ -13,7 +13,7 @@ Monorepo pnpm + Turborepo, TypeScript partout.
 - `packages/llm` : client OpenAI-compatible (streaming, usage, tracing LangSmith). Même format que `schemas`.
 - `packages/narrator` : corpus du guide, prompts versionnés, FAQ, détection du hors-sujet. Même format.
 
-Redis tourne en tunnel localhost sur le serveur via `redis://:<mot_de_passe>@localhost:16379` (sessions et file BullMQ). Postgres est atteint de la même façon, sur `127.0.0.1:15432`, par `POSTGRES_URL` ; le Makefile n'ouvre pour l'instant que le tunnel Redis. Keycloak est hébergé sur `sso.joachimjasmin.com`.
+Redis tourne en tunnel localhost sur le serveur via `redis://:<mot_de_passe>@localhost:16379` (sessions et file BullMQ). Postgres est atteint de la même façon, sur `127.0.0.1:15432`, par `POSTGRES_URL`. `make tunnel` ouvre les deux ports. Keycloak est hébergé sur `sso.joachimjasmin.com`.
 
 Prévus, pas encore créés : `packages/engine`, pgvector. Ne pas les créer sans demande explicite.
 
@@ -223,7 +223,7 @@ Le joueur achète des **crédits**, tarifés par action : un tour en vaut un, un
 
 ### Stripe
 
-Les plans vivent en code, leurs prix chez Stripe, l'appariement dans `STRIPE_PRICE_*` : un identifiant de prix diffère entre le mode test et la production, et le mettre en base rendrait la base propre à un environnement.
+La clé et le secret de webhook sont les seules variables d'environnement. Les paliers et leurs identifiants de prix vivent en base (voir le tableau de bord d'administration) : en variable, mettre un palier en vente demandait un déploiement.
 
 - Tout est facultatif. Sans `STRIPE_PRIVATE_KEY`, `BillingConfig.enabled` est faux, la vente se tait et le palier libre suffit à jouer : on développe sans compte Stripe.
 - **`ODYSSAI_ENV`, pas `NODE_ENV`.** Les deux copies du site tournent avec `NODE_ENV=production`, l'image étant la même : il ne peut pas les distinguer. `ODYSSAI_ENV` vaut `production` sur la vraie et `staging` sur celle de dev, et lui seul décide du mode Stripe autorisé.
@@ -238,8 +238,36 @@ Les plans vivent en code, leurs prix chez Stripe, l'appariement dans `STRIPE_PRI
 - Checkout Session pour souscrire, Customer Portal pour gérer et résilier. Aucune saisie de carte chez nous : l'héberger ferait entrer le projet dans le périmètre PCI sans rien apporter.
 - En développement : `stripe listen --forward-to localhost:3001/billing/webhook` donne le secret à mettre dans `STRIPE_WEBHOOK_SECRET`.
 - `GET /billing/catalog` est **public** : le barème n'a rien de personnel, et une page de tarifs doit s'afficher avant l'inscription. `purchasable` y est faux tant qu'un plan n'a pas de prix configuré, et l'écran cache alors l'offre au lieu d'offrir un bouton qui répondrait 503.
+- Le nom d'un palier vient de la base, jamais d'une clé de traduction : les paliers se créent au tableau de bord, et leurs noms ne sont pas connus à la compilation.
 - Aucun montant en euros dans le code : les prix vivent chez Stripe, qui les affiche sur sa propre page. Les recopier ferait deux vérités, et la fausse serait la nôtre.
 - L'URL de retour après Stripe est **construite côté serveur** depuis `user.locale`, jamais reçue du navigateur : accepter une URL de retour du client ouvrirait une redirection arbitraire. Les deux chemins localisés y sont recopiés de `routing.ts`, faute de source partagée entre les deux applications.
+
+## Tableau de bord d'administration
+
+`/admin`, **hors du segment `[locale]` et hors du proxy next-intl**, en français seul : un back-office que seul l'administrateur voit n'a pas d'audience anglophone, et le traduire aurait doublé chaque libellé pour personne. `admin` est donc exclu du `matcher` de `src/proxy.ts`, sans quoi `/admin` serait redirigé vers `/fr/admin`, où rien ne répond.
+
+- **L'ordre des gardes compte.** `SessionGuard` dépose le joueur sur la requête, `AdminGuard` le relit. Inversés, le second ne verrait rien et laisserait tout passer : `test/admin.e2e-spec.ts` le vérifie route par route, et le test unitaire du garde couvre le cas « aucune session résolue ».
+- **`users.is_admin` n'est modifiable par aucune route**, pas même par le tableau de bord. Un dashboard capable de nommer des administrateurs transforme une session volée en prise de contrôle définitive. Le droit se pose avec `pnpm --filter @odyssai/api admin:grant <email>`, donc avec un accès au serveur.
+- Le garde côté web est une commodité, jamais une sécurité : il évite d'afficher des tableaux vides et des 403, c'est tout.
+- Un ajustement de réserve passe par le grand livre, avec un **motif obligatoire** : il est en ajout seul, et un solde remis à zéro doit s'y lire comme un mouvement daté, pas comme un trou. Le solde ne descend jamais sous zéro.
+- La liste des joueurs pagine **par curseur** : elle s'allonge pendant qu'on la lit, et un décalage par numéro de page ferait sauter ou répéter des lignes. L'`id` étant un uuid v7, l'ordre décroissant suffit.
+- La résiliation d'un abonnement n'écrit **pas** le retour au palier libre : il viendra du webhook `customer.subscription.deleted`, seule source du droit. L'écrire tout de suite ferait diverger nos lignes de celles de Stripe si l'appel échouait à mi-chemin.
+- Les primitives visuelles vivent dans `components/admin/ui.tsx` et non dans `components/ui` : le kit habille le jeu, elles habillent un back-office. Les tokens, eux, sont bien ceux du kit.
+- `components/admin/confirm.tsx` double `ui/danger-action` parce que celui-ci tire ses textes de next-intl, que `/admin` n'a pas. Le même mot à taper des deux côtés, pour ne pas avoir deux réflexes à apprendre.
+
+### Les paliers vivent en base
+
+`packages/engine` ne porte plus que le barème par action, `FREE_PLAN_SLUG` et les bornes. Les paliers sont des lignes de `plans`, éditables depuis le tableau de bord : changer une dotation ne doit pas demander un déploiement.
+
+- L'objection d'origine (une table rendrait la base propre à un environnement) **ne tient pas** : les deux copies du site ont déjà leur propre Postgres, et un prix du mode test n'a de sens que dans la base de dev. `STRIPE_PRICE_*` a donc disparu de la configuration.
+- **L'amorçage des trois paliers est dans la migration**, pas dans un script : la clé étrangère posée juste après échouerait sur les abonnements existants, et une migration qui laisse la base invalide entre deux commandes n'en est pas une.
+- `subscriptions.plan` référence `plans.slug` et non l'uuid : c'est le slug qui voyage dans les contrats HTTP et se relit dans un journal. La clé étrangère empêche de supprimer un palier que quelqu'un porte.
+- **Le palier libre est protégé** de l'archivage comme de la suppression : tout y retombe, et un abonnement sans palier n'est plus lisible.
+- `PlansService` **ne met rien en cache** : une lecture de plus par tour est négligeable devant l'appel au modèle qui suit, et un cache ferait vivre un joueur sur une dotation que l'administrateur croit avoir changée.
+- **Un prix Stripe est immuable.** Changer un montant crée un nouveau prix et désactive l'ancien ; les abonnés en cours gardent le leur jusqu'à leur prochaine facture, Stripe ne rejouant pas un abonnement sur un nouveau prix. C'est le piège central d'`AdminPlansService`.
+- Les écritures chez Stripe passent **avant** l'écriture en base : un produit créé sans ligne chez nous se voit et se nettoie, une ligne qui pointe un prix inexistant ferait échouer un paiement. Les créations portent une clé d'idempotence dérivée du slug.
+- Un prix n'est jamais supprimé chez Stripe, seulement désactivé : les factures passées y renvoient.
+- Un seul client Stripe, fourni par `StripeModule` : trois `new Stripe(...)` finiraient par diverger sur la version d'API, ce qui se verrait au pire moment.
 
 ## Conventions
 
