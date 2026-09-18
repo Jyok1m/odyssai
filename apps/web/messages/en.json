@@ -77,8 +77,18 @@
       "invalid_request": "The login could not complete. Try again from the home page.",
       "provider_error": "The identity service refused the login. Try again in a moment.",
       "session_failed": "The session could not be opened. Try again in a moment.",
+      "alpha_full": "Alpha pre-registration is closed: all hundred seats are taken.",
       "unknown": "The login failed. Try again."
-    }
+    },
+    "alphaFullTitle": "Pre-registration is closed.",
+    "alphaFullBody": "All hundred alpha seats are taken. No game account was created, and there is nothing to retry: a wider opening will come, and it will be announced here.",
+    "alphaFullClose": "Dismiss this message",
+    "noticePreTitle": "Pre-registration is open.",
+    "noticePreBody": "The alpha will start with {seats} players, and {remaining, plural, =0 {no seats remain} one {one seat remains} other {# seats remain}}.",
+    "noticeOpenTitle": "The alpha is open.",
+    "noticeOpenBody": "It welcomes {seats} players, and {remaining, plural, =0 {no seats remain} one {one seat remains} other {# seats remain}}.",
+    "noticeFullTitle": "The alpha is full.",
+    "noticeFullBody": "All {seats} seats are taken. A wider opening will come, and it will be announced here."
   },
   "Account": {
     "title": "My account",

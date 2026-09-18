@@ -21,7 +21,7 @@ import {
 import type { CookieOptions, Request, Response } from 'express';
 import { z } from 'zod';
 import { AppConfig } from '../config/app-config.js';
-import { UsersService } from '../users/users.service.js';
+import { AlphaFullError, UsersService } from '../users/users.service.js';
 import { OidcService } from './oidc.service.js';
 import { SessionService, refreshLifetimeSeconds, safeCompare } from './session.service.js';
 
@@ -69,6 +69,20 @@ export class AuthController {
     @Query('locale') locale: string | undefined,
     @Res({ passthrough: true }) res: Response,
   ): Promise<Redirection> {
+    /**
+     * Refuse avant d'envoyer vers le realm.
+     *
+     * La garde qui compte est celle du provisionnement, au retour : l'adresse
+     * d'inscription de Keycloak est publique et personne ne passe forcement
+     * par ici. Mais laisser creer une identite qui n'aura jamais de joueur
+     * derriere elle est un cadeau empoisonne : l'api n'a aucun droit sur le
+     * realm et ne pourra pas l'effacer.
+     */
+    if (await this.users.alphaFull()) {
+      this.logger.warn("inscription refusee avant le realm : alpha complete");
+      return this.failure('alpha_full');
+    }
+
     return this.beginFlow('signup', redirect, locale, res);
   }
 
@@ -128,6 +142,13 @@ export class AuthController {
         statusCode: HttpStatus.FOUND,
       };
     } catch (error: unknown) {
+      // Une alpha complete n'est pas une panne : l'ecran doit le dire
+      // autrement, et les journaux n'ont pas a s'en alarmer.
+      if (error instanceof AlphaFullError) {
+        this.logger.warn(`inscription refusee, alpha complete : ${error.seats} places`);
+        return this.failure('alpha_full');
+      }
+
       this.logger.error(`ouverture de session en echec : ${String(error)}`);
       return this.failure('session_failed');
     }

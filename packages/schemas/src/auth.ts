@@ -55,6 +55,12 @@ export const AuthErrorCode = z.enum([
   'invalid_request',
   'provider_error',
   'session_failed',
+  /**
+   * Les places de l'alpha sont prises. Distinct de `session_failed` : ce n'est
+   * pas une panne, et dire « reessaie » a quelqu'un qui n'entrera jamais
+   * serait lui mentir.
+   */
+  'alpha_full',
 ]);
 
 export type AuthErrorCode = z.infer<typeof AuthErrorCode>;

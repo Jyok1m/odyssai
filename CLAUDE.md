@@ -288,6 +288,19 @@ La clé et le secret de webhook sont les seules variables d'environnement. Les p
 - Un prix n'est jamais supprimé chez Stripe, seulement désactivé : les factures passées y renvoient.
 - Un seul client Stripe, fourni par `StripeModule` : trois `new Stripe(...)` finiraient par diverger sur la version d'API, ce qui se verrait au pire moment.
 
+## Les cent places de l'alpha
+
+`ALPHA_SEATS` borne le nombre de joueurs. Au delà, l'api refuse de provisionner, et le visiteur reçoit `alpha_full` plutôt qu'un message de panne.
+
+- **La garde est au provisionnement**, dans `UsersService.signIn` : c'est la seule écriture qui fait naître un joueur, donc le seul endroit où une place se prend. `GET /auth/signup` refuse aussi en amont, mais ce n'est que de l'ergonomie : l'adresse d'inscription de Keycloak est publique, et personne n'est obligé de passer par là.
+- Refuser avant le realm évite surtout un **cadeau empoisonné** : une identité Keycloak sans joueur derrière elle, que l'api ne peut pas effacer puisqu'elle n'a aucun droit sur le realm.
+- La fermeture ne vaut que pour les nouveaux : un joueur déjà inscrit se reconnecte toujours, même si le compte a été dépassé. Les administrateurs ne prennent pas de place, comme pour le bonus fondateur.
+- Le compte est **lu, pas verrouillé** : deux inscriptions arrivées dans la même milliseconde à la centième place passeraient toutes les deux. Une contrainte en base demanderait un déclencheur ou une table de compteur, pour un dépassement d'une unité sur une alpha qu'on ouvre à la main. Le jour où la place se vend, ce raisonnement ne tiendra plus.
+- `ALPHA_SEATS` et `FOUNDER_BONUS.rank` valent le même nombre et pour cause, ce sont les mêmes personnes. Deux constantes tout de même : ouvrir les portes un jour ne doit pas retirer leur bonus aux premiers arrivés.
+- `alpha_full` est un code d'erreur d'authentification à part, et pas un `session_failed` : ce n'est pas une panne, et proposer de réessayer à quelqu'un qui n'entrera jamais serait lui mentir.
+- Il s'affiche en **bandeau**, pas en toast (`AlphaFullBanner`) : une pré-inscription refusée n'est pas une notification de trois secondes. Le bandeau lit `useSearchParams` sous un `Suspense`, qui garde le prérendu statique du layout, et garde le paramètre dans l'URL jusqu'à ce qu'on le ferme : la fermeture de l'alpha ne s'annule pas en actualisant la page. `AuthErrorToast` laisse donc ce code tranquille, paramètre compris.
+- **Un centième et unième inscrit garde une identité Keycloak orpheline.** Qui passe directement par la page d'inscription du realm, sans passer par `/auth/signup`, obtient un compte que l'api refusera de provisionner à chaque connexion. L'api n'a aucun droit sur le realm et ne peut pas l'effacer ; la personne le peut depuis la console de compte. Le seul vrai verrou serait de couper l'auto-inscription du realm, ce qui se pilote depuis le rôle ansible.
+
 ## La page de tarifs
 
 `/tarifs` en français, `/pricing` en anglais, publique, alimentée par `GET /billing/catalog`.

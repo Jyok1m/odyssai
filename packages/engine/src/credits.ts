@@ -62,6 +62,22 @@ export const FOUNDER_BONUS = {
 } as const;
 
 /**
+ * Les places de l'alpha fermee.
+ *
+ * Au dela, l'api refuse de provisionner un joueur. Keycloak peut bien creer
+ * un compte, le realm n'etant pas pilote d'ici : il n'y aura pas de joueur
+ * derriere, et la connexion echouera de la meme facon.
+ *
+ * Le meme nombre que le rang fondateur, et pour cause : ce sont les memes
+ * personnes. Deux constantes tout de meme, parce qu'ouvrir les portes un jour
+ * ne doit pas retirer leur bonus a ceux qui sont arrives les premiers.
+ *
+ * Les administrateurs ne prennent pas de place : ils doivent pouvoir entrer
+ * pour verifier, et prendre celle d'un joueur serait se servir.
+ */
+export const ALPHA_SEATS = 100;
+
+/**
  * Bornes d'un palier, appliquees a la creation comme a la modification.
  *
  * Une dotation negative rendrait un solde negatif ; une dotation demesuree
