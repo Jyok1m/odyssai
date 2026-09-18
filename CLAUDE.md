@@ -24,7 +24,8 @@ Prévus, pas encore créés : `packages/engine`, pgvector. Ne pas les créer san
 - Dépendance : `pnpm --filter @odyssai/<pkg> add <dep>`. Jamais npm install ni yarn.
 - Dépendance interne : `pnpm --filter @odyssai/<pkg> add @odyssai/schemas@workspace:*`
 - Redis de dev : `make tunnel` ouvre le tunnel SSH, `make redis-ping` vérifie qu'il répond vraiment. Coordonnées du serveur dans `.env.local`.
-- `make check` vaut `pnpm typecheck && pnpm lint && pnpm build && corpus:check`.
+- `make check` vaut `pnpm typecheck && pnpm lint && pnpm build && corpus:check`. **Il ne lance aucun test.**
+- **Les tests sont en deux commandes.** `pnpm --filter @odyssai/api test` ne couvre que l'unitaire ; les bouts en bout ont leur propre configuration et demandent `test:e2e`. Une régression qui ne casse que les seconds passe donc inaperçue avec la première, et c'est déjà arrivé : un appel Prisma ajouté à un service a cassé sept e2e sans qu'un seul test unitaire bronche. Lancer les deux avant de committer.
 - Guide : `pnpm --filter @odyssai/narrator corpus:build` régénère le corpus depuis les messages next-intl, `corpus:check` échoue s'il a dérivé. `pnpm --filter @odyssai/api llm:smoke` fait un appel réel de contrôle, `eval:guide` lance l'expérience LangSmith (ni l'un ni l'autre dans `make check`).
 - Base : `pnpm --filter @odyssai/db db:migrate` crée et applique une migration, `db:deploy` applique les migrations existantes, `db:generate` regénère le client seul, `db:studio` ouvre Studio.
 - `typecheck` vaut `tsc --noEmit` partout, sauf `apps/web` où il est précédé de `next typegen` : les types de routes et de layouts (`LayoutProps`, `PageProps`) sont générés par Next dans `.next/types/` et manquent sans ça.
@@ -161,6 +162,10 @@ La garde sur la propriété intellectuelle a trois étages, et aucun ne suffit s
 - `universes.owner_id` et `characters.universe_id` sont nullables en `SetNull`, pas en `Cascade` : c'est le service qui décide du sort d'un monde, pas la base. Contrepartie, supprimer un utilisateur à la main laisse son monde orphelin. Le worker refuse de générer pour un monde sans propriétaire.
 - **L'API n'a aucun droit sur Keycloak**, et n'en gagne aucun : `DELETE /me` efface le jeu et ferme la session, puis rend `accountUrl` pour que le joueur supprime son identité lui-même. Le rôle ansible active pour cela l'action requise `delete_account` et le rôle client `account/delete-account`.
 - La confirmation est un **mot à taper** (`DangerAction`), pas une case ni un second clic : les deux s'obtiennent par réflexe, recopier un mot demande de lire.
+- **L'abonnement Stripe est résilié avant que la ligne disparaisse.** `subscriptions` est en cascade sur `users` : effacer d'abord emporterait l'identifiant Stripe, et le joueur continuerait d'être prélevé pour un compte qui n'existe plus. Immédiatement et non en fin de période, personne ne restant pour en profiter, et sans remboursement.
+- Un échec chez Stripe **n'arrête pas le départ** : le droit à l'effacement ne se suspend pas à la disponibilité d'un tiers. Il part en `logger.error` avec l'identifiant, pour être rattrapé à la main. C'est le seul cas où quelqu'un continuerait d'être prélevé sans pouvoir s'y opposer.
+- Le client Stripe reste, seul l'abonnement part : les factures doivent survivre au compte de jeu, c'est une obligation comptable, et elles ne portent plus rien qui s'y rattache.
+- `ErasureService` prend le client Stripe de `StripeModule`, qui est global. Passer par `BillingService` ferait `AuthModule` vers `ErasureModule` vers `BillingModule` vers `AuthModule`, et un `forwardRef` pour une ligne d'annulation se paierait cher.
 
 ### Le checkpointer LangGraph vit dans son propre schéma
 
@@ -225,6 +230,11 @@ Le joueur achète des **crédits**, tarifés par action : un tour en vaut un, un
 - Le roulement de période est **paresseux, à la lecture**. Une tâche nocturne ferait le même travail en moins fiable et laisserait un joueur sans réserve jusqu'à son passage.
 - Les crédits **ne se reportent pas** : la réserve est remise à la dotation du plan, jamais augmentée. Sinon un joueur absent six mois reviendrait avec six mois d'avance.
 - La modération et les embeddings ne sont **jamais facturés** : faire payer au joueur le fait qu'on le surveille serait indéfendable.
+- **Un administrateur ne consomme rien.** `spend()` sort avant tout débit et rend `null`, comme une action gratuite : aucun appelant ne tente de rembourser une écriture qui n'existe pas. `llm_usage` continue de compter ce que ses parties coûtent, c'est lui la comptabilité. Contrepartie à connaître : l'écran de réserve épuisée ne s'affichera jamais pour lui, le vérifier demande un compte ordinaire.
+- **Le bonus des premiers arrivés n'est pas un palier**, c'est un supplément posé sur le compte (`FOUNDER_BONUS`). Un palier se choisit, celui-là s'attribue ; le mettre dans `plans` forçait la page de tarifs à montrer une offre que personne ne pouvait prendre. Il s'écrit au grand livre sous son propre motif, `founder`, et non fondu dans le `welcome` : « 80 crédits » ne dirait pas pourquoi ce joueur en a reçu trente de plus que le suivant.
+- Le rang se lit sur `created_at`, **jamais sur un compteur** : un compteur se désynchronise d'une suppression, une date se relit et le calcul rejoué rend la même réponse. Un administrateur n'y a pas droit et n'occupe pas une place, sa réserve n'étant jamais débitée.
+- **Une dotation nulle ne reprend rien.** `roll()` ne remet la réserve à zéro que si le palier reverse quelque chose : la règle « les crédits ne se reportent pas » borne un abonné qui en reçoit de nouveaux, appliquée à un palier offert elle confisquait une réserve que personne ne remplaçait. Rien ne s'écrit au grand livre quand rien ne bouge.
+- Un abonnement **résilié garde ses crédits**. `customer.subscription.deleted` fait retomber la ligne au palier libre en `canceled` sans toucher à la réserve, et le roulement suivant ne verse ni ne reprend rien. Ce qui a été payé ne s'évapore pas parce que l'abonnement s'arrête.
 
 ### Stripe
 
@@ -242,6 +252,10 @@ La clé et le secret de webhook sont les seules variables d'environnement. Les p
 - Le garde est posé **méthode par méthode** sur `BillingController` : le webhook n'a pas de session.
 - Checkout Session pour souscrire, Customer Portal pour gérer et résilier. Aucune saisie de carte chez nous : l'héberger ferait entrer le projet dans le périmètre PCI sans rien apporter.
 - En développement : `stripe listen --forward-to localhost:3001/billing/webhook` donne le secret à mettre dans `STRIPE_WEBHOOK_SECRET`.
+- **Un prix désactivé est refusé au paiement** : « The price specified is inactive ». Le piège vient de la clé d'idempotence, qui rend le prix déjà créé pour ce montant, dans l'état où il est : l'ancien et le nouveau sont alors le même objet, et « créer puis désactiver l'ancien » se retournait contre lui-même. `reprice` réactive donc un prix rendu inactif, et ne désactive l'ancien que s'il diffère du nouveau.
+- Un palier qui porte un montant sans prix actif est **refait à la modification**, prix absent comme prix désactivé. Comparer les seuls montants le laissait invendable à vie, et le remettre en vente demandait de changer le prix puis de le remettre. La lecture chez Stripe ne coûte qu'à la modification d'un palier. Sans clé configurée elle est sautée : renommer un palier payant ne doit pas échouer parce que Stripe est absent.
+- Deux états s'éditent au tableau de bord et vivent en base. `recommended` désigne le palier mis en avant, un seul à la fois, garanti par un index partiel unique et non par le service, où deux écritures concurrentes passeraient. C'était un calcul, « celui du milieu parmi les payants » : juste à trois paliers, faux au quatrième, et hors de portée de qui les édite.
+- `comingSoon` annonce sans vendre. À distinguer d'un palier sans prix Stripe, qui n'est pas vendable faute de configuration : ici c'est une décision. Un palier archivé, lui, disparaît.
 - `GET /billing/catalog` est **public** : le barème n'a rien de personnel, et une page de tarifs doit s'afficher avant l'inscription. `purchasable` y est faux tant qu'un plan n'a pas de prix configuré, et l'écran cache alors l'offre au lieu d'offrir un bouton qui répondrait 503.
 - Le nom d'un palier vient de la base, jamais d'une clé de traduction : les paliers se créent au tableau de bord, et leurs noms ne sont pas connus à la compilation.
 - Aucun montant en euros dans le code : les prix vivent chez Stripe, qui les affiche sur sa propre page. Les recopier ferait deux vérités, et la fausse serait la nôtre.
@@ -273,6 +287,18 @@ La clé et le secret de webhook sont les seules variables d'environnement. Les p
 - Les écritures chez Stripe passent **avant** l'écriture en base : un produit créé sans ligne chez nous se voit et se nettoie, une ligne qui pointe un prix inexistant ferait échouer un paiement. Les créations portent une clé d'idempotence dérivée du slug.
 - Un prix n'est jamais supprimé chez Stripe, seulement désactivé : les factures passées y renvoient.
 - Un seul client Stripe, fourni par `StripeModule` : trois `new Stripe(...)` finiraient par diverger sur la version d'API, ce qui se verrait au pire moment.
+
+## La page de tarifs
+
+`/tarifs` en français, `/pricing` en anglais, publique, alimentée par `GET /billing/catalog`.
+
+- **Rien n'y est écrit en dur**, ni un nom de palier, ni un montant, ni une dotation. Les puces des cartes et les lignes du comparatif se déduisent des chiffres du catalogue, pour qu'un palier ajouté au tableau de bord s'y range sans qu'on y touche.
+- Le catalogue publie `welcome` en plus de `monthly` : les paliers offerts ne tiennent que par lui, et une page qui ne lirait que la dotation mensuelle annoncerait zéro crédit sur le seul palier qu'un visiteur peut essayer.
+- Le palier du visiteur connecté est **encadré** et son bouton d'achat disparaît. Ce qu'on porte prime sur ce qu'on recommande : mettre en avant un achat déjà fait n'a pas de sens.
+- Le bouton ouvre **Stripe**, pas l'écran de compte, par une navigation de premier niveau : la page de Stripe refuse d'être chargée en second plan. Sans session il n'y a pas de paiement à ouvrir, donc le bouton passe par la connexion, qui ramène ici.
+- L'écran de compte, lui, ne propose **qu'un lien vers cette page**. Empilés, les paliers s'y comparaient mal et le compte devenait une page de vente ; la comparaison se fait en colonnes, ici.
+- Les puces disent « un monde, puis N tours » et non « N mondes » : soixante mondes est juste et ne veut rien dire, personne n'en crée soixante.
+- Elle entre dans le corpus du guide, qui sait donc expliquer ce qu'est un crédit. Il **n'annonce jamais un prix** : les montants vivent chez Stripe et les dotations en base, rien de tout cela n'est dans les messages, et un prix récité par un modèle serait la mauvaise source.
 
 ## Les réglages vivent dans un index
 

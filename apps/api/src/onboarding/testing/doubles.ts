@@ -232,6 +232,21 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
 
   const double = {
     user: {
+      /**
+       * Deux filtres suffisent, ce sont les seuls que le code pose : le droit
+       * d'administration pour les places de l'alpha, et l'anteriorite pour le
+       * rang des premiers arrives.
+       */
+      count: async ({ where }: any) =>
+        store.users.filter((user) => {
+          if (where?.isAdmin !== undefined && user.isAdmin !== where.isAdmin) {
+            return false;
+          }
+          if (where?.createdAt?.lt && !(user.createdAt < where.createdAt.lt)) {
+            return false;
+          }
+          return true;
+        }).length,
       findUnique: async ({ where, select }: any) => {
         const row = store.users.find((user) =>
           where.id ? user.id === where.id : user.keycloakId === where.keycloakId,
