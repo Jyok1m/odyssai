@@ -61,6 +61,33 @@ pipeline {
                     }
                 }
 
+                // Avant les suites, parce que rien d autre ne verifiait les
+                // types avant la construction des images. Vitest transpile
+                // avec esbuild, qui ne les regarde pas : un objet litteral
+                // portant deux fois la meme propriete passait toutes les
+                // suites, puis faisait echouer `nest build` six minutes plus
+                // tard. C est arrive sur une fusion ou deux branches avaient
+                // corrige le meme bug chacune de son cote, chacune dans une
+                // zone que git a su fusionner sans conflit.
+                stage('types') {
+                    steps {
+                        sh '''
+                            docker run --rm \
+                                --platform "$PLATFORM" \
+                                -v "$PWD":/app -w /app \
+                                -u "$(id -u):$(id -g)" \
+                                -e HOME=/app/.ci-home \
+                                -e COREPACK_HOME=/app/.ci-home/corepack \
+                                -e CI=true \
+                                "$NODE_IMAGE" \
+                                sh -eu -c '
+                                    export PATH="$HOME/bin:$PATH"
+                                    pnpm typecheck
+                                '
+                        '''
+                    }
+                }
+
                 // Les deux suites sont deux commandes, pas une : `test` ne
                 // couvre que l unitaire, les bouts en bout ont leur propre
                 // configuration. Une regression qui ne casse que les seconds

@@ -181,6 +181,36 @@ export interface OnboardingStore {
   plans?: PlanRow[];
 }
 
+function matchMessages(store: OnboardingStore, where: any): MessageRow[] {
+  return store.messages.filter(
+    (row) =>
+      row.universeId === where.universeId &&
+      row.channel === where.channel &&
+      (where.role === undefined || row.role === where.role),
+  );
+}
+
+function sortMessages(rows: MessageRow[], orderBy: any): MessageRow[] {
+  if (orderBy?.seq) {
+    const sign = orderBy.seq === 'desc' ? -1 : 1;
+    return [...rows].sort((a, b) => sign * (a.seq - b.seq));
+  }
+
+  const sign = orderBy?.createdAt === 'desc' ? -1 : 1;
+  return [...rows].sort(
+    (a, b) => sign * (a.createdAt.getTime() - b.createdAt.getTime()),
+  );
+}
+
+function project(rows: MessageRow[], select: any): any[] {
+  if (!select) return rows.map((row) => ({ ...row }));
+  return rows.map((row) =>
+    Object.fromEntries(
+      Object.keys(select).map((key) => [key, (row as any)[key]]),
+    ),
+  );
+}
+
 /** `Prisma.DbNull` est un marqueur, pas une valeur : la colonne recoit NULL. */
 function value(raw: unknown): unknown {
   return raw === Prisma.DbNull || raw === Prisma.JsonNull ? null : raw;
@@ -417,26 +447,11 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
     },
 
     conversationMessage: {
-      findMany: async ({ where, orderBy, select }: any) => {
-        const rows = store.messages
-          .filter(
-            (row) =>
-              row.universeId === where.universeId &&
-              row.channel === where.channel &&
-              (where.role === undefined || row.role === where.role),
-          )
-          .sort((a, b) =>
-            orderBy?.createdAt === 'desc'
-              ? b.createdAt.getTime() - a.createdAt.getTime()
-              : a.createdAt.getTime() - b.createdAt.getTime(),
-          );
-
-        if (!select) return rows.map((row) => ({ ...row }));
-        return rows.map((row) =>
-          Object.fromEntries(
-            Object.keys(select).map((key) => [key, (row as any)[key]]),
-          ),
-        );
+      findMany: async ({ where, orderBy, select }: any) =>
+        project(sortMessages(matchMessages(store, where), orderBy), select),
+      findFirst: async ({ where, orderBy, select }: any) => {
+        const [row] = sortMessages(matchMessages(store, where), orderBy);
+        return row ? project([row], select)[0] : null;
       },
       create: async ({ data }: any) => {
         const seq = data.seq ?? 0;
@@ -464,27 +479,12 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
           content: data.content,
           seq,
           // Les messages d'un meme test naissent dans la meme milliseconde :
-          // sans ce decalage, leur ordre de lecture serait indefini.
+          // sans ce decalage, leur ordre de lecture serait indefini. C'est
+          // exactement ce que le rang evite en base.
           createdAt: new Date(Date.now() + store.messages.length),
         };
         store.messages.push(row);
         return { ...row };
-      },
-      findFirst: async ({ where, orderBy, select }: any) => {
-        const rows = store.messages
-          .filter(
-            (row) =>
-              row.universeId === where.universeId &&
-              row.channel === where.channel,
-          )
-          .sort((a, b) => (orderBy?.seq === 'desc' ? b.seq - a.seq : a.seq - b.seq));
-
-        const row = rows[0];
-        if (!row) return null;
-        if (!select) return { ...row };
-        return Object.fromEntries(
-          Object.keys(select).map((key) => [key, (row as any)[key]]),
-        );
       },
       count: async ({ where }: any) =>
         store.messages.filter(
