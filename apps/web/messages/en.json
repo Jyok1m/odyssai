@@ -27,11 +27,11 @@
     "about": "About"
   },
   "Hero": {
-    "badge": "Private Alpha· 100 spots",
+    "badge": "Private alpha · 100 spots",
     "badgeCta": "Learn more",
     "title": "Build any world you want. Then go and visit everyone else's.",
     "description": "Every player shapes their own world, guided by an AI narrator. Universes cross paths, trade characters and events, and share one common General Lore. The AI tells the story, the engine decides what is true.",
-    "primaryCta": "Create my universe",
+    "primaryCta": "Claim my spot",
     "secondaryCta": "Discover the concept"
   },
   "Guide": {
@@ -67,9 +67,9 @@
     "home": "Home"
   },
   "Alpha": {
-    "closed": "The private alpha is not open yet. Come back soon.",
-    "preRegister": "The alpha isn't open yet. Create an account to join the waitlist and lock in 30 free credits: you'll get your invite and news from the multiverse if you opt-in, nothing else.",
-    "preRegisterShort": "Join the first-players list",
+    "preRegister": "The game isn't live yet. Create your account now: you're one of the first 100 players, your 30 credits are waiting, and you'll get the invite the moment the alpha opens.",
+    "reservedTitle": "Your spot is reserved.",
+    "reservedBody": "Your account is created and your 30 credits are waiting. The game isn't live yet: you'll get the invite the moment the alpha opens.",
     "terms": "By creating an account, you accept the <terms>terms and conditions</terms> and the <privacy>privacy policy</privacy>."
   },
   "Auth": {
@@ -81,14 +81,14 @@
       "invalid_request": "The login could not complete. Try again from the home page.",
       "provider_error": "The identity service refused the login. Try again in a moment.",
       "session_failed": "The session could not be opened. Try again in a moment.",
-      "alpha_full": "Alpha pre-registration is closed: all hundred seats are taken.",
+      "alpha_full": "Alpha sign-ups are closed: all hundred spots are taken.",
       "unknown": "The login failed. Try again."
     },
-    "alphaFullTitle": "Pre-registration is closed.",
+    "alphaFullTitle": "Sign-ups are closed.",
     "alphaFullBody": "All hundred alpha seats are taken. No game account was created, and there is nothing to retry: a wider opening will come, and it will be announced here.",
     "alphaFullClose": "Dismiss this message",
-    "noticePreTitle": "Pre-registration is open.",
-    "noticePreBody": "{remaining, plural, =0 {no seats remain} one {one seat remains} other {# seats remaining}}.",
+    "noticePreTitle": "Sign-ups are open.",
+    "noticePreBody": "{seats} Alpha spots, 30 free credits.",
     "noticeOpenTitle": "The alpha is open.",
     "noticeOpenBody": "{remaining, plural, =0 {no seats remain} one {one seat remains} other {# seats remaining}}.",
     "noticeFullTitle": "The alpha is full.",
@@ -590,7 +590,7 @@
       {
         "title": "Where the project stands",
         "body": [
-          "OdyssAI is in closed alpha, limited to a hundred players. Pre-registration opens and closes with the seats available, and the banner at the top of the site shows how many are left.",
+          "OdyssAI is in closed alpha, limited to a hundred spots. The game isn't live yet: signing up reserves a spot and the thirty credits that come with it, and the invite goes out when it opens. The banner at the top of the site says where sign-ups stand.",
           "An alpha is unstable by nature: features change, others disappear, and a technical change can lose a universe. That is the price of coming in early, and it is stated in the terms and conditions.",
           "There is no release date. It would be made up."
         ]

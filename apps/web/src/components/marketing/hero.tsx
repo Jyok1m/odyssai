@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
+import { AlphaStanding } from "@/components/auth/alpha-standing";
 import { SignupCta } from "@/components/auth/signup-cta";
 import { SignupTerms } from "@/components/auth/signup-terms";
 import { Link } from "@/i18n/navigation";
@@ -14,7 +15,6 @@ import { Constellation } from "./constellation";
  */
 export function Hero({ children }: { children?: ReactNode }) {
   const t = useTranslations("Hero");
-  const tAlpha = useTranslations("Alpha");
 
   return (
     <div className="relative isolate overflow-hidden">
@@ -44,10 +44,9 @@ export function Hero({ children }: { children?: ReactNode }) {
           </p>
 
           {/* Dire à quoi mène le bouton avant qu'on l'ait cliqué : ce n'est
-              pas une entrée dans le jeu, c'est une place sur la liste. */}
-          <p className="mt-4 max-w-measure text-ui-sm text-pretty text-vellum-3">
-            {tAlpha("preRegister")}
-          </p>
+              pas une entrée dans le jeu, c'est une place réservée. Et pour
+              qui l'a déjà réservée, dire que le jeu n'est pas encore ouvert. */}
+          <AlphaStanding />
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
             <SignupCta>{t("primaryCta")}</SignupCta>

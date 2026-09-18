@@ -1,7 +1,6 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import toast from "react-hot-toast";
 
 import { useAuthLinks } from "@/components/auth/auth-links";
 import { useSession } from "@/components/auth/session-provider";
@@ -11,11 +10,10 @@ import { ALPHA_OPEN } from "@/lib/flags";
 
 /**
  * Appel à l'action principal. Trois réponses selon l'état : l'inscription pour
- * un visiteur, l'attente pour un joueur connecté tant que l'alpha est fermée,
- * et l'entrée en jeu une fois qu'elle est ouverte.
+ * un visiteur, rien pour un joueur connecté tant que l'alpha est fermée, et
+ * l'entrée en jeu une fois qu'elle est ouverte.
  */
 export function SignupCta({ children }: { children: string }) {
-  const t = useTranslations("Alpha");
   const tPlay = useTranslations("Play");
   const session = useSession();
   const { signUp } = useAuthLinks();
@@ -32,11 +30,10 @@ export function SignupCta({ children }: { children: string }) {
       );
     }
 
-    return (
-      <Button type="button" onClick={() => toast(t("closed"))}>
-        {children}
-      </Button>
-    );
+    // Rien, et non un bouton qui répond « pas encore » : sa place est déjà
+    // réservée, `AlphaStanding` le lui dit juste au-dessus, et un bouton qui
+    // ne mène nulle part se lit comme une panne.
+    return null;
   }
 
   // Pendant la lecture de la session, l'inscription est la bonne réponse : un
