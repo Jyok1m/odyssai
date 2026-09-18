@@ -31,3 +31,6 @@ odyssai-tarifs.xlsx
 # appels payants a chaque execution, et son entree n'est donc pas dans le
 # package.json : se lance a la main, voir l'en-tete du fichier.
 apps/api/scripts/measure-generation.ts
+
+# HOME du conteneur de test de la CI (corepack, cache pnpm).
+.ci-home/
