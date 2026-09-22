@@ -85,8 +85,8 @@ const TRAJET_HABITE: GuidanceCard = {
 
 const LIEU_SANS_PERSONNE: GuidanceCard = {
   id: 'lieu-sans-personne',
-  fr: `Quand il n'y a personne dans la scène, c'est le lieu qui agit. L'eau qui monte, la lumière qui tombe, une bête, une machine qui tourne encore, une trace fraîche. Quelque chose bouge sans que le joueur y soit pour rien.`,
-  en: `When no one is in the scene, the place acts. Water rising, light failing, an animal, a machine still turning, a fresh track. Something moves without the player having anything to do with it.`,
+  fr: `Si personne n'est présent dans la scène, alors c'est le lieu qui agit : l'eau qui monte, la lumière qui tombe, une bête, une machine qui tourne encore, une trace fraîche. Quelqu'un est là : laisse le lieu tranquille, c'est cette personne qui agit.`,
+  en: `If no one is present in the scene, then the place acts: water rising, light failing, an animal, a machine still turning, a fresh track. Someone is there: leave the place alone, that person is the one who acts.`,
 };
 
 const OUVRAGE_IMPARFAIT: GuidanceCard = {
@@ -161,14 +161,14 @@ const BY_SITUATION: Record<Situation, readonly GuidanceCard[]> = {
   lore: [REPONSE_EN_IMAGE, SAVOIR_PARTIEL, CE_QUIL_DIT_DE_LUI],
   exploration: [
     TROUVAILLE_UTILE,
-    TRAJET_HABITE,
     LIEU_SANS_PERSONNE,
+    TRAJET_HABITE,
     TRACE_LAISSEE,
   ],
   entreprise: [OUVRAGE_IMPARFAIT, TENTATIVE_SANS_TALENT],
   intimite: [VOLONTE_DE_LAUTRE, CE_QUIL_DIT_DE_LUI],
   demesure: [REFUS_PAR_LE_MONDE, MORT_ANNONCEE],
-  attente: [MONDE_QUI_AVANCE, LIEU_SANS_PERSONNE, TRAJET_HABITE],
+  attente: [MONDE_QUI_AVANCE, TRAJET_HABITE],
   meta: [SORTIE_DE_FICTION],
 };
 
