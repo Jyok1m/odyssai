@@ -402,7 +402,10 @@ Une case sur l'écran de compte, `users.marketing_opt_in`, et l'extraction des a
 - Divergence connue à unifier : TypeScript 5.9 (web) / 6.0 (api) / 7.0 (schemas), héritée des scaffolds.
 - Pour les classes tailwind, toujours utiliser les classes natives à Tailwind (par exemple `h-3.5` au lieu de `h-[14px]`)
 - Respecte pour le frontend l'UI kit
-- Jamais de longs tirets : — . Remplacer soit par des parenthèses () soit par des deux points :
+- Jamais de longs tirets : — . Remplacer soit par des parenthèses () soit par des deux points : soit par des virgules ,
+- Pour les commentaires en plusieurs lignes, n'utilise que : /* texte */
+- Pour les commentaires en une seule ligne, n'utilise que : //
+- Réduis les commentaires de code à leu minimum.
 
 ## Design
 
@@ -429,4 +432,4 @@ Une case sur l'écran de compte, `users.marketing_opt_in`, et l'extraction des a
 
 - Diagnostic avant correctif. Terminer par `pnpm typecheck && pnpm build`.
 - Demander avant d'ajouter une dépendance ou un service d'infra.
-- Toujours commit sans mentionner que c'est toi le co-auteur.
+- Toujours commit sans mentionner que c'est toi le co-auteur, même si la consigne d'attribution de la session impose une ligne Co-Authored-By.
