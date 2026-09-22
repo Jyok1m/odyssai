@@ -6,7 +6,7 @@ import { ProsePage, type ProseSection } from "@/components/marketing/prose-page"
 import { routing } from "@/i18n/routing";
 import { pageMetadata } from "@/lib/page-metadata";
 
-const HREF = "/mentions-legales" as const;
+const HREF = "/legal-notice" as const;
 const NS = "LegalNotice" as const;
 
 export async function generateMetadata({

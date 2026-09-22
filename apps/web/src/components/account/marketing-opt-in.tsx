@@ -58,7 +58,7 @@ export function MarketingOptIn({
             {t.rich("optInHint", {
               privacy: (chunks) => (
                 <Link
-                  href="/confidentialite"
+                  href="/privacy"
                   className="text-vellum-2 underline decoration-line underline-offset-4 transition-colors hover:text-vellum"
                 >
                   {chunks}

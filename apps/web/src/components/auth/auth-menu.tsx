@@ -61,7 +61,7 @@ export function AuthMenu({
   return (
     <Button
       as={Link}
-      href="/compte"
+      href="/account"
       variant={stacked ? "secondary" : "ghost"}
       size={size}
       title={session.user.email}

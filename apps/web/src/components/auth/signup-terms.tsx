@@ -21,9 +21,9 @@ export function SignupTerms() {
   return (
     <p className="mx-auto mt-6 max-w-measure text-caption text-pretty text-vellum-3">
       {t.rich("terms", {
-        terms: (chunks: ReactNode) => <Inline href="/conditions">{chunks}</Inline>,
+        terms: (chunks: ReactNode) => <Inline href="/terms">{chunks}</Inline>,
         privacy: (chunks: ReactNode) => (
-          <Inline href="/confidentialite">{chunks}</Inline>
+          <Inline href="/privacy">{chunks}</Inline>
         ),
       })}
     </p>
@@ -34,7 +34,7 @@ function Inline({
   href,
   children,
 }: {
-  href: "/conditions" | "/confidentialite";
+  href: "/terms" | "/privacy";
   children: ReactNode;
 }) {
   return (

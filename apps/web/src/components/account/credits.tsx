@@ -175,9 +175,9 @@ export function Credits() {
           {/* Un seul bouton vers la page de tarifs, et non un par palier.
               Empilés, les paliers se comparaient mal et l'écran de compte
               devenait une page de vente ; la comparaison est le travail de
-              /tarifs, qui la fait déjà en colonnes. */}
+              /pricing, qui la fait déjà en colonnes. */}
           {offers.length > 0 ? (
-            <Button as={Link} href="/tarifs">
+            <Button as={Link} href="/pricing">
               {t("changePlan")}
             </Button>
           ) : null}

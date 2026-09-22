@@ -168,7 +168,7 @@ export class BillingService {
     partagee entre les deux applications.
   */
   private accountUrl(user: User): string {
-    const path = user.locale === 'en' ? '/en/account' : '/fr/compte';
+    const path = `/${user.locale}/account`;
     return new URL(path, this.app.webBaseUrl).toString();
   }
 

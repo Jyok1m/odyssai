@@ -15,10 +15,10 @@ import { LocaleSwitcher } from "./locale-switcher";
 // Chemins internes ; next-intl les traduit en URLs localisées.
 const NAV_ITEMS = [
   { key: "concept", href: "/concept" },
-  { key: "universes", href: "/univers" },
-  { key: "multiverse", href: "/multivers" },
+  { key: "universes", href: "/universes" },
+  { key: "multiverse", href: "/multiverse" },
   { key: "lore", href: "/lore" },
-  { key: "pricing", href: "/tarifs" },
+  { key: "pricing", href: "/pricing" },
 ] as const;
 
 export function SiteHeader() {

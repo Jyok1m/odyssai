@@ -6,7 +6,7 @@ import { Pricing } from "@/components/billing/pricing";
 import { routing } from "@/i18n/routing";
 import { pageMetadata } from "@/lib/page-metadata";
 
-const HREF = "/tarifs" as const;
+const HREF = "/pricing" as const;
 
 export async function generateMetadata({
   params,

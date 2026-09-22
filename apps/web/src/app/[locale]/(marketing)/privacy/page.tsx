@@ -2,14 +2,12 @@ import type { Metadata } from "next";
 import { hasLocale, useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
 
-import {
-  ProsePage,
-  type ProseSection,
-} from "@/components/marketing/prose-page";
+import { ProsePage, type ProseSection } from "@/components/marketing/prose-page";
 import { routing } from "@/i18n/routing";
 import { pageMetadata } from "@/lib/page-metadata";
 
-const HREF = "/univers" as const;
+const HREF = "/privacy" as const;
+const NS = "Privacy" as const;
 
 export async function generateMetadata({
   params,
@@ -19,7 +17,7 @@ export async function generateMetadata({
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) return {};
 
-  const t = await getTranslations({ locale, namespace: "Universes" });
+  const t = await getTranslations({ locale, namespace: NS });
 
   return pageMetadata({
     locale,
@@ -29,8 +27,8 @@ export async function generateMetadata({
   });
 }
 
-export default function UniversesPage() {
-  const t = useTranslations("Universes");
+export default function Page() {
+  const t = useTranslations(NS);
 
   return (
     <ProsePage

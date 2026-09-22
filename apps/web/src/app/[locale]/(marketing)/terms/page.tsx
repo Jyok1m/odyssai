@@ -6,8 +6,8 @@ import { ProsePage, type ProseSection } from "@/components/marketing/prose-page"
 import { routing } from "@/i18n/routing";
 import { pageMetadata } from "@/lib/page-metadata";
 
-const HREF = "/confidentialite" as const;
-const NS = "Privacy" as const;
+const HREF = "/terms" as const;
+const NS = "Terms" as const;
 
 export async function generateMetadata({
   params,
@@ -27,6 +27,13 @@ export async function generateMetadata({
   });
 }
 
+/*
+  Conditions d'utilisation et de vente, en un seul document.
+
+  Les séparer en deux pages obligerait à décider, pour chaque règle, si elle
+  relève de l'usage ou de la vente. Les crédits sont les deux à la fois : une
+  règle de jeu et l'objet du contrat.
+*/
 export default function Page() {
   const t = useTranslations(NS);
 

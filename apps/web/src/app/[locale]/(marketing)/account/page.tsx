@@ -6,7 +6,7 @@ import { AccountPanel } from "@/components/account/account-panel";
 import { routing } from "@/i18n/routing";
 import { pageMetadata } from "@/lib/page-metadata";
 
-const HREF = "/compte" as const;
+const HREF = "/account" as const;
 
 export async function generateMetadata({
   params,

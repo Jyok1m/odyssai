@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { routing, type Pathname } from "@/i18n/routing";
-import { urlFor } from "@/lib/seo";
+import { alternatesFor, urlFor } from "@/lib/seo";
 
 /*
   Chemins internes publics, déclinés par locale avec les hreflang des autres.
@@ -13,19 +13,19 @@ import { urlFor } from "@/lib/seo";
 const PATHS: { href: Pathname; priority: number }[] = [
   { href: "/", priority: 1 },
   { href: "/concept", priority: 0.8 },
-  { href: "/univers", priority: 0.8 },
-  { href: "/multivers", priority: 0.8 },
+  { href: "/universes", priority: 0.8 },
+  { href: "/multiverse", priority: 0.8 },
   { href: "/lore", priority: 0.8 },
   // Une page de tarifs se cherche par son nom : elle merite la meme priorite
   // que les pages de contenu, pas celle des mentions legales.
-  { href: "/tarifs", priority: 0.8 },
-  { href: "/glossaire", priority: 0.5 },
-  { href: "/a-propos", priority: 0.6 },
+  { href: "/pricing", priority: 0.8 },
+  { href: "/glossary", priority: 0.5 },
+  { href: "/about", priority: 0.6 },
   // Faible priorite, mais presentes : elles sont obligatoires.
-  { href: "/conditions", priority: 0.3 },
+  { href: "/terms", priority: 0.3 },
   { href: "/contact", priority: 0.4 },
-  { href: "/mentions-legales", priority: 0.2 },
-  { href: "/confidentialite", priority: 0.2 },
+  { href: "/legal-notice", priority: 0.2 },
+  { href: "/privacy", priority: 0.2 },
   { href: "/cookies", priority: 0.2 },
 ];
 
@@ -35,11 +35,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: urlFor(locale, href),
       priority,
       changeFrequency: "weekly" as const,
-      alternates: {
-        languages: Object.fromEntries(
-          routing.locales.map((l) => [l, urlFor(l, href)]),
-        ),
-      },
+      // Les memes hreflang que la page, x-default compris : deux listes qui
+      // divergeraient feraient douter le robot de l'une et de l'autre.
+      alternates: { languages: alternatesFor(locale, href).languages },
     })),
   );
 }

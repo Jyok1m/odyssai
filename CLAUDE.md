@@ -92,7 +92,7 @@ Agent de questions-réponses du site vitrine, sur la page d'accueil. Il répond 
 
 ## Parcours d'entrée en jeu
 
-De la page d'accueil au monde généré. `GET/PUT /onboarding` derrière `SessionGuard`, une seule ressource pour tout le parcours, et la route interne `/play` (servie `/jouer` en français) côté web.
+De la page d'accueil au monde généré. `GET/PUT /onboarding` derrière `SessionGuard`, une seule ressource pour tout le parcours, et la route `/play` côté web.
 
 - **Deux schémas par étape** dans `packages/schemas/src/onboarding.ts` : un brouillon permissif enregistré au fil de la saisie, un strict qui conditionne le passage à l'étape suivante. Le parcours doit être reprenable, donc une saisie à moitié remplie doit pouvoir s'écrire en base.
 - `advance: true` sur une saisie incomplète **enregistre quand même**, puis répond 422 `incomplete` : rien de ce que le joueur a tapé ne se perd parce qu'il a cliqué trop tôt.
@@ -260,7 +260,7 @@ Un vrai jeu de rôle donne une histoire à tout ce qu'il nomme. La bible en donn
 - **Recommencer n'efface que l'histoire ouverte.** Un monde supprimé retire le pointeur par la base (`SetNull`), un monde gardé (détaché) le retire par le service : le joueur repart sur une histoire neuve, les autres restent à portée. Supprimer le compte passe toutes les histoires par la même règle, et `DepartureOutcome` en garde le pire cas visible : gardé prime sur supprimé.
 - `STORIES_MAX` (`packages/schemas/src/stories.ts`) borne le nombre : une histoire vide ne coûte rien, mais au-delà de quelques-unes la liste cesse d'être un choix.
 - La migration a ouvert, pour chaque joueur existant, la seule histoire qu'il avait. Le pointeur d'un joueur qui n'en avait aucune reste nul, ce qui est l'état d'un nouveau joueur.
-- **Côté web, les histoires ont leur onglet** : `/play/stories` (servi `/jouer/histoires`), deux onglets au-dessus du jeu (`GameTabs`), et `StoriesPanel` pour créer, jouer et supprimer. Jouer ouvre l'histoire puis ramène à la table : c'est le parcours qui suit l'histoire ouverte, l'onglet ne fait que dire laquelle. Un sélecteur en ligne au-dessus de l'assistant a été essayé et retiré : il ne savait pas supprimer, et deux endroits pour la même chose se lisent comme deux règles. La table ne s'affiche donc jamais pour deux histoires à la fois, ce qui dispense de clé par histoire sur les écrans de saisie : changer d'histoire passe par une navigation, qui remonte l'assistant.
+- **Côté web, les histoires ont leur onglet** : `/play/stories`, deux onglets au-dessus du jeu (`GameTabs`), et `StoriesPanel` pour créer, jouer et supprimer. Jouer ouvre l'histoire puis ramène à la table : c'est le parcours qui suit l'histoire ouverte, l'onglet ne fait que dire laquelle. Un sélecteur en ligne au-dessus de l'assistant a été essayé et retiré : il ne savait pas supprimer, et deux endroits pour la même chose se lisent comme deux règles. La table ne s'affiche donc jamais pour deux histoires à la fois, ce qui dispense de clé par histoire sur les écrans de saisie : changer d'histoire passe par une navigation, qui remonte l'assistant.
 - Un test e2e (`test/stories.e2e-spec.ts`) joue l'aller-retour, y compris qu'ouvrir le monde d'un autre répond 404 sans dire qu'il existe.
 
 ### Le checkpointer LangGraph vit dans son propre schéma
@@ -479,7 +479,7 @@ Une case sur l'écran de compte, `users.marketing_opt_in`, et l'extraction des a
 
 ## La page de tarifs
 
-`/tarifs` en français, `/pricing` en anglais, publique, alimentée par `GET /billing/catalog`.
+`/pricing`, publique, alimentée par `GET /billing/catalog`.
 
 - **Rien n'y est écrit en dur**, ni un nom de palier, ni un montant, ni une dotation. Les puces des cartes et les lignes du comparatif se déduisent des chiffres du catalogue, pour qu'un palier ajouté au tableau de bord s'y range sans qu'on y touche.
 - Le catalogue publie `welcome` en plus de `monthly` : les paliers offerts ne tiennent que par lui, et une page qui ne lirait que la dotation mensuelle annoncerait zéro crédit sur le seul palier qu'un visiteur peut essayer.
@@ -503,7 +503,7 @@ Une case sur l'écran de compte, `users.marketing_opt_in`, et l'extraction des a
 
 ## Conditions générales
 
-`/conditions` en français, `/terms` en anglais. Utilisation et vente dans **un seul document** : les séparer obligerait à trancher, pour chaque règle, si elle relève de l'usage ou de la vente, alors que les crédits sont les deux à la fois.
+`/terms`. Utilisation et vente dans **un seul document** : les séparer obligerait à trancher, pour chaque règle, si elle relève de l'usage ou de la vente, alors que les crédits sont les deux à la fois.
 
 - Le texte décrit le fonctionnement **réel** : deux couches de modération, le code qui décide de l'état et non le récit, la réserve qui ne se reporte pas sauf sur le palier offert, la résiliation à la fin de période, la suppression de compte qui résilie tout de suite. Une clause qui ne correspondrait plus au code serait pire qu'une clause absente.
 - La mention d'acceptation est sur la page d'accueil (`SignupTerms`), sous les boutons. C'est le **dernier écran qui nous appartient** : l'inscription part ensuite chez Keycloak, dont les pages vivent dans le dépôt d'infrastructure. Elle disparaît pour un joueur déjà connecté, qui a accepté en s'inscrivant.
@@ -553,10 +553,11 @@ Une case sur l'écran de compte, `users.marketing_opt_in`, et l'extraction des a
 
 À faire évoluer à chaque route ajoutée, pas seulement à la création.
 
+- **Une seule adresse par page, en anglais, sous `/fr` comme sous `/en`.** Le préfixe de locale porte la langue, le chemin porte la page : `/fr/pricing`, `/en/pricing`. Les chemins français d'avant (`/tarifs`, `/compte`, `/jouer`…) ont été indexés et partagés : `next.config.ts` les redirige de façon permanente, nus et sous `/fr`, et cette table ne se retire pas. Les clés de `routing.pathnames` sont désormais aussi les chemins servis, et les dossiers sous `app/[locale]` portent les mêmes noms.
 - `SITE_URL` conditionne canonical, hreflang, OpenGraph, sitemap et robots. Sans préfixe `NEXT_PUBLIC_` : elle n'est lue que côté serveur. Non définie, tout retombe sur localhost.
 - `src/lib/seo.ts` centralise l'origine, les locales OpenGraph, `urlFor()` et `alternatesFor()` (canonical, hreflang, x-default). `src/lib/page-metadata.ts` en dérive les métadonnées d'une page de contenu.
 - Toute nouvelle route publique s'ajoute à `PATHS` dans `src/app/sitemap.ts`.
-- `x-default` pointe la racine, qui négocie la langue, pour concorder avec l'en-tête `Link` émis par le proxy next-intl.
+- `x-default` pointe l'adresse nue de la page, que le proxy fait négocier, pour concorder avec l'en-tête `Link` qu'il émet. Le sitemap annonce les mêmes hreflang que la page, `x-default` compris : il les prend à `alternatesFor` au lieu de les recomposer.
 - JSON-LD dans `src/components/seo/json-ld.tsx` : le graphe du site dans le layout, le fil d'Ariane porté par `ProsePage` via sa prop `href`. N'y déclarer que du vérifiable : ni note agrégée, ni offre, ni date de sortie inventées.
 
 ## Façon de travailler

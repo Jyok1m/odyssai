@@ -10,7 +10,7 @@ import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { routing, type Locale } from "@/i18n/routing";
 import { pageMetadata } from "@/lib/page-metadata";
 
-const HREF = "/glossaire" as const;
+const HREF = "/glossary" as const;
 
 export async function generateMetadata({
   params,

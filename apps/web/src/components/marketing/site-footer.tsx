@@ -13,15 +13,15 @@ import { SITE_NAME } from "@/lib/site";
 */
 const NAV_ITEMS = [
   { key: "concept", href: "/concept" },
-  { key: "universes", href: "/univers" },
-  { key: "multiverse", href: "/multivers" },
+  { key: "universes", href: "/universes" },
+  { key: "multiverse", href: "/multiverse" },
   { key: "lore", href: "/lore" },
-  { key: "glossary", href: "/glossaire" },
-  { key: "about", href: "/a-propos" },
+  { key: "glossary", href: "/glossary" },
+  { key: "about", href: "/about" },
   { key: "contact", href: "/contact" },
-  { key: "terms", href: "/conditions" },
-  { key: "legal", href: "/mentions-legales" },
-  { key: "privacy", href: "/confidentialite" },
+  { key: "terms", href: "/terms" },
+  { key: "legal", href: "/legal-notice" },
+  { key: "privacy", href: "/privacy" },
   { key: "cookies", href: "/cookies" },
 ] as const;
 

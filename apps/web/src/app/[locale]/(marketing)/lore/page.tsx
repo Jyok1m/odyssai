@@ -42,7 +42,7 @@ export default function LorePage() {
       sections={t.raw("sections") as ProseSection[]}
       footer={
         <Link
-          href="/glossaire"
+          href="/glossary"
           className="inline-flex items-center gap-2 font-ui text-control font-medium text-accent transition-colors hover:text-vellum"
         >
           {t("glossaryCta")} <span aria-hidden="true">&rarr;</span>

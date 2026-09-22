@@ -218,7 +218,7 @@ export function GuideChat() {
                       {t("linkConcept")}
                     </Link>
                     {", "}
-                    <Link href="/univers" className="text-accent underline">
+                    <Link href="/universes" className="text-accent underline">
                       {t("linkUniverses")}
                     </Link>
                     {", "}

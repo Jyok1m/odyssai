@@ -18,7 +18,7 @@ export function OutOfCredits() {
     <span className="text-brass">
       {t("outOfCredits")}{" "}
       <Link
-        href="/compte"
+        href="/account"
         className="underline decoration-brass/40 underline-offset-2 hover:decoration-brass"
       >
         {t("seePlans")}

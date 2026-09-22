@@ -250,7 +250,7 @@ function Sidebar({
 
         <div className="mt-auto -mx-6 border-t border-line">
           <Link
-            href="/fr/compte"
+            href="/fr/account"
             onClick={onNavigate}
             className="flex items-center gap-x-3 px-6 py-4 font-ui text-ui-sm text-vellum-2 hover:bg-mist/60 hover:text-vellum"
           >
