@@ -180,8 +180,28 @@ End your answer with ${CANON_MARKER} followed by a JSON object, on a single line
 };
 
 const OPENING: Record<UiLocale, string> = {
-  fr: "Le joueur vient d'arriver dans son monde et n'a encore rien dit. Ouvre la scène : un lieu, quelqu'un à ses côtés, et une chose qui ne va pas. Deux noms propres au plus, chacun présenté en trois mots au moment où tu le poses : c'est sa toute première phrase de ce monde, et il ne peut s'y repérer que par ce que tu lui dis. Ne récite pas le lore pour autant, et ne résume pas la charte : montre. Le dé ne sert pas ici, et la première scène ne se termine pas par une question.",
-  en: "The player has just arrived in their world and has said nothing yet. Open the scene: a place, someone at their side, and one thing that is wrong. Two proper names at most, each introduced in three words as you set it down: this is their very first sentence of this world, and they can only find their bearings through what you tell them. Do not recite the lore for all that, and do not summarise the charter: show. The die is not used here, and the first scene does not end on a question.",
+  fr: `Le joueur vient d'arriver dans son monde et n'a encore rien dit. C'est la première scène, et la seule qui ait le droit de poser le décor : tout ce qu'il saura de ce monde, il le tiendra d'abord de toi.
+
+Trois choses, dans cet ordre.
+
+D'abord **où il se trouve et ce qui s'y joue en ce moment** : deux ou trois phrases, pas davantage. Le pays, l'époque, ce qui menace ou ce qui a changé. Raconte-le comme ce que son personnage sait déjà, de la façon dont on se rappelle où l'on est en ouvrant les yeux, jamais comme on l'expliquerait à un étranger.
+
+Ensuite **qui il est là-dedans** : ce qu'il y fait, ce qu'on attend de lui, à qui il est lié. C'est ce qui donne un sens à tout le reste ; sans cela il se réveille devant un décor qui ne le concerne pas.
+
+Enfin **la scène** : un lieu précis, quelqu'un à ses côtés, et une chose qui ne va pas maintenant.
+
+Trois noms propres au plus, chacun présenté en trois mots au moment où il tombe. Deux cent cinquante mots pour cette scène et pour elle seule : la limite de cent cinquante ne s'y applique pas. Le dé ne sert pas ici, et tu ne termines pas par une question.`,
+  en: `The player has just arrived in their world and has said nothing yet. This is the first scene, and the only one allowed to set the stage: everything they come to know of this world, they will first get from you.
+
+Three things, in this order.
+
+First, **where they are and what is at stake there right now**: two or three sentences, no more. The land, the age, what threatens or what has changed. Tell it as what their character already knows, the way one remembers where one is on opening one's eyes, never the way one would explain it to a stranger.
+
+Then **who they are within it**: what they do there, what is expected of them, who they are bound to. That is what gives the rest its meaning; without it they wake before scenery that has nothing to do with them.
+
+Last, **the scene**: a precise place, someone at their side, and one thing that is wrong now.
+
+Three proper names at most, each introduced in three words as it lands. Two hundred and fifty words for this scene and this one only: the hundred and fifty limit does not apply to it. The die is not used here, and you do not end on a question.`,
 };
 
 const FATE: Record<UiLocale, string> = {
@@ -190,7 +210,7 @@ const FATE: Record<UiLocale, string> = {
 };
 
 export const TURN_PROMPT = {
-  id: 'turn/v9',
+  id: 'turn/v10',
 
   build(
     locale: UiLocale,
