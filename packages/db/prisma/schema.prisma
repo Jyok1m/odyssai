@@ -600,6 +600,16 @@ model Turn {
   /// Faits entres au canon a ce tour.
   learned Int @default(0)
 
+  /// Ce que le classificateur a lu dans le message du joueur. Nul quand il n'a
+  /// rien reconnu, quand il n'a pas repondu, ou quand le tour n'a pas de
+  /// message : une ouverture et un appel au sort n'en portent jamais.
+  situation String? @db.VarChar(24)
+
+  /// Les fiches de maitrise rappelees au meneur, par identifiant. Gardees pour
+  /// la meme raison que le jet du de : verifier apres coup ce que le modele a
+  /// reellement recu, et mesurer a quelle frequence le rappel se declenche.
+  guidance String[] @default([])
+
   provider     String?
   model        String?
   inputTokens  Int?    @map("input_tokens")

@@ -129,35 +129,6 @@ export const TurnErrorBodySchema = z.object({
 export type TurnErrorBody = z.infer<typeof TurnErrorBodySchema>;
 
 /*
-  Verdict de moderation. `reason` n'est jamais rendu au joueur tel quel : il
-  sert au journal et a choisir le message affiche.
-*/
-export const ModerationVerdictSchema = z.object({
-  allow: z.boolean(),
-  reason: z
-    .enum(['insulte', 'haine', 'sexuel', 'minorite', 'violence_gratuite'])
-    .nullable()
-    .default(null),
-  /*
-    Code de la langue du message, en deux ou trois lettres. Le classificateur
-    lit deja la phrase : la lui demander ne coute rien, la detecter ailleurs
-    couterait un appel ou une dependance.
-
-    Pas une enumeration : le joueur peut ecrire dans n'importe quelle langue,
-    et seule la distinction « francais ou non » est exploitee.
-  */
-  language: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .regex(/^[a-z]{2,3}$/)
-    .nullable()
-    .default(null),
-});
-
-export type ModerationVerdict = z.infer<typeof ModerationVerdictSchema>;
-
-/*
   Ce que le joueur vient de faire, lu dans sa seule phrase : ce sont des actes
   de langage, pas des etats de scene. Une situation qui demanderait
   l'historique (la scene s'enlise, il repete la meme action) viendrait du code,
@@ -185,3 +156,42 @@ export type Situation = z.infer<typeof SituationSchema>;
 
 // Au dela, le rappel pese autant que les consignes permanentes du meneur.
 export const GUIDANCE_PER_TURN_MAX = 2;
+
+/*
+  Verdict de moderation. `reason` n'est jamais rendu au joueur tel quel : il
+  sert au journal et a choisir le message affiche.
+*/
+export const ModerationVerdictSchema = z.object({
+  allow: z.boolean(),
+  reason: z
+    .enum(['insulte', 'haine', 'sexuel', 'minorite', 'violence_gratuite'])
+    .nullable()
+    .default(null),
+  /*
+    Code de la langue du message, en deux ou trois lettres. Le classificateur
+    lit deja la phrase : la lui demander ne coute rien, la detecter ailleurs
+    couterait un appel ou une dependance.
+
+    Pas une enumeration : le joueur peut ecrire dans n'importe quelle langue,
+    et seule la distinction « francais ou non » est exploitee.
+  */
+  language: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .regex(/^[a-z]{2,3}$/)
+    .nullable()
+    .default(null),
+  /*
+    Ce que le joueur vient de faire, pour choisir les fiches de maitrise. Le
+    classificateur lit deja la phrase : la lui demander ne coute pas un appel
+    de plus, et le code garde la decision de consulter ou non.
+
+    Nulle des qu'elle est absente, inconnue ou illisible : le tour se joue
+    sans rappel, comme avant ce corpus.
+  */
+  situation: SituationSchema.nullable().catch(null).default(null),
+});
+
+export type ModerationVerdict = z.infer<typeof ModerationVerdictSchema>;
+

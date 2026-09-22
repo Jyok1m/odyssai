@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { GUIDANCE } from '@odyssai/narrator';
+import { GUIDANCE, TURN_PROMPT } from '@odyssai/narrator';
 import { SituationSchema, type Situation } from '@odyssai/schemas';
 import { TUNING } from '@odyssai/engine';
 
@@ -27,11 +27,13 @@ describe('fiches de maitrise', () => {
   */
   it("n'abandonne aucune fiche hors de portee de la borne", () => {
     const served = new Set(
-      SITUATIONS.flatMap((situation) => GUIDANCE.for(situation, 'fr')),
+      SITUATIONS.flatMap((situation) =>
+        GUIDANCE.for(situation, 'fr').map((card) => card.id),
+      ),
     );
 
     const unreachable = GUIDANCE.cards
-      .filter((card) => !served.has(card.fr))
+      .filter((card) => !served.has(card.id))
       .map((card) => card.id);
 
     expect(unreachable).toEqual([]);
@@ -59,8 +61,65 @@ describe('fiches de maitrise', () => {
     const [fr] = GUIDANCE.for('meta', 'fr');
     const [en] = GUIDANCE.for('meta', 'en');
 
-    expect(fr).toContain('fiction');
-    expect(en).toContain('fiction');
-    expect(fr).not.toBe(en);
+    expect(fr?.id).toBe(en?.id);
+    expect(fr?.text).toContain('fiction');
+    expect(en?.text).toContain('fiction');
+    expect(fr?.text).not.toBe(en?.text);
+  });
+});
+
+/*
+  Le branchement lui-meme : ce que le meneur recoit vraiment. Le bloc n'existe
+  que lorsqu'une fiche a ete retenue, sinon le prompt est celui d'avant ce
+  corpus, au mot pres.
+*/
+describe('rappels dans le prompt du meneur', () => {
+  const context = {
+    charter: {
+      premise: 'p',
+      tone: 't',
+      allowed: ['a', 'b'],
+      forbidden: ['c', 'd'],
+      narratorRules: ['e', 'f'],
+    },
+    bible: {} as never,
+    character: {} as never,
+    canon: [],
+    recent: [],
+    recalled: [],
+    band: 'partiel',
+    fate: false,
+    opening: false,
+  };
+
+  const system = (guidance: string[]) =>
+    TURN_PROMPT.build('fr', { ...context, guidance }, 'je frappe')[0]!.content;
+
+  /*
+    La balise ouvrante du bloc, et non la mention que les consignes en font :
+    elles parlent de <rappels> a chaque tour, bloc ou pas.
+  */
+  const OPENS = '<rappels>\n';
+
+  it('pose le bloc quand une fiche a ete retenue', () => {
+    const content = system(
+      GUIDANCE.for('violence', 'fr').map((card) => card.text),
+    );
+
+    expect(content).toContain(OPENS);
+    expect(content).toContain('Un affrontement ne se compte pas en points');
+  });
+
+  it('ne pose aucun bloc sans fiche', () => {
+    expect(system([])).not.toContain(OPENS);
+  });
+
+  /*
+    Le bloc arrive apres le de, donc apres tout ce qui ne change pas d'un tour
+    a l'autre : le cache de prompt du fournisseur n'a rien a y perdre.
+  */
+  it('place le bloc apres le de', () => {
+    const content = system(['rappel']);
+    expect(content.indexOf(OPENS)).toBeGreaterThan(content.indexOf('<de>\n'));
   });
 });

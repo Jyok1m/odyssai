@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { isClean, normalizeForModeration, screenText } from '@odyssai/engine';
+import { ModerationVerdictSchema } from '@odyssai/schemas';
 
 describe('moderation lexicale', () => {
   it('laisse passer un texte ordinaire', () => {
@@ -64,5 +65,38 @@ describe('moderation lexicale', () => {
 
   it('normalise de facon stable', () => {
     expect(normalizeForModeration('Ça  va, Élodie ?')).toBe('ca va elodie');
+  });
+});
+
+/*
+  La situation voyage avec le verdict : le classificateur lit deja la phrase,
+  et la lui demander ne coute pas un appel de plus.
+*/
+describe('etiquette de situation', () => {
+  it('retient une etiquette connue', () => {
+    const verdict = ModerationVerdictSchema.parse({
+      allow: true,
+      situation: 'violence',
+    });
+    expect(verdict.situation).toBe('violence');
+  });
+
+  /*
+    Le point qui compte : une etiquette inventee, accentuee ou absente ne doit
+    pas faire echouer le parse. Sans le `.catch`, le verdict entier serait
+    illisible, donc traite comme une acceptation, et un message refusable
+    passerait pour avoir mal nomme sa situation.
+  */
+  it("ne perd pas le verdict quand l'etiquette est mauvaise", () => {
+    for (const situation of ['bagarre', 'démesure', '', 42, null, undefined]) {
+      const verdict = ModerationVerdictSchema.parse({
+        allow: false,
+        reason: 'insulte',
+        situation,
+      });
+      expect(verdict.allow, String(situation)).toBe(false);
+      expect(verdict.reason, String(situation)).toBe('insulte');
+      expect(verdict.situation, String(situation)).toBeNull();
+    }
   });
 });

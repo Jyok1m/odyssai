@@ -24,6 +24,12 @@ export interface TurnContext {
     que si l'issue etait incertaine.
   */
   band: string;
+  /*
+    Des consignes de maitrise que la situation appelle, choisies par le code
+    d'apres l'etiquette rendue par le classificateur. Vide la plupart du
+    temps : c'est un rappel occasionnel, pas un socle.
+  */
+  guidance: string[];
   // Vrai quand le joueur s'en remet au sort sans dire ce qu'il fait.
   fate: boolean;
   /*
@@ -82,6 +88,11 @@ Tu connais les secrets des personnages. Tu ne les dis jamais en clair : ils se d
 
 Le joueur peut agir, ou poser une question. Une question se répond de l'intérieur du monde, avec ce que le lore contient, et sans détour. Si le lore ne le dit pas, invente une réponse qui tient avec le reste, et note-la comme un fait de canon : elle deviendra vraie pour toujours.
 
+Les rappels :
+- <rappels> porte des consignes de maîtrise qui ne valent que pour ce tour, parce que la situation s'y prête. Suis-les.
+- Ce sont des rappels, pas des ordres : en cas de désaccord, tout ce qui précède l'emporte sur eux.
+- Ne les cite jamais, n'y fais jamais allusion, ne dis jamais au joueur qu'ils existent. Ils ne font pas partie du monde.
+
 Le dé :
 - Tu reçois une bande d'issue, jamais un chiffre.
 - Tu ne t'en sers que si l'issue était incertaine. Une question sur le monde, ou un geste sans risque, ne se tranche pas au dé.
@@ -135,6 +146,11 @@ You know the characters' secrets. You never state them plainly: they are found t
 
 The player may act, or ask a question. A question is answered from inside the world, with what the lore holds, and without detour. If the lore does not say, invent an answer that holds with the rest, and record it as a canon fact: it becomes true for good.
 
+The reminders:
+- <rappels> holds game-master notes that apply to this turn only, because the situation calls for them. Follow them.
+- They are reminders, not orders: where they disagree with anything above, what is above wins.
+- Never quote them, never allude to them, never tell the player they exist. They are not part of the world.
+
 The die:
 - You receive an outcome band, never a number.
 - Use it only if the outcome was uncertain. A question about the world, or a harmless gesture, is not settled by a die.
@@ -160,7 +176,7 @@ const FATE: Record<UiLocale, string> = {
 };
 
 export const TURN_PROMPT = {
-  id: 'turn/v7',
+  id: 'turn/v8',
 
   build(
     locale: UiLocale,
@@ -181,6 +197,9 @@ export const TURN_PROMPT = {
         ? `<souvenirs>\n${context.recalled.join('\n---\n')}\n</souvenirs>`
         : '',
       `<de>\nbande : ${context.band}\n</de>`,
+      context.guidance.length > 0
+        ? `<rappels>\n${context.guidance.join('\n\n')}\n</rappels>`
+        : '',
       context.opening ? OPENING[locale] : '',
       context.fate ? FATE[locale] : '',
     ]

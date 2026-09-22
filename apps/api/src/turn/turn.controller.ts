@@ -17,11 +17,12 @@ import type { Response } from 'express';
 import {
   CanonFactSchema,
   TurnRequestSchema,
+  type Situation,
   type TurnHistory,
   type TurnStreamEvent,
 } from '@odyssai/schemas';
 import type { LlmClient } from '@odyssai/llm';
-import { TURN_PROMPT_VERSION, playTurn } from '@odyssai/narrator';
+import { GUIDANCE, TURN_PROMPT_VERSION, playTurn } from '@odyssai/narrator';
 import { arbitrateCanon, bandOf, publicOutcome, rollD20 } from '@odyssai/engine';
 import { PrismaClient, type User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
@@ -134,6 +135,12 @@ export class TurnController {
     */
     let locale = user.locale;
 
+    /*
+      Ce que le classificateur a lu dans la phrase du joueur. Nulle pour une
+      ouverture et pour un appel au sort, qui n'ont pas de message a lire.
+    */
+    let situation: Situation | null = null;
+
     // Avant la limite et avant tout appel : un message refuse ne doit ni
     // consommer un tour, ni atteindre le modele, ni entrer en base.
     if (request.kind === 'say') {
@@ -152,6 +159,8 @@ export class TurnController {
       // Une langue indetectable laisse le compte decider : un message de deux
       // mots ne doit pas faire basculer le tour.
       if (seen.language && seen.language !== 'fr') locale = 'en';
+
+      situation = seen.situation;
     }
 
     /*
@@ -204,6 +213,13 @@ export class TurnController {
     const memory = await this.memory.recall(world.universeId, said);
     const seq = memory.nextSeq;
 
+    /*
+      Le rappel est occasionnel : sans etiquette, le tour se joue exactement
+      comme avant ce corpus. La locale est celle du tour et non celle du
+      compte, comme le reste des consignes.
+    */
+    const guidance = GUIDANCE.for(situation, locale);
+
     // Le jet est tire ici, par le code, pour chaque tour. Le modele n'en verra
     // que la bande, et ne s'en servira que si l'issue etait incertaine.
     const die = rollD20();
@@ -250,7 +266,14 @@ export class TurnController {
         llm: this.llm,
         config: this.config.model,
         locale,
-        context: { ...world, ...memory, band, fate, opening },
+        context: {
+          ...world,
+          ...memory,
+          band,
+          fate,
+          opening,
+          guidance: guidance.map((card) => card.text),
+        },
         message: fate ? "Je ne sais pas quoi faire, que le sort decide." : said,
         trace: {
           name: 'turn',
@@ -259,6 +282,7 @@ export class TurnController {
             universe_id: world.universeId,
             prompt_version: TURN_PROMPT_VERSION,
             band,
+            situation,
           },
         },
       });
@@ -313,6 +337,8 @@ export class TurnController {
             usedDie: delta.usedDie,
             kind: delta.kind,
             learned: arbitrated.accepted.length,
+            situation,
+            guidance: guidance.map((card) => card.id),
             provider: this.config.provider,
             model: usage.model ?? this.config.model.model,
             inputTokens: usage.inputTokens,

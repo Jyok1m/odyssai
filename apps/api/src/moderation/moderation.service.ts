@@ -17,7 +17,12 @@ import { UsageService } from '../usage/usage.service.js';
   modele de conversation, et un appel par message.
 */
 // Laisser passer, et sans avis sur la langue.
-const OPEN: ModerationVerdict = { allow: true, reason: null, language: null };
+const OPEN: ModerationVerdict = {
+  allow: true,
+  reason: null,
+  language: null,
+  situation: null,
+};
 
 @Injectable()
 export class ModerationService {
@@ -43,7 +48,7 @@ export class ModerationService {
       // Le mot reconnu reste dans le journal du serveur, jamais dans la
       // reponse : le renvoyer au joueur reviendrait a le republier.
       this.logger.log(`refus lexical : ${hits[0]!.match}`);
-      return { allow: false, reason: 'insulte', language: null };
+      return { allow: false, reason: 'insulte', language: null, situation: null };
     }
 
     if (!this.config.moderation.enabled) return OPEN;

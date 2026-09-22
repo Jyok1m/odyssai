@@ -176,16 +176,22 @@ export const GUIDANCE = {
   id: 'guidance/v1',
 
   /*
+    Le texte pour le prompt et l'identifiant pour la base, d'une seule source :
+    les demander separement les ferait diverger le jour ou l'ordre change.
+
     Deterministe : une rotation ferait varier la consigne sous un meneur qui
     n'a pas change de scene. Situation nulle (verdict illisible, etiquette
     inconnue, ouverture) : le tour se joue sans rappel.
   */
-  for(situation: Situation | null, locale: UiLocale): string[] {
+  for(
+    situation: Situation | null,
+    locale: UiLocale,
+  ): { id: string; text: string }[] {
     if (!situation) return [];
 
     return (BY_SITUATION[situation] ?? [])
       .slice(0, GUIDANCE_PER_TURN_MAX)
-      .map((card) => card[locale]);
+      .map((card) => ({ id: card.id, text: card[locale] }));
   },
 
   // Une seule fois chacune : une meme fiche sert plusieurs situations.

@@ -33,7 +33,12 @@ export interface ModerateRequest {
   jugement, pas de l'evidence.
 */
 // Ce qu'on retient quand le classificateur n'a rien dit d'exploitable.
-const OPEN: ModerationVerdict = { allow: true, reason: null, language: null };
+const OPEN: ModerationVerdict = {
+  allow: true,
+  reason: null,
+  language: null,
+  situation: null,
+};
 
 export interface ModerationResult {
   verdict: ModerationVerdict;
