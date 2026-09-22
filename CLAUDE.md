@@ -253,6 +253,8 @@ Deux couches, dans cet ordre, sur tout ce qu'un joueur écrit.
 - Mesuré sur `qwen/qwen3.5-35b-a3b` : un tour **0,0012 $** en moyenne, une génération de monde **0,0040 $** sans rejeu. Un monde vaut donc trois tours, pas vingt-cinq. Les 25 crédits qu'il coûte sont une assurance contre les rejeux du graphe et un levier d'abonnement, **pas le reflet d'un coût**, et ça s'assume comme tel.
 - L'entrée d'un tour monte de 3 800 à 6 900 jetons entre le premier et le douzième, puis se stabilise : c'est `recentTurns` qui se remplit. C'est le curseur qui pèse le plus sur le coût d'un tour.
 - Le coût d'un même tour varie **du simple au quadruple** à taille égale, selon le fournisseur vers lequel OpenRouter route. Tarifer sur une seule mesure n'a donc aucun sens : il faut une moyenne et un pire cas.
+- **LangSmith ne porte pas le coût, et ne le portera pas.** Son wrapper `wrapOpenAI` ne lit que les champs d'usage standard d'OpenAI et ignore le `cost` d'OpenRouter, que `packages/llm` capture pourtant déjà : il voit les jetons, jamais la dépense. Lui déclarer un barème par modèle donnerait un chiffre faux pour la raison ci-dessus, la route variant d'un appel à l'autre, et ferait une seconde vérité à côté de `LLM_NARRATOR_PRICE_*`. La comptabilité est `llm_usage`, LangSmith sert à relire un prompt : le pont entre les deux est la métadonnée (`turn_id`, `guide_question_id`, `generation_job_id`).
+- Les **embeddings ne sont pas tracés** : `embed()` passe par le client nu. Il n'y a ni texte diffusé ni prompt à relire, et leur usage est journalisé comme le reste.
 
 ### `prisma generate` est une tâche turbo à part
 
