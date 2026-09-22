@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { OPENROUTER_ONLY_BODY_KEYS } from '@odyssai/llm';
+import { LLM_MODELS, OPENROUTER_ONLY_BODY_KEYS } from '@odyssai/llm';
 
 /*
   Configuration du worker, validee au demarrage. Contrairement a l'api, le
@@ -13,10 +13,7 @@ const EnvSchema = z
     POSTGRES_URL: z.string().min(1),
 
     LLM_NARRATOR_PROVIDER: z.enum(['openrouter', 'openai']).default('openrouter'),
-    LLM_NARRATOR_MODEL: z.string().min(1),
     LLM_NARRATOR_EXTRA_BODY: z.string().default('{}'),
-    LLM_NARRATOR_TEMPERATURE: z.coerce.number().min(0).max(2).default(0.6),
-    LLM_NARRATOR_MAX_OUTPUT_TOKENS: z.coerce.number().int().positive().default(900),
 
     /*
       Servent au journal d'usage quand le fournisseur ne rend pas le cout.
@@ -118,11 +115,11 @@ export function loadConfig() {
       env.LLM_NARRATOR_PROVIDER === 'openrouter'
         ? env.OPENROUTER_API_KEY
         : env.OPENAI_API_KEY,
-    model: {
-      model: env.LLM_NARRATOR_MODEL,
-      temperature: env.LLM_NARRATOR_TEMPERATURE,
-      maxOutputTokens: env.LLM_NARRATOR_MAX_OUTPUT_TOKENS,
-      extraBody: extraBody.ok ? extraBody.value : {},
+    // Un modele par role, du registre code en dur de `packages/llm`.
+    // `superRefine` a deja refuse un corps illisible : ici il est toujours lu.
+    models: {
+      generation: { ...LLM_MODELS.generation, extraBody: extraBody.ok ? extraBody.value : {} },
+      abstraction: { ...LLM_MODELS.abstraction, extraBody: extraBody.ok ? extraBody.value : {} },
     },
     // Sert au journal d'usage quand le fournisseur ne rend pas le cout.
     prices: {

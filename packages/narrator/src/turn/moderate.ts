@@ -73,6 +73,7 @@ export async function moderate(
       usage.outputTokens = event.outputTokens;
       usage.reasoningTokens = event.reasoningTokens;
       usage.costUsd = event.costUsd;
+      usage.cachedTokens = event.cachedTokens;
     }
   }
 

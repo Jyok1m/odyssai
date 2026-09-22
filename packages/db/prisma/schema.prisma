@@ -511,6 +511,11 @@ model LlmUsage {
   /// Factures au tarif de sortie chez les deux fournisseurs.
   reasoningTokens Int? @map("reasoning_tokens")
 
+  /// Jetons d'entree servis depuis le cache du fournisseur. Le seul temoin
+  /// qu'un cache de prompt sert vraiment : sans lui, choisir un fournisseur
+  /// pour son cache serait une reputation.
+  cachedTokens Int? @map("cached_tokens")
+
   /// Rendu par OpenRouter, calcule sinon. Decimal et non Float : un cout
   /// s'additionne sur des milliers de lignes, et le binaire y derive.
   costUsd Decimal? @map("cost_usd") @db.Decimal(12, 8)

@@ -44,6 +44,12 @@ export type LlmStreamEvent =
       inputTokens: number;
       outputTokens: number;
       reasoningTokens?: number;
+      /*
+        Les jetons d'entree servis depuis le cache du fournisseur. C'est le
+        seul moyen de savoir si un cache de prompt sert vraiment : sans ce
+        chiffre, choisir un fournisseur pour son cache serait une reputation.
+      */
+      cachedTokens?: number;
       costUsd?: number;
     };
 
@@ -173,6 +179,7 @@ export function createLlmClient(options: CreateLlmClientOptions): LlmClient {
               inputTokens: usage.prompt_tokens ?? 0,
               outputTokens: usage.completion_tokens ?? 0,
               reasoningTokens: usage.completion_tokens_details?.reasoning_tokens,
+              cachedTokens: usage.prompt_tokens_details?.cached_tokens,
               // OpenRouter rend le cout reel, les autres non.
               costUsd: typeof usage.cost === 'number' ? usage.cost : undefined,
             };
@@ -190,6 +197,7 @@ interface UsageChunk {
   prompt_tokens?: number;
   completion_tokens?: number;
   completion_tokens_details?: { reasoning_tokens?: number };
+  prompt_tokens_details?: { cached_tokens?: number };
   cost?: number;
 }
 

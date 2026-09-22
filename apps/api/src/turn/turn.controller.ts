@@ -10,7 +10,6 @@ import {
   NotFoundException,
   Post,
   Res,
-  ServiceUnavailableException,
   UseGuards,
 } from '@nestjs/common';
 import type { Response } from 'express';
@@ -139,10 +138,6 @@ export class TurnController {
   ): Promise<void> {
     const parsed = TurnRequestSchema.safeParse(rawBody);
     if (!parsed.success) throw new BadRequestException({ code: 'validation_error' });
-
-    if (!this.config.configured) {
-      throw new ServiceUnavailableException({ code: 'upstream_error' });
-    }
 
     const request = parsed.data;
 
@@ -397,7 +392,7 @@ export class TurnController {
     try {
       const turn = playTurn({
         llm: this.llm,
-        config: this.config.model,
+        config: this.config.modelFor('turn'),
         locale,
         context: {
           ...world,
@@ -503,7 +498,7 @@ export class TurnController {
 
         const described = await describeEntity({
           llm: this.llm,
-          config: this.config.model,
+          config: this.config.modelFor('lore'),
           locale,
           works: world.works,
           context: {
@@ -627,7 +622,7 @@ export class TurnController {
             situation,
             guidance: guidance.map((card) => card.id),
             provider: this.config.provider,
-            model: usage.model ?? this.config.model.model,
+            model: usage.model ?? this.config.modelFor('turn').model,
             inputTokens: usage.inputTokens,
             outputTokens: usage.outputTokens,
             costUsd: UsageService.cost(usage, this.config.prices),

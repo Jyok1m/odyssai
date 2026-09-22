@@ -44,6 +44,7 @@ export interface CharacterUsage {
   outputTokens?: number;
   reasoningTokens?: number;
   costUsd?: number;
+  cachedTokens?: number;
 }
 
 export function buildCharacterMessages(
@@ -98,6 +99,7 @@ function absorb(
   usage.inputTokens = event.inputTokens;
   usage.outputTokens = event.outputTokens;
   usage.costUsd = event.costUsd;
+  usage.cachedTokens = event.cachedTokens;
 }
 
 export interface CharacterExtractRequest {

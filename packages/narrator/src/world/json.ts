@@ -13,6 +13,7 @@ export interface JsonUsage {
   inputTokens?: number;
   outputTokens?: number;
   costUsd?: number;
+  cachedTokens?: number;
 }
 
 /*
@@ -60,6 +61,7 @@ export async function callJson(
       usage.inputTokens = event.inputTokens;
       usage.outputTokens = event.outputTokens;
       usage.costUsd = event.costUsd;
+      usage.cachedTokens = event.cachedTokens;
     }
   }
 

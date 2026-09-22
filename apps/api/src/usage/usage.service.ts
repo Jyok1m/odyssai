@@ -8,6 +8,8 @@ export interface RecordedUsage {
   inputTokens?: number;
   outputTokens?: number;
   reasoningTokens?: number;
+  // Servis depuis le cache du fournisseur : le seul temoin qu'un cache sert.
+  cachedTokens?: number;
   costUsd?: number;
 }
 
@@ -80,6 +82,7 @@ export class UsageService {
           inputTokens: entry.usage.inputTokens,
           outputTokens: entry.usage.outputTokens ?? 0,
           reasoningTokens: entry.usage.reasoningTokens ?? null,
+          cachedTokens: entry.usage.cachedTokens ?? null,
           costUsd: cost === undefined ? null : new Prisma.Decimal(cost.toFixed(8)),
         },
       });

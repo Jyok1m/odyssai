@@ -1,27 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { z } from 'zod';
-import { OPENROUTER_ONLY_BODY_KEYS } from '@odyssai/llm';
+import { LLM_MODELS, OPENROUTER_ONLY_BODY_KEYS, type LlmRole } from '@odyssai/llm';
 
 /*
-  Le modele de narration se choisit par evaluation, pas par reputation : il n'y
-  a donc pas de defaut ici. `LLM_NARRATOR_CANDIDATES` porte les modeles a
-  comparer, `LLM_NARRATOR_MODEL` celui qui a gagne.
-
-  Vide, l'api demarre quand meme : faire tomber le bootstrap pour une variable
-  qu'aucune route ne lit ferait echouer loin de la cause.
+  Les modeles vivent dans `packages/llm/src/models.ts`, un par role et en
+  code. Ici ne restent que ce qui depend de la machine : le fournisseur, ses
+  cles, le corps supplementaire, les prix de repli, et les candidats a
+  comparer par `eval:narration` avant de decider la-bas.
 */
 const EnvSchema = z
   .object({
     LLM_NARRATOR_PROVIDER: z.enum(['openrouter', 'openai']).default('openrouter'),
-    LLM_NARRATOR_MODEL: z.string().default(''),
     LLM_NARRATOR_CANDIDATES: z.string().default(''),
     LLM_NARRATOR_EXTRA_BODY: z.string().default('{}'),
-    LLM_NARRATOR_TEMPERATURE: z.coerce.number().min(0).max(2).default(0.6),
-    LLM_NARRATOR_MAX_OUTPUT_TOKENS: z.coerce
-      .number()
-      .int()
-      .positive()
-      .default(900),
     LLM_NARRATOR_PRICE_INPUT_USD_PER_MTOK: z.coerce
       .number()
       .nonnegative()
@@ -116,9 +107,6 @@ export class NarratorConfig {
   }
 
   // Faux tant qu'aucun modele n'a ete retenu par l'evaluation.
-  get configured(): boolean {
-    return this.env.LLM_NARRATOR_MODEL.length > 0;
-  }
 
   get provider(): 'openrouter' | 'openai' {
     return this.env.LLM_NARRATOR_PROVIDER;
@@ -131,13 +119,13 @@ export class NarratorConfig {
       : this.env.OPENAI_API_KEY;
   }
 
-  get model() {
-    return {
-      model: this.env.LLM_NARRATOR_MODEL,
-      temperature: this.env.LLM_NARRATOR_TEMPERATURE,
-      maxOutputTokens: this.env.LLM_NARRATOR_MAX_OUTPUT_TOKENS,
-      extraBody: this.extraBody,
-    };
+  /*
+    Le modele d'un role, du registre code en dur de `packages/llm`. Le corps
+    supplementaire, lui, reste dans l'environnement : il depend du
+    fournisseur, pas du role.
+  */
+  modelFor(role: LlmRole) {
+    return { ...LLM_MODELS[role], extraBody: this.extraBody };
   }
 
   // Les modeles a comparer. Lus par le script d'evaluation seul.

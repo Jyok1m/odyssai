@@ -76,7 +76,7 @@ worker.on('failed', (job, error) => {
 worker.on('error', (error) => log(`worker : ${error.message}`));
 
 log(
-  `worker pret sur ${GENERATION_QUEUE}, ${config.concurrency} monde(s) a la fois, modele ${config.model.model}`,
+  `worker pret sur ${GENERATION_QUEUE}, ${config.concurrency} monde(s) a la fois, modele ${config.models.generation.model} pour la generation, ${config.models.abstraction.model} pour l'abstraction`,
 );
 
 // Le travail en cours va au bout : le couper laisserait un monde a moitie ecrit.

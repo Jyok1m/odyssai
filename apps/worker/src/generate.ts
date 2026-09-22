@@ -28,7 +28,13 @@ async function journal(
   kind: 'abstraction' | 'generation',
   universeId: string,
   ownerId: string | null,
-  usages: { model?: string; inputTokens?: number; outputTokens?: number; costUsd?: number }[],
+  usages: {
+    model?: string;
+    inputTokens?: number;
+    outputTokens?: number;
+    cachedTokens?: number;
+    costUsd?: number;
+  }[],
 ): Promise<void> {
   const { inputUsdPerMTok, outputUsdPerMTok } = deps.config.prices;
 
@@ -49,9 +55,14 @@ async function journal(
           provider: deps.config.provider,
           userId: ownerId,
           universeId,
-          model: usage.model ?? deps.config.model.model,
+          model:
+            usage.model ??
+            (kind === 'abstraction'
+              ? deps.config.models.abstraction.model
+              : deps.config.models.generation.model),
           inputTokens: usage.inputTokens,
           outputTokens: usage.outputTokens ?? 0,
+          cachedTokens: usage.cachedTokens ?? null,
           costUsd: new Prisma.Decimal(cost.toFixed(8)),
         },
       })
@@ -171,7 +182,7 @@ export async function generate(
     const works = inspiration.data.mode === 'works' ? inspiration.data.works : [];
 
     const outcome = await runGeneration({
-      deps: { llm: deps.llm, config: deps.config.model },
+      deps: { llm: deps.llm, config: deps.config.models.generation },
       checkpointer: deps.checkpointer,
       input: {
         universeId,
@@ -250,7 +261,7 @@ async function abstract(
 ): Promise<WorldThemes> {
   const result = await abstractWorld({
     llm: deps.llm,
-    config: deps.config.model,
+    config: deps.config.models.abstraction,
     input: { inspiration, locale: 'fr' },
     signal,
     trace: { name: 'abstraction', metadata: { universe_id: universeId } },

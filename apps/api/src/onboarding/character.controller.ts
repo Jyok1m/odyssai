@@ -100,8 +100,6 @@ export class CharacterController {
     const parsed = CharacterMessageRequestSchema.safeParse(rawBody);
     if (!parsed.success) throw new BadRequestException({ code: 'validation_error' });
 
-    this.assertConfigured();
-
     // Avant d'ecrire quoi que ce soit : le nom d'un personnage est vu par les
     // autres joueurs le jour ou les univers se croisent.
     const seen = await this.moderation.check(
@@ -151,7 +149,7 @@ export class CharacterController {
     try {
       const turn = converseCharacter({
         llm: this.llm,
-        config: this.config.model,
+        config: this.config.modelFor('character'),
         locale: user.locale,
         history,
         message: parsed.data.content,
@@ -209,7 +207,6 @@ export class CharacterController {
 
   @Post('extract')
   async extract(@CurrentUser() user: User): Promise<CharacterExtractResponse> {
-    this.assertConfigured();
 
     const universeId = await this.guard(() => this.characters.open(user));
     await this.guard(() => this.characters.assertExtractable(universeId));
@@ -218,7 +215,7 @@ export class CharacterController {
 
     const result = await extractCharacter({
       llm: this.llm,
-      config: this.config.model,
+      config: this.config.modelFor('extract'),
       locale: user.locale,
       history,
       trace: {
@@ -245,14 +242,6 @@ export class CharacterController {
     }
 
     return { character: result.character, missing: result.missing };
-  }
-
-  private assertConfigured(): void {
-    // Le modele se choisit par evaluation : tant qu'aucun n'a gagne, dire
-    // indisponible vaut mieux qu'appeler un modele vide.
-    if (!this.config.configured) {
-      throw new ServiceUnavailableException({ code: 'upstream_error' });
-    }
   }
 
   // Traduit les refus du parcours en codes que le front sait lire.

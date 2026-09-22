@@ -14,6 +14,7 @@ export interface TailUsage {
   outputTokens?: number;
   reasoningTokens?: number;
   costUsd?: number;
+  cachedTokens?: number;
 }
 
 export interface TailSplit {
@@ -79,6 +80,7 @@ export function splitTail(
         usage.outputTokens = event.outputTokens;
         usage.reasoningTokens = event.reasoningTokens;
         usage.costUsd = event.costUsd;
+        usage.cachedTokens = event.cachedTokens;
         continue;
       }
 

@@ -12,16 +12,22 @@ function makeConfig(overrides: Record<string, string> = {}): NarratorConfig {
 }
 
 describe('NarratorConfig', () => {
-  // L'api doit demarrer sans : la narration n'est lue par aucune route.
-  it('accepte un modele absent, et le dit', () => {
-    const config = makeConfig({ LLM_NARRATOR_MODEL: '' });
+  /*
+    Les modeles vivent en code, un par role : une variable d'environnement qui
+    pretendrait en poser un est ignoree, et le corps supplementaire, lui, se
+    retrouve sur chaque role parce qu'il depend du fournisseur.
+  */
+  it('sert un modele par role, depuis le code et non depuis l environnement', () => {
+    const config = makeConfig({
+      LLM_NARRATOR_MODEL: 'un/modele-ignore',
+      LLM_NARRATOR_EXTRA_BODY: '{"reasoning":{"effort":"none"}}',
+    });
 
-    expect(config.configured).toBe(false);
+    expect(config.modelFor('turn').model).not.toBe('un/modele-ignore');
+    expect(config.modelFor('turn').model).not.toBe(config.modelFor('extract').model);
+    expect(config.modelFor('extract').temperature).toBeLessThan(config.modelFor('turn').temperature);
+    expect(config.modelFor('lore').extraBody).toEqual({ reasoning: { effort: 'none' } });
     expect(config.candidates).toEqual([]);
-  });
-
-  it('reconnait un modele retenu', () => {
-    expect(makeConfig({ LLM_NARRATOR_MODEL: 'un/modele' }).configured).toBe(true);
   });
 
   it('decoupe les candidats et ignore les blancs', () => {

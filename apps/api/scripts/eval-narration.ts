@@ -174,8 +174,8 @@ function target(model: string, locale: EvalLocale) {
       llm,
       config: {
         model,
-        temperature: narrator.model.temperature,
-        maxOutputTokens: narrator.model.maxOutputTokens,
+        temperature: narrator.modelFor('abstraction').temperature,
+        maxOutputTokens: narrator.modelFor('abstraction').maxOutputTokens,
         extraBody: narrator.extraBody,
       },
       input: { inspiration: toInspiration(inputs), locale },

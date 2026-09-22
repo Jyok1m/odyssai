@@ -53,6 +53,7 @@ export interface AbstractionUsage {
   inputTokens?: number;
   outputTokens?: number;
   costUsd?: number;
+  cachedTokens?: number;
 }
 
 export const ABSTRACTION_PROMPT_VERSION = ABSTRACTION_PROMPT.id;
@@ -97,6 +98,7 @@ export async function abstractWorld(
       usage.inputTokens = event.inputTokens;
       usage.outputTokens = event.outputTokens;
       usage.costUsd = event.costUsd;
+      usage.cachedTokens = event.cachedTokens;
     }
   }
 
