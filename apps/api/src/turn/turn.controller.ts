@@ -272,6 +272,17 @@ export class TurnController {
     const die = rollD20();
     const band = bandOf(die);
 
+    /*
+      Le de a-t-il tranche ? C'est le code qui repond, pas le modele.
+
+      Il declare bien `usedDie` dans son bloc de queue, mais il l'oublie ou le
+      nie : sur les premiers tours, `used_die` etait faux meme la ou le joueur
+      venait de lancer. Or ce qu'on montre au joueur et ce qu'on garde pour
+      verifier un de apres coup ne peuvent pas dependre d'une declaration.
+      Sa reponse ne sert donc plus que pour les tours qu'on lui laisse juger.
+    */
+    const settled = !opening && settledByDie(situation);
+
     // Ecrit avant l'appel : une coupure en cours de reponse ne doit pas faire
     // perdre au joueur ce qu'il a tape. Rien a ecrire a l'ouverture, ou la
     // reponse du meneur prend le premier rang.
@@ -327,7 +338,7 @@ export class TurnController {
           opening,
           guidance: guidance.map((card) => card.text),
           // Une ouverture ne tranche rien : le joueur n'a encore rien tente.
-          mustUseDie: !opening && settledByDie(situation),
+          mustUseDie: settled,
         },
         message: fate ? "Je ne sais pas quoi faire, que le sort decide." : said,
         trace: {
@@ -389,7 +400,7 @@ export class TurnController {
             seq,
             die,
             band,
-            usedDie: delta.usedDie,
+            usedDie: settled || delta.usedDie,
             kind: delta.kind,
             learned: arbitrated.accepted.length,
             situation,
@@ -417,7 +428,7 @@ export class TurnController {
       if (streaming) {
         this.write(res, {
           type: 'done',
-          outcome: delta.usedDie ? publicOutcome(band) : null,
+          outcome: settled || delta.usedDie ? publicOutcome(band) : null,
           learned: arbitrated.accepted.length,
         });
       }
