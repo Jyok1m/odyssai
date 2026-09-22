@@ -33,7 +33,18 @@ import { loadRootEnvFile } from '@odyssai/db';
 import { GuideConfig } from '../dist/config/guide-config.js';
 import { NarratorConfig } from '../dist/config/narrator-config.js';
 
-const DATASET = 'odyssai-abstraction-fr';
+/*
+  Les deux langues, toujours : le meneur repond dans celle du joueur, et un
+  modele qui abstrait proprement en francais peut emprunter en anglais. Un
+  candidat ne se juge que sur son pire cote.
+
+  Contrepartie a connaitre : le nombre d'appels double. Une execution vaut le
+  nombre de cas multiplie par le nombre de candidats, multiplie par deux.
+*/
+const LOCALES = ['fr', 'en'] as const;
+type EvalLocale = (typeof LOCALES)[number];
+
+const datasetOf = (locale: EvalLocale) => `odyssai-abstraction-${locale}`;
 
 interface EvalCase {
   id: string;
@@ -65,21 +76,27 @@ if (candidates.length === 0) {
 // dans une seconde configuration ferait deux verites a tenir.
 const tracing = new GuideConfig().tracing;
 
-const cases: EvalCase[] = readFileSync(
-  join(
-    new URL('..', import.meta.url).pathname,
-    '..',
-    '..',
-    'packages',
-    'narrator',
-    'evals',
-    'abstraction.fr.jsonl',
-  ),
-  'utf8',
-)
-  .trim()
-  .split('\n')
-  .map((line) => JSON.parse(line) as EvalCase);
+function casesOf(locale: EvalLocale): EvalCase[] {
+  return readFileSync(
+    join(
+      new URL('..', import.meta.url).pathname,
+      '..',
+      '..',
+      'packages',
+      'narrator',
+      'evals',
+      `abstraction.${locale}.jsonl`,
+    ),
+    'utf8',
+  )
+    .trim()
+    .split('\n')
+    .map((line) => JSON.parse(line) as EvalCase);
+}
+
+const casesByLocale = new Map<EvalLocale, EvalCase[]>(
+  LOCALES.map((locale) => [locale, casesOf(locale)]),
+);
 
 const client = new Client({
   apiUrl: tracing.endpoint,
@@ -87,24 +104,25 @@ const client = new Client({
   workspaceId: tracing.workspaceId,
 });
 
-const dataset = await client
-  .readDataset({ datasetName: DATASET })
-  .catch(async () =>
-    client.createDataset(DATASET, {
-      description: "Passe d'abstraction d'OdyssAI : oeuvres citees vers themes.",
+for (const locale of LOCALES) {
+  const name = datasetOf(locale);
+  const dataset = await client.readDataset({ datasetName: name }).catch(async () =>
+    client.createDataset(name, {
+      description: `Passe d'abstraction d'OdyssAI (${locale}) : oeuvres citees vers themes.`,
     }),
   );
 
-// Les exemples portent leur `id` en metadonnee : une seconde execution les met
-// a jour au lieu d'en creer douze de plus.
-const existing = new Set<string>();
-for await (const example of client.listExamples({ datasetId: dataset.id })) {
-  const key = (example.metadata as { caseId?: string } | undefined)?.caseId;
-  if (key) existing.add(key);
-}
+  // Les exemples portent leur `id` en metadonnee : une seconde execution les
+  // met a jour au lieu d'en creer douze de plus.
+  const existing = new Set<string>();
+  for await (const example of client.listExamples({ datasetId: dataset.id })) {
+    const key = (example.metadata as { caseId?: string } | undefined)?.caseId;
+    if (key) existing.add(key);
+  }
 
-const toCreate = cases.filter((item) => !existing.has(item.id));
-if (toCreate.length > 0) {
+  const toCreate = casesByLocale.get(locale)!.filter((item) => !existing.has(item.id));
+  if (toCreate.length === 0) continue;
+
   await client.createExamples(
     toCreate.map((item) => ({
       dataset_id: dataset.id,
@@ -150,7 +168,7 @@ interface Output {
   costUsd?: number;
 }
 
-function target(model: string) {
+function target(model: string, locale: EvalLocale) {
   return async function run(inputs: Inputs): Promise<Output> {
     const result = await abstractWorld({
       llm,
@@ -160,10 +178,10 @@ function target(model: string) {
         maxOutputTokens: narrator.model.maxOutputTokens,
         extraBody: narrator.extraBody,
       },
-      input: { inspiration: toInspiration(inputs), locale: 'fr' },
+      input: { inspiration: toInspiration(inputs), locale },
       trace: {
         name: 'abstraction',
-        metadata: { prompt_version: ABSTRACTION_PROMPT_VERSION, model },
+        metadata: { prompt_version: ABSTRACTION_PROMPT_VERSION, model, locale },
       },
     });
 
@@ -297,46 +315,54 @@ const summary = new Map<string, Map<string, Score>>();
 const failures: string[] = [];
 let spent = 0;
 
+/*
+  Une ligne par modele et par langue : c'est l'ecart entre les deux qui se
+  regarde, pas la moyenne des deux. Un modele qui abstrait proprement en
+  francais et emprunte en anglais ne vaut pas un modele regulier.
+*/
 for (const model of candidates) {
-  console.log(`\n--- ${model}`);
+  for (const locale of LOCALES) {
+    const row = `${model} (${locale})`;
+    console.log(`\n--- ${row}`);
 
-  const results = await evaluate(target(model), {
-    data: DATASET,
-    evaluators,
-    client,
-    experimentPrefix: `${ABSTRACTION_PROMPT_VERSION} ${model}`,
-    // Un seul a la fois : comparer des modeles sous des limites de debit
-    // differentes mesurerait le fournisseur, pas le modele.
-    maxConcurrency: 2,
-  });
+    const results = await evaluate(target(model, locale), {
+      data: datasetOf(locale),
+      evaluators,
+      client,
+      experimentPrefix: `${ABSTRACTION_PROMPT_VERSION} ${locale} ${model}`,
+      // Un seul a la fois : comparer des modeles sous des limites de debit
+      // differentes mesurerait le fournisseur, pas le modele.
+      maxConcurrency: 2,
+    });
 
-  const perKey = new Map<string, Score>();
-  for (const row of results.results) {
-    const caseId =
-      ((row.example?.metadata ?? {}) as { caseId?: string }).caseId ?? '?';
+    const perKey = new Map<string, Score>();
+    for (const result of results.results) {
+      const caseId =
+        ((result.example?.metadata ?? {}) as { caseId?: string }).caseId ?? '?';
 
-    for (const evaluation of row.evaluationResults.results) {
-      const value = typeof evaluation.score === 'number' ? evaluation.score : 0;
-      const score = perKey.get(evaluation.key) ?? { total: 0, count: 0 };
-      score.total += value;
-      score.count += 1;
-      perKey.set(evaluation.key, score);
+      for (const evaluation of result.evaluationResults.results) {
+        const value = typeof evaluation.score === 'number' ? evaluation.score : 0;
+        const score = perKey.get(evaluation.key) ?? { total: 0, count: 0 };
+        score.total += value;
+        score.count += 1;
+        perKey.set(evaluation.key, score);
 
-      if (value < 1) {
-        failures.push(
-          `${model} · ${caseId} · ${evaluation.key}${evaluation.comment ? ` · ${evaluation.comment}` : ''}`,
-        );
+        if (value < 1) {
+          failures.push(
+            `${row} · ${caseId} · ${evaluation.key}${evaluation.comment ? ` · ${evaluation.comment}` : ''}`,
+          );
+        }
+      }
+
+      const paid = (result.run.outputs as { costUsd?: number } | undefined)?.costUsd;
+      if (typeof paid === 'number') {
+        spent += paid;
+        cost.set(row, (cost.get(row) ?? 0) + paid);
       }
     }
 
-    const paid = (row.run.outputs as { costUsd?: number } | undefined)?.costUsd;
-    if (typeof paid === 'number') {
-      spent += paid;
-      cost.set(model, (cost.get(model) ?? 0) + paid);
-    }
+    summary.set(row, perKey);
   }
-
-  summary.set(model, perKey);
 }
 
 
@@ -345,15 +371,15 @@ console.log(
   `\n${'modele'.padEnd(40)}${keys.map((k) => k.padEnd(18)).join('')}${'cout'.padEnd(12)}`,
 );
 
-for (const [model, perKey] of summary) {
+for (const [line, perKey] of summary) {
   const cells = keys.map((key) => {
     const score = perKey.get(key);
     const value = score && score.count > 0 ? score.total / score.count : 0;
     return `${(value * 100).toFixed(0)} %`.padEnd(18);
   });
-  const paid = cost.get(model) ?? 0;
+  const paid = cost.get(line) ?? 0;
   console.log(
-    `${model.padEnd(40)}${cells.join('')}${(paid > 0 ? `${paid.toFixed(5)} USD` : 'n/c').padEnd(12)}`,
+    `${line.padEnd(40)}${cells.join('')}${(paid > 0 ? `${paid.toFixed(5)} USD` : 'n/c').padEnd(12)}`,
   );
 }
 
@@ -363,7 +389,7 @@ if (failures.length > 0) {
 }
 
 console.log(
-  `\n${cases.length} cas par modele. Cout total rapporte : ${spent > 0 ? `${spent.toFixed(4)} USD` : 'non rapporte par le fournisseur'}.`,
+  `\n${casesByLocale.get('fr')!.length} cas par modele et par langue, ${LOCALES.length} langues. Cout total rapporte : ${spent > 0 ? `${spent.toFixed(4)} USD` : 'non rapporte par le fournisseur'}.`,
 );
 console.log(
   'Reporte le gagnant dans LLM_NARRATOR_MODEL, et garde LLM_NARRATOR_CANDIDATES pour la prochaine comparaison.',
