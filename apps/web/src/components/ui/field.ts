@@ -10,8 +10,9 @@ export const FIELD =
   "h-10 w-full rounded-control border border-line bg-ink px-3.5 font-ui text-ui-sm text-vellum transition-colors focus:border-accent";
 
 // Meme chose, sur plusieurs lignes.
+// `resize-y` : le joueur regle la hauteur, jamais la largeur, qui casserait la grille.
 export const FIELD_AREA =
-  "w-full rounded-card border border-line bg-ink px-3.5 py-2.5 font-ui text-ui-sm text-vellum transition-colors focus:border-accent";
+  "w-full min-w-0 resize-y rounded-card border border-line bg-ink px-3.5 py-2.5 font-ui text-ui-sm text-vellum transition-colors focus:border-accent";
 
 // Une saisie dont l'issue est sans retour : la bordure vire a l'ember.
 export const FIELD_DANGER =

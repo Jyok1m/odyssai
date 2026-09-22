@@ -7,6 +7,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
+import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
@@ -27,7 +28,6 @@ interface Turn {
 }
 
 // Au-delà, le champ défile au lieu de repousser le bouton hors de l'écran.
-const TEXTAREA_MAX_PX = 160;
 // Le compteur n'apparaît qu'à l'approche de la borne, pas à chaque frappe.
 const COUNTER_FROM = GUIDE_QUESTION_MAX_CHARS - 50;
 
@@ -57,14 +57,6 @@ export function GuideChat() {
     return () => controller.abort();
   }, [locale]);
 
-  // Le champ grandit avec le texte. Remis à zéro d'abord, sinon scrollHeight
-  // ne redescend jamais quand on efface.
-  useEffect(() => {
-    const field = fieldRef.current;
-    if (!field) return;
-    field.style.height = "0px";
-    field.style.height = `${Math.min(field.scrollHeight, TEXTAREA_MAX_PX)}px`;
-  }, [input]);
 
   const seenTurns = useRef(0);
 
@@ -274,10 +266,9 @@ export function GuideChat() {
           <label htmlFor="guide-question" className="sr-only">
             {t("inputLabel")}
           </label>
-          <textarea
-            ref={fieldRef}
+          <AutoGrowTextarea
+            fieldRef={fieldRef}
             id="guide-question"
-            rows={1}
             value={input}
             maxLength={GUIDE_QUESTION_MAX_CHARS}
             placeholder={t("placeholder")}
@@ -294,7 +285,6 @@ export function GuideChat() {
               event.preventDefault();
               void ask(input);
             }}
-            className="max-h-40 w-full resize-none self-center border-0 bg-transparent py-1.5 font-ui text-ui-sm text-vellum placeholder:text-vellum-3"
           />
 
           {input.length >= COUNTER_FROM && (

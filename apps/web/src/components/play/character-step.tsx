@@ -9,6 +9,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 import { OutOfCredits } from "@/components/billing/out-of-credits";
+import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { Button } from "@/components/ui/button";
 import { isOutOfCredits } from "@/lib/billing";
 import {
@@ -218,9 +219,8 @@ export function CharacterStep({ initial, saving, error, onAdvance }: Props) {
             <label htmlFor="character-message" className="sr-only">
               {t("character.inputLabel")}
             </label>
-            <textarea
+            <AutoGrowTextarea
               id="character-message"
-              rows={1}
               value={input}
               maxLength={CHARACTER_MESSAGE_MAX_CHARS}
               placeholder={t("character.placeholder")}
@@ -237,7 +237,6 @@ export function CharacterStep({ initial, saving, error, onAdvance }: Props) {
                 event.preventDefault();
                 void send();
               }}
-              className="max-h-40 w-full resize-none self-center border-0 bg-transparent py-1.5 font-ui text-ui-sm text-vellum placeholder:text-vellum-3"
             />
             <Button
               type="submit"

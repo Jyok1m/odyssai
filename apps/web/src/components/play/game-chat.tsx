@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from "react";
 import { OutOfCredits } from "@/components/billing/out-of-credits";
 import { CreditsBadge } from "@/components/play/credits-badge";
 import { Story } from "@/components/play/story";
+import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { Button } from "@/components/ui/button";
 import { isOutOfCredits } from "@/lib/billing";
 import { TurnError, fetchHistory, playTurn } from "@/lib/turn";
@@ -331,9 +332,8 @@ export function GameChat() {
           <label htmlFor="turn" className="sr-only">
             {t("inputLabel")}
           </label>
-          <textarea
+          <AutoGrowTextarea
             id="turn"
-            rows={1}
             value={input}
             maxLength={TURN_MESSAGE_MAX_CHARS}
             placeholder={t("placeholder")}
@@ -352,7 +352,6 @@ export function GameChat() {
               setInput("");
               void play({ kind: "say", content });
             }}
-            className="max-h-40 w-full resize-none self-center border-0 bg-transparent py-1.5 font-ui text-ui-sm text-vellum placeholder:text-vellum-3"
           />
           <Button type="submit" size="sm" disabled={!input.trim() || busy}>
             {t("send")}
