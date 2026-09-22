@@ -2,27 +2,18 @@ import { Injectable, Logger } from '@nestjs/common';
 import { z } from 'zod';
 
 /*
-  Stripe, et rien d'autre.
+  La cle et le secret de webhook, rien d'autre : les identifiants de prix
+  vivent dans `plans`, ou le tableau de bord les ecrit. En variable, mettre un
+  palier en vente demandait un deploiement.
 
-  La cle et le secret de webhook, rien d'autre. Les identifiants de prix
-  vivaient ici : ils sont passes dans la table `plans`, ou le tableau de bord
-  d'administration les ecrit lui-meme en creant le produit chez Stripe. Les
-  garder en variable d'environnement obligeait a un deploiement pour mettre un
-  palier en vente.
-
-  Tout est optionnel : sans cle, la facturation se tait et le palier libre
-  suffit a jouer. C'est ce qui permet de developper sans compte Stripe.
+  Tout est optionnel : sans cle, la vente se tait et le palier libre suffit.
 */
 const EnvSchema = z
   .object({
     /*
-      Le deploiement, et non la facon dont Node est bati.
-
-      `NODE_ENV` ne peut pas servir ici : les deux copies du site tournent
-      avec `NODE_ENV=production`, l'image etant la meme, alors que celle de
-      dev doit justement travailler en mode test chez Stripe. Sans cette
-      variable, la copie de dev refuserait de demarrer ou debiterait de
-      vraies cartes, et les deux sont inacceptables.
+      Le deploiement, et non la facon dont Node est bati : les deux copies du
+      site tournent avec `NODE_ENV=production`, l'image etant la meme, quand
+      celle de dev doit travailler en mode test chez Stripe.
     */
     ODYSSAI_ENV: z
       .enum(['development', 'staging', 'production'])

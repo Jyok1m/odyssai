@@ -9,16 +9,12 @@ import { BRAND_INK } from "@/lib/site";
 import "../globals.css";
 
 /*
-  Racine du tableau de bord, distincte de celle du site.
+  Racine du tableau de bord, hors du segment `[locale]` et hors du proxy
+  next-intl : un back-office que seul l'administrateur voit n'a pas d'audience
+  anglophone. Textes en français, en dur.
 
-  `/admin` vit hors du segment `[locale]` et hors du proxy next-intl : un
-  back-office que seul l'administrateur voit n'a pas d'audience anglophone,
-  et le traduire aurait double chaque libellé pour personne. Les textes sont
-  donc en français, en dur.
-
-  Deux racines coexistent parce qu'aucune `app/layout.tsx` ne les chapeaute :
-  une route statique l'emporte sur `[locale]`, donc `/admin` arrive bien ici
-  et `/fr` va dans l'autre.
+  Deux racines coexistent faute d'une `app/layout.tsx` qui les chapeaute : une
+  route statique l'emporte sur `[locale]`.
 */
 const instrumentSans = Instrument_Sans({
   variable: "--font-instrument-sans",

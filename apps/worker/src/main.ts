@@ -37,14 +37,9 @@ const llm = createLlmClient({
 });
 
 /*
-  Le checkpointer cree ses tables au premier demarrage, dans son propre schema
-  Postgres et non dans `public`.
-
-  C'est ce qui les met hors de portee de Prisma : `migrate diff` compare le
-  schema declare a ce qu'il trouve dans `public`, et y voyait des tables qu'il
-  ne connaissait pas. Chaque migration proposait donc de les supprimer, ce qui
-  aurait efface l'etat de reprise de toutes les generations en cours. Elles
-  appartiennent a LangGraph, qui en decide la forme ; les isoler le dit.
+  Le checkpointer cree ses tables au demarrage, dans son propre schema et non
+  dans `public` : la, Prisma ne les voyant pas declarees, chaque `migrate diff`
+  proposait de les supprimer et aurait efface l'etat des generations en cours.
 */
 const checkpointer = PostgresSaver.fromConnString(config.postgresUrl, {
   schema: 'langgraph',

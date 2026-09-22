@@ -32,13 +32,9 @@ export const PlayerProfile = z.object({
 export type PlayerProfile = z.infer<typeof PlayerProfile>;
 
 /*
-  Pseudo dans le jeu. Il n'existe pas dans le realm : c'est la seule piece de
-  l'identite que l'application decide.
-
-  Bornes lexicales volontairement etroites : le pseudo est affiche aux autres
-  joueurs, donc pas de caracteres de controle, pas d'espaces en lisiere ni
-  doubles, et il commence et finit par une lettre ou un chiffre. L'unicite,
-  elle, est insensible a la casse et se joue en base.
+  Pseudo dans le jeu, absent du realm : la seule piece de l'identite que
+  l'application decide. Bornes etroites parce qu'il est affiche aux autres
+  joueurs. L'unicite est insensible a la casse et se joue en base.
 */
 export const Username = z
   .string()

@@ -7,10 +7,8 @@ import { OPENROUTER_ONLY_BODY_KEYS } from '@odyssai/llm';
   a donc pas de defaut ici. `LLM_NARRATOR_CANDIDATES` porte les modeles a
   comparer, `LLM_NARRATOR_MODEL` celui qui a gagne.
 
-  Vide, la configuration n'empeche pas l'api de demarrer : la narration
-  n'existe encore ni dans une route ni dans un worker, et faire tomber le
-  bootstrap pour une variable qu'aucun chemin de requete ne lit ferait echouer
-  loin de la cause. Ceux qui en ont besoin le disent eux-memes.
+  Vide, l'api demarre quand meme : faire tomber le bootstrap pour une variable
+  qu'aucune route ne lit ferait echouer loin de la cause.
 */
 const EnvSchema = z
   .object({
@@ -158,11 +156,9 @@ export class NarratorConfig {
       temperature: 0,
       maxOutputTokens: this.env.MODERATION_MAX_OUTPUT_TOKENS,
       /*
-        Le meme corps que la narration, et non une variable de plus : c'est le
-        meme fournisseur et ce sont les memes exigences. Sans lui, le
-        classificateur facturait 140 a 178 jetons de raisonnement au tarif de
-        sortie pour rendre un verdict d'une ligne, soit les deux tiers de ce
-        que coute une moderation, et le texte du joueur partait sans
+        Le meme corps que la narration, meme fournisseur et memes exigences.
+        Sans lui, le classificateur facturait 140 a 178 jetons de raisonnement
+        pour un verdict d'une ligne, et le texte du joueur partait sans
         `data_collection: deny`.
       */
       extraBody: this.extraBody,

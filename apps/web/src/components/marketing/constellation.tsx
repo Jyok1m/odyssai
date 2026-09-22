@@ -1,11 +1,9 @@
 /*
-  Décor du hero, reprise de l'élément `.sky` du kit : les mondes sont des
-  nœuds, les arêtes les passages de l'un à l'autre, et l'étoile de laiton le
-  Lore Général (le point fixe que tous les univers partagent).
+  Décor du hero, reprise de `.sky` du kit : les mondes sont des nœuds, les
+  arêtes les passages, l'étoile de laiton le Lore Général.
 
-  Les quatre couleurs de monde sont les exemples d'accent du kit. Elles vivent
-  dans des attributs SVG, pas dans des classes, la convention Tailwind ne s'y
-  applique donc pas.
+  Les quatre couleurs sont les accents du kit, dans des attributs SVG et non
+  des classes : la convention Tailwind ne s'y applique pas.
 */
 const EDGES =
   "M70 110L200 60L300 160L430 90L540 190L500 340L380 270L300 160M380 270L230 320L130 230L70 110M130 230L300 160";

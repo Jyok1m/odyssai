@@ -25,15 +25,12 @@ export type OffTopicSplit =
     };
 
 /*
-  Bufferise le debut du flux pour decider s'il s'agit d'un refus.
+  Bufferise le debut du flux pour decider s'il s'agit d'un refus. Tant que le
+  buffer reste un prefixe de la sentinelle on accumule ; complete, on coupe
+  l'appel amont ; divergente, on rend le buffer puis la suite.
 
-  Tant que le buffer reste un prefixe de la sentinelle, on accumule sans rien
-  emettre. Des qu'elle est complete, on coupe l'appel amont : inutile de payer
-  une generation dont rien ne sera servi. Des que le buffer diverge, on rend le
-  buffer puis la suite, sans alteration.
-
-  La sentinelle arrive souvent coupee entre plusieurs chunks, d'ou la
-  comparaison par prefixe plutot qu'une egalite sur le premier chunk.
+  La comparaison est par prefixe : la sentinelle arrive souvent coupee entre
+  plusieurs chunks.
 */
 export async function splitOffTopic(
   source: AsyncIterable<LlmStreamEvent>,

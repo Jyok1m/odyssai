@@ -329,15 +329,10 @@ export async function runGeneration(
   };
 
   /*
-    Reprendre un fil interrompu, et non en ouvrir un second.
-
-    Passer une entree complete fait repartir le graphe du debut, meme quand un
-    checkpoint existe : c'est `null` qui dit de continuer. Sans cette
-    distinction, un worker tue au quatrieme noeud repayerait les trois
-    premiers, ce que le checkpointer etait precisement cense eviter.
-
-    `next` est vide quand le fil est absent ou deja mene a son terme. Dans les
-    deux cas on repart de l'entree.
+    Reprendre un fil, et non en ouvrir un second : c'est `null` en entree qui
+    dit de continuer, une entree complete faisant repartir du debut meme quand
+    un checkpoint existe. `next` vide signale un fil absent ou acheve, et on
+    repart alors de l'entree.
   */
   const resuming =
     options.checkpointer !== undefined &&

@@ -8,15 +8,12 @@ import { STRIPE } from '../stripe/stripe.module.js';
 /*
   Ce qui arrive a un monde et a un personnage quand leur joueur s'en va.
 
-  Deux questions independantes : un personnage peut avoir ete rencontre
-  ailleurs sans que son monde ait jamais recu de visiteur, puisque c'est lui
-  qui voyage. La table `encounters` repond aux deux, et personne n'y ecrit
-  encore : tant que la traversee entre univers n'existe pas, les deux
-  reponses sont non, et tout est supprime. C'est le comportement juste.
+  Deux questions independantes : un personnage voyage, donc il peut avoir ete
+  rencontre sans que son monde ait recu personne. Rien n'ecrit encore dans
+  `encounters`, donc les deux reponses sont non et tout est supprime.
 
-  Un module a part, et non une methode d'OnboardingService : MeController vit
-  dans AuthModule, qu'OnboardingModule importe deja, et l'inverse ferait un
-  cycle.
+  Un module a part : `MeController` vit dans `AuthModule`, qu'`OnboardingModule`
+  importe deja, et l'inverse ferait un cycle.
 */
 @Injectable()
 export class ErasureService {
@@ -75,10 +72,11 @@ export class ErasureService {
       }
 
       if (worldKept) {
-        // Le monde reste, le joueur non. Ses propres mots partent avec lui :
-        // les titres cites, sa description libre et toute la conversation de
-        // creation. Ce qui demeure est le monde ecrit par le modele, sans
-        // plus rien qui le relie a une personne.
+        /*
+          Le monde reste, le joueur non : ses titres cites, sa description
+          libre et la conversation de creation partent avec lui. Ce qui demeure
+          est le texte du modele, sans lien avec une personne.
+        */
         await tx.conversationMessage.deleteMany({ where: { universeId: universe.id } });
         await tx.generationJob.deleteMany({ where: { universeId: universe.id } });
         await tx.universe.update({
@@ -120,24 +118,12 @@ export class ErasureService {
   }
 
   /*
-    Resilie l'abonnement Stripe du partant, immediatement.
-
-    **Avant la suppression, et non apres** : `subscriptions` est en cascade sur
-    `users`, donc effacer la ligne emporte l'identifiant Stripe avec elle.
-    Plus personne ne saurait quoi annuler, et le joueur continuerait d'etre
-    preleve pour un compte qui n'existe plus.
-
-    Immediatement et non a la fin de la periode : le compte disparait, et il
-    n'y a personne pour profiter du temps restant. Aucun remboursement n'est
-    demande, ce qui a ete facture l'a ete.
-
-    Un echec n'arrete pas le depart. Le droit a l'effacement ne se suspend pas
-    a la disponibilite d'un tiers, mais un abonnement qui survit a son
-    proprietaire preleve quelqu'un qui ne peut plus rien annuler : il se crie
-    dans les journaux, avec l'identifiant, pour etre rattrape a la main.
-
-    Le client Stripe, lui, reste : ses factures doivent survivre au compte de
-    jeu, et elles ne portent plus rien qui s'y rattache.
+    Avant la suppression : `subscriptions` est en cascade sur `users`, donc
+    effacer d'abord emporterait l'identifiant Stripe et le joueur resterait
+    preleve. Immediatement et sans remboursement, personne ne restant pour
+    profiter de la periode. Un echec n'arrete pas le depart : il part dans les
+    journaux, avec l'identifiant, pour etre rattrape a la main. Le client
+    Stripe reste, ses factures devant survivre au compte.
   */
   private async endBilling(userId: string): Promise<void> {
     const subscription = await this.prisma.subscription.findUnique({

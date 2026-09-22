@@ -155,10 +155,11 @@ export function InspirationStep({
                       ),
                     )
                   }
-                  // Pas le FIELD partage : la couleur de bordure est
-                  // conditionnelle, et deux utilitaires visant la meme
-                  // propriete sont arbitres par la feuille CSS, pas par
-                  // l'ordre dans className. Elle se pose donc une seule fois.
+                  /*
+                    Pas le FIELD partage : la bordure est conditionnelle, et
+                    deux utilitaires sur la meme propriete sont arbitres par
+                    la feuille CSS, pas par l'ordre dans className.
+                  */
                   className={[
                     "h-10 min-w-0 flex-1 rounded-control border bg-ink px-3.5 font-ui text-ui-sm text-vellum transition-colors focus:border-accent",
                     marked.has(index) ? "border-ember" : "border-line",

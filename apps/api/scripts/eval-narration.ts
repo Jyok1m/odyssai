@@ -4,13 +4,12 @@
     LLM_NARRATOR_CANDIDATES="a/modele,b/modele,c/modele" \
     pnpm --filter @odyssai/api eval:narration
 
-  Le modele de narration se choisit par evaluation, pas par reputation. Les
-  evaluateurs sont en code, sans LLM juge : ce qu'on mesure ici est verifiable
-  sans avis, et l'essentiel tient en une question binaire, le monde produit
-  emprunte-t-il quelque chose aux oeuvres citees.
+  Le modele se choisit par evaluation, pas par reputation. Les evaluateurs
+  sont en code, sans LLM juge : l'essentiel tient en une question binaire, le
+  monde produit emprunte-t-il aux oeuvres citees.
 
-  Ce script n'entre pas dans `make check` et consomme des appels reels : une
-  execution vaut le nombre de cas multiplie par le nombre de candidats.
+  Hors de `make check`, et des appels reels : une execution vaut le nombre de
+  cas multiplie par le nombre de candidats.
 */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -242,10 +241,11 @@ const evaluators = [
     const { banned } = meta(example);
     if (banned.length === 0) return { key: 'no_banned_name', score: 1 };
 
-    // Sur des mots entiers, et non en sous-chaine : « San », le nom d'un
-    // personnage, se retrouve dans « sans », « paysan » et « artisan », et
-    // faisait echouer des sorties parfaitement propres. Meme piege que celui
-    // deja corrige dans findBorrowedNames.
+    /*
+      Sur des mots entiers et non en sous-chaine : « San » se retrouve dans
+      « sans » et « paysan », et faisait echouer des sorties propres. Meme
+      piege que dans findBorrowedNames.
+    */
     const prose = ` ${normalizeWorkTitle(value.prose)} `;
     const leaked = banned.filter((name) =>
       prose.includes(` ${normalizeWorkTitle(name)} `),

@@ -31,15 +31,11 @@ export interface UsageEntry {
 }
 
 /*
-  Le journal de ce que les modeles coutent.
+  Le journal de ce que les modeles coutent : sans lui, un bareme d'abonnement
+  ne peut etre qu'une opinion.
 
-  Cinq des huit points d'appel jetaient leur usage, alors que narrator le
-  calculait deja. Sans ce journal, aucun barème d'abonnement ne peut etre
-  autre chose qu'une opinion.
-
-  Une ecriture ratee est journalisee, jamais relancee : le joueur a deja recu
-  sa reponse, et la comptabilite ne vaut pas de casser un tour. C'est la meme
-  regle que le journal du guide.
+  Une ecriture ratee est journalisee, jamais relancee : le joueur a deja sa
+  reponse, et la comptabilite ne vaut pas de casser un tour.
 */
 @Injectable()
 export class UsageService {

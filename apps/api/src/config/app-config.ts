@@ -79,10 +79,11 @@ export class AppConfig {
   */
   get accountUrl(): string {
     const url = new URL(`${this.keycloak.issuer}/account`);
-    // `referrer` seul, sans `referrer_uri` : Keycloak valide ce dernier contre
-    // les redirectUris du client, ou l'origine du web ne figure pas, et il
-    // laisse alors tomber le lien de retour en silence. Sans lui, il se rabat
-    // sur le baseUrl du client, que le role ansible pose deja sur le site.
+    /*
+      `referrer` seul, sans `referrer_uri` : Keycloak valide ce dernier contre
+      les redirectUris du client, ou l'origine du web ne figure pas, et laisse
+      alors tomber le lien de retour en silence.
+    */
     url.searchParams.set('referrer', this.env.KEYCLOAK_CLIENT_ID);
     return url.toString();
   }

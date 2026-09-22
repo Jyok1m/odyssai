@@ -1,16 +1,9 @@
 import { randomInt } from 'node:crypto';
 
 /*
-  Le de du meneur.
-
-  Il est lance par le code, jamais par le modele : « le LLM narre, le code
-  decide ». Un modele a qui l'on demanderait de tirer au sort tirerait ce qui
-  arrange son recit, ce qui n'est plus du hasard.
-
-  `randomInt` et non `Math.random` : la premiere est cryptographique et sans
-  biais modulo, la seconde est un generateur de rendu. Le cout est negligeable
-  a un jet par tour, et l'equite d'un de est le genre de chose qu'on ne veut
-  pas avoir a redemontrer plus tard.
+  Lance par le code, jamais par le modele, qui tirerait ce qui arrange son
+  recit. `randomInt` et non `Math.random` : sans biais modulo, et l'equite
+  d'un de ne doit pas avoir a se redemontrer.
 */
 export const DIE_FACES = 20;
 

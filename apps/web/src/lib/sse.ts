@@ -9,13 +9,9 @@ interface Parser<T> {
 /*
   Lecteur de flux SSE, commun au guide et à la conversation de personnage.
 
-  Le découpage se fait sur `\n\n` en gardant le reste : un événement arrive
-  souvent coupé entre deux morceaux du corps, et le recoller est la seule
-  chose qui distingue ce lecteur d'un simple `split`.
-
-  Chaque événement passe par le schéma partagé avant d'être rendu, et un
-  événement invalide est ignoré plutôt que de faire tomber le flux : le reste
-  de la réponse a encore de la valeur.
+  Découpage sur `\n\n` en gardant le reste : un événement arrive souvent coupé
+  entre deux morceaux, et le recoller est ce qui distingue ce lecteur d'un
+  `split`. Un événement invalide est ignoré plutôt que de faire tomber le flux.
 */
 export async function readEventStream<T>(
   response: Response,

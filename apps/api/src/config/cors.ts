@@ -2,15 +2,12 @@ import type { CorsOptions } from '@nestjs/common/interfaces/external/cors-option
 import type { AppConfig } from './app-config.js';
 
 /*
-  Verbes ouverts au navigateur.
+  Verbes ouverts au navigateur, et le piege qui va avec : une route servie
+  sous un verbe absent d'ici marche depuis curl et depuis supertest, qui
+  n'emettent pas de preflight, et echoue dans un navigateur seul.
 
-  La liste est explicite plutot que laissee au defaut de `cors`, mais c'est un
-  piege : une route servie sous un verbe absent d'ici marche depuis curl et
-  depuis les tests, et echoue seulement dans un navigateur, ou le preflight la
-  refuse. PUT y a manque le temps que le parcours d'entree en jeu sorte.
-
-  Toute route ajoutee sous un nouveau verbe s'ajoute ici, et le controle du
-  preflight dans les tests e2e le rappelle.
+  Toute route sous un nouveau verbe s'ajoute ici. `cors.e2e-spec.ts` le
+  verifie verbe par verbe.
 */
 export const CORS_METHODS = [
   'GET',

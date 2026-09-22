@@ -3,14 +3,11 @@ import type { PromptMessage } from '../guide/v1.js';
 import type { ConversationTurn } from '../character/v1.js';
 
 /*
-  Extraction de la fiche depuis la conversation.
+  Un appel separe de la conversation : melanger une reponse adressee au joueur
+  et une structure destinee a la base ferait porter deux roles au meme texte.
 
-  Un appel separe, et non la meme sortie que la conversation : melanger une
-  reponse adressee au joueur et une structure destinee a la base ferait porter
-  deux roles au meme texte, et le premier rate abimerait le second.
-
-  Le modele propose, le schema tranche, le joueur corrige. Ce prompt n'a donc
-  pas a etre parfait : ce qu'il n'invente pas, l'ecran le demande.
+  Le modele propose, le schema tranche, le joueur corrige : ce qu'il n'extrait
+  pas, l'ecran le demande.
 */
 const INSTRUCTIONS: Record<UiLocale, string> = {
   fr: `Tu lis une conversation de création de personnage et tu en tires une fiche.

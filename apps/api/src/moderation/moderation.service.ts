@@ -8,18 +8,13 @@ import { NARRATOR_LLM } from '../onboarding/narrator-llm.provider.js';
 import { UsageService } from '../usage/usage.service.js';
 
 /*
-  Deux couches, dans cet ordre.
-
-  La lexicale d'abord : instantanee, gratuite, elle arrete ce qui est
-  manifeste sans qu'aucun octet ne sorte. Le classificateur ensuite, qui lit
-  la phrase entiere et tranche ce qu'une liste de mots ne saura jamais
-  trancher : une scene dure contre une scene obscene, un juron adresse a une
-  situation contre une insulte adressee a quelqu'un.
+  Deux couches, dans cet ordre. La lexicale d'abord, instantanee et gratuite,
+  avant qu'aucun octet ne sorte. Le classificateur ensuite, qui lit la phrase
+  et tranche ce qu'une liste de mots ne saura jamais trancher.
 
   Aucun point de moderation dedie n'est joignable avec les cles du projet :
-  OpenRouter ne sert pas /moderations et la cle OpenAI est vide. Le
-  classificateur est donc un petit modele de conversation, ce qui coute un
-  appel par message.
+  OpenRouter ne sert pas /moderations et la cle OpenAI est vide. D'ou un petit
+  modele de conversation, et un appel par message.
 */
 // Laisser passer, et sans avis sur la langue.
 const OPEN: ModerationVerdict = { allow: true, reason: null, language: null };

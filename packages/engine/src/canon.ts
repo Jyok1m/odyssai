@@ -52,13 +52,10 @@ function meaningfulWords(text: string): string[] {
 }
 
 /*
-  Un interdit de la charte est contredit quand le fait reprend assez de ses
-  mots porteurs pour parler de la meme chose.
-
-  La regle est grossiere et le sait. Elle se trompe dans le sens du refus :
-  un fait refuse a tort coute une phrase au meneur, un fait accepte a tort
-  ouvre dans le monde une porte que sa charte disait fermee, et plus rien ne
-  la referme ensuite puisque le canon nourrit tous les tours suivants.
+  Un interdit est contredit quand le fait reprend assez de ses mots porteurs
+  pour parler de la meme chose. La regle est grossiere et se trompe dans le
+  sens du refus : un fait accepte a tort ouvre une porte que plus rien ne
+  referme, le canon nourrissant tous les tours suivants.
 */
 function contradicts(statement: string, forbidden: string): boolean {
   const words = meaningfulWords(forbidden);

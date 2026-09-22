@@ -2,13 +2,10 @@ import { z } from 'zod';
 import { normalizeWorkTitle } from './onboarding.js';
 
 /*
-  Un mot qui commence par une majuscule ailleurs qu'en tete de phrase est tenu
-  pour un nom propre. La regle est grossiere et le sait : en francais comme en
-  anglais, presque rien d'autre ne porte la majuscule au milieu d'une phrase.
-
-  Elle se trompe donc plutot dans le sens du refus, ce qui coute une relance et
-  jamais un monde emprunte. L'apostrophe separe les mots, sans quoi « l'Ordre »
-  passerait pour un seul mot commencant par une minuscule.
+  Une majuscule hors tete de phrase vaut nom propre. La regle est grossiere et
+  se trompe dans le sens du refus : une relance coute moins qu'un monde
+  emprunte. L'apostrophe separe les mots, sans quoi « l'Ordre » passerait pour
+  un mot commencant par une minuscule.
 */
 const SENTENCE_BREAK = /[.!?…:;]+\s+|\n+/;
 const WORD = /\p{L}[\p{L}\p{M}-]*/gu;
@@ -50,15 +47,11 @@ function significantWords(title: string): string[] {
 
 /*
   Dernier etage de la garde : relit un texte genere contre les titres saisis.
+  Seuls les mots capitalises sont compares, sinon un monde desertique inspire
+  de Dune ne pourrait plus parler de dunes.
 
-  Seuls les mots portant une majuscule sont compares, la ou `findProperNouns`
-  ignore les tetes de phrase : c'est un nom emprunte que l'on cherche, pas un
-  mot commun. Un lore qui parle d'une rose dans un jardin passe, un lore qui
-  fonde l'ordre de la Rose ne passe pas.
-
-  Elle attrape les noms, pas les intrigues : un monde qui reprendrait la trame
-  d'une oeuvre sans en citer un seul nom lui echapperait. C'est la passe
-  d'abstraction qui porte cette part la, en ne transmettant que des themes.
+  Elle attrape les noms, pas les intrigues : c'est l'abstraction qui porte
+  cette part la, en ne transmettant que des themes.
 */
 export function findBorrowedNames(text: string, works: string[]): string[] {
   const banned = new Map<string, string>();
@@ -73,13 +66,13 @@ export function findBorrowedNames(text: string, works: string[]): string[] {
     if (banned.has(normalizeWorkTitle(word))) borrowed.add(word);
   }
 
-  // Un titre entier recopie, meme en minuscules, n'est pas une coincidence.
-  // Les titres d'un seul mot en sont exclus : « dune » ou « fondation » sont
-  // aussi des mots communs, et les refuser en minuscules interdirait a un monde
-  // desertique de parler de sable. Capitalises, ils restent attrapes plus haut.
-  //
-  // La comparaison porte sur des mots entiers : sans cela « dune » se
-  // retrouverait dans « dunes », et le refus tomberait sur une coincidence.
+  /*
+    Un titre entier recopie, meme en minuscules, n'est pas une coincidence. Les
+    titres d'un seul mot en sont exclus : « dune » est aussi un mot commun, et
+    le refuser interdirait a un monde desertique de parler de sable.
+
+    La comparaison porte sur des mots entiers, jamais sur des sous-chaines.
+  */
   const haystack = ` ${normalizeWorkTitle(text)} `;
   for (const title of works) {
     const needle = normalizeWorkTitle(title);

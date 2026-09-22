@@ -1,28 +1,11 @@
 /*
-  Les reglages du jeu, au meme endroit.
+  Index des reglages : ce qui se tourne sans changer de logique. Une valeur
+  n'a qu'une definition, donc celle qui appartient a un schema se reexporte
+  depuis `@odyssai/schemas` au lieu d'etre recopiee ici.
 
-  Tout ce qui se regle sans changer de code vit ici : ce qu'une action coute,
-  combien de fois on rejoue, ce qu'un joueur peut ecrire, ce dont le meneur se
-  souvient. Avant ce fichier il fallait connaitre cinq fichiers dans trois
-  paquets pour savoir ou tourner un bouton.
-
-  **Une valeur n'a qu'une definition.** Ce fichier est un index, pas une copie :
-  quand la valeur appartient a un schema, il la reexporte depuis
-  `@odyssai/schemas`, ou le schema Zod qui la fait respecter la lit deja. La
-  dupliquer ici ferait deux verites, et la fausse serait celle qu'on aurait
-  pris l'habitude de lire.
-
-  Ce qui n'est pas ici, et pourquoi :
-
-  - Les paliers d'abonnement, dotations et prix compris, vivent dans la table
-    `plans` et s'editent au tableau de bord. Changer une dotation ne doit pas
-    demander un deploiement.
-  - Le choix des modeles, leurs temperatures et leurs plafonds de sortie
-    restent dans l'environnement : ils dependent de la copie du site, et une
-    cle d'API n'entre pas dans un depot.
-  - La liste lexicale de moderation est dans `moderation.ts`, avec le detail
-    cas par cas de ce qui a ete retire et pourquoi. Ce n'est pas un curseur,
-    c'est une decision par mot.
+  Hors d'ici : les paliers, qui vivent en base et s'editent au tableau de
+  bord ; le choix des modeles, qui reste dans l'environnement ; la liste
+  lexicale de moderation, qui est une decision par mot, pas un curseur.
 */
 import {
   ATTRIBUTES_MAX,

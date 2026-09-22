@@ -173,15 +173,10 @@ export class BillingService {
   }
 
   /*
-    Resilie l'abonnement d'un joueur, immediatement.
-
-    Reserve au tableau de bord : un joueur passe par le portail de Stripe,
-    qui lui propose de resilier a la fin de la periode payee. Ici c'est une
-    intervention, donc elle coupe tout de suite et le webhook
-    `customer.subscription.deleted` fera retomber la ligne au palier libre.
-
-    Aucun remboursement n'est demande : ce qui a ete facture l'a ete, et le
-    rendre est une decision commerciale qui se prend chez Stripe.
+    Resilie immediatement, et seulement depuis le tableau de bord : un joueur
+    passe par le portail Stripe, qui resilie en fin de periode. C'est le
+    webhook `customer.subscription.deleted` qui fera retomber la ligne au
+    palier libre, pas cet appel. Aucun remboursement.
   */
   async cancelSubscription(stripeSubscriptionId: string): Promise<void> {
     await this.client().subscriptions.cancel(stripeSubscriptionId);
@@ -316,10 +311,11 @@ export class BillingService {
     pas voir sa reserve repartir le 1er.
   */
   private async renew(invoice: Stripe.Invoice): Promise<void> {
-    // L'ordre des webhooks n'est pas garanti : `invoice.paid` peut preceder
-    // `customer.subscription.created`. Sans cette relecture, le plan encore
-    // inscrit chez nous serait `free`, et un joueur qui vient de payer
-    // recevrait la dotation du palier libre.
+    /*
+      L'ordre des webhooks n'est pas garanti : `invoice.paid` peut preceder
+      `customer.subscription.created`, et sans cette relecture un joueur qui
+      vient de payer recevrait la dotation du palier libre.
+    */
     await this.syncById(invoice.parent?.subscription_details?.subscription ?? null);
 
     const local = await this.find(String(invoice.customer));

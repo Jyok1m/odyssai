@@ -2,14 +2,13 @@ import type { Inspiration, UiLocale } from '@odyssai/schemas';
 import type { PromptMessage } from '../guide/v1.js';
 
 /*
-  La passe d'abstraction. Elle est la seule de toute la chaine a voir les
-  titres cites : tout ce qui suit ne recoit que les themes qu'elle produit.
+  La seule passe de la chaine a voir les titres cites : tout ce qui suit ne
+  recoit que ses themes.
 
-  Le refus des noms propres est ecrit ici, mais ce n'est que le premier des
-  trois etages de la garde. Le schema Zod les refuse a son tour, et un controle
-  final relit le monde produit contre les titres saisis. Aucun des trois ne
-  suffit seul : un modele oublie une consigne, un schema ne lit pas une
-  intrigue, un controle ne voit que ce qu'il sait chercher.
+  Le refus des noms propres est le premier des trois etages de la garde, avec
+  le schema Zod et le controle final. Aucun ne suffit seul : un modele oublie
+  une consigne, un schema ne lit pas une intrigue, un controle ne voit que ce
+  qu'il sait chercher.
 */
 const INSTRUCTIONS: Record<UiLocale, string> = {
   fr: `Tu prépares la création d'un monde de jeu de rôle. On te donne ce qui inspire un joueur, et tu en tires des thèmes abstraits.

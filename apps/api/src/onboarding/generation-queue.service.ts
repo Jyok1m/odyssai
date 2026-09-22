@@ -28,10 +28,11 @@ export class GenerationQueueService implements OnApplicationShutdown {
       defaultJobOptions: {
         attempts: 3,
         backoff: { type: 'exponential', delay: 30_000 },
-        // Redis transporte, Postgres enregistre : generation_jobs garde la
-        // trace, donc rien ne justifie de retenir un travail fini. Le garder
-        // empecherait surtout une relance apres echec, l'identifiant du
-        // travail etant celui de l'univers.
+        /*
+          Redis transporte, Postgres enregistre : rien ne justifie de retenir
+          un travail fini, et le garder empecherait une relance, l'identifiant
+          du travail etant celui de l'univers.
+        */
         removeOnComplete: true,
         removeOnFail: true,
       },

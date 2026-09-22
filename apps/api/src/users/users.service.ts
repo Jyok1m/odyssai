@@ -145,17 +145,12 @@ export class UsersService {
   }
 
   /*
-    Refuse la centieme et unieme inscription.
+    Refuse la centieme et unieme inscription. Les administrateurs ne sont pas
+    comptes.
 
-    Les administrateurs ne sont pas comptes : ils doivent pouvoir entrer pour
-    verifier ce qu'ils livrent, et prendre la place d'un joueur serait se
-    servir.
-
-    Le compte est lu, pas verrouille : deux inscriptions arrivees dans la
-    meme milliseconde a la centieme place passeraient toutes les deux. Une
-    contrainte en base demanderait un declencheur ou une table de compteur,
-    pour un depassement d'une unite sur une alpha qu'on ouvre a la main. Le
-    jour ou la place se vend, ce raisonnement ne tiendra plus.
+    Le compte est lu, pas verrouille : deux inscriptions dans la meme
+    milliseconde a la centieme place passeraient toutes les deux. Assume pour
+    une alpha qu'on ouvre a la main, plus le jour ou la place se vend.
   */
   private async assertSeat(): Promise<void> {
     if (await this.alphaFull()) throw new AlphaFullError(ALPHA_SEATS);

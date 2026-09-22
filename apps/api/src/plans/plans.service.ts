@@ -16,15 +16,11 @@ export class MissingFreePlanError extends Error {
 }
 
 /*
-  Les paliers, lus en base.
-
-  Ils vivaient en code, ce qui obligeait a deployer pour changer une dotation.
-  Ils sont desormais une donnee, editable depuis le tableau de bord
-  d'administration, et ce service est le seul a les lire.
+  Les paliers, lus en base et editables au tableau de bord : en code, changer
+  une dotation demandait un deploiement.
 
   Pas de cache. Une lecture de plus par tour est negligeable devant l'appel au
-  modele qui suit, et un cache ferait vivre un joueur sur une dotation que
-  l'administrateur croit avoir changee.
+  modele, et un cache ferait vivre un joueur sur une dotation deja changee.
 */
 @Injectable()
 export class PlansService {

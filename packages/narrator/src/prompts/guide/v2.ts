@@ -7,23 +7,12 @@ export interface PromptMessage {
 }
 
 /*
-  Consignes du guide, par locale.
+  Consignes du guide, avant le corpus, la question en dernier : ce prefixe ne
+  change pas d'un visiteur a l'autre, donc le cache de prompt le reconnait.
+  Inverser l'ordre le rendrait inutile.
 
-  Elles sont dans le message systeme, avant le corpus, et la question arrive en
-  dernier : ce prefixe ne change jamais d'un visiteur a l'autre, donc le cache
-  de prompt du fournisseur le reconnait. Inverser l'ordre le rendrait inutile.
-
-  Deux corrections par rapport a la v1, qui mentait de bonne foi. Elle disait
-  que le jeu n'etait pas jouable, ce qui a cesse d'etre vrai. Et elle
-  interdisait tout prix, ce qui etait juste tant qu'aucun montant n'atteignait
-  le modele : les paliers arrivent desormais dans un bloc a part, releve en
-  base au moment de la question, et il peut les lire sans rien inventer.
-
-  La v3 les ecrit en francais accentue, contrairement aux commentaires de ce
-  depot : ce n'est pas du code, c'est ce que le modele lit pour savoir comment
-  ecrire. Elle lui demande aussi de se relire. Le guide est le premier texte
-  que voit un visiteur, et le corpus qu'il cite est deja accentue : lui seul
-  ne l'etait pas.
+  La v1 disait le jeu non jouable et interdisait tout prix. Les paliers
+  arrivent desormais dans un bloc releve en base, qu'il peut citer.
 */
 const INSTRUCTIONS: Record<UiLocale, string> = {
   fr: `Tu es le guide d'OdyssAI, un jeu de rôle narratif multivers. Tu réponds aux visiteurs du site, uniquement à partir du corpus et du bloc tarifs fournis plus bas.

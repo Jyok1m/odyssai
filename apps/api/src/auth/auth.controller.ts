@@ -70,13 +70,10 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<Redirection> {
     /*
-      Refuse avant d'envoyer vers le realm.
-
-      La garde qui compte est celle du provisionnement, au retour : l'adresse
-      d'inscription de Keycloak est publique et personne ne passe forcement
-      par ici. Mais laisser creer une identite qui n'aura jamais de joueur
-      derriere elle est un cadeau empoisonne : l'api n'a aucun droit sur le
-      realm et ne pourra pas l'effacer.
+      Refuse avant d'envoyer vers le realm. La garde qui compte reste celle du
+      provisionnement, l'adresse d'inscription de Keycloak etant publique :
+      celle-ci evite une identite sans joueur derriere, que l'api n'aurait
+      aucun droit d'effacer.
     */
     if (await this.users.alphaFull()) {
       this.logger.warn("inscription refusee avant le realm : alpha complete");
@@ -170,16 +167,14 @@ export class AuthController {
       return { authenticated: false };
     }
 
-    // La ligne est relue a chaque lecture de session, meme quand la session
-    // porte deja l'id applicatif : `isAdmin` vit en base et s'y pose avec
-    // admin:grant, hors de tout flot de connexion. Le garder dans la session
-    // Redis le figerait jusqu'a la prochaine reconnexion, donc un droit retire
-    // continuerait d'ouvrir la porte du tableau de bord a l'ecran. C'est la
-    // meme lecture indexee que fait deja chaque route protegee.
-    //
-    // La resolution couvre au passage les sessions ouvertes avant le
-    // provisionnement, qui ne portent pas d'id applicatif : le front ne doit
-    // jamais confondre le sub du realm avec l'identifiant de la ligne.
+    /*
+      La ligne est relue a chaque lecture de session : `isAdmin` vit en base et
+      s'y pose hors de tout flot de connexion, donc le figer dans Redis
+      laisserait un droit retire ouvrir la porte jusqu'a la reconnexion.
+
+      Elle couvre au passage les sessions ouvertes avant le provisionnement,
+      qui ne portent pas d'id applicatif.
+    */
     const user = await this.users.resolve({
       keycloakId: session.sub,
       email: session.email,

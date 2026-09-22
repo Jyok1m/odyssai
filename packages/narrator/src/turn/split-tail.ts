@@ -52,14 +52,13 @@ function heldBack(buffer: string, marker: string): number {
 /*
   Coupe un flux en deux : la prose devant, le bloc structure derriere.
 
-  L'inverse de `splitOffTopic`, qui decide avant le premier octet parce que sa
-  sentinelle est en tete. Ici le marqueur est en queue et la prose doit partir
-  au fil de l'eau : on ne peut donc pas attendre la fin, il faut retenir en
-  permanence ce qui pourrait etre un debut de marqueur.
+  L'inverse de `splitOffTopic`, dont la sentinelle est en tete et qui decide
+  avant le premier octet. Ici le marqueur est en queue et la prose part au fil
+  de l'eau : il faut retenir en permanence le plus long suffixe qui pourrait
+  etre un debut de marqueur.
 
-  Le flux n'est jamais avorte, meme quand le joueur est parti : le bloc de
-  queue doit arriver pour que le canon s'ecrive. C'est a l'appelant d'arreter
-  la diffusion sans arreter la generation.
+  Le flux n'est jamais avorte, meme si le joueur part : le bloc de queue doit
+  arriver pour que le canon s'ecrive.
 */
 export function splitTail(
   source: AsyncIterable<LlmStreamEvent>,

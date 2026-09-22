@@ -36,13 +36,10 @@ export interface TurnContext {
 }
 
 /*
-  Les consignes sont ecrites dans un francais accentue, contrairement aux
-  commentaires de ce depot. Ce n'est pas du code : c'est le texte que le
-  modele lit pour savoir comment ecrire, et il ecrit comme on lui parle. Le
-  lui donner sans accents, c'est lui montrer une langue fautive et esperer une
-  langue juste. Le titre de la derniere section le montrait bien : prive de
-  son accent, le nom du de se lisait comme la preposition la plus courante de
-  la langue.
+  Consignes en francais accentue, contrairement aux commentaires du depot : le
+  modele ecrit comme on lui parle, et lui montrer une langue fautive pour en
+  attendre une juste ne tient pas. Prive de son accent, le titre de la section
+  du de se lisait « de ».
 */
 const INSTRUCTIONS: Record<UiLocale, string> = {
   fr: `Tu es le meneur de jeu. Tu mènes, le joueur répond.

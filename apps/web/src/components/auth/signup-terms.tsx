@@ -7,17 +7,10 @@ import { useSession } from "@/components/auth/session-provider";
 import { Link } from "@/i18n/navigation";
 
 /*
-  Ce qu'on accepte en créant un compte, dit avant de cliquer.
+  Ce qu'on accepte en créant un compte. L'inscription part ensuite chez
+  Keycloak : c'est le dernier écran qui nous appartient.
 
-  L'inscription part chez Keycloak, dont les pages vivent dans le dépôt
-  d'infrastructure : c'est donc ici, sur le dernier écran qui nous appartient,
-  que la mention doit se trouver. Après le bouton, la personne n'est plus
-  chez nous.
-
-  Rien pour un joueur déjà connecté : il a accepté en s'inscrivant, et le
-  répéter à chaque visite de l'accueil ne l'informe plus. Pendant la lecture
-  de la session, la mention s'affiche, comme le bouton d'inscription auquel
-  elle se rapporte.
+  Rien pour un joueur déjà connecté, qui a accepté en s'inscrivant.
 */
 export function SignupTerms() {
   const t = useTranslations("Alpha");

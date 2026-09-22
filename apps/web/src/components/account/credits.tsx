@@ -83,10 +83,11 @@ export function Credits() {
     (plan) => plan.purchasable && plan.id !== summary.plan,
   );
 
-  // Un palier sans dotation mensuelle n'a pas de dénominateur, donc pas de
-  // jauge : diviser par zéro affichait une barre vide et annonçait « une
-  // dotation de 0 par mois », ce qui ne veut rien dire pour une réserve qui ne
-  // se remplit jamais.
+  /*
+    Un palier sans dotation mensuelle n'a pas de dénominateur, donc pas de
+    jauge : diviser par zéro affichait une barre vide et « une dotation de 0
+    par mois ».
+  */
   const renews = summary.monthly > 0 && !summary.unlimited;
 
   // La jauge peut dépasser sa dotation le premier mois, la bienvenue s'y
@@ -95,13 +96,14 @@ export function Credits() {
     ? Math.min(100, Math.round((summary.credits / summary.monthly) * 100))
     : 0;
 
-  // Tant que le solde dépasse la dotation, « 55 sur 30 » se lit comme une
-  // incohérence. Le surplus ne peut venir que de la bienvenue, autant le dire.
-  // Sa part exacte n'est pas affichée : dès la première dépense, le grand
-  // livre ne sait plus quel crédit a été consommé, et « dont 25 de bienvenue »
-  // deviendrait faux.
-  // Un administrateur ne consomme rien : afficher son solde donnerait un
-  // compteur immobile, et une jauge pleine se lirait comme un compteur cassé.
+  /*
+    Tant que le solde dépasse la dotation, « 55 sur 30 » se lit comme une
+    incohérence : le surplus vient de la bienvenue. Sa part exacte n'est pas
+    affichée, le grand livre ne sachant plus quel crédit a été consommé.
+
+    Un administrateur ne consomme rien : une jauge pleine se lirait comme un
+    compteur cassé.
+  */
   const balance = summary.unlimited
     ? t("balanceUnlimited")
     : renews

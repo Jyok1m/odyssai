@@ -4,16 +4,10 @@ import type { UiLocale } from '@odyssai/schemas';
 import { PlansService } from '../plans/plans.service.js';
 
 /*
-  Les paliers, en clair, pour le guide.
-
-  Le corpus est genere depuis les messages du site, ou aucun montant ne
-  figure : les prix vivent chez Stripe et les dotations en base, et les
-  recopier dans un fichier de traduction ferait deux verites. Le guide les
-  recoit donc a part, releves au moment de la question.
-
-  Rien n'est mis en cache, comme dans `PlansService` : une lecture de plus
-  avant un appel au modele est negligeable, et un cache ferait citer un prix
-  que l'administrateur croit avoir change.
+  Les paliers, en clair, pour le guide. Aucun montant ne figure dans le
+  corpus : les prix vivent chez Stripe et les dotations en base, les recopier
+  dans une traduction ferait deux verites. Ils sont donc releves a chaque
+  question, et rien n'est mis en cache.
 */
 @Injectable()
 export class GuidePricingService {

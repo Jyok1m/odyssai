@@ -13,15 +13,11 @@ const EnvSchema = z.object({
 });
 
 /*
-  La messagerie sortante.
+  Tout est facultatif, comme Stripe : sans configuration le contact enregistre
+  toujours en base, seul l'envoi se tait.
 
-  Tout est facultatif, comme Stripe : sans configuration, `enabled` est faux,
-  le formulaire de contact continue d'enregistrer en base, et seul l'envoi se
-  tait. On developpe sans serveur de messagerie.
-
-  Le compte depend de la copie du site et non du code : `no-reply-dev@` sur la
-  copie de developpement, `no-reply@` en production. Les deux images etant
-  identiques, c'est l'environnement qui les distingue.
+  Le compte depend de la copie du site, les deux images etant identiques :
+  `no-reply-dev@` en developpement, `no-reply@` en production.
 */
 @Injectable()
 export class MailConfig {

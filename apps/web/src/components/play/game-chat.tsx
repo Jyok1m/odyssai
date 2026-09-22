@@ -127,15 +127,12 @@ export function GameChat() {
   };
 
   /*
-    La première scène, jouée dès l'arrivée si rien n'a encore été joué.
+    La première scène, jouée dès l'arrivée : c'est le meneur qui ouvre une
+    partie, sinon le joueur arrive devant un champ vide.
 
-    C'est le meneur qui ouvre une partie, pas celui qui la joue : sans cela le
-    joueur arrive devant un champ vide et doit deviner qu'il commence.
-
-    `opened` et non l'état des messages : le fil se remplit pendant l'appel, et
-    une condition qui le lirait relancerait une seconde ouverture. L'API refuse
-    de toute façon dès qu'un tour existe, mais le lui demander deux fois serait
-    déjà de trop.
+    `opened` et non l'état des messages, qui se remplit pendant l'appel et
+    déclencherait une seconde ouverture. L'API refuse dès qu'un tour existe,
+    mais le lui demander deux fois serait déjà de trop.
   */
   useEffect(() => {
     if (!loaded || opened.current || messages.length > 0) return;

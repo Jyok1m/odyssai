@@ -11,14 +11,12 @@ export type ProseSection = {
 };
 
 /*
-  Gabarit des pages de contenu. Chaque page lit ses propres messages et passe
-  le texte résolu, ce qui évite un namespace dynamique et garde le typage des
-  clés. `href` est le chemin interne, celui du dossier sous app/[locale] : il
-  ne sert qu'au fil d'Ariane, que toutes ces pages doivent porter.
+  Gabarit des pages de contenu. Chaque page passe son texte résolu, ce qui
+  évite un namespace dynamique et garde le typage des clés. `href` est le
+  chemin interne, pour le fil d'Ariane que toutes ces pages portent.
 
-  Le kit alterne un chapeau étroit et du contenu qui occupe la largeur : ici
-  la prose garde sa longueur de ligne et c'est le sommaire qui remplit la
-  colonne de droite, comme l'écran de jeu du kit en `1fr 296px`.
+  La prose garde sa longueur de ligne, le sommaire remplit la colonne de
+  droite : l'écran de jeu du kit, en `1fr 296px`.
 */
 export function ProsePage({
   href,

@@ -9,15 +9,12 @@ import { Link } from "@/i18n/navigation";
 import { updateMarketingOptIn } from "@/lib/profile";
 
 /*
-  Le consentement à recevoir des nouvelles.
+  Décoché par défaut : une case pré-cochée n'est pas un consentement. Le
+  basculer écrit la date du choix dans les deux sens, un retrait devant se
+  prouver aussi bien qu'un accord.
 
-  Décoché par défaut, et il le reste tant que personne ne le coche : une case
-  pré-cochée n'est pas un consentement. Le basculer écrit la date du choix,
-  dans les deux sens, parce qu'un retrait doit se prouver aussi bien qu'un
-  accord.
-
-  L'état affiché suit la réponse de l'API et non le clic : en cas d'échec, la
-  case revient là où elle était plutôt que de mentir sur ce qui est enregistré.
+  L'état suit la réponse de l'API et non le clic : en cas d'échec la case
+  revient plutôt que de mentir.
 */
 export function MarketingOptIn({
   profile,

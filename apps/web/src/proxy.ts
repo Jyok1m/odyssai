@@ -7,9 +7,11 @@ import { routing } from "./i18n/routing";
 export default createMiddleware(routing);
 
 export const config = {
-  // Tout sauf les routes d'API, les internals Next et les fichiers statiques.
-  //
-  // `admin` en est exclu : le tableau de bord n'est pas traduit, et sans cette
-  // exception next-intl redirigerait /admin vers /fr/admin, où rien ne répond.
+  /*
+    Tout sauf les routes d'API, les internals Next et les fichiers statiques.
+
+    `admin` en est exclu : le tableau de bord n'est pas traduit, et next-intl
+    redirigerait /admin vers /fr/admin, où rien ne répond.
+  */
   matcher: "/((?!api|admin|_next|_vercel|.*\\..*).*)",
 };

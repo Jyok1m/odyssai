@@ -223,10 +223,11 @@ export function OnboardingWizard() {
   // n'a pas abouti, et l'API l'accepte en écriture pour cette raison.
   const failedRun = state.step === "failed";
 
-  // L'étape affichée, distincte de celle du serveur, peut reculer. L'API
-  // accepte déjà d'écrire à son étape ou en deçà, donc corriger l'inspiration
-  // depuis l'écran du personnage n'a rien à demander de plus, et seul un
-  // `advance` déplace l'étape côté serveur.
+  /*
+    L'étape affichée, distincte de celle du serveur, peut reculer : l'API
+    accepte d'écrire à son étape ou en deçà, et seul un `advance` déplace
+    l'étape côté serveur.
+  */
   const showing = back && state.step === "character" ? "inspiration" : state.step;
 
   return (

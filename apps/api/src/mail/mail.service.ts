@@ -3,15 +3,11 @@ import { createTransport, type Transporter } from 'nodemailer';
 import { MailConfig } from '../config/mail-config.js';
 
 /*
-  L'envoi de courriels.
+  Un seul transporteur, construit une fois : nodemailer garde le pool, en
+  ouvrir un par message ferait payer une poignee de main TLS a chaque fois.
 
-  Un seul transporteur, construit une fois : nodemailer garde le pool de
-  connexions, et en ouvrir un par message ferait payer une poignee de main TLS
-  a chaque fois.
-
-  Aucune methode ne jette. Un courriel perdu est une gene ; une exception
-  remontee jusqu'au controleur ferait perdre au visiteur le message qu'il
-  vient d'ecrire, alors qu'il est deja enregistre.
+  Aucune methode ne jette : le message est deja enregistre, et une exception
+  ferait perdre au visiteur ce qu'il vient d'ecrire.
 */
 @Injectable()
 export class MailService {

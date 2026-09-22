@@ -66,10 +66,10 @@ export function UsersView() {
     }
   }, []);
 
-  // Le premier chargement n'appelle pas `load` : celle-ci pose son etat avant
-  // d'attendre, ce qui dans un effet declenche un rendu en cascade. Ici les
-  // setState vivent dans le callback de la promesse, comme partout ailleurs
-  // dans le projet.
+  /*
+    Le premier chargement n'appelle pas `load` : elle pose son etat avant
+    d'attendre, ce qui dans un effet declenche un rendu en cascade.
+  */
   useEffect(() => {
     const controller = new AbortController();
     inFlight.current = controller;

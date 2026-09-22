@@ -1,14 +1,9 @@
 /*
-  Premiere couche de moderation : lexicale, instantanee, gratuite.
+  Premiere couche : lexicale, instantanee, gratuite. Elle attrape le manifeste
+  sans appel reseau, le discernement appartenant au classificateur.
 
-  Elle n'a pas vocation a juger. Elle attrape ce qui est grossier et manifeste,
-  sans appel reseau et sans latence, pour que l'evidence n'atteigne jamais ni
-  le modele, ni la base, ni un autre joueur. Le discernement appartient a la
-  seconde couche, qui est un classificateur.
-
-  Une liste courte, donc, et assumee comme telle : l'allonger indefiniment
-  donnerait l'illusion d'une protection tout en multipliant les faux positifs
-  sur des mots parfaitement innocents.
+  La liste est courte et assumee : l'allonger donnerait l'illusion d'une
+  protection en multipliant les faux positifs.
 */
 
 /*
@@ -40,12 +35,8 @@ function fold(text: string): string {
 
 /*
   L'etirement seul est defait : trois lettres identiques ou plus tombent a
-  une, un doublement reste intact.
-
-  Ecraser aussi les doubles legitimes serait destructeur dans les deux sens :
-  « faggot » deviendrait « fagot », qui est un mot francais courant, et toute
-  phrase parlant de bois fagote se ferait refuser. Aucun mot n'a en revanche
-  trois fois la meme lettre de suite, donc y toucher ne coute rien.
+  une, un doublement reste intact. A deux, « faggot » deviendrait « fagot », un
+  mot courant. Aucun mot n'a trois fois la meme lettre de suite.
 */
 const squash = (text: string): string => text.replace(/(\p{L})\1{2,}/gu, '$1');
 
@@ -55,13 +46,10 @@ export function normalizeForModeration(text: string): string {
 }
 
 /*
-  Les mots epeles lettre a lettre : « c.o.n.n.a.r.d », « c o n n a r d ».
-
-  Seules les suites d'au moins quatre lettres isolees sont recollees, et rien
-  d'autre. Coller tout le texte reviendrait a chercher en sous-chaine sans
-  aucune frontiere de mot, ce qui faisait tomber « batardeau », « salopette »
-  et « fagotiere ». Du francais ordinaire ne produit jamais quatre lettres
-  seules de suite : c'est la signature d'un contournement, pas d'une phrase.
+  Les mots epeles : « c.o.n.n.a.r.d ». Seules les suites d'au moins quatre
+  lettres isolees sont recollees, tout coller revenant a chercher en
+  sous-chaine, ce qui faisait tomber « batardeau » et « salopette ». Quatre
+  lettres seules de suite signent un contournement, pas une phrase.
 */
 const SPELLED_MIN = 4;
 
@@ -97,17 +85,10 @@ const SLUR_ROOTS = [
 ];
 
 /*
-  Trois racines ont ete retirees apres avoir fait tomber du francais courant,
-  et elles disent la limite de l'exercice :
-
-  - `retard`, slur en anglais, mot de tous les jours en francais. « Il retarde
-    son depart » est une phrase de joueur parfaitement ordinaire.
-  - `fag`, trop court, attrapait « fagot » et « fagotiere ». `faggot` reste.
-  - `rape`, qui redevient « rape » une fois les accents defaits, donc tout
-    fromage rape.
-
-  Les manquer est le prix a payer. Le discernement appartient au
-  classificateur, qui lit la phrase entiere au lieu de compter des lettres.
+  Trois racines retirees apres avoir fait tomber du francais courant :
+  `retard` (mot de tous les jours), `fag` (attrapait « fagot », `faggot`
+  reste), `rape` (tout fromage rape une fois les accents defaits). Les
+  manquer est le prix ; le classificateur lit la phrase, pas les lettres.
 */
 
 const ROOTS = new Set(SLUR_ROOTS.map((root) => squash(root)));

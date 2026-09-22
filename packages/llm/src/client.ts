@@ -81,13 +81,9 @@ export interface LlmClient {
 }
 
 /*
-  Construit le client du fournisseur.
-
   `apiKey`, `baseURL`, `organization` et `project` sont passes explicitement,
-  y compris a null. Sans cela le SDK lit de lui-meme OPENAI_API_KEY,
-  OPENAI_BASE_URL, OPENAI_ORG_ID et OPENAI_PROJECT_ID dans l'environnement :
-  avec le fournisseur openrouter et une cle OpenRouter absente, la cle OpenAI
-  partirait chez OpenRouter.
+  y compris a null : sinon le SDK lit OPENAI_* dans l'environnement, et avec
+  le fournisseur openrouter sans cle, la cle OpenAI partirait chez OpenRouter.
 */
 export function createLlmClient(options: CreateLlmClientOptions): LlmClient {
   const { provider, apiKey, tracing } = options;

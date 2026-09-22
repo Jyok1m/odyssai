@@ -24,17 +24,11 @@ export const SessionUser = z.object({
   emailVerified: z.boolean(),
   roles: z.array(z.string()),
   /*
-    Le droit d'administration, lu en base et non dans les roles du realm :
-    `users.is_admin` se pose avec admin:grant, donc avec un acces au serveur,
-    et aucune route ne l'accorde. Il voyage jusqu'au navigateur pour qu'un
-    ecran sache quoi montrer, jamais pour decider : c'est `AdminGuard` qui
-    refuse vraiment.
+    Lu en base et non dans les roles du realm. Il dit a un ecran quoi montrer,
+    il ne decide de rien : c'est `AdminGuard` qui refuse.
 
-    Absent, il vaut faux plutot que de faire echouer la lecture : les deux
-    images basculent l'une apres l'autre, et un navigateur qui charge le
-    nouveau site pendant que l'ancienne api repond encore passerait pour
-    anonyme. Le type de sortie reste `boolean`, donc l'api, elle, doit
-    toujours le fournir.
+    Absent, il vaut faux plutot que de faire echouer la lecture : pendant une
+    bascule d'images, le nouveau site peut interroger l'ancienne api.
   */
   isAdmin: z.boolean().default(false),
 });

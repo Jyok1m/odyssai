@@ -73,14 +73,12 @@ export class BillingController {
   }
 
   /*
-    L'entree des evenements Stripe.
-
     Le corps brut est indispensable : la signature se calcule sur les octets
-    recus, et le JSON re-serialise par Nest ne les reproduit pas. D'ou
+    recus, que le JSON re-serialise par Nest ne reproduit pas. D'ou
     `rawBody: true` au demarrage.
 
-    Une signature invalide vaut 400 : Stripe ne rejoue pas un 4xx, et il n'y a
-    rien a rejouer puisque l'appel ne vient pas de lui.
+    Une signature invalide vaut 400 : Stripe ne rejoue pas un 4xx, et l'appel
+    ne vient pas de lui.
   */
   @Post('webhook')
   @HttpCode(200)

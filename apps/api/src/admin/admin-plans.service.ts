@@ -53,16 +53,12 @@ export class StripeUnavailableError extends Error {
 /*
   Le CRUD des paliers, base et Stripe ensemble.
 
-  Un prix Stripe est **immuable** : on ne modifie pas un montant, on cree un
-  nouveau prix et on desactive l'ancien. C'est le piege central de cette
-  classe, et la raison pour laquelle `amountCents` n'est pas un simple champ.
-  Les abonnes en cours gardent le prix qu'ils ont signe jusqu'a leur prochaine
-  facture : Stripe ne rejoue pas un abonnement sur un nouveau prix, et c'est
-  le comportement voulu.
+  Un prix Stripe est immuable : changer un montant cree un prix et desactive
+  l'ancien, et les abonnes en cours gardent le leur jusqu'a leur prochaine
+  facture. C'est le piege central de cette classe.
 
-  Les ecritures chez Stripe passent avant l'ecriture en base : un produit cree
-  sans ligne chez nous se voit et se nettoie, une ligne qui pointe un prix
-  inexistant ferait echouer un paiement.
+  Les ecritures chez Stripe passent avant celle en base : une ligne qui
+  pointe un prix inexistant ferait echouer un paiement.
 */
 @Injectable()
 export class AdminPlansService {
@@ -154,15 +150,9 @@ export class AdminPlansService {
     }
 
     /*
-      Le montant change : un prix Stripe etant immuable, on en cree un et on
-      desactive l'ancien. Sans cela le tableau de bord mentirait, affichant un
-      montant que Stripe ne facture pas.
-
-      Le montant inchange passe aussi quand aucun prix n'existe. Un palier
-      peut porter un montant sans prix : une migration l'a pose, ou un appel
-      a Stripe a echoue apres l'ecriture. Comparer les seuls montants le
-      laissait invendable a vie, et le remettre en vente demandait de changer
-      le prix puis de le remettre.
+      Un prix Stripe etant immuable, un montant qui change en cree un et
+      desactive l'ancien. Un palier peut aussi porter un montant sans prix
+      actif : comparer les seuls montants le laissait invendable a vie.
     */
     if (
       request.amountCents !== undefined &&

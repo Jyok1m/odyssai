@@ -8,17 +8,12 @@ import {
 import type { AuthenticatedRequest } from '../auth/session.guard.js';
 
 /*
-  Le droit d'administrer.
+  A poser apres `SessionGuard`, dont il relit le joueur : Nest execute les
+  gardes dans l'ordre de declaration, et inverses celui-ci ne verrait rien.
 
-  A poser **apres** `SessionGuard`, dont il relit le joueur : Nest execute les
-  gardes dans l'ordre de leur declaration, et seul est vrai ce que le premier
-  a depose sur la requete.
-
-  `users.is_admin` n'est modifiable par aucune route, ni par le tableau de
-  bord lui-meme : se donner le droit demande un acces a la base
-  (`pnpm --filter @odyssai/api admin:grant <email>`). Un dashboard qui peut
-  nommer des administrateurs transforme une session volee en prise de
-  controle definitive.
+  `users.is_admin` n'est modifiable par aucune route, pas meme par le tableau
+  de bord (`admin:grant`, donc un acces au serveur) : un dashboard qui nomme
+  des administrateurs transforme une session volee en prise de controle.
 */
 @Injectable()
 export class AdminGuard implements CanActivate {

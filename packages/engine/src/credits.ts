@@ -1,17 +1,10 @@
 /*
-  Le bareme, en credits.
+  Le bareme, en credits et non en jetons : un tour vaut un credit, et tout se
+  compare a cela. Le rapport entre un credit et son cout reel se regle ici,
+  sans toucher a Stripe.
 
-  Le joueur achete des credits, pas des jetons : « il te reste 43 200 jetons »
-  ne veut rien dire pour quelqu'un qui joue, et un monde bavard viderait sa
-  reserve sans qu'il comprenne pourquoi. Un tour vaut un credit, et tout se
-  compare a cela.
-
-  Le rapport entre un credit et son cout reel se regle ici, sans toucher a
-  Stripe : les prix vendus ne bougent pas quand le modele change.
-
-  Le bareme reste en code parce que c'est une regle de jeu : ce qu'un tour
-  coute en credits ne se negocie pas par client. Les paliers, eux, vivent en
-  base et s'editent depuis le tableau de bord d'administration.
+  En code parce que c'est une regle de jeu, quand les paliers, eux, vivent en
+  base et s'editent au tableau de bord.
 */
 export const CREDIT_COSTS = {
   // L'unite de reference.
@@ -44,16 +37,10 @@ export function creditsFor(action: CreditAction): number {
 export const FREE_PLAN_SLUG = 'free';
 
 /*
-  Le bonus des premiers arrives.
-
-  Ce n'est pas un palier : un palier se choisit, celui-ci s'attribue. Le
-  mettre dans `plans` obligeait la page de tarifs a montrer une offre que
-  personne ne pouvait prendre.
-
-  Le rang se lit sur la date d'inscription, et non sur un compteur : un
-  compteur se desynchronise, une date se relit. Les administrateurs ne sont
-  pas comptes dans les cent places, ils n'ont pas a prendre la place d'un
-  joueur.
+  Le bonus des premiers arrives. Pas un palier : un palier se choisit, celui-ci
+  s'attribue, et dans `plans` il forcait la page de tarifs a montrer une offre
+  que personne ne pouvait prendre. Le rang se lit sur la date d'inscription,
+  un compteur se desynchronisant.
 */
 export const FOUNDER_BONUS = {
   // Les cent premiers joueurs, administrateurs non compris.
@@ -62,18 +49,13 @@ export const FOUNDER_BONUS = {
 } as const;
 
 /*
-  Les places de l'alpha fermee.
+  Les places de l'alpha fermee. Au dela, l'api refuse de provisionner : le
+  realm n'etant pas pilote d'ici, Keycloak peut creer un compte sans joueur
+  derriere.
 
-  Au dela, l'api refuse de provisionner un joueur. Keycloak peut bien creer
-  un compte, le realm n'etant pas pilote d'ici : il n'y aura pas de joueur
-  derriere, et la connexion echouera de la meme facon.
-
-  Le meme nombre que le rang fondateur, et pour cause : ce sont les memes
-  personnes. Deux constantes tout de meme, parce qu'ouvrir les portes un jour
-  ne doit pas retirer leur bonus a ceux qui sont arrives les premiers.
-
-  Les administrateurs ne prennent pas de place : ils doivent pouvoir entrer
-  pour verifier, et prendre celle d'un joueur serait se servir.
+  Le meme nombre que le rang fondateur, ce sont les memes personnes, mais deux
+  constantes : ouvrir les portes ne doit pas retirer leur bonus aux premiers.
+  Les administrateurs ne prennent pas de place.
 */
 export const ALPHA_SEATS = 100;
 
@@ -93,15 +75,9 @@ export const PLAN_LIMITS = {
 } as const;
 
 /*
-  La periode suivante, un mois apres celle en cours.
-
-  Le renouvellement suit la date d'ancrage, pas le calendrier : un abonne du
-  20 ne doit pas voir sa reserve repartir le 1er. Pour un abonnement paye,
-  l'ancre vient de la facture Stripe ; pour le palier libre, de la creation
-  du compte.
-
-  Le 31 d'un mois qui n'en a que 30 retombe sur le dernier jour, plutot que de
-  deborder sur le mois suivant comme le ferait `setMonth` seul.
+  La periode suivante suit la date d'ancrage, pas le calendrier : un abonne du
+  20 ne voit pas sa reserve repartir le 1er. Le 31 d'un mois qui n'en a que 30
+  retombe sur le dernier jour, la ou `setMonth` seul deborderait.
 */
 export function nextPeriod(from: Date): Date {
   const next = new Date(from);

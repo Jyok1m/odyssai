@@ -92,13 +92,11 @@ export class MeController {
   }
 
   /*
-    Le depart. Efface les donnees de jeu selon la regle, la ligne du joueur,
-    et ferme la session.
+    Le depart : les donnees de jeu, la ligne du joueur, la session.
 
-    L'identite reste : elle appartient au realm, et l'api n'a volontairement
-    aucun droit dessus. `accountUrl` mene le joueur la ou il la supprimera
-    lui-meme. Tant qu'il ne l'a pas fait, se reconnecter ici recree un joueur
-    vide, ce que l'ecran doit lui dire.
+    L'identite reste, elle appartient au realm et l'api n'a aucun droit
+    dessus : `accountUrl` mene le joueur la ou il la supprimera. Tant qu'il ne
+    l'a pas fait, se reconnecter ici recree un joueur vide.
   */
   @Delete()
   async erase(

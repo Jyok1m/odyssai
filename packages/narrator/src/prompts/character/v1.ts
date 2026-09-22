@@ -4,26 +4,13 @@ import type { PromptMessage } from '../guide/v1.js';
 /*
   Conversation de creation de personnage.
 
-  Elle ne voit rien des oeuvres citees. Le joueur, lui, les a ecrites, donc il
-  n'y aurait pas de fuite a les lui renvoyer ; mais la fiche produite repart
-  ensuite dans les prompts de generation, et un personnage nomme d'apres une
-  franchise y entrerait par la petite porte. L'abstraction reste la seule
-  etape a les voir.
+  Elle ne voit rien des oeuvres citees : la fiche repart ensuite dans les
+  prompts de generation, et l'abstraction reste la seule etape a les voir.
+  Elle n'ouvre pas la partie non plus, le monde n'existant pas encore.
 
-  Le monde n'existe pas encore non plus : il se genere apres. La conversation
-  porte donc sur qui le joueur veut etre, pas sur ou il se trouve.
-
-  Elle n'ouvre pas la partie. La v2 disait "invite le joueur a la valider", ce
-  que le modele lisait comme une question a poser : le joueur repondait oui, et
-  le modele enchainait par "quelle est ta premiere action ?". Il jouait le
-  meneur dans un monde qui n'etait pas encore genere. La v3 le lui interdit.
-
-  En revanche un joueur qui demande la fiche doit l'obtenir, et non s'entendre
-  repondre d'aller chercher un bouton : le modele pose alors CHARACTER_SHEET_MARKER
-  en fin de message, l'api le retire du texte et l'ecran dresse la fiche. Le
-  marqueur est en queue comme celui du canon, et non en tete comme la sentinelle
-  du hors-sujet : la phrase adressee au joueur part la premiere, le signal
-  suit.
+  Un joueur qui demande sa fiche l'obtient : le modele pose alors
+  CHARACTER_SHEET_MARKER en fin de message, en queue comme celui du canon,
+  pour que la phrase parte avant le signal.
 */
 /*
   Ce qui dit que le joueur a demande sa fiche.

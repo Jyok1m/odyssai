@@ -268,13 +268,9 @@ describe('roulement de periode', () => {
 });
 
 /*
-  Apres une resiliation chez Stripe.
-
-  Le webhook `customer.subscription.deleted` fait retomber la ligne au palier
-  libre avec le statut `canceled`, sans toucher a la reserve. Reste le
-  roulement de periode : il ne doit plus rien verser, et surtout rien
-  reprendre. Les credits sont payes, ils ne s'evaporent pas parce que
-  l'abonnement s'arrete.
+  Apres une resiliation chez Stripe : la ligne retombe au palier libre en
+  `canceled` sans toucher a la reserve, et le roulement suivant ne verse ni ne
+  reprend rien. Ce qui a ete paye ne s'evapore pas.
 */
 describe('apres une resiliation', () => {
   it('garde les credits et n en verse plus', async () => {

@@ -22,11 +22,9 @@ import {
   Tout vient de `GET /billing/catalog`, public et sans session : le barème n'a
   rien de personnel, et un visiteur doit voir les prix avant de s'inscrire.
 
-  **Rien n'est écrit en dur ici**, ni un nom de palier, ni un montant, ni une
-  dotation. Les paliers se créent au tableau de bord et leurs noms ne sont pas
-  connus à la compilation ; les montants vivent chez Stripe, les recopier
-  ferait deux vérités. Même les lignes du comparatif se déduisent des
-  chiffres, pour qu'un palier ajouté demain s'y range sans qu'on y touche.
+  Rien n'est écrit en dur, ni un nom de palier, ni un montant, ni une
+  dotation : même les lignes du comparatif se déduisent des chiffres, pour
+  qu'un palier ajouté demain s'y range sans qu'on y touche.
 */
 export function Pricing() {
   const t = useTranslations("Pricing");
@@ -180,11 +178,12 @@ function PlanCard({
   const worlds = costs.worldGeneration > 0 ? Math.floor(grant / costs.worldGeneration) : 0;
   const turns = costs.turn > 0 ? grant - costs.worldGeneration : 0;
 
-  // Trois états possibles, et un seul l'emporte : le palier qu'on a déjà prime
-  // sur celui qu'on recommande, sans quoi on mettrait en avant un achat que le
-  // visiteur a déjà fait. Chaque variante pose sa propre bordure et son propre
-  // fond : deux utilitaires sur la même propriété sont arbitrés par la feuille
-  // de style, pas par l'ordre dans className.
+  /*
+    Le palier qu'on a déjà prime sur celui qu'on recommande : mettre en avant
+    un achat déjà fait n'a pas de sens. Chaque variante pose sa propre bordure
+    et son propre fond, deux utilitaires sur la même propriété étant arbitrés
+    par la feuille de style et non par l'ordre dans className.
+  */
   const skin = current
     ? "border-verdigris bg-mist"
     : featured

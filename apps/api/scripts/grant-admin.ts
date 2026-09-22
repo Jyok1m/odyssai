@@ -4,12 +4,9 @@
     pnpm --filter @odyssai/api admin:grant <email>
     pnpm --filter @odyssai/api admin:grant <email> --revoke
 
-  Cette bascule n'a volontairement aucune route : un tableau de bord capable
-  de nommer des administrateurs transformerait une session volee en prise de
-  controle definitive. Il faut un acces a la base, donc au serveur.
-
-  L'adresse est un miroir du realm et n'est pas unique : si deux lignes la
-  portent, le script refuse plutot que de choisir a votre place.
+  Aucune route ne fait cette bascule : un tableau de bord qui nomme des
+  administrateurs transforme une session volee en prise de controle. L'adresse
+  n'etant pas unique, le script refuse plutot que de choisir a votre place.
 */
 import { createPrismaClient, loadRootEnvFile } from '@odyssai/db';
 

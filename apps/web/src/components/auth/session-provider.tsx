@@ -51,10 +51,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         } catch (error: unknown) {
           if (controller.signal.aborted) return;
 
-          // L'échec le plus courant est passager : en développement l'API
-          // compile encore quand Next sert déjà la page, et en production un
-          // hoquet réseau ferait passer un joueur connecté pour un anonyme
-          // jusqu'à ce qu'il recharge.
+          /*
+            L'échec le plus courant est passager : l'API compile encore quand
+            Next sert déjà la page, ou un hoquet réseau ferait passer un joueur
+            connecté pour un anonyme jusqu'à ce qu'il recharge.
+          */
           const delay = RETRY_DELAYS_MS[attempt];
           if (delay !== undefined) {
             await new Promise((resolve) => setTimeout(resolve, delay));
