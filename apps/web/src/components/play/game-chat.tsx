@@ -9,6 +9,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 import { OutOfCredits } from "@/components/billing/out-of-credits";
+import { CreditsBadge } from "@/components/play/credits-badge";
 import { Story } from "@/components/play/story";
 import { Button } from "@/components/ui/button";
 import { isOutOfCredits } from "@/lib/billing";
@@ -33,6 +34,8 @@ export function GameChat() {
     porte le résultat du dernier lancer, montré jusqu'au tour suivant.
   */
   const [awaiting, setAwaiting] = useState(false);
+  // Incrémenté à chaque tour joué : c'est ce qui fait relire la réserve.
+  const [played, setPlayed] = useState(0);
   const [roll, setRoll] = useState<{ die: number; outcome: PublicOutcome } | null>(
     null,
   );
@@ -125,7 +128,10 @@ export function GameChat() {
           streamed.current += event.text;
           patch({ content: streamed.current });
         }
-        if (event.type === "done") patch({ outcome: event.outcome });
+        if (event.type === "done") {
+          patch({ outcome: event.outcome });
+          setPlayed((count) => count + 1);
+        }
         if (event.type === "error") setError(t("errorGeneric"));
 
         /*
@@ -178,8 +184,12 @@ export function GameChat() {
 
   return (
     <section className="rounded-card border border-line bg-abyss p-4 shadow-2xl shadow-ink/50 sm:p-6">
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 flex items-center gap-3">
+        <CreditsBadge refreshKey={played} />
+        {/* `ml-auto` et non `justify-between` : le compteur disparaît quand la
+            facturation ne répond pas, et le bouton resterait alors à gauche. */}
         <Button
+          className="ml-auto"
           variant="ghost"
           size="sm"
           type="button"

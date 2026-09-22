@@ -949,6 +949,7 @@
     "rollPrompt": "What you are attempting can fail. Roll the die.",
     "rollAction": "Roll the die",
     "dieRolled": "on the die",
-    "errorRollExpired": "Your action has expired. Write again what you want to do, nothing was charged."
+    "errorRollExpired": "Your action has expired. Write again what you want to do, nothing was charged.",
+    "credits": "{credits, plural, =0 {No credits} one {# credit} other {# credits}}"
   }
 }
