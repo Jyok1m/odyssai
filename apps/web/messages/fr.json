@@ -961,6 +961,7 @@
       "presence": "présence",
       "instinct": "instinct"
     },
-    "grew": "Ton {attribute} passe à {score}."
+    "grew": "Ton {attribute} passe à {score}.",
+    "carrying": "Tu portes : {items}"
   }
 }

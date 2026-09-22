@@ -42,6 +42,8 @@ export interface TurnWorld {
     derniere montee. Le meneur n'en voit rien.
   */
   progress: Progress;
+  // Ce que le personnage porte, des noms et rien d'autre.
+  inventory: string[];
 }
 
 export interface TurnMemory {
@@ -133,6 +135,7 @@ export class TurnMemoryService implements OnModuleInit {
       character: character.data,
       works: universe.works,
       progress: (universe.character?.progress ?? {}) as Progress,
+      inventory: universe.character?.inventory ?? [],
     };
   }
 

@@ -961,6 +961,7 @@
       "presence": "presence",
       "instinct": "instinct"
     },
-    "grew": "Your {attribute} rises to {score}."
+    "grew": "Your {attribute} rises to {score}.",
+    "carrying": "You carry: {items}"
   }
 }

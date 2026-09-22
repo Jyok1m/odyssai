@@ -4,6 +4,16 @@ import { AttributeSchema } from './onboarding.js';
 export const TURN_MESSAGE_MAX_CHARS = 600;
 
 // Au dela, le meneur invente plus qu'il ne repond.
+/*
+  Ce qu'un personnage porte, au plus. Un sac, pas un entrepot : au dela, le
+  meneur decrirait un inventaire que personne ne relit, et chaque tour le lui
+  renverrait en entier.
+*/
+export const INVENTORY_MAX = 10;
+
+// Ce qui peut changer de main en un tour, dans chaque sens.
+export const ITEMS_PER_TURN_MAX = 3;
+
 export const CANON_FACTS_PER_TURN_MAX = 3;
 
 /*
@@ -81,6 +91,15 @@ export const TurnDeltaSchema = z.object({
   // Vrai si l'issue etait incertaine et que la bande a colore le recit.
   usedDie: z.boolean(),
   facts: z.array(CanonFactSchema).max(CANON_FACTS_PER_TURN_MAX).default([]),
+  /*
+    Ce que le personnage vient de prendre et de perdre.
+
+    Des noms, et rien d'autre : un objet n'a pas d'effet chiffre. Le meneur le
+    raconte, le moteur ne le calcule pas. Sinon « je fabrique une epee qui tue
+    tout » serait obei, et l'etat du jeu se deciderait dans la prose.
+  */
+  gained: z.array(z.string().trim().min(2).max(60)).max(ITEMS_PER_TURN_MAX).default([]),
+  lost: z.array(z.string().trim().min(2).max(60)).max(ITEMS_PER_TURN_MAX).default([]),
 });
 
 export type TurnDelta = z.infer<typeof TurnDeltaSchema>;
@@ -105,6 +124,11 @@ export const TurnStreamEventSchema = z.discriminatedUnion('type', [
     en soi : elle se lit une fois, la ou le verdict d'un tour se lit avec le
     tour.
   */
+  // L'inventaire apres le tour, envoye seulement quand il a change.
+  z.object({
+    type: z.literal('carrying'),
+    items: z.array(z.string()),
+  }),
   z.object({
     type: z.literal('grew'),
     attribute: AttributeSchema,
@@ -152,6 +176,8 @@ export type TurnMessage = z.infer<typeof TurnMessageSchema>;
 // Reponse de GET /turn : de quoi reprendre la partie ou on l'a laissee.
 export const TurnHistorySchema = z.object({
   messages: z.array(TurnMessageSchema),
+  // Ce que le personnage porte, pour que l'ecran le retrouve en revenant.
+  inventory: z.array(z.string()),
   // Les faits que le meneur a inventes, pour que le joueur puisse les relire.
   canon: z.array(CanonFactSchema),
 });
@@ -225,6 +251,7 @@ export const GUIDANCE_PER_TURN_MAX = 2;
   ne revienne pas trancher une scene qui a change.
 */
 export const PENDING_ROLL_TTL_SECONDS = 600;
+
 
 /*
   Verdict de moderation. `reason` n'est jamais rendu au joueur tel quel : il

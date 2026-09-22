@@ -51,8 +51,14 @@ export function buildTurnMessages(
   return TURN_PROMPT.build(locale, context, message);
 }
 
-// Un bloc absent vaut une action sans de et sans fait invente.
-const DEFAULT_DELTA: TurnDelta = { kind: 'action', usedDie: false, facts: [] };
+// Un bloc absent vaut une action sans de, sans fait invente et sans objet.
+const DEFAULT_DELTA: TurnDelta = {
+  kind: 'action',
+  usedDie: false,
+  facts: [],
+  gained: [],
+  lost: [],
+};
 
 function unwrap(raw: string): string {
   const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -98,10 +104,26 @@ export function readDelta(tail: string): TurnDelta {
     }
   }
 
+  /*
+    Une liste d'objets illisible ne doit pas emporter le reste du bloc, comme
+    un fait mal forme : le recit est deja parti, et ce qui ne se lit pas se
+    laisse tomber.
+  */
+  const items = (raw: unknown): string[] => {
+    const single = TurnDeltaSchema.safeParse({
+      kind: 'action',
+      usedDie: false,
+      gained: Array.isArray(raw) ? raw : [],
+    });
+    return single.success ? single.data.gained : [];
+  };
+
   return {
     kind: source.kind === 'question' ? 'question' : 'action',
     usedDie: source.usedDie === true,
     facts: facts.slice(0, CANON_FACTS_PER_TURN_MAX),
+    gained: items(source.gained),
+    lost: items(source.lost),
   };
 }
 

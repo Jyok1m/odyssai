@@ -89,6 +89,7 @@ describe('rappels dans le prompt du meneur', () => {
     recalled: [],
     band: 'partiel',
     asking: false,
+    inventory: [],
     mustUseDie: false,
     fate: false,
     opening: false,

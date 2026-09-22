@@ -254,6 +254,10 @@ model Character {
   /// lit pas, le meneur si.
   talents String[] @default([])
 
+  /// Ce que le personnage porte. Des noms, sans effet chiffre : le meneur les
+  /// raconte, le moteur ne les calcule pas.
+  inventory String[] @default([])
+
   /// Jets depuis la derniere montee, un compteur par attribut. Remis a zero au
   /// palier franchi : sans lui il faudrait rejouer toute l'histoire pour
   /// savoir ou en est un personnage.

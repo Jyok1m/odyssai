@@ -16,6 +16,7 @@ import {
 import type { Response } from 'express';
 import {
   CanonFactSchema,
+  INVENTORY_MAX,
   TurnRequestSchema,
   type Situation,
   type TurnHistory,
@@ -33,6 +34,7 @@ import {
   rollD20,
   settledByDie,
   usesAfter,
+  carryAfter,
 } from '@odyssai/engine';
 import { PrismaClient, type User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
@@ -101,6 +103,7 @@ export class TurnController {
     );
 
     return {
+      inventory: world.inventory,
       messages: messages.map((row) => ({
         id: row.id,
         seq: row.seq,
@@ -382,6 +385,7 @@ export class TurnController {
           fate,
           opening,
           guidance: guidance.map((card) => card.text),
+          inventory: world.inventory,
           // Une ouverture ne tranche rien : le joueur n'a encore rien tente.
           asking,
           mustUseDie: settled,
@@ -432,6 +436,21 @@ export class TurnController {
         ne ressort plus.
       */
       const arbitrated = arbitrateCanon(delta.facts, world.charter, world.works);
+
+      /*
+        Ce que le modele dit avoir change de main, applique par le code : un
+        objet qu'il n'a pas declare ici n'entre pas, quoi que son recit ait
+        raconte.
+      */
+      const carried = carryAfter(
+        world.inventory,
+        delta.gained,
+        delta.lost,
+        INVENTORY_MAX,
+      );
+      const moved =
+        carried.length !== world.inventory.length ||
+        carried.some((item, index) => item !== world.inventory[index]);
       for (const { fact, verdict: why } of arbitrated.rejected) {
         this.logger.warn(`fait refuse (${why.reason}) : ${fact.subject}`);
       }
@@ -467,12 +486,21 @@ export class TurnController {
             traceId: turnId,
           },
         }),
+        ...(!attribute && moved
+          ? [
+              this.prisma.character.update({
+                where: { universeId: world.universeId },
+                data: { inventory: carried },
+              }),
+            ]
+          : []),
         ...(attribute
           ? [
               this.prisma.character.update({
                 where: { universeId: world.universeId },
                 data: {
                   progress: { ...world.progress, [attribute]: grew ? 0 : uses },
+                  ...(moved ? { inventory: carried } : {}),
                   ...(grew
                     ? {
                         attributes: {
@@ -496,6 +524,10 @@ export class TurnController {
           }),
         ),
       ]);
+
+      if (streaming && moved) {
+        this.write(res, { type: 'carrying', items: carried });
+      }
 
       if (streaming && grew && attribute) {
         this.write(res, { type: 'grew', attribute, score: grew });

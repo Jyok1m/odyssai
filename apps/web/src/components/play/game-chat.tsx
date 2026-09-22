@@ -37,6 +37,9 @@ export function GameChat() {
   const [awaiting, setAwaiting] = useState(false);
   // Incrémenté à chaque tour joué : c'est ce qui fait relire la réserve.
   const [played, setPlayed] = useState(0);
+  // Ce que le personnage porte, rendu par l'historique puis suivi au fil des
+  // tours : c'est le serveur qui decide, l'ecran ne fait que l'afficher.
+  const [carrying, setCarrying] = useState<string[]>([]);
   const [roll, setRoll] = useState<{
     die: number;
     modifier: number;
@@ -60,6 +63,7 @@ export function GameChat() {
     fetchHistory(controller.signal)
       .then((history) => {
         setMessages(history.messages);
+        setCarrying(history.inventory);
         setLoaded(true);
       })
       .catch((caught: unknown) => {
@@ -148,6 +152,8 @@ export function GameChat() {
         }
 
         // Une montée se lit une fois, à part du verdict du tour.
+        if (event.type === "carrying") setCarrying(event.items);
+
         if (event.type === "grew") {
           toast.success(
             t("grew", {
@@ -205,6 +211,13 @@ export function GameChat() {
     <section className="rounded-card border border-line bg-abyss p-4 shadow-2xl shadow-ink/50 sm:p-6">
       <div className="mb-4 flex items-center gap-3">
         <CreditsBadge refreshKey={played} />
+        {/* Ce que le personnage porte. Des noms, jamais un effet : le meneur
+            les raconte, le moteur ne les calcule pas. */}
+        {carrying.length > 0 ? (
+          <span className="text-caption text-vellum-3">
+            {t("carrying", { items: carrying.join(", ") })}
+          </span>
+        ) : null}
         {/* `ml-auto` et non `justify-between` : le compteur disparaît quand la
             facturation ne répond pas, et le bouton resterait alors à gauche. */}
         <Button

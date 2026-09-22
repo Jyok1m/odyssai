@@ -50,3 +50,46 @@ export type Progress = Partial<Record<Attribute, number>>;
 export function usesAfter(progress: Progress, attribute: Attribute): number {
   return (progress[attribute] ?? 0) + 1;
 }
+
+/*
+  L'inventaire apres un tour.
+
+  Le modele dit ce qui a change de main, le code decide de ce qui est porte.
+  C'est la meme regle que partout : aucun etat n'est deduit du texte, et ce
+  bloc de queue est une declaration comme une autre.
+
+  La comparaison est normalisee parce qu'il ecrit « l'epee » la ou il avait
+  ecrit « epee corrompue » : ce qui ne se retrouve pas est ignore plutot que
+  de faire echouer le tour, comme le reste de `readDelta`.
+
+  Au dela de la borne, l'objet n'entre pas. Faire sortir le plus ancien ferait
+  perdre une epee pour trois cailloux, et un sac plein est une situation que
+  le joueur comprend mieux qu'une disparition silencieuse.
+*/
+export function carryAfter(
+  current: string[],
+  gained: string[],
+  lost: string[],
+  max: number,
+): string[] {
+  const fold = (item: string) =>
+    item
+      .normalize('NFKD')
+      .replace(/\p{Diacritic}/gu, '')
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, ' ')
+      .trim();
+
+  const dropped = new Set(lost.map(fold));
+  const kept = current.filter((item) => !dropped.has(fold(item)));
+
+  const seen = new Set(kept.map(fold));
+  for (const item of gained) {
+    if (kept.length >= max) break;
+    if (seen.has(fold(item))) continue;
+    kept.push(item);
+    seen.add(fold(item));
+  }
+
+  return kept;
+}
