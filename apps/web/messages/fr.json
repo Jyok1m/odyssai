@@ -960,6 +960,7 @@
       "esprit": "esprit",
       "presence": "présence",
       "instinct": "instinct"
-    }
+    },
+    "grew": "Ton {attribute} passe à {score}."
   }
 }

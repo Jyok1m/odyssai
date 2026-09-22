@@ -100,6 +100,16 @@ export const TurnStreamEventSchema = z.discriminatedUnion('type', [
     joueur lance, donc il voit. La bande, elle, reste interne : cinq nuances
     servent a nuancer un recit, pas a etre lues.
   */
+  /*
+    Un attribut vient de monter. A part de `done` parce que c'est une nouvelle
+    en soi : elle se lit une fois, la ou le verdict d'un tour se lit avec le
+    tour.
+  */
+  z.object({
+    type: z.literal('grew'),
+    attribute: AttributeSchema,
+    score: z.number().int(),
+  }),
   z.object({
     type: z.literal('roll'),
     die: z.number().int().min(1),

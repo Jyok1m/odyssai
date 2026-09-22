@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import { TUNING } from '@odyssai/engine';
+import { TUNING, type Progress } from '@odyssai/engine';
 import type { LlmClient } from '@odyssai/llm';
 import {
   CanonFactSchema,
@@ -36,6 +36,12 @@ export interface TurnWorld {
     tour, et un nom refuse a la generation ne doit pas rentrer par la.
   */
   works: string[];
+  /*
+    Les compteurs de progression, a cote de la fiche et non dedans : la fiche
+    dit ce que le personnage est, ceux-ci disent ce qu'il a pratique depuis sa
+    derniere montee. Le meneur n'en voit rien.
+  */
+  progress: Progress;
 }
 
 export interface TurnMemory {
@@ -126,6 +132,7 @@ export class TurnMemoryService implements OnModuleInit {
       bible: bible.data,
       character: character.data,
       works: universe.works,
+      progress: (universe.character?.progress ?? {}) as Progress,
     };
   }
 

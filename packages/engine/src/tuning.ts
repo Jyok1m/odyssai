@@ -37,6 +37,7 @@ import {
   PLAN_LIMITS,
 } from './credits.js';
 import { DIE_FACES } from './die.js';
+import { PROGRESS_STEPS } from './progress.js';
 
 /*
   Les tours rendus au meneur mot pour mot. Au dela, c'est le rappel par
@@ -97,6 +98,8 @@ export const TUNING = {
     attributeMin: ATTRIBUTE_MIN,
     attributeMax: ATTRIBUTE_MAX,
     talentsMax: TALENTS_MAX,
+    // Ce qu'il faut de jets pour passer d'un score au suivant.
+    progressSteps: PROGRESS_STEPS,
     messageMaxChars: CHARACTER_MESSAGE_MAX_CHARS,
     // En deca, la fiche n'est pas extractible : il n'y a rien a extraire.
     turnsMin: CHARACTER_TURNS_MIN,

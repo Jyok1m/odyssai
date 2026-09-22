@@ -27,10 +27,12 @@ import {
   arbitrateCanon,
   attributeFor,
   bandFor,
+  grewTo,
   modifierOf,
   publicOutcome,
   rollD20,
   settledByDie,
+  usesAfter,
 } from '@odyssai/engine';
 import { PrismaClient, type User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
@@ -306,8 +308,18 @@ export class TurnController {
       personnage rendrait le resultat illisible.
     */
     const attribute = settled ? attributeFor(situation) : null;
-    const modifier = attribute ? modifierOf(world.character.attributes[attribute]) : 0;
+    const score = attribute ? world.character.attributes[attribute] : 0;
+    const modifier = attribute ? modifierOf(score) : 0;
     const band = bandFor(die, modifier);
+
+    /*
+      On progresse en pratiquant : le jet compte pour l'attribut qu'il
+      sollicite, echec compris. Rater est la facon la plus ordinaire
+      d'apprendre, et ne compter que les reussites ferait monter le plus fort
+      et stagner le plus faible.
+    */
+    const uses = attribute ? usesAfter(world.progress, attribute) : 0;
+    const grew = attribute ? grewTo(score, uses) : null;
 
 
     // Ecrit avant l'appel : une coupure en cours de reponse ne doit pas faire
@@ -455,6 +467,24 @@ export class TurnController {
             traceId: turnId,
           },
         }),
+        ...(attribute
+          ? [
+              this.prisma.character.update({
+                where: { universeId: world.universeId },
+                data: {
+                  progress: { ...world.progress, [attribute]: grew ? 0 : uses },
+                  ...(grew
+                    ? {
+                        attributes: {
+                          ...world.character.attributes,
+                          [attribute]: grew,
+                        },
+                      }
+                    : {}),
+                },
+              }),
+            ]
+          : []),
         ...arbitrated.accepted.map((fact) =>
           this.prisma.canonFact.create({
             data: {
@@ -466,6 +496,10 @@ export class TurnController {
           }),
         ),
       ]);
+
+      if (streaming && grew && attribute) {
+        this.write(res, { type: 'grew', attribute, score: grew });
+      }
 
       if (streaming) {
         this.write(res, {

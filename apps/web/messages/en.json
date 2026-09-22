@@ -960,6 +960,7 @@
       "esprit": "wits",
       "presence": "presence",
       "instinct": "instinct"
-    }
+    },
+    "grew": "Your {attribute} rises to {score}."
   }
 }

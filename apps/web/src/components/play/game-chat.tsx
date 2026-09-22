@@ -6,6 +6,7 @@ import {
   type TurnMessage,
 } from "@odyssai/schemas";
 import { useTranslations } from "next-intl";
+import toast from "react-hot-toast";
 import { useEffect, useRef, useState } from "react";
 
 import { OutOfCredits } from "@/components/billing/out-of-credits";
@@ -144,6 +145,16 @@ export function GameChat() {
         if (event.type === "roll_required") {
           setAwaiting(true);
           setMessages((current) => current.slice(0, -1));
+        }
+
+        // Une montée se lit une fois, à part du verdict du tour.
+        if (event.type === "grew") {
+          toast.success(
+            t("grew", {
+              attribute: t(`attribute.${event.attribute}` as never),
+              score: event.score,
+            }),
+          );
         }
 
         if (event.type === "roll") {
