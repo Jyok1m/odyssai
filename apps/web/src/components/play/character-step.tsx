@@ -11,11 +11,13 @@ import { useEffect, useRef, useState } from "react";
 import { OutOfCredits } from "@/components/billing/out-of-credits";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { Button } from "@/components/ui/button";
+import { DangerAction } from "@/components/ui/danger-action";
 import { isOutOfCredits } from "@/lib/billing";
 import {
   CharacterError,
   extractCharacter,
   fetchConversation,
+  resetCharacter,
   sendCharacterMessage,
 } from "@/lib/character";
 
@@ -50,24 +52,33 @@ export function CharacterStep({ initial, saving, error, onAdvance }: Props) {
     initial ? { character: initial, missing: [] } : null,
   );
 
+  const tDanger = useTranslations("Danger");
+  const [resetError, setResetError] = useState<string | null>(null);
+
   const thread = useRef<HTMLOListElement>(null);
   const streamed = useRef("");
 
-  useEffect(() => {
-    const controller = new AbortController();
-
-    fetchConversation(controller.signal)
+  const load = (signal?: AbortSignal) =>
+    fetchConversation(signal)
       .then((conversation) => {
         setMessages(conversation.messages);
         setCanExtract(conversation.canExtract);
         setTurnsLeft(conversation.turnsLeft);
       })
       .catch((caught: unknown) => {
-        if (controller.signal.aborted) return;
+        if (signal?.aborted) return;
         setChatError(t(errorKey(caught)));
       });
 
+  useEffect(() => {
+    const controller = new AbortController();
+
+    void load(controller.signal);
+
     return () => controller.abort();
+    // `load` change à chaque rendu et n'a pas à relancer cet effet : c'est
+    // l'arrivée sur l'étape qui le déclenche, une seule fois.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t]);
 
   // Le fil suit toujours le dernier message : contrairement au guide, il n'y a
@@ -248,6 +259,38 @@ export function CharacterStep({ initial, saving, error, onAdvance }: Props) {
           </div>
         </form>
       </section>
+
+      {/* Repartir de zéro sur le personnage seul : la conversation et le
+          brouillon partent, l'inspiration reste. Derrière un mot à taper,
+          comme tout ce qui ne se défait pas. */}
+      <div className="mt-6">
+        <DangerAction
+          label={tDanger("character.label")}
+          title={tDanger("character.title")}
+          lead={tDanger("character.lead")}
+          confirmLabel={tDanger("character.confirm")}
+          busyLabel={tDanger("character.busy")}
+          error={resetError}
+          consequences={
+            <ul className="space-y-1.5">
+              <li>{tDanger("character.gone")}</li>
+              <li>{tDanger("character.credits")}</li>
+              <li className="text-vellum-3">{tDanger("character.kept")}</li>
+            </ul>
+          }
+          onConfirm={async () => {
+            setResetError(null);
+            try {
+              await resetCharacter();
+              setProposal(null);
+              setChatError(null);
+              await load();
+            } catch (caught: unknown) {
+              setResetError(t(errorKey(caught)));
+            }
+          }}
+        />
+      </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-4">
         <Button

@@ -927,6 +927,16 @@
       "character": "Your character and the conversation that created it",
       "account": "Your name and game profile",
       "visited": "Unless they have already been seen by other players: a visited world is kept without you, and a character others met stays in their stories, described as dead."
+    },
+    "character": {
+      "label": "Start the character over",
+      "title": "Start the character over",
+      "lead": "The conversation starts again from scratch. Your inspiration and themes are kept: only the character is erased.",
+      "confirm": "Erase the conversation",
+      "busy": "Erasing.",
+      "gone": "The conversation and the draft sheet are erased.",
+      "credits": "The credits spent on these messages are not refunded.",
+      "kept": "Your inspiration and themes remain."
     }
   },
   "Game": {

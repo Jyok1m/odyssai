@@ -52,6 +52,23 @@ export class CharacterService {
     return universe.id;
   }
 
+  /*
+    Remettre la creation a zero : la conversation et le brouillon de fiche
+    partent, l'inspiration et ses themes restent. Le monde n'existe pas
+    encore, donc rien d'autre ne tient au personnage.
+
+    Les credits depenses pour ces messages ne sont pas rendus : les appels ont
+    eu lieu, et le joueur les a lus.
+  */
+  async reset(universeId: string): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.conversationMessage.deleteMany({
+        where: { universeId, channel: CHANNEL },
+      }),
+      this.prisma.character.deleteMany({ where: { universeId } }),
+    ]);
+  }
+
   async conversation(universeId: string): Promise<CharacterConversation> {
     const rows = await this.prisma.conversationMessage.findMany({
       where: { universeId, channel: CHANNEL },

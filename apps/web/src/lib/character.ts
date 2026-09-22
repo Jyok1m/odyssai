@@ -57,6 +57,15 @@ export async function sendCharacterMessage(
 }
 
 // Une proposition, pas un enregistrement : c'est PUT /onboarding qui écrit.
+/*
+  Repartir de zéro sur le personnage seul. Rien n'est rendu : l'écran relit
+  ensuite la conversation, qui repart de l'ouverture.
+*/
+export async function resetCharacter(): Promise<void> {
+  const response = await fetch(BASE, { method: "DELETE", credentials: "include" });
+  if (!response.ok) throw await toCharacterError(response);
+}
+
 export async function extractCharacter(
   signal?: AbortSignal,
 ): Promise<CharacterExtractResponse> {

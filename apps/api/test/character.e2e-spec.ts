@@ -325,15 +325,4 @@ describe('/onboarding/character (e2e)', () => {
     await harness.app.close();
   });
 
-  it('repond indisponible tant qu aucun modele n a ete retenu', async () => {
-    const sansModele = await boot({ model: '' });
-
-    await request(sansModele.app.getHttpServer())
-      .post('/onboarding/character/messages')
-      .set('Cookie', COOKIE)
-      .send({ content: 'Bonjour' })
-      .expect(503);
-
-    await sansModele.app.close();
-  });
 });

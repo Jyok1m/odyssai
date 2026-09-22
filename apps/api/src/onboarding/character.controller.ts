@@ -3,7 +3,9 @@ import {
   Body,
   ConflictException,
   Controller,
+  Delete,
   Get,
+  HttpCode,
   HttpException,
   HttpStatus,
   Inject,
@@ -89,6 +91,18 @@ export class CharacterController {
         },
       ],
     };
+  }
+
+  /*
+    Repartir de zero sur le personnage seul. Meme garde que la lecture : une
+    fois la generation lancee, la conversation est close et le personnage
+    tient au monde.
+  */
+  @Delete()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async reset(@CurrentUser() user: User): Promise<void> {
+    const universeId = await this.guard(() => this.characters.open(user));
+    await this.characters.reset(universeId);
   }
 
   @Post('messages')

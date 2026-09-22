@@ -927,6 +927,16 @@
       "character": "Ton personnage et la conversation qui l'a créé",
       "account": "Ton pseudo et ton profil de jeu",
       "visited": "Sauf s'ils ont déjà été vus par d'autres joueurs : un monde visité est conservé sans toi, un personnage rencontré reste dans les récits des autres, décrit comme mort."
+    },
+    "character": {
+      "label": "Recommencer le personnage",
+      "title": "Recommencer le personnage",
+      "lead": "La conversation repart de zéro. Ton inspiration et tes thèmes sont conservés : seul le personnage s'efface.",
+      "confirm": "Effacer la conversation",
+      "busy": "Effacement.",
+      "gone": "La conversation et le brouillon de fiche sont effacés.",
+      "credits": "Les crédits dépensés pour ces messages ne sont pas rendus.",
+      "kept": "Ton inspiration et tes thèmes restent."
     }
   },
   "Game": {
