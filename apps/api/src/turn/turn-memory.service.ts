@@ -28,6 +28,14 @@ export interface TurnWorld {
   charter: WorldCharter;
   bible: WorldBible;
   character: CharacterSheet;
+  /*
+    Les oeuvres citees a l'inspiration, pour la garde sur les emprunts.
+
+    Elles ne partent jamais dans un prompt : c'est `findBorrowedNames` qui les
+    lit, pour relire ce que le meneur vient d'ecrire. Le canon grandit a chaque
+    tour, et un nom refuse a la generation ne doit pas rentrer par la.
+  */
+  works: string[];
 }
 
 export interface TurnMemory {
@@ -116,6 +124,7 @@ export class TurnMemoryService implements OnModuleInit {
       charter: charter.data,
       bible: bible.data,
       character: character.data,
+      works: universe.works,
     };
   }
 

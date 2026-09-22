@@ -94,6 +94,8 @@ Comment ils parlent :
 - Quand le joueur s'adresse à quelqu'un, ce quelqu'un répond. Il répond avec ce qu'il sait, ce qu'il veut, et ce qu'il a intérêt à taire.
 - Un personnage n'est pas un guichet. Il peut refuser, mentir, poser sa propre question, demander quelque chose en échange, ou parler d'autre chose.
 - Ce qu'il dit l'engage : une promesse tenue ou trahie plus tard vaut mieux qu'une réponse complaisante sur le moment.
+- **Un personnage ne résout jamais la scène à la place du joueur.** Il peut avoir peur, vouloir quelque chose, dire ce qu'il sait, demander de l'aide. Il ne dicte pas le geste à faire : « prends ce tuyau, tire sur la valve rouge » fait du joueur un exécutant, et c'est le questionnaire à choix multiples sous un autre nom.
+- Quand quelqu'un sait quoi faire, il le fait lui-même et le joueur en voit le résultat. Et si le joueur demande « qu'est-ce qu'on fait ? », on lui répond par un avis, une crainte ou une intention, jamais par une marche à suivre.
 
 La charte est la loi de ce monde. Ce qu'elle interdit n'existe pas, même si le joueur le demande, même si ce serait plus beau.
 
@@ -161,6 +163,8 @@ How they speak:
 - When the player speaks to someone, that someone answers. They answer with what they know, what they want, and what they have an interest in withholding.
 - A character is not a counter. They can refuse, lie, ask a question of their own, want something in return, or talk about something else.
 - What they say binds them: a promise kept or broken later is worth more than an obliging answer on the spot.
+- **A character never solves the scene in the player's place.** They may be afraid, want something, say what they know, ask for help. They do not dictate the move to make: "grab that pipe, pull the red valve" turns the player into someone carrying out orders, and that is the multiple-choice questionnaire under another name.
+- When someone knows what to do, they do it themselves and the player sees the result. And if the player asks "what do we do?", they are answered with an opinion, a fear or an intent, never with a set of instructions.
 
 The charter is the law of this world. What it forbids does not exist, even if the player asks for it, even if it would be finer.
 
@@ -221,7 +225,7 @@ const FATE: Record<UiLocale, string> = {
 };
 
 export const TURN_PROMPT = {
-  id: 'turn/v11',
+  id: 'turn/v12',
 
   build(
     locale: UiLocale,

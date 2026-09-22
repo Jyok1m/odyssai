@@ -379,7 +379,13 @@ export class TurnController {
 
       // Le canon grandit : ce qui a ete refuse a la generation ne doit pas
       // rentrer par une reponse du meneur.
-      const arbitrated = arbitrateCanon(delta.facts, world.charter, []);
+      /*
+        Les oeuvres du joueur, et non un tableau vide : c'est le troisieme
+        etage de la garde sur les emprunts, et il ne comparait contre rien.
+        Le canon nourrit tous les tours suivants, donc un nom qui entre ici
+        ne ressort plus.
+      */
+      const arbitrated = arbitrateCanon(delta.facts, world.charter, world.works);
       for (const { fact, verdict: why } of arbitrated.rejected) {
         this.logger.warn(`fait refuse (${why.reason}) : ${fact.subject}`);
       }
