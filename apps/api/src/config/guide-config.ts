@@ -51,8 +51,6 @@ const EnvSchema = z
     GUIDE_PASS_TTL_SECONDS: z.coerce.number().int().positive().default(3600),
     GUIDE_IP_HASH_SECRET: z.string().min(16),
     GUIDE_LOG_RETENTION_DAYS: z.coerce.number().int().positive().default(30),
-    GUIDE_TRACE_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(1),
-    GUIDE_TRACE_HIDE_IO: boolish('false'),
 
     TURNSTILE_SECRET_KEY: z.string().min(1),
     TRUST_PROXY: z.string().default('false'),
@@ -221,6 +219,15 @@ export class GuideConfig {
     };
   }
 
+  /*
+    Ces coordonnees ne servent plus qu'aux evaluations (`eval:guide`,
+    `eval:narration`), qui creent leurs jeux de cas et leurs experiences par le
+    SDK. Le tracing d'execution, lui, est diffuse par OpenRouter vers la
+    destination configuree chez lui : plus rien ici n'emet de trace.
+
+    `LANGSMITH_TRACING` en garde le nom pour ne pas toucher au role ansible,
+    mais il ne dit plus que ceci : les coordonnees sont renseignees.
+  */
   get tracing() {
     return {
       enabled: this.env.LANGSMITH_TRACING,
@@ -228,8 +235,6 @@ export class GuideConfig {
       apiKey: this.env.LANGSMITH_API_KEY,
       project: this.env.LANGSMITH_PROJECT,
       workspaceId: this.env.LANGSMITH_WORKSPACE_ID,
-      sampleRate: this.env.GUIDE_TRACE_SAMPLE_RATE,
-      hideIo: this.env.GUIDE_TRACE_HIDE_IO,
     };
   }
 

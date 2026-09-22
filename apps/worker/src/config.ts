@@ -28,19 +28,6 @@ const EnvSchema = z
     OPENROUTER_API_KEY: z.string().default(''),
     OPENAI_API_KEY: z.string().default(''),
 
-    LANGSMITH_TRACING: z
-      .enum(['true', 'false'])
-      .default('false')
-      .transform((value) => value === 'true'),
-    LANGSMITH_ENDPOINT: z.url().default('https://eu.api.smith.langchain.com'),
-    LANGSMITH_API_KEY: z.string().default(''),
-    LANGSMITH_PROJECT: z.string().default('Odyssai-Dev'),
-    LANGSMITH_WORKSPACE_ID: z.string().optional(),
-    GUIDE_TRACE_HIDE_IO: z
-      .enum(['true', 'false'])
-      .default('false')
-      .transform((value) => value === 'true'),
-
     /*
       Un monde a la fois par worker. Chaque generation fait sept appels et
       dure des minutes : en faire tourner plusieurs de front sur une petite
@@ -141,14 +128,6 @@ export function loadConfig() {
     prices: {
       inputUsdPerMTok: env.LLM_NARRATOR_PRICE_INPUT_USD_PER_MTOK,
       outputUsdPerMTok: env.LLM_NARRATOR_PRICE_OUTPUT_USD_PER_MTOK,
-    },
-    tracing: {
-      enabled: env.LANGSMITH_TRACING,
-      endpoint: env.LANGSMITH_ENDPOINT,
-      apiKey: env.LANGSMITH_API_KEY,
-      project: env.LANGSMITH_PROJECT,
-      workspaceId: env.LANGSMITH_WORKSPACE_ID,
-      hideIo: env.GUIDE_TRACE_HIDE_IO,
     },
   };
 }

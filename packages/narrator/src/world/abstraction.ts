@@ -27,7 +27,6 @@ export interface AbstractionRequest {
   input: AbstractionInput;
   signal?: AbortSignal;
   trace?: LlmTrace;
-  onTraced?: (traced: boolean) => void;
 }
 
 /*
@@ -78,7 +77,7 @@ function unwrap(raw: string): string {
 export async function abstractWorld(
   request: AbstractionRequest,
 ): Promise<AbstractionResult> {
-  const { llm, config, input, signal, trace, onTraced } = request;
+  const { llm, config, input, signal, trace } = request;
 
   let text = '';
   const usage: AbstractionUsage = {};
@@ -91,7 +90,6 @@ export async function abstractWorld(
     extraBody: config.extraBody,
     signal,
     trace,
-    onTraced,
   })) {
     if (event.type === 'text') text += event.text;
     if (event.type === 'usage') {

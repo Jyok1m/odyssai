@@ -138,7 +138,6 @@ function makeWorldLlm(
     provider: 'openrouter',
     baseUrl: 'https://openrouter.ai/api/v1',
     calls,
-    async flushTraces() {},
 
     /*
       Deterministe, et suffisant pour un test : deux textes identiques donnent

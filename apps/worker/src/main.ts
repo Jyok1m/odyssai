@@ -1,7 +1,6 @@
 import { PostgresSaver } from '@langchain/langgraph-checkpoint-postgres';
 import { Worker, type Job } from 'bullmq';
 import { Redis } from 'ioredis';
-import { Client } from 'langsmith';
 import { createLlmClient } from '@odyssai/llm';
 import { createPrismaClient, loadRootEnvFile } from '@odyssai/db';
 import { GENERATION_QUEUE, GenerationJobDataSchema } from '@odyssai/schemas';
@@ -19,21 +18,6 @@ const prisma = createPrismaClient(config.postgresUrl);
 const llm = createLlmClient({
   provider: config.provider,
   apiKey: config.apiKey,
-  tracing: config.tracing.enabled
-    ? {
-        client: new Client({
-          apiUrl: config.tracing.endpoint,
-          apiKey: config.tracing.apiKey,
-          workspaceId: config.tracing.workspaceId,
-          hideInputs: config.tracing.hideIo,
-          hideOutputs: config.tracing.hideIo,
-        }),
-        projectName: config.tracing.project,
-        // Une generation par monde, sept appels : tout tracer coute peu et
-        // vaut cher le jour ou un monde sort de travers.
-        sampleRate: 1,
-      }
-    : undefined,
 });
 
 /*
@@ -99,7 +83,6 @@ log(
 async function shutdown(signal: string): Promise<void> {
   log(`${signal} : arret apres le travail en cours`);
   await worker.close();
-  await llm.flushTraces();
   await checkpointer.end();
   await connection.quit();
   await prisma.$disconnect();

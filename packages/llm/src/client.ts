@@ -1,25 +1,25 @@
 import { OpenAI } from 'openai';
-import type { Client } from 'langsmith';
-import { wrapOpenAI } from 'langsmith/wrappers/openai';
 import { LlmError, isRetryableStatus } from './errors.js';
 import { LLM_PROVIDERS, type LlmProvider } from './providers.js';
-
-export interface LlmTracing {
-  // Client LangSmith construit par l'api, avec apiUrl et apiKey explicites.
-  client: Client;
-  projectName: string;
-  // Part des appels tracee, entre 0 et 1.
-  sampleRate: number;
-}
 
 export interface CreateLlmClientOptions {
   provider: LlmProvider;
   apiKey: string;
-  tracing?: LlmTracing;
   // Injecte par les tests, pour qu'aucun appel ne sorte vraiment.
   fetch?: typeof globalThis.fetch;
 }
 
+/*
+  De quoi retrouver un appel dans l'observabilite.
+
+  Ce n'est plus le SDK LangSmith qui l'emporte mais OpenRouter, par son champ
+  de corps `trace` : c'est lui qui diffuse vers la destination configuree, et
+  lui seul connait le cout reel et le fournisseur vers lequel il a route.
+
+  Consequence a connaitre : sans ces metadonnees dans le corps, la trace
+  arriverait orpheline. C'est par elles qu'on rejoint `llm_usage`, `turns` et
+  `guide_questions`, jamais par un identifiant rendu par la passerelle.
+*/
 export interface LlmTrace {
   name: string;
   metadata: Record<string, unknown>;
@@ -34,12 +34,6 @@ export interface StreamChatRequest {
   extraBody?: Record<string, unknown>;
   signal?: AbortSignal;
   trace?: LlmTrace;
-  /*
-    Appele avec la decision d'echantillonnage, avant l'appel. Le journal doit
-    savoir si la requete est tracee pour qu'on retrouve la trace par sa
-    metadonnee, et la decision se prend ici.
-  */
-  onTraced?: (traced: boolean) => void;
 }
 
 export type LlmStreamEvent =
@@ -77,7 +71,6 @@ export interface LlmClient {
   readonly baseUrl: string;
   streamChat(request: StreamChatRequest): AsyncIterable<LlmStreamEvent>;
   embed(request: EmbedRequest): Promise<EmbedResult>;
-  flushTraces(): Promise<void>;
 }
 
 /*
@@ -86,7 +79,7 @@ export interface LlmClient {
   le fournisseur openrouter sans cle, la cle OpenAI partirait chez OpenRouter.
 */
 export function createLlmClient(options: CreateLlmClientOptions): LlmClient {
-  const { provider, apiKey, tracing } = options;
+  const { provider, apiKey } = options;
 
   if (!apiKey) {
     throw new LlmError(`cle absente pour le fournisseur ${provider}`, {
@@ -103,25 +96,14 @@ export function createLlmClient(options: CreateLlmClientOptions): LlmClient {
     ...(options.fetch ? { fetch: options.fetch } : {}),
   });
 
-  // L'instance tracee n'existe que si l'api a decide d'activer le tracing.
-  // `tracingEnabled` prime sur LANGSMITH_TRACING, verifie dans les typings.
-  const traced = tracing
-    ? wrapOpenAI(raw, {
-        client: tracing.client,
-        project_name: tracing.projectName,
-        tracingEnabled: true,
-      })
-    : undefined;
-
   return {
     provider,
     baseUrl: spec.baseUrl,
 
     /*
-      Les embeddings ne sont ni diffuses ni traces : ce n'est pas une
-      generation, il n'y a rien a lire au fil de l'eau et rien a relire dans
-      LangSmith. L'ordre des vecteurs suit celui des entrees, et le
-      fournisseur peut le rendre desordonne : on trie sur `index`.
+      Les embeddings ne sont pas diffuses : il n'y a rien a lire au fil de
+      l'eau. L'ordre des vecteurs suit celui des entrees, et le fournisseur
+      peut le rendre desordonne : on trie sur `index`.
     */
     async embed(request: EmbedRequest): Promise<EmbedResult> {
       const response = await raw.embeddings.create(
@@ -151,31 +133,29 @@ export function createLlmClient(options: CreateLlmClientOptions): LlmClient {
         ...request.extraBody,
       };
 
+      /*
+        Champ propre a OpenRouter : l'API d'OpenAI rejette ce qu'elle ne
+        connait pas, comme pour les cles de `OPENROUTER_ONLY_BODY_KEYS`.
+      */
+      if (provider === 'openrouter' && request.trace) {
+        body.trace = {
+          trace_name: request.trace.name,
+          ...request.trace.metadata,
+          ...(request.trace.tags ? { tags: request.trace.tags } : {}),
+        };
+      }
+
       // Jamais presence_penalty ni frequency_penalty : combines a un effort de
       // raisonnement a none, ils font remonter des 500.
       delete body.presence_penalty;
       delete body.frequency_penalty;
 
-      const useTraced =
-        traced !== undefined &&
-        tracing !== undefined &&
-        Math.random() < tracing.sampleRate;
-      request.onTraced?.(useTraced);
-
       let stream: AsyncIterable<OpenAI.ChatCompletionChunk>;
       try {
-        stream = useTraced
-          ? await traced!.chat.completions.create(
-              body as unknown as OpenAI.ChatCompletionCreateParamsStreaming,
-              {
-                signal: request.signal,
-                langsmithExtra: request.trace,
-              },
-            )
-          : await raw.chat.completions.create(
-              body as unknown as OpenAI.ChatCompletionCreateParamsStreaming,
-              { signal: request.signal },
-            );
+        stream = await raw.chat.completions.create(
+          body as unknown as OpenAI.ChatCompletionCreateParamsStreaming,
+          { signal: request.signal },
+        );
       } catch (error: unknown) {
         throw toLlmError(error);
       }
@@ -201,10 +181,6 @@ export function createLlmClient(options: CreateLlmClientOptions): LlmClient {
       } catch (error: unknown) {
         throw toLlmError(error);
       }
-    },
-
-    async flushTraces(): Promise<void> {
-      await tracing?.client.awaitPendingTraceBatches?.();
     },
   };
 }

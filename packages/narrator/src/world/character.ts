@@ -36,7 +36,6 @@ export interface CharacterTurnRequest {
   message: string;
   signal?: AbortSignal;
   trace?: LlmTrace;
-  onTraced?: (traced: boolean) => void;
 }
 
 export interface CharacterUsage {
@@ -68,7 +67,7 @@ export function converseCharacter(request: CharacterTurnRequest): {
   sheetRequested: () => boolean;
   usage: () => CharacterUsage;
 } {
-  const { llm, config, locale, history, message, signal, trace, onTraced } =
+  const { llm, config, locale, history, message, signal, trace } =
     request;
 
   const split = splitTail(
@@ -80,7 +79,6 @@ export function converseCharacter(request: CharacterTurnRequest): {
       extraBody: config.extraBody,
       signal,
       trace,
-      onTraced,
     }),
     CHARACTER_SHEET_MARKER,
   );
@@ -109,7 +107,6 @@ export interface CharacterExtractRequest {
   history: ConversationTurn[];
   signal?: AbortSignal;
   trace?: LlmTrace;
-  onTraced?: (traced: boolean) => void;
 }
 
 /*
@@ -131,7 +128,7 @@ function unwrap(raw: string): string {
 export async function extractCharacter(
   request: CharacterExtractRequest,
 ): Promise<CharacterExtractResult> {
-  const { llm, config, locale, history, signal, trace, onTraced } = request;
+  const { llm, config, locale, history, signal, trace } = request;
 
   let text = '';
   const usage: CharacterUsage = {};
@@ -144,7 +141,6 @@ export async function extractCharacter(
     extraBody: config.extraBody,
     signal,
     trace,
-    onTraced,
   })) {
     if (event.type === 'text') text += event.text;
     if (event.type === 'usage') absorb(usage, event);

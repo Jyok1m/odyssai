@@ -129,7 +129,6 @@ export class GuideController {
       normalizedHash,
       promptVersion: GUIDE_PROMPT_VERSION,
       corpusVersion: GUIDE_CORPUS_VERSION,
-      traced: false,
     };
 
     // 3. Guide coupe.
@@ -215,7 +214,6 @@ export class GuideController {
     res.on('close', onClose);
 
     let usage: GuideUsage | undefined;
-    let traced = false;
     let source: GuideSource = 'llm';
     let answer = '';
 
@@ -226,9 +224,6 @@ export class GuideController {
         config: this.guideConfig.model,
         input: { question, locale, live },
         signal: controller.signal,
-        onTraced: (value) => {
-          traced = value;
-        },
         trace: {
           name: 'guide',
           metadata: {
@@ -271,7 +266,6 @@ export class GuideController {
       await this.journal.record({
         ...base,
         source,
-        traced,
         provider: this.guideConfig.provider,
         model: usage?.model ?? this.guideConfig.model.model,
         inputTokens: usage?.inputTokens,

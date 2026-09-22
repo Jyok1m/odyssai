@@ -121,8 +121,11 @@ model GuideQuestion {
   reasoningTokens Int?     @map("reasoning_tokens")
   costUsd         Decimal? @map("cost_usd") @db.Decimal(10, 6)
 
-  /// Vrai si la requete a ete echantillonnee : la trace se retrouve dans
-  /// LangSmith par la metadonnee guide_question_id.
+  /// N'est plus ecrite : le tracing d'execution est diffuse par OpenRouter,
+  /// qui trace tout, et l'echantillonnage n'existe plus. Gardee un
+  /// deploiement, le temps que l'ancienne image cesse de tourner, puis a
+  /// supprimer : une colonne se retire en deux fois, jamais dans celui qui
+  /// cesse de l'ecrire.
   traced Boolean @default(false)
 
   /// Uniquement pour les reponses generees, jamais pour les textes fixes.

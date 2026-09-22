@@ -18,7 +18,6 @@ export interface JournalEntry {
   outputTokens?: number;
   reasoningTokens?: number;
   costUsd?: number;
-  traced: boolean;
   // Uniquement pour les reponses generees, jamais pour les textes fixes.
   answer?: string;
   promptVersion: string;
@@ -60,7 +59,6 @@ export class GuideJournalService implements OnModuleInit {
           outputTokens: entry.outputTokens ?? null,
           reasoningTokens: entry.reasoningTokens ?? null,
           costUsd: entry.costUsd ?? null,
-          traced: entry.traced,
           answer: entry.answer ?? null,
           promptVersion: entry.promptVersion,
           corpusVersion: entry.corpusVersion,

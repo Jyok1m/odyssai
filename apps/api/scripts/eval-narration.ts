@@ -339,7 +339,6 @@ for (const model of candidates) {
   summary.set(model, perKey);
 }
 
-await llm.flushTraces();
 
 const keys = evaluators.map((evaluator) => evaluator.name);
 console.log(

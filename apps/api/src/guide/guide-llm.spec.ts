@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Client } from 'langsmith';
 import { LlmError, createLlmClient } from '@odyssai/llm';
 
 // Corps SSE minimal, pour qu'aucun appel ne sorte vraiment.
@@ -22,16 +21,6 @@ function fakeFetch() {
 
 function bodyOf(spy: ReturnType<typeof fakeFetch>): Record<string, unknown> {
   return JSON.parse(String(spy.mock.calls[0]![1]!.body)) as Record<string, unknown>;
-}
-
-// Client LangSmith qui ne joint rien : le tracing ne doit jamais sortir.
-function silentLangsmith(): Client {
-  return new Client({
-    apiUrl: 'https://langsmith.invalid',
-    apiKey: 'ls-factice',
-    fetchImplementation: (async () =>
-      new Response('{}', { status: 200 })) as unknown as typeof fetch,
-  });
 }
 
 const REQUEST = {
@@ -134,37 +123,51 @@ describe('createLlmClient', () => {
     expect(body.max_tokens).toBeUndefined();
   });
 
-  describe('echantillonnage', () => {
-    const drain = async (sampleRate: number): Promise<boolean> => {
-      let traced: boolean | undefined;
-      const client = createLlmClient({
-        provider: 'openrouter',
-        apiKey: 'sk-or-x',
-        fetch: fakeFetch() as unknown as typeof fetch,
-        tracing: {
-          client: silentLangsmith(),
-          projectName: 'Odyssai-Test',
-          sampleRate,
-        },
-      });
-
-      for await (const _ of client.streamChat({
-        ...REQUEST,
-        onTraced: (value) => {
-          traced = value;
-        },
-      })) {
-        // on epuise le flux
-      }
-      return traced!;
+  /*
+    Le rattachement ne passe plus par le SDK mais par le corps de la requete :
+    c'est OpenRouter qui diffuse, et sans ces metadonnees la trace arriverait
+    orpheline, impossible a relier a un tour ou a une ligne de `llm_usage`.
+  */
+  describe('metadonnees de trace', () => {
+    const TRACE = {
+      name: 'turn',
+      metadata: { turn_id: 't-1', universe_id: 'u-1' },
+      tags: ['jeu'],
     };
 
-    it('sampleRate 0 passe toujours par l instance brute', async () => {
-      expect(await drain(0)).toBe(false);
+    const drain = async (
+      provider: 'openrouter' | 'openai',
+      trace?: typeof TRACE,
+    ) => {
+      const fetchSpy = fakeFetch();
+      const client = createLlmClient({
+        provider,
+        apiKey: 'sk-x',
+        fetch: fetchSpy as unknown as typeof fetch,
+      });
+
+      for await (const _ of client.streamChat({ ...REQUEST, trace })) {
+        // on epuise le flux
+      }
+      return bodyOf(fetchSpy);
+    };
+
+    it('pose le champ trace chez OpenRouter', async () => {
+      expect((await drain('openrouter', TRACE)).trace).toEqual({
+        trace_name: 'turn',
+        turn_id: 't-1',
+        universe_id: 'u-1',
+        tags: ['jeu'],
+      });
     });
 
-    it('sampleRate 1 passe toujours par l instance tracee', async () => {
-      expect(await drain(1)).toBe(true);
+    // L'API d'OpenAI rejette les arguments qu'elle ne connait pas.
+    it('ne le pose pas chez OpenAI en direct', async () => {
+      expect((await drain('openai', TRACE)).trace).toBeUndefined();
+    });
+
+    it('ne pose rien quand l appelant ne trace pas', async () => {
+      expect((await drain('openrouter')).trace).toBeUndefined();
     });
   });
 });

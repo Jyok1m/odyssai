@@ -141,7 +141,6 @@ export function makeFakeLlm(options: FakeLlmOptions = {}): FakeLlm {
 
     async *streamChat(request: StreamChatRequest): AsyncIterable<LlmStreamEvent> {
       calls.push(request);
-      request.onTraced?.(false);
       request.signal?.addEventListener('abort', () => {
         state.aborted = true;
       });
@@ -164,7 +163,6 @@ export function makeFakeLlm(options: FakeLlmOptions = {}): FakeLlm {
       }
     },
 
-    async flushTraces(): Promise<void> {},
   };
 
   return client;

@@ -253,8 +253,21 @@ Deux couches, dans cet ordre, sur tout ce qu'un joueur écrit.
 - Mesuré sur `qwen/qwen3.5-35b-a3b` : un tour **0,0012 $** en moyenne, une génération de monde **0,0040 $** sans rejeu. Un monde vaut donc trois tours, pas vingt-cinq. Les 25 crédits qu'il coûte sont une assurance contre les rejeux du graphe et un levier d'abonnement, **pas le reflet d'un coût**, et ça s'assume comme tel.
 - L'entrée d'un tour monte de 3 800 à 6 900 jetons entre le premier et le douzième, puis se stabilise : c'est `recentTurns` qui se remplit. C'est le curseur qui pèse le plus sur le coût d'un tour.
 - Le coût d'un même tour varie **du simple au quadruple** à taille égale, selon le fournisseur vers lequel OpenRouter route. Tarifer sur une seule mesure n'a donc aucun sens : il faut une moyenne et un pire cas.
-- **LangSmith ne porte pas le coût, et ne le portera pas.** Son wrapper `wrapOpenAI` ne lit que les champs d'usage standard d'OpenAI et ignore le `cost` d'OpenRouter, que `packages/llm` capture pourtant déjà : il voit les jetons, jamais la dépense. Lui déclarer un barème par modèle donnerait un chiffre faux pour la raison ci-dessus, la route variant d'un appel à l'autre, et ferait une seconde vérité à côté de `LLM_NARRATOR_PRICE_*`. La comptabilité est `llm_usage`, LangSmith sert à relire un prompt : le pont entre les deux est la métadonnée (`turn_id`, `guide_question_id`, `generation_job_id`).
+- **Le coût de LangSmith vient d'OpenRouter, jamais d'un barème.** Son wrapper `wrapOpenAI` ne lisait que les champs d'usage standard d'OpenAI et ignorait le `cost` d'OpenRouter : il voyait les jetons, jamais la dépense. Lui déclarer un barème par modèle aurait donné un chiffre faux pour la raison ci-dessus, la route variant d'un appel à l'autre. C'est **Broadcast** qui règle cela, en diffusant le coût réel et le fournisseur effectivement routé. La comptabilité reste `llm_usage` : deux sources qui mesurent la même chose, l'une pour tarifer, l'autre pour relire un appel.
 - Les **embeddings ne sont pas tracés** : `embed()` passe par le client nu. Il n'y a ni texte diffusé ni prompt à relire, et leur usage est journalisé comme le reste.
+
+### L'observabilité passe par OpenRouter, plus par le SDK
+
+`wrapOpenAI` a disparu de `packages/llm` : c'est **Broadcast** qui diffuse les traces vers LangSmith, configuré chez OpenRouter et non dans ce dépôt.
+
+- **Le rattachement passe par le corps de la requête.** Les métadonnées (`turn_id`, `universe_id`, `guide_question_id`, `prompt_version`, `band`, `situation`) partaient par `langsmithExtra`, côté client LangSmith ; elles partent désormais dans le champ `trace` d'OpenRouter. Sans elles, une trace arriverait juste mais orpheline, impossible à relier à un tour ou à une ligne de `llm_usage`. C'est le seul endroit où ce lien existe : la passerelle ne rend aucun identifiant.
+- Ce champ est **propre à OpenRouter** et n'est posé que pour lui, comme les clés de `OPENROUTER_ONLY_BODY_KEYS` : l'API d'OpenAI rejette ce qu'elle ne connaît pas. Un test le vérifie dans les deux sens.
+- **Aucun champ `user` n'est envoyé.** OpenRouter en accepte un, mais `guide_questions` ne porte déjà ni adresse ni identifiant de joueur : ce n'est pas à la passerelle d'en recevoir un.
+- L'**échantillonnage a disparu** avec le SDK : Broadcast trace tout. `GUIDE_TRACE_SAMPLE_RATE` et `GUIDE_TRACE_HIDE_IO` n'existent plus, et `guide_questions.traced` n'est plus écrite, en attendant d'être retirée au déploiement suivant.
+- Ce qui se gagne au passage : la **modération est tracée** sans une ligne de code, elle qui ne l'était pas, et le **fournisseur réellement routé** apparaît, seule façon d'expliquer qu'un même tour varie du simple au quadruple.
+- Le SDK `langsmith` **reste une dépendance d'`apps/api`** : `eval:guide` et `eval:narration` s'en servent pour leurs jeux de cas et leurs expériences (`createDataset`, `evaluate`), ce que Broadcast ne sait pas faire. Il a quitté `packages/llm` et `apps/worker`, qui ne l'utilisaient que pour tracer.
+- `LANGSMITH_TRACING` garde son nom pour ne pas toucher au rôle ansible, mais ne dit plus que ceci : les coordonnées sont renseignées, pour les évaluations.
+- Conséquence à connaître : une exécution d'évaluation produit désormais **deux runs par appel**, celle de `evaluate()` et celle de Broadcast, qui n'est rattachée à aucune expérience. Une clé d'API dédiée aux évaluations, exclue de la destination, est la façon de les séparer.
 
 ### `prisma generate` est une tâche turbo à part
 

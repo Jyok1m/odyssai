@@ -22,7 +22,6 @@
     "@odyssai/schemas": "workspace:*",
     "bullmq": "^6.3.6",
     "ioredis": "^6.0.0",
-    "langsmith": "^0.10.4",
     "zod": "^4.5.4"
   },
   "devDependencies": {

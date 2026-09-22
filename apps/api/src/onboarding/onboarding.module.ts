@@ -1,5 +1,4 @@
-import { Module, forwardRef, type OnApplicationShutdown, Inject } from '@nestjs/common';
-import type { LlmClient } from '@odyssai/llm';
+import { Module, forwardRef } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module.js';
 import { ErasureModule } from '../erasure/erasure.module.js';
 import { ModerationModule } from '../moderation/moderation.module.js';
@@ -23,11 +22,4 @@ import { OnboardingService } from './onboarding.service.js';
   ],
   exports: [OnboardingService, NARRATOR_LLM],
 })
-export class OnboardingModule implements OnApplicationShutdown {
-  constructor(@Inject(NARRATOR_LLM) private readonly llm: LlmClient) {}
-
-  // Sans ce vidage, les derniers lots de traces partent avec le processus.
-  async onApplicationShutdown(): Promise<void> {
-    await this.llm.flushTraces();
-  }
-}
+export class OnboardingModule {}
