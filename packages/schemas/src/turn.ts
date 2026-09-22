@@ -156,3 +156,32 @@ export const ModerationVerdictSchema = z.object({
 });
 
 export type ModerationVerdict = z.infer<typeof ModerationVerdictSchema>;
+
+/*
+  Ce que le joueur vient de faire, lu dans sa seule phrase : ce sont des actes
+  de langage, pas des etats de scene. Une situation qui demanderait
+  l'historique (la scene s'enlise, il repete la meme action) viendrait du code,
+  pas du classificateur, qui ne voit que ce message.
+
+  Sans accent : le prompt qui les cite est en francais accentue, et un modele
+  serviable corrigerait `demesure` en `démesure`. Le prompt devra le dire.
+*/
+export const SituationSchema = z.enum([
+  'violence',
+  'contrainte',
+  'tromperie',
+  'echange',
+  'interrogation',
+  'lore',
+  'exploration',
+  'entreprise',
+  'intimite',
+  'demesure',
+  'attente',
+  'meta',
+]);
+
+export type Situation = z.infer<typeof SituationSchema>;
+
+// Au dela, le rappel pese autant que les consignes permanentes du meneur.
+export const GUIDANCE_PER_TURN_MAX = 2;

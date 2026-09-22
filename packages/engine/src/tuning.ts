@@ -33,6 +33,7 @@ import {
   CHARACTER_TURNS_MIN,
   GENERATION_ATTEMPTS_PER_NODE,
   GENERATION_REWRITES_MAX,
+  GUIDANCE_PER_TURN_MAX,
   GUIDE_QUESTION_MAX_CHARS,
   OWN_DESCRIPTION_MAX,
   OWN_DESCRIPTION_MIN,
@@ -120,6 +121,7 @@ export const TUNING = {
     canonFactsMax: CANON_FACTS_PER_TURN_MAX,
     recentTurns: RECENT_TURNS,
     recalledMax: RECALLED_MAX,
+    guidanceMax: GUIDANCE_PER_TURN_MAX,
   },
 
   /** L'agent de questions-reponses du site vitrine. */
