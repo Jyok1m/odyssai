@@ -945,6 +945,10 @@
     "errorRefused": "This message was refused. The game accepts violence and dark subjects, but not insults or explicit content.",
     "storyOpen": "Read the story",
     "storyClose": "Back to the thread",
-    "storyEmpty": "The story will be written here, turn after turn."
+    "storyEmpty": "The story will be written here, turn after turn.",
+    "rollPrompt": "What you are attempting can fail. Roll the die.",
+    "rollAction": "Roll the die",
+    "dieRolled": "on the die",
+    "errorRollExpired": "Your action has expired. Write again what you want to do, nothing was charged."
   }
 }

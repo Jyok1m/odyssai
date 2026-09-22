@@ -1,0 +1,65 @@
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import type { Redis } from 'ioredis';
+import { PENDING_ROLL_TTL_SECONDS, type Situation, type UiLocale } from '@odyssai/schemas';
+import { REDIS } from '../redis/redis.module.js';
+
+/*
+  Ce qu'une action attend pendant que le joueur lance le de.
+
+  En Redis et non en base : c'est un etat de quelques secondes, propre a une
+  session, qui n'a rien a faire dans l'historique d'une partie. Rien n'est
+  encore ecrit dans `conversation_messages` a ce moment-la, donc une action
+  abandonnee ne laisse pas un message sans reponse.
+
+  Et surtout, rien de tout cela ne repasse par le navigateur entre les deux
+  temps : le texte du joueur, sa langue et sa situation sont des decisions
+  deja prises, que le client pourrait sinon rejouer autrement.
+*/
+export interface PendingRoll {
+  content: string;
+  situation: Situation;
+  locale: UiLocale;
+}
+
+@Injectable()
+export class PendingRollService {
+  private readonly logger = new Logger(PendingRollService.name);
+
+  constructor(@Inject(REDIS) private readonly redis: Redis) {}
+
+  private key(userId: string): string {
+    return `turn:pending:${userId}`;
+  }
+
+  async hold(userId: string, pending: PendingRoll): Promise<void> {
+    await this.redis.set(
+      this.key(userId),
+      JSON.stringify(pending),
+      'EX',
+      PENDING_ROLL_TTL_SECONDS,
+    );
+  }
+
+  /*
+    Lit et efface d'un seul coup : deux clics sur le bouton ne doivent pas
+    jouer le tour deux fois, et `getdel` tranche cote Redis plutot que par une
+    lecture suivie d'une suppression, ou deux requetes concurrentes passeraient
+    toutes les deux.
+  */
+  async take(userId: string): Promise<PendingRoll | null> {
+    const raw = await this.redis.getdel(this.key(userId));
+    if (!raw) return null;
+
+    try {
+      return JSON.parse(raw) as PendingRoll;
+    } catch {
+      this.logger.warn(`action en attente illisible pour ${userId}`);
+      return null;
+    }
+  }
+
+  // Le joueur repart sur autre chose : ce qui attendait n'a plus lieu d'etre.
+  async drop(userId: string): Promise<void> {
+    await this.redis.del(this.key(userId));
+  }
+}

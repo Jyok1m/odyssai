@@ -945,6 +945,10 @@
     "errorRefused": "Ce message a été refusé. Le jeu accepte la violence et les sujets sombres, mais pas les insultes ni le contenu explicite.",
     "storyOpen": "Lire le récit",
     "storyClose": "Revenir au fil",
-    "storyEmpty": "Le récit s'écrira ici, au fil de la partie."
+    "storyEmpty": "Le récit s'écrira ici, au fil de la partie.",
+    "rollPrompt": "Ce que tu tentes peut échouer. Lance le dé.",
+    "rollAction": "Lancer le dé",
+    "dieRolled": "au dé",
+    "errorRollExpired": "Ton action a expiré. Réécris ce que tu veux faire, rien n'a été décompté."
   }
 }

@@ -38,6 +38,7 @@ import { NARRATOR_LLM } from '../onboarding/narrator-llm.provider.js';
 import { PRISMA } from '../prisma/prisma.module.js';
 import { ModerationService } from '../moderation/moderation.service.js';
 import { TurnLimitsService } from './turn-limits.service.js';
+import { PendingRollService } from './pending-roll.service.js';
 import { CreditsService, OutOfCreditsError } from '../credits/credits.service.js';
 import { UsageService } from '../usage/usage.service.js';
 import { TurnMemoryService } from './turn-memory.service.js';
@@ -64,6 +65,7 @@ export class TurnController {
     private readonly config: NarratorConfig,
     private readonly memory: TurnMemoryService,
     private readonly limits: TurnLimitsService,
+    private readonly pending: PendingRollService,
     private readonly moderation: ModerationService,
     private readonly usage: UsageService,
     private readonly credits: CreditsService,
@@ -146,6 +148,22 @@ export class TurnController {
       ouverture et pour un appel au sort, qui n'ont pas de message a lire.
     */
     let situation: Situation | null = null;
+    let said = '';
+
+    /*
+      Second temps d'une action que le de tranche. Tout a deja ete decide au
+      premier : la moderation a tourne, la limite a ete consommee, et la
+      situation vient de Redis et non du navigateur.
+    */
+    if (request.kind === 'roll') {
+      const pending = await this.pending.take(user.id);
+      if (!pending) {
+        throw new HttpException({ code: 'roll_expired' }, HttpStatus.CONFLICT);
+      }
+      said = pending.content;
+      situation = pending.situation;
+      locale = pending.locale;
+    }
 
     // Avant la limite et avant tout appel : un message refuse ne doit ni
     // consommer un tour, ni atteindre le modele, ni entrer en base.
@@ -188,7 +206,10 @@ export class TurnController {
       }
     }
 
-    const verdict = await this.limits.consume(user.id);
+    const verdict =
+      request.kind === 'roll'
+        ? { allowed: true }
+        : await this.limits.consume(user.id);
     if (!verdict.allowed) {
       res.setHeader('Retry-After', String(verdict.retryAfterSeconds ?? 60));
       throw new HttpException(
@@ -199,7 +220,27 @@ export class TurnController {
 
     const fate = request.kind === 'fate';
     const opening = request.kind === 'open';
-    const said = request.kind === 'say' ? request.content : '';
+    if (request.kind === 'say') said = request.content;
+
+    /*
+      Premier temps : l'action se tranche au de, donc rien n'est genere et
+      rien n'est debite. Ce que le joueur a ecrit attend en Redis, et l'ecran
+      lui demande le jet.
+    */
+    if (request.kind === 'say' && settledByDie(situation)) {
+      await this.pending.hold(user.id, {
+        content: said,
+        situation: situation!,
+        locale,
+      });
+      this.openStream(res);
+      this.write(res, { type: 'roll_required' });
+      res.end();
+      return;
+    }
+
+    // Une action qui ne se tranche pas annule celle qui attendait son jet.
+    if (request.kind === 'say') await this.pending.drop(user.id);
 
     // Debit avant tout appel : une reserve vide refuse le tour sans rien
     // depenser, et le joueur n'a pas de facture surprise.
@@ -248,6 +289,12 @@ export class TurnController {
 
     // A partir d'ici, plus aucune exception ne sort : seulement du SSE.
     this.openStream(res);
+
+    // Le joueur a lance : il voit son chiffre, avant que le recit commence.
+    if (request.kind === 'roll') {
+      this.write(res, { type: 'roll', die, outcome: publicOutcome(band) });
+    }
+
     const ping = setInterval(() => res.write(': ping\n\n'), PING_INTERVAL_MS);
 
     /*

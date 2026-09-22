@@ -28,6 +28,14 @@ export function GameChat() {
   // La lecture du récit, à côté du fil et non à sa place : on y revient pour
   // relire, puis on reprend la partie là où elle était.
   const [reading, setReading] = useState(false);
+  /*
+    Le jet en deux temps. `awaiting` dit qu'une action attend son dé, `roll`
+    porte le résultat du dernier lancer, montré jusqu'au tour suivant.
+  */
+  const [awaiting, setAwaiting] = useState(false);
+  const [roll, setRoll] = useState<{ die: number; outcome: PublicOutcome } | null>(
+    null,
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Distinct du message d'erreur : la réserve vide n'est pas une panne, et ce
@@ -69,6 +77,7 @@ export function GameChat() {
     setBusy(true);
     setError(null);
     setEmpty(false);
+    setRoll(null);
     streamed.current = "";
 
     const now = new Date().toISOString();
@@ -77,7 +86,7 @@ export function GameChat() {
     // À l'ouverture, le joueur n'a rien dit : seule la réponse du meneur
     // s'ajoute, et elle prend le premier rang.
     const said: TurnMessage[] =
-      request.kind === "open"
+      request.kind === "open" || request.kind === "roll"
         ? []
         : [
             {
@@ -118,10 +127,26 @@ export function GameChat() {
         }
         if (event.type === "done") patch({ outcome: event.outcome });
         if (event.type === "error") setError(t("errorGeneric"));
+
+        /*
+          Premier temps : rien n'a été généré ni débité. La bulle vide du
+          meneur n'a plus lieu d'être, la phrase du joueur reste.
+        */
+        if (event.type === "roll_required") {
+          setAwaiting(true);
+          setMessages((current) => current.slice(0, -1));
+        }
+
+        if (event.type === "roll") {
+          setAwaiting(false);
+          setRoll({ die: event.die, outcome: event.outcome });
+        }
       });
     } catch (caught: unknown) {
       if (isOutOfCredits(caught)) setEmpty(true);
       else setError(t(errorKey(caught)));
+      // Une action expirée ne se rejoue pas toute seule : le joueur réécrit.
+      setAwaiting(false);
       // Le tour est enregistré côté serveur même si la diffusion a échoué :
       // la réponse vide serait un mensonge, on la retire.
       setMessages((current) => current.filter((message) => message.content !== ""));
@@ -199,6 +224,36 @@ export function GameChat() {
         ))}
       </ol>}
 
+      {/*
+        Le jet, entre le fil et la saisie. Le chiffre sort du serveur et
+        s'affiche tel quel : le joueur a lancé, il voit ce qu'il a fait.
+      */}
+      {roll ? (
+        <p className="mt-5 flex items-center justify-center gap-3 rounded-card border border-line bg-ink py-3 text-ui-sm text-vellum-2">
+          <span className="font-voice text-title text-accent">{roll.die}</span>
+          <span>{t("dieRolled")}</span>
+          <Verdict outcome={roll.outcome} />
+        </p>
+      ) : null}
+
+      {/*
+        Premier temps : l'action attend son dé, et la saisie laisse la place
+        au lancer. Rien n'a encore été débité.
+      */}
+      {awaiting ? (
+        <div className="mt-5 flex flex-col items-center gap-2 rounded-card border border-line bg-ink p-5">
+          <p className="text-ui-sm text-pretty text-center text-vellum-2">
+            {t("rollPrompt")}
+          </p>
+          <Button
+            type="button"
+            disabled={busy}
+            onClick={() => void play({ kind: "roll" })}
+          >
+            {t("rollAction")}
+          </Button>
+        </div>
+      ) : (
       <form
         className="mt-5"
         onSubmit={(event) => {
@@ -244,10 +299,11 @@ export function GameChat() {
           </Button>
         </div>
       </form>
+      )}
 
       <div className="mt-4 flex flex-wrap items-center gap-4">
-        {/* Le joueur ne verra jamais le chiffre : il s'en remet au sort, et
-            c'est le meneur qui dit ce qui arrive. */}
+        {/* Ici le chiffre reste caché : le joueur ne tente rien, il s'en
+            remet au sort, et c'est le meneur qui dit ce qui arrive. */}
         <Button
           type="button"
           variant="secondary"
@@ -299,6 +355,8 @@ function errorKey(caught: unknown) {
       return "errorSignedOut" as const;
     case "upstream_error":
       return "errorUnavailable" as const;
+    case "roll_expired":
+      return "errorRollExpired" as const;
     default:
       return "errorGeneric" as const;
   }

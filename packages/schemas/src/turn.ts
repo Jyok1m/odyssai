@@ -37,6 +37,15 @@ export const TurnRequestSchema = z.discriminatedUnion('kind', [
     rechargement, et chaque fois pour un credit.
   */
   z.object({ kind: z.literal('open') }),
+  /*
+    Le second temps d'une action que le de doit trancher.
+
+    Il ne porte rien : ce que le joueur a ecrit attend en Redis depuis le
+    premier temps. Le lui faire renvoyer reviendrait a le croire sur parole,
+    et rien ne l'empecherait de changer sa phrase entre le jet demande et le
+    jet lance.
+  */
+  z.object({ kind: z.literal('roll') }),
 ]);
 
 export type TurnRequest = z.infer<typeof TurnRequestSchema>;
@@ -66,6 +75,23 @@ export type TurnDelta = z.infer<typeof TurnDeltaSchema>;
 // Evenements du flux SSE, un objet JSON par ligne `data:`.
 export const TurnStreamEventSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('delta'), text: z.string() }),
+  /*
+    Premier temps : l'action se tranche au de, rien n'est encore genere et
+    rien n'est debite. Le flux se ferme la-dessus, et l'ecran demande le jet.
+  */
+  z.object({ type: z.literal('roll_required') }),
+  /*
+    Second temps : le jet, avant le premier mot du recit.
+
+    Le chiffre sort du serveur, contrairement a ce qui valait jusqu'ici : le
+    joueur lance, donc il voit. La bande, elle, reste interne : cinq nuances
+    servent a nuancer un recit, pas a etre lues.
+  */
+  z.object({
+    type: z.literal('roll'),
+    die: z.number().int().min(1),
+    outcome: PublicOutcomeSchema,
+  }),
   z.object({
     type: z.literal('done'),
     // Nul quand le de n'a pas servi : rien a annoncer.
@@ -113,6 +139,12 @@ export const TurnErrorBodySchema = z.object({
     'out_of_credits',
     // Le message a ete refuse par la moderation.
     'refused',
+    /*
+      L'action qui attendait son jet a vecu plus que son delai, ou le jet a
+      deja ete lance. Le joueur reecrit ce qu'il voulait faire : rien n'a ete
+      debite, et la scene n'a pas bouge.
+    */
+    'roll_expired',
     'upstream_error',
   ]),
   // Presente sur un refus. Sert a choisir le message, jamais affichee brute.
@@ -156,6 +188,13 @@ export type Situation = z.infer<typeof SituationSchema>;
 
 // Au dela, le rappel pese autant que les consignes permanentes du meneur.
 export const GUIDANCE_PER_TURN_MAX = 2;
+
+/*
+  Combien de temps une action attend son jet. Large pour qu'un rechargement de
+  page ou un moment d'absence ne la perde pas, borne pour qu'une action oubliee
+  ne revienne pas trancher une scene qui a change.
+*/
+export const PENDING_ROLL_TTL_SECONDS = 600;
 
 /*
   Verdict de moderation. `reason` n'est jamais rendu au joueur tel quel : il
