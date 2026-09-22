@@ -4,7 +4,7 @@ import { PRISMA } from '../prisma/prisma.module.js';
 import { isUniqueViolation } from '../prisma/unique-violation.js';
 import { Prisma, PrismaClient, type User } from '@odyssai/db';
 
-/** Le pseudo du joueur est deja pose : il ne se choisit qu'une fois. */
+// Le pseudo du joueur est deja pose : il ne se choisit qu'une fois.
 export class UsernameLockedError extends Error {
   constructor() {
     super('pseudo deja pose');
@@ -12,7 +12,7 @@ export class UsernameLockedError extends Error {
   }
 }
 
-/** Le pseudo est deja pris, a la casse pres. */
+// Le pseudo est deja pris, a la casse pres.
 export class UsernameTakenError extends Error {
   constructor() {
     super('pseudo deja pris');
@@ -20,13 +20,13 @@ export class UsernameTakenError extends Error {
   }
 }
 
-/**
- * L'alpha est complete : ce compte n'aura pas de joueur derriere lui.
- *
- * Une fermeture, pas une panne. L'ecran doit le dire autrement qu'un echec
- * technique : proposer de reessayer a quelqu'un qui n'entrera jamais serait
- * lui mentir.
- */
+/*
+  L'alpha est complete : ce compte n'aura pas de joueur derriere lui.
+
+  Une fermeture, pas une panne. L'ecran doit le dire autrement qu'un echec
+  technique : proposer de reessayer a quelqu'un qui n'entrera jamais serait
+  lui mentir.
+*/
 export class AlphaFullError extends Error {
   readonly seats: number;
 
@@ -37,7 +37,7 @@ export class AlphaFullError extends Error {
   }
 }
 
-/** Ce que le realm apprend d'un joueur : son sujet, et le miroir d'identite. */
+// Ce que le realm apprend d'un joueur : son sujet, et le miroir d'identite.
 export interface RealmIdentity {
   keycloakId: string;
   email: string;
@@ -48,11 +48,11 @@ export interface RealmIdentity {
 export class UsersService {
   constructor(@Inject(PRISMA) private readonly prisma: PrismaClient) {}
 
-  /**
-   * Au retour de Keycloak. Seul moment ou l'on ecrit le miroir : le realm est
-   * seul a pouvoir le faire changer, et une connexion est le seul instant ou
-   * l'on en apprend la valeur courante.
-   */
+  /*
+    Au retour de Keycloak. Seul moment ou l'on ecrit le miroir : le realm est
+    seul a pouvoir le faire changer, et une connexion est le seul instant ou
+    l'on en apprend la valeur courante.
+  */
   async signIn(identity: RealmIdentity): Promise<User> {
     const lastLoginAt = new Date();
 
@@ -79,11 +79,11 @@ export class UsersService {
     });
   }
 
-  /**
-   * Resout la ligne sans rien ecrire quand elle existe : cette lecture est sur
-   * le chemin de chaque requete protegee. La creation ne sert qu'aux sessions
-   * ouvertes avant que le provisionnement existe.
-   */
+  /*
+    Resout la ligne sans rien ecrire quand elle existe : cette lecture est sur
+    le chemin de chaque requete protegee. La creation ne sert qu'aux sessions
+    ouvertes avant que le provisionnement existe.
+  */
   async resolve(identity: RealmIdentity): Promise<User> {
     const existing = await this.prisma.user.findUnique({
       where: { keycloakId: identity.keycloakId },
@@ -100,11 +100,11 @@ export class UsersService {
     });
   }
 
-  /**
-   * Pose le pseudo du joueur. Le replie est ecrit ici et nulle part ailleurs :
-   * c'est lui qui porte l'unicite insensible a la casse, et une ecriture qui
-   * l'oublierait laisserait passer un doublon.
-   */
+  /*
+    Pose le pseudo du joueur. Le replie est ecrit ici et nulle part ailleurs :
+    c'est lui qui porte l'unicite insensible a la casse, et une ecriture qui
+    l'oublierait laisserait passer un doublon.
+  */
   async setUsername(userId: string, username: string): Promise<User> {
     // La regle tient ici et pas seulement a l'ecran : un PATCH direct
     // contournerait un garde qui ne vivrait que dans le navigateur.
@@ -125,12 +125,12 @@ export class UsersService {
     }
   }
 
-  /**
-   * Pose ou retire le consentement, en horodatant le changement.
-   *
-   * La date est ecrite dans les deux sens : un retrait doit se prouver aussi
-   * bien qu'un accord, et c'est la meme colonne qui les porte.
-   */
+  /*
+    Pose ou retire le consentement, en horodatant le changement.
+
+    La date est ecrite dans les deux sens : un retrait doit se prouver aussi
+    bien qu'un accord, et c'est la meme colonne qui les porte.
+  */
   async setMarketingOptIn(userId: string, optIn: boolean): Promise<User> {
     return this.prisma.user.update({
       where: { id: userId },
@@ -138,25 +138,25 @@ export class UsersService {
     });
   }
 
-  /** Vrai quand plus aucune place n'est libre. Lecture seule, sans effet. */
+  // Vrai quand plus aucune place n'est libre. Lecture seule, sans effet.
   async alphaFull(): Promise<boolean> {
     const taken = await this.prisma.user.count({ where: { isAdmin: false } });
     return taken >= ALPHA_SEATS;
   }
 
-  /**
-   * Refuse la centieme et unieme inscription.
-   *
-   * Les administrateurs ne sont pas comptes : ils doivent pouvoir entrer pour
-   * verifier ce qu'ils livrent, et prendre la place d'un joueur serait se
-   * servir.
-   *
-   * Le compte est lu, pas verrouille : deux inscriptions arrivees dans la
-   * meme milliseconde a la centieme place passeraient toutes les deux. Une
-   * contrainte en base demanderait un declencheur ou une table de compteur,
-   * pour un depassement d'une unite sur une alpha qu'on ouvre a la main. Le
-   * jour ou la place se vend, ce raisonnement ne tiendra plus.
-   */
+  /*
+    Refuse la centieme et unieme inscription.
+
+    Les administrateurs ne sont pas comptes : ils doivent pouvoir entrer pour
+    verifier ce qu'ils livrent, et prendre la place d'un joueur serait se
+    servir.
+
+    Le compte est lu, pas verrouille : deux inscriptions arrivees dans la
+    meme milliseconde a la centieme place passeraient toutes les deux. Une
+    contrainte en base demanderait un declencheur ou une table de compteur,
+    pour un depassement d'une unite sur une alpha qu'on ouvre a la main. Le
+    jour ou la place se vend, ce raisonnement ne tiendra plus.
+  */
   private async assertSeat(): Promise<void> {
     if (await this.alphaFull()) throw new AlphaFullError(ALPHA_SEATS);
   }

@@ -5,7 +5,7 @@ import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { FIELD_DANGER } from "@/components/ui/field";
 
-/** Le même mot que sur le site, pour ne pas avoir deux réflexes à apprendre. */
+// Le même mot que sur le site, pour ne pas avoir deux réflexes à apprendre.
 const WORD = "SUPPRIMER";
 
 interface Props {
@@ -16,14 +16,14 @@ interface Props {
   onConfirm: () => Promise<void>;
 }
 
-/**
- * Une action sans retour, derrière un mot à taper.
- *
- * Jumeau de `ui/danger-action`, dont il ne reprend pas le code : celui-là tire
- * ses textes de next-intl, que le tableau de bord n'a pas, étant en français
- * seul. L'y brancher pour un unique mot aurait coûté plus cher que ces
- * quarante lignes, et aurait fait dépendre un back-office du corpus du site.
- */
+/*
+  Une action sans retour, derrière un mot à taper.
+
+  Jumeau de `ui/danger-action`, dont il ne reprend pas le code : celui-là tire
+  ses textes de next-intl, que le tableau de bord n'a pas, étant en français
+  seul. L'y brancher pour un unique mot aurait coûté plus cher que ces
+  quarante lignes, et aurait fait dépendre un back-office du corpus du site.
+*/
 export function Confirm({ label, title, lead, confirmLabel, onConfirm }: Props) {
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState("");

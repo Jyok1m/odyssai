@@ -16,11 +16,11 @@ import {
 } from '@odyssai/narrator';
 import type { WorkerConfig } from './config.js';
 
-/**
- * Le plus gros poste de depense du produit : sept appels au mieux,
- * vingt-trois au pire, et aucun n'etait compte. L'usage etait pourtant deja
- * agrege par le graphe et rendu par abstractWorld.
- */
+/*
+  Le plus gros poste de depense du produit : sept appels au mieux,
+  vingt-trois au pire, et aucun n'etait compte. L'usage etait pourtant deja
+  agrege par le graphe et rendu par abstractWorld.
+*/
 async function journal(
   deps: GenerateDeps,
   kind: 'abstraction' | 'generation',
@@ -59,23 +59,23 @@ async function journal(
   }
 }
 
-/** Le message d'erreur est borne par la colonne : de quoi diagnostiquer. */
+// Le message d'erreur est borne par la colonne : de quoi diagnostiquer.
 const ERROR_MAX = 500;
 
 export interface GenerateDeps {
   prisma: PrismaClient;
   llm: LlmClient;
   config: WorkerConfig;
-  /**
-   * Le type vient de narrator et non de @langchain/langgraph : narrator etant
-   * en CommonJS, ses declarations resolvent le paquet par la condition
-   * `require`, ce worker par `import`, et les deux identites ne se melangent
-   * pas. Prendre la sienne met la seule conversion au point d'entree.
-   */
+  /*
+    Le type vient de narrator et non de @langchain/langgraph : narrator etant
+    en CommonJS, ses declarations resolvent le paquet par la condition
+    `require`, ce worker par `import`, et les deux identites ne se melangent
+    pas. Prendre la sienne met la seule conversion au point d'entree.
+  */
   checkpointer?: RunGenerationOptions['checkpointer'];
 }
 
-/** Le travail est fini, ou n'a jamais eu lieu : rien a generer. */
+// Le travail est fini, ou n'a jamais eu lieu : rien a generer.
 export class NothingToDo extends Error {
   constructor(reason: string) {
     super(reason);
@@ -87,14 +87,14 @@ function short(error: unknown): string {
   return String(error instanceof Error ? error.message : error).slice(0, ERROR_MAX);
 }
 
-/**
- * Une generation complete, du travail en file au monde ecrit.
- *
- * La passe d'abstraction reste hors du graphe. Elle est la seule etape a voir
- * les titres cites, et l'avoir a part rend cette frontiere visible ; ses themes
- * sont ecrits en base des qu'ils existent, ce qui vaut point de reprise et
- * donne en plus une donnee interrogeable, ce qu'un checkpoint n'est pas.
- */
+/*
+  Une generation complete, du travail en file au monde ecrit.
+
+  La passe d'abstraction reste hors du graphe. Elle est la seule etape a voir
+  les titres cites, et l'avoir a part rend cette frontiere visible ; ses themes
+  sont ecrits en base des qu'ils existent, ce qui vaut point de reprise et
+  donne en plus une donnee interrogeable, ce qu'un checkpoint n'est pas.
+*/
 export async function generate(
   deps: GenerateDeps,
   universeId: string,
@@ -250,7 +250,7 @@ async function abstract(
   return result.themes;
 }
 
-/** L'avancement est indicatif : une ecriture ratee ne casse pas le travail. */
+// L'avancement est indicatif : une ecriture ratee ne casse pas le travail.
 async function step(
   deps: GenerateDeps,
   jobId: string,
@@ -261,10 +261,10 @@ async function step(
     .catch(() => undefined);
 }
 
-/**
- * L'univers retombe en `failed`, qui reste ouvert a l'ecriture : c'est la
- * seule sortie pour un joueur dont le monde n'a pas abouti.
- */
+/*
+  L'univers retombe en `failed`, qui reste ouvert a l'ecriture : c'est la
+  seule sortie pour un joueur dont le monde n'a pas abouti.
+*/
 async function fail(
   deps: GenerateDeps,
   jobId: string,

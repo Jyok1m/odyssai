@@ -19,7 +19,7 @@ import {
 const SESSION_ID = 'session-de-test';
 const COOKIE = `odyssai_session=${SESSION_ID}`;
 
-/** Description valide : le schema strict en exige deux cents caracteres. */
+// Description valide : le schema strict en exige deux cents caracteres.
 const LONG_DESCRIPTION = 'Un archipel de cites flottantes. '.repeat(10);
 
 const SHEET = {
@@ -33,7 +33,7 @@ const SHEET = {
 interface Harness {
   app: INestApplication<App>;
   store: OnboardingStore;
-  /** Univers publies dans la file, pour verifier que l'annonce part. */
+  // Univers publies dans la file, pour verifier que l'annonce part.
   queued: string[];
 }
 

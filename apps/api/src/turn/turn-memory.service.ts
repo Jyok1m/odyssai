@@ -37,24 +37,24 @@ export interface TurnMemory {
   nextSeq: number;
 }
 
-/**
- * Ce que le meneur a en tete au moment de jouer.
- *
- * Tout est en base, rien ne se perd. Ce qui entre dans un tour, en revanche,
- * est choisi : la charte et le canon toujours, les derniers tours mot pour mot,
- * et des tours anciens seulement s'ils ressemblent a ce que le joueur vient de
- * dire.
- */
+/*
+  Ce que le meneur a en tete au moment de jouer.
+
+  Tout est en base, rien ne se perd. Ce qui entre dans un tour, en revanche,
+  est choisi : la charte et le canon toujours, les derniers tours mot pour mot,
+  et des tours anciens seulement s'ils ressemblent a ce que le joueur vient de
+  dire.
+*/
 @Injectable()
 export class TurnMemoryService implements OnModuleInit {
   private readonly logger = new Logger(TurnMemoryService.name);
 
-  /**
-   * L'extension n'est pas toujours la. L'image Postgres officielle ne l'embarque
-   * pas, et le rappel long ne doit pas empecher de jouer : sans elle on se
-   * contente des derniers tours, et la memoire longue s'allume le jour ou
-   * l'image change, sans rien toucher au code.
-   */
+  /*
+    L'extension n'est pas toujours la. L'image Postgres officielle ne l'embarque
+    pas, et le rappel long ne doit pas empecher de jouer : sans elle on se
+    contente des derniers tours, et la memoire longue s'allume le jour ou
+    l'image change, sans rien toucher au code.
+  */
   private vectors = false;
 
   constructor(
@@ -87,7 +87,7 @@ export class TurnMemoryService implements OnModuleInit {
     return this.vectors;
   }
 
-  /** Le monde, ou `null` si la partie n'est pas jouable. */
+  // Le monde, ou `null` si la partie n'est pas jouable.
   async world(userId: string): Promise<TurnWorld | null> {
     const universe = await this.prisma.universe.findUnique({
       where: { ownerId: userId },
@@ -157,10 +157,10 @@ export class TurnMemoryService implements OnModuleInit {
     };
   }
 
-  /**
-   * Les tours anciens qui ressemblent a la demande. Ceux deja rendus mot pour
-   * mot sont exclus : les repeter couterait des tokens sans rien apprendre.
-   */
+  /*
+    Les tours anciens qui ressemblent a la demande. Ceux deja rendus mot pour
+    mot sont exclus : les repeter couterait des tokens sans rien apprendre.
+  */
   private async recalled(
     universeId: string,
     message: string,

@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Prisma, PrismaClient } from '@odyssai/db';
 import { PRISMA } from '../prisma/prisma.module.js';
 
-/** Ce que tous les points d'appel rendent deja, sous un nom ou un autre. */
+// Ce que tous les points d'appel rendent deja, sous un nom ou un autre.
 export interface RecordedUsage {
   model?: string;
   inputTokens?: number;
@@ -26,31 +26,31 @@ export interface UsageEntry {
   userId?: string | null;
   universeId?: string | null;
   usage: RecordedUsage;
-  /** Prix du modele, pour calculer le cout quand le fournisseur ne le rend pas. */
+  // Prix du modele, pour calculer le cout quand le fournisseur ne le rend pas.
   prices?: { inputUsdPerMTok: number; outputUsdPerMTok: number };
 }
 
-/**
- * Le journal de ce que les modeles coutent.
- *
- * Cinq des huit points d'appel jetaient leur usage, alors que narrator le
- * calculait deja. Sans ce journal, aucun barème d'abonnement ne peut etre
- * autre chose qu'une opinion.
- *
- * Une ecriture ratee est journalisee, jamais relancee : le joueur a deja recu
- * sa reponse, et la comptabilite ne vaut pas de casser un tour. C'est la meme
- * regle que le journal du guide.
- */
+/*
+  Le journal de ce que les modeles coutent.
+
+  Cinq des huit points d'appel jetaient leur usage, alors que narrator le
+  calculait deja. Sans ce journal, aucun barème d'abonnement ne peut etre
+  autre chose qu'une opinion.
+
+  Une ecriture ratee est journalisee, jamais relancee : le joueur a deja recu
+  sa reponse, et la comptabilite ne vaut pas de casser un tour. C'est la meme
+  regle que le journal du guide.
+*/
 @Injectable()
 export class UsageService {
   private readonly logger = new Logger(UsageService.name);
 
   constructor(@Inject(PRISMA) private readonly prisma: PrismaClient) {}
 
-  /**
-   * Le cout rendu par le fournisseur d'abord, le calcul par les jetons sinon.
-   * Les jetons de raisonnement sont factures au tarif de sortie chez les deux.
-   */
+  /*
+    Le cout rendu par le fournisseur d'abord, le calcul par les jetons sinon.
+    Les jetons de raisonnement sont factures au tarif de sortie chez les deux.
+  */
   static cost(
     usage: RecordedUsage,
     prices?: { inputUsdPerMTok: number; outputUsdPerMTok: number },

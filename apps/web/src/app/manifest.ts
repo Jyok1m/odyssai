@@ -4,12 +4,12 @@ import { BRAND_INK, SITE_NAME } from "@/lib/site";
 import { routing } from "@/i18n/routing";
 import fr from "../../messages/fr.json";
 
-/**
- * Servi sur une URL unique, hors du segment [locale] : il ne peut pas être
- * localisé par requête, et prend donc la locale par défaut. Les messages sont
- * importés directement parce que `next/root-params`, dont dépend notre
- * configuration next-intl, n'est pas utilisable ici.
- */
+/*
+  Servi sur une URL unique, hors du segment [locale] : il ne peut pas être
+  localisé par requête, et prend donc la locale par défaut. Les messages sont
+  importés directement parce que `next/root-params`, dont dépend notre
+  configuration next-intl, n'est pas utilisable ici.
+*/
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: fr.Metadata.title,

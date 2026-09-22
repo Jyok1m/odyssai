@@ -9,12 +9,12 @@ import { ALPHA_FULL_CODE } from "@/components/auth/alpha-notice";
 
 const PARAM = "auth_error";
 
-/**
- * L'API renvoie sur l'accueil avec ?auth_error=<code>, retiré aussitôt lu pour
- * qu'un rechargement ne rejoue pas l'erreur. Lecture dans `window` et non par
- * `useSearchParams` : ce composant vit dans le layout de toutes les pages, que
- * ce hook ferait basculer du prérendu statique au rendu dynamique.
- */
+/*
+  L'API renvoie sur l'accueil avec ?auth_error=<code>, retiré aussitôt lu pour
+  qu'un rechargement ne rejoue pas l'erreur. Lecture dans `window` et non par
+  `useSearchParams` : ce composant vit dans le layout de toutes les pages, que
+  ce hook ferait basculer du prérendu statique au rendu dynamique.
+*/
 export function AuthErrorToast() {
   const t = useTranslations("Auth.errors");
 

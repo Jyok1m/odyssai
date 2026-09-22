@@ -7,11 +7,11 @@ import { useState } from "react";
 import { DangerAction } from "@/components/ui/danger-action";
 import { OnboardingError, restartOnboarding } from "@/lib/onboarding";
 
-/**
- * Recommencer une partie. Le sort du monde et du personnage n'est pas décidé
- * ici mais par l'API, selon ce que d'autres joueurs en ont déjà vu : l'écran
- * annonce la règle avant, puis rapporte ce qui a réellement été fait.
- */
+/*
+  Recommencer une partie. Le sort du monde et du personnage n'est pas décidé
+  ici mais par l'API, selon ce que d'autres joueurs en ont déjà vu : l'écran
+  annonce la règle avant, puis rapporte ce qui a réellement été fait.
+*/
 export function RestartAction({ onDone }: { onDone: () => void }) {
   const t = useTranslations("Danger");
   const tPlay = useTranslations("Play");

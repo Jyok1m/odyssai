@@ -11,7 +11,7 @@ import { NARRATOR_LLM, narratorLlmProvider } from './narrator-llm.provider.js';
 import { OnboardingController } from './onboarding.controller.js';
 import { OnboardingService } from './onboarding.service.js';
 
-/** AuthModule apporte SessionGuard et ce qu'il lui faut pour se construire. */
+// AuthModule apporte SessionGuard et ce qu'il lui faut pour se construire.
 @Module({
   imports: [AuthModule, ErasureModule, forwardRef(() => ModerationModule)],
   controllers: [OnboardingController, CharacterController, GenerationController],
@@ -26,7 +26,7 @@ import { OnboardingService } from './onboarding.service.js';
 export class OnboardingModule implements OnApplicationShutdown {
   constructor(@Inject(NARRATOR_LLM) private readonly llm: LlmClient) {}
 
-  /** Sans ce vidage, les derniers lots de traces partent avec le processus. */
+  // Sans ce vidage, les derniers lots de traces partent avec le processus.
   async onApplicationShutdown(): Promise<void> {
     await this.llm.flushTraces();
   }

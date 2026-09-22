@@ -26,12 +26,12 @@ interface Props {
   onChanged: (detail: AdminUserDetail) => void;
 }
 
-/**
- * La fiche d'un joueur, en tiroir.
- *
- * En tiroir et non sur une page : on vient de la liste, on y retourne, et la
- * position de lecture ne doit pas se perdre à chaque consultation.
- */
+/*
+  La fiche d'un joueur, en tiroir.
+
+  En tiroir et non sur une page : on vient de la liste, on y retourne, et la
+  position de lecture ne doit pas se perdre à chaque consultation.
+*/
 export function UserPanel({ id, onClose, onChanged }: Props) {
   const [detail, setDetail] = useState<AdminUserDetail | null>(null);
   const [error, setError] = useState<string | null>(null);

@@ -33,11 +33,11 @@ import { callJson, type JsonModelConfig, type JsonUsage } from './json.js';
 
 export const GENERATION_PROMPT_VERSION = GENERATION_PROMPT.id;
 
-/**
- * Les deux reglages du graphe viennent de `@odyssai/schemas`, ou
- * `@odyssai/engine` les reexporte dans son index de reglages : un bouton qui
- * ne se voit que dans le fichier qui s'en sert ne se tourne jamais.
- */
+/*
+  Les deux reglages du graphe viennent de `@odyssai/schemas`, ou
+  `@odyssai/engine` les reexporte dans son index de reglages : un bouton qui
+  ne se voit que dans le fichier qui s'en sert ne se tourne jamais.
+*/
 const ATTEMPTS_PER_NODE = GENERATION_ATTEMPTS_PER_NODE;
 const REWRITES_MAX = GENERATION_REWRITES_MAX;
 
@@ -53,14 +53,14 @@ export class GenerationFailure extends Error {
   }
 }
 
-/**
- * Etat du graphe.
- *
- * `works` y figure pour le seul noeud de controle. Aucun noeud creatif ne peut
- * le transmettre a un modele sans y mettre du sien : `GenerationContext`, le
- * type que prend le constructeur de prompts, n'a pas de champ pour le porter.
- * C'est la forme du type qui tient l'invariant, pas une consigne.
- */
+/*
+  Etat du graphe.
+
+  `works` y figure pour le seul noeud de controle. Aucun noeud creatif ne peut
+  le transmettre a un modele sans y mettre du sien : `GenerationContext`, le
+  type que prend le constructeur de prompts, n'a pas de champ pour le porter.
+  C'est la forme du type qui tient l'invariant, pas une consigne.
+*/
 const GenerationState = Annotation.Root({
   universeId: Annotation<string>,
   locale: Annotation<UiLocale>,
@@ -75,7 +75,7 @@ const GenerationState = Annotation.Root({
   npcs: Annotation<Npc[] | undefined>,
   affinities: Annotation<Affinity[] | undefined>,
 
-  /** Noms empruntes releves par le controle, s'il y en a. */
+  // Noms empruntes releves par le controle, s'il y en a.
   borrowed: Annotation<string[] | undefined>,
   rewrites: Annotation<number>,
   usage: Annotation<JsonUsage[]>({
@@ -91,7 +91,7 @@ export interface GraphDeps {
   config: JsonModelConfig;
 }
 
-/** Ce que les noeuds suivants relisent, sans jamais voir les titres. */
+// Ce que les noeuds suivants relisent, sans jamais voir les titres.
 function produced(state: GenerationStateType): Record<string, unknown> {
   const value: Record<string, unknown> = {};
   if (state.charter) value.charter = state.charter;
@@ -102,11 +102,11 @@ function produced(state: GenerationStateType): Record<string, unknown> {
   return value;
 }
 
-/**
- * Un noeud creatif. Le schema tranche : ce que le modele rend et qui ne tient
- * pas est rejoue, et au bout de deux essais le travail echoue plutot que
- * d'ecrire un monde a moitie forme.
- */
+/*
+  Un noeud creatif. Le schema tranche : ce que le modele rend et qui ne tient
+  pas est rejoue, et au bout de deux essais le travail echoue plutot que
+  d'ecrire un monde a moitie forme.
+*/
 function node<T, K extends keyof GenerationStateType>(
   deps: GraphDeps,
   step: GenerationNode,
@@ -160,7 +160,7 @@ function node<T, K extends keyof GenerationStateType>(
   };
 }
 
-/** Le modele repond parfois l'objet nu, parfois enveloppe sous sa cle. */
+// Le modele repond parfois l'objet nu, parfois enveloppe sous sa cle.
 function under(key: string) {
   return (value: unknown): unknown => {
     if (value !== null && typeof value === 'object' && key in value) {
@@ -170,12 +170,12 @@ function under(key: string) {
   };
 }
 
-/**
- * Dernier etage de la garde sur la propriete intellectuelle. Il relit tout ce
- * qui a ete produit contre les titres saisis : un nom peut avoir traverse
- * l'abstraction sans encombre et reapparaitre ici, le modele l'ayant retrouve
- * seul a partir des themes.
- */
+/*
+  Dernier etage de la garde sur la propriete intellectuelle. Il relit tout ce
+  qui a ete produit contre les titres saisis : un nom peut avoir traverse
+  l'abstraction sans encombre et reapparaitre ici, le modele l'ayant retrouve
+  seul a partir des themes.
+*/
 function validate(state: GenerationStateType): Partial<GenerationStateType> {
   if (!state.charter) {
     throw new GenerationFailure('validation', ['charte absente']);
@@ -206,10 +206,10 @@ function validate(state: GenerationStateType): Partial<GenerationStateType> {
   return { borrowed, rewrites: state.rewrites + (borrowed.length > 0 ? 1 : 0) };
 }
 
-/**
- * Les noeuds sont prefixes : LangGraph refuse qu'un noeud porte le nom d'un
- * canal d'etat, et `charter`, `lore` ou `factions` sont les deux a la fois.
- */
+/*
+  Les noeuds sont prefixes : LangGraph refuse qu'un noeud porte le nom d'un
+  canal d'etat, et `charter`, `lore` ou `factions` sont les deux a la fois.
+*/
 const WRITE = {
   charter: 'write_charter',
   lore: 'write_lore',
@@ -279,7 +279,7 @@ export function buildGenerationGraph(deps: GraphDeps) {
     .addConditionalEdges('validation', afterValidation, [WRITE.lore, END]);
 }
 
-/** Nom de noeud vers etape, pour l'avancement rendu au joueur. */
+// Nom de noeud vers etape, pour l'avancement rendu au joueur.
 const STEP_OF = Object.fromEntries(
   Object.entries(WRITE).map(([step, id]) => [id, step]),
 ) as Record<string, GenerationNode>;
@@ -295,7 +295,7 @@ export interface RunGenerationOptions {
     works: string[];
   };
   signal?: AbortSignal;
-  /** Appele quand un noeud a fini, pour suivre l'avancement. */
+  // Appele quand un noeud a fini, pour suivre l'avancement.
   onStep?: (step: GenerationNode | 'validation') => void;
 }
 
@@ -305,14 +305,14 @@ export interface GenerationOutcome {
   usage: JsonUsage[];
 }
 
-/**
- * Une generation complete. Le checkpointer est injecte : le graphe vit dans ce
- * paquet, sa persistance appartient au worker, et narrator ne connait pas
- * Postgres.
- *
- * Le fil de reprise est l'identifiant de l'univers : relancer une generation
- * interrompue repart du noeud suivant, pas du debut.
- */
+/*
+  Une generation complete. Le checkpointer est injecte : le graphe vit dans ce
+  paquet, sa persistance appartient au worker, et narrator ne connait pas
+  Postgres.
+
+  Le fil de reprise est l'identifiant de l'univers : relancer une generation
+  interrompue repart du noeud suivant, pas du debut.
+*/
 export async function runGeneration(
   options: RunGenerationOptions,
 ): Promise<GenerationOutcome> {
@@ -328,17 +328,17 @@ export async function runGeneration(
     recursionLimit: 20,
   };
 
-  /**
-   * Reprendre un fil interrompu, et non en ouvrir un second.
-   *
-   * Passer une entree complete fait repartir le graphe du debut, meme quand un
-   * checkpoint existe : c'est `null` qui dit de continuer. Sans cette
-   * distinction, un worker tue au quatrieme noeud repayerait les trois
-   * premiers, ce que le checkpointer etait precisement cense eviter.
-   *
-   * `next` est vide quand le fil est absent ou deja mene a son terme. Dans les
-   * deux cas on repart de l'entree.
-   */
+  /*
+    Reprendre un fil interrompu, et non en ouvrir un second.
+
+    Passer une entree complete fait repartir le graphe du debut, meme quand un
+    checkpoint existe : c'est `null` qui dit de continuer. Sans cette
+    distinction, un worker tue au quatrieme noeud repayerait les trois
+    premiers, ce que le checkpointer etait precisement cense eviter.
+
+    `next` est vide quand le fil est absent ou deja mene a son terme. Dans les
+    deux cas on repart de l'entree.
+  */
   const resuming =
     options.checkpointer !== undefined &&
     (await graph.getState(config)).next.length > 0;

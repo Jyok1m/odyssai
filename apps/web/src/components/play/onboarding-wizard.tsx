@@ -23,15 +23,17 @@ import { InspirationStep, type SaveStatus } from "./inspiration-step";
 import { StepRail } from "./step-rail";
 import { UsernameStep } from "./username-step";
 
-/** Assez long pour ne pas écrire à chaque touche, assez court pour qu'un
- * onglet fermé juste après la dernière frappe ne perde rien. */
+/*
+  Assez long pour ne pas écrire à chaque touche, assez court pour qu'un
+  onglet fermé juste après la dernière frappe ne perde rien.
+*/
 const AUTOSAVE_DELAY_MS = 900;
 
-/**
- * Un message par cause. Tout renvoyer sur « impossible d'enregistrer » laisse
- * le joueur, et celui qui dépanne, sans rien pour distinguer une API éteinte
- * d'une session expirée ou d'une étape désynchronisée.
- */
+/*
+  Un message par cause. Tout renvoyer sur « impossible d'enregistrer » laisse
+  le joueur, et celui qui dépanne, sans rien pour distinguer une API éteinte
+  d'une session expirée ou d'une étape désynchronisée.
+*/
 function saveErrorKey(code: OnboardingError["code"]) {
   switch (code) {
     case "locked":
@@ -61,7 +63,7 @@ export function OnboardingWizard() {
   // lien qui permet d'y remédier, et n'occupe pas le champ d'erreur du pas.
   const [empty, setEmpty] = useState(false);
   const [fatal, setFatal] = useState<string | null>(null);
-  /** Vrai quand le joueur regarde une étape antérieure à celle du serveur. */
+  // Vrai quand le joueur regarde une étape antérieure à celle du serveur.
   const [back, setBack] = useState(false);
 
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -92,7 +94,7 @@ export function OnboardingWizard() {
     return () => controller.abort();
   }, [session.status, t]);
 
-  /** Après le pseudo : l'étape a changé côté serveur, on la relit. */
+  // Après le pseudo : l'étape a changé côté serveur, on la relit.
   const reload = useCallback(() => {
     fetchOnboarding()
       .then(setState)
@@ -276,7 +278,7 @@ export function OnboardingWizard() {
   );
 }
 
-/** Le titre vit ici et non dans la page : le monde prêt n'en veut pas. */
+// Le titre vit ici et non dans la page : le monde prêt n'en veut pas.
 function header(title: string, lead: string) {
   return (
     <header className="max-w-headline">

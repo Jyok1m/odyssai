@@ -16,14 +16,14 @@ import { OG_LOCALE, SITE_URL, alternatesFor } from "@/lib/seo";
 import { BRAND_INK, SITE_NAME } from "@/lib/site";
 import "../globals.css";
 
-/** L'interface et le joueur. */
+// L'interface et le joueur.
 const instrumentSans = Instrument_Sans({
   variable: "--font-instrument-sans",
   subsets: ["latin"],
   display: "swap",
 });
 
-/** Le narrateur. L'axe optique adapte le dessin à la taille rendue. */
+// Le narrateur. L'axe optique adapte le dessin à la taille rendue.
 const literata = Literata({
   variable: "--font-literata",
   subsets: ["latin"],

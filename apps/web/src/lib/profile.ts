@@ -8,12 +8,12 @@ import {
 
 import { API_BASE_URL } from "./api";
 
-/** Refus de l'API sur le profil. `username_taken` est le seul cas métier. */
+// Refus de l'API sur le profil. `username_taken` est le seul cas métier.
 export class ProfileError extends Error {
   readonly code:
     | ProfileErrorBody["code"]
     | "unauthenticated"
-    /** L'API n'a pas répondu : réseau coupé, ou origine refusée. */
+    // L'API n'a pas répondu : réseau coupé, ou origine refusée.
     | "unreachable"
     | "unknown";
 
@@ -61,7 +61,7 @@ export async function updateUsername(username: string): Promise<PlayerProfile> {
   return PlayerProfile.parse(await response.json());
 }
 
-/** Pose ou retire le consentement. Le retour porte le profil à jour. */
+// Pose ou retire le consentement. Le retour porte le profil à jour.
 export async function updateMarketingOptIn(
   marketingOptIn: boolean,
 ): Promise<PlayerProfile> {
@@ -80,10 +80,10 @@ export async function updateMarketingOptIn(
   return PlayerProfile.parse(await response.json());
 }
 
-/**
- * Le départ. Efface les données de jeu et ferme la session ; l'identité reste
- * chez Keycloak, et `accountUrl` mène là où le joueur la supprimera lui-même.
- */
+/*
+  Le départ. Efface les données de jeu et ferme la session ; l'identité reste
+  chez Keycloak, et `accountUrl` mène là où le joueur la supprimera lui-même.
+*/
 export async function eraseAccount(): Promise<AccountErasure> {
   const response = await send(
     `${API_BASE_URL}/me`,
@@ -95,11 +95,11 @@ export async function eraseAccount(): Promise<AccountErasure> {
   return AccountErasureSchema.parse(await response.json());
 }
 
-/**
- * `fetch` rejette sur un échec réseau, et aussi quand le navigateur bloque la
- * réponse pour cause d'origine non autorisée. Les deux méritent d'être dits :
- * confondus avec un refus de l'API, ils donnent un message qui n'apprend rien.
- */
+/*
+  `fetch` rejette sur un échec réseau, et aussi quand le navigateur bloque la
+  réponse pour cause d'origine non autorisée. Les deux méritent d'être dits :
+  confondus avec un refus de l'API, ils donnent un message qui n'apprend rien.
+*/
 async function send(
   input: string,
   init: RequestInit,

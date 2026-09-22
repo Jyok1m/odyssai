@@ -10,18 +10,18 @@ import Link from "next/link";
 import { useSession } from "@/components/auth/session-provider";
 import { Button } from "@/components/ui/button";
 
-/**
- * L'entrée du tableau de bord, montrée aux seuls administrateurs.
- *
- * Comme le garde d'`AdminShell`, c'est une commodité et jamais une sécurité :
- * `AdminGuard` refuse côté API, et `users.is_admin` ne se pose qu'avec
- * admin:grant. Cacher le bouton évite seulement de proposer une page qui
- * répondrait 403.
- *
- * Rien n'est réservé pendant la lecture de la session, contrairement au bouton
- * de compte : presque personne n'est administrateur, et garder la place ferait
- * un trou dans le header de tous les autres.
- */
+/*
+  L'entrée du tableau de bord, montrée aux seuls administrateurs.
+
+  Comme le garde d'`AdminShell`, c'est une commodité et jamais une sécurité :
+  `AdminGuard` refuse côté API, et `users.is_admin` ne se pose qu'avec
+  admin:grant. Cacher le bouton évite seulement de proposer une page qui
+  répondrait 403.
+
+  Rien n'est réservé pendant la lecture de la session, contrairement au bouton
+  de compte : presque personne n'est administrateur, et garder la place ferait
+  un trou dans le header de tous les autres.
+*/
 export function AdminLink({
   size = "sm",
   stacked = false,

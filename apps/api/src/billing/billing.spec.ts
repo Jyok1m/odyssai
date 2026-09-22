@@ -10,7 +10,7 @@ import { BillingService } from './billing.service.js';
 const SECRET = 'whsec_secret_de_test';
 const KEPT = { ...process.env };
 
-/** Les paliers vivent en base : le double en porte trois, comme la migration. */
+// Les paliers vivent en base : le double en porte trois, comme la migration.
 const PLANS: Plan[] = [
   plan('free', 'Libre', 30, 25, null, null),
   plan('apprenti', 'Apprenti', 300, 0, 500, 'price_apprenti'),
@@ -46,11 +46,11 @@ function plan(
   };
 }
 
-/**
- * La ligne d'abonnement, telle qu'elle vit en base. Un double en memoire
- * suffit : ce qui est verifie ici est la lecture des evenements Stripe, pas
- * Prisma.
- */
+/*
+  La ligne d'abonnement, telle qu'elle vit en base. Un double en memoire
+  suffit : ce qui est verifie ici est la lecture des evenements Stripe, pas
+  Prisma.
+*/
 interface Row {
   id: string;
   userId: string;
@@ -151,7 +151,7 @@ function billing(prisma: PrismaClient) {
   );
 }
 
-/** Signe comme Stripe signe : meme HMAC, sans le moindre appel reseau. */
+// Signe comme Stripe signe : meme HMAC, sans le moindre appel reseau.
 function signed(event: unknown): { body: Buffer; signature: string } {
   const payload = JSON.stringify(event);
   const stripe = new Stripe('sk_test_factice', { apiVersion: '2026-08-26.dahlia' });
@@ -235,10 +235,10 @@ describe('webhook Stripe', () => {
     expect(fake.row.stripeSubscriptionId).toBe('sub_stripe');
   });
 
-  /**
-   * Un prix qu'on ne connait pas ne doit rien changer : le prendre pour le
-   * palier libre ferait retomber un abonne payant.
-   */
+  /*
+    Un prix qu'on ne connait pas ne doit rien changer : le prendre pour le
+    palier libre ferait retomber un abonne payant.
+  */
   it('ignore un prix inconnu plutot que de deviner', async () => {
     const { body, signature } = signed(
       subscriptionEvent('evt_1', 'customer.subscription.updated', 'price_dun_autre_produit'),
@@ -324,7 +324,7 @@ describe('renouvellement', () => {
     expect(fake.entries[0]!.delta).toBe(APPRENTI.monthlyCredits - 12);
   });
 
-  /** Un abonne du 20 ne doit pas voir sa reserve repartir le 1er. */
+  // Un abonne du 20 ne doit pas voir sa reserve repartir le 1er.
   it('ancre la periode sur la facture, pas sur le calendrier', async () => {
     const fake = fakePrisma(row({ plan: 'apprenti' }));
     const service = billing(fake.db);
@@ -336,7 +336,7 @@ describe('renouvellement', () => {
     expect(fake.row.periodEnd.toISOString()).toBe('2026-04-20T09:00:00.000Z');
   });
 
-  /** Stripe rejoue jusqu'a obtenir un 2xx. Crediter deux fois serait un cadeau. */
+  // Stripe rejoue jusqu'a obtenir un 2xx. Crediter deux fois serait un cadeau.
   it('ne credite qu une fois le meme evenement', async () => {
     const fake = fakePrisma(row({ plan: 'apprenti', credits: 0 }));
     const service = billing(fake.db);

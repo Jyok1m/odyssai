@@ -19,10 +19,10 @@ export class WorldError extends Error {
   }
 }
 
-/**
- * Suit l'avancement jusqu'à la fin du flux. L'API le ferme d'elle-même au bout
- * de dix minutes : l'appelant rouvre s'il n'a pas eu de conclusion.
- */
+/*
+  Suit l'avancement jusqu'à la fin du flux. L'API le ferme d'elle-même au bout
+  de dix minutes : l'appelant rouvre s'il n'a pas eu de conclusion.
+*/
 export async function watchGeneration(
   onEvent: (event: GenerationStreamEvent) => void,
   signal?: AbortSignal,

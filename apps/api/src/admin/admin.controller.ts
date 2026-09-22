@@ -46,14 +46,14 @@ import {
 } from './admin-plans.service.js';
 import { AdminService, UserNotFoundError } from './admin.service.js';
 
-/**
- * Le tableau de bord d'administration.
- *
- * L'ordre des gardes compte : `SessionGuard` depose le joueur sur la requete,
- * `AdminGuard` le relit. Inverses, le second ne verrait rien et laisserait
- * tout passer. Ils sont poses sur la classe, sans exception : il n'y a ici
- * aucune route publique, et il ne doit jamais y en avoir.
- */
+/*
+  Le tableau de bord d'administration.
+
+  L'ordre des gardes compte : `SessionGuard` depose le joueur sur la requete,
+  `AdminGuard` le relit. Inverses, le second ne verrait rien et laisserait
+  tout passer. Ils sont poses sur la classe, sans exception : il n'y a ici
+  aucune route publique, et il ne doit jamais y en avoir.
+*/
 @Controller('admin')
 @UseGuards(SessionGuard, AdminGuard)
 export class AdminController {
@@ -80,12 +80,12 @@ export class AdminController {
     return this.admin.users({ search, plan, cursor, optIn: optIn === 'true' });
   }
 
-  /**
-   * Les adresses de ceux qui ont consenti.
-   *
-   * Aucun parametre : il n'existe pas de moyen de demander les autres, et
-   * c'est voulu. Sous /admin, donc derriere les deux gardes.
-   */
+  /*
+    Les adresses de ceux qui ont consenti.
+
+    Aucun parametre : il n'existe pas de moyen de demander les autres, et
+    c'est voulu. Sous /admin, donc derriere les deux gardes.
+  */
   @Get('marketing/emails')
   marketingEmails(): Promise<AdminMarketingList> {
     return this.admin.marketingList();
@@ -96,7 +96,7 @@ export class AdminController {
     return this.guarded(() => this.admin.user(id));
   }
 
-  /** Poser une reserve, ou la deplacer. Le grand livre garde la trace et le motif. */
+  // Poser une reserve, ou la deplacer. Le grand livre garde la trace et le motif.
   @Post('users/:id/credits')
   async adjustCredits(
     @Param('id') id: string,
@@ -109,14 +109,14 @@ export class AdminController {
     return this.guarded(() => this.admin.adjustCredits(id, parsed.data, by));
   }
 
-  /**
-   * Resilie l'abonnement Stripe d'un joueur, tout de suite.
-   *
-   * Le retour au palier libre n'est pas ecrit ici : il viendra du webhook
-   * `customer.subscription.deleted`, seule source du droit. L'ecrire des
-   * maintenant ferait diverger nos lignes de celles de Stripe si l'appel
-   * echouait a mi-chemin.
-   */
+  /*
+    Resilie l'abonnement Stripe d'un joueur, tout de suite.
+
+    Le retour au palier libre n'est pas ecrit ici : il viendra du webhook
+    `customer.subscription.deleted`, seule source du droit. L'ecrire des
+    maintenant ferait diverger nos lignes de celles de Stripe si l'appel
+    echouait a mi-chemin.
+  */
   @Delete('users/:id/subscription')
   @HttpCode(204)
   async cancel(@Param('id') id: string): Promise<void> {
@@ -131,10 +131,10 @@ export class AdminController {
     );
   }
 
-  /**
-   * L'etat de l'alpha. La phase et l'annonce s'ecrivent, les places se lisent :
-   * un administrateur ne doit pas pouvoir annoncer ce qui n'est plus vrai.
-   */
+  /*
+    L'etat de l'alpha. La phase et l'annonce s'ecrivent, les places se lisent :
+    un administrateur ne doit pas pouvoir annoncer ce qui n'est plus vrai.
+  */
   @Get('alpha')
   alphaStatus(): Promise<AlphaStatus> {
     return this.alpha.status();
@@ -145,11 +145,11 @@ export class AdminController {
     return this.alpha.update(UpdateAlphaRequestSchema.parse(body));
   }
 
-  /**
-   * Les messages du formulaire de contact. Ils partent aussi par courriel,
-   * mais restent lisibles ici : un envoi peut echouer, et une boite peut se
-   * perdre.
-   */
+  /*
+    Les messages du formulaire de contact. Ils partent aussi par courriel,
+    mais restent lisibles ici : un envoi peut echouer, et une boite peut se
+    perdre.
+  */
   @Get('contact')
   contactMessages(
     @Query('cursor') cursor?: string,
@@ -199,13 +199,13 @@ export class AdminController {
     await this.guarded(() => this.plans.remove(id));
   }
 
-  /**
-   * Traduit les refus metier en reponses HTTP.
-   *
-   * Un seul endroit : la meme erreur remontee par deux routes doit donner le
-   * meme code, et l'ecran s'appuie dessus pour proposer d'archiver plutot que
-   * de supprimer.
-   */
+  /*
+    Traduit les refus metier en reponses HTTP.
+
+    Un seul endroit : la meme erreur remontee par deux routes doit donner le
+    meme code, et l'ecran s'appuie dessus pour proposer d'archiver plutot que
+    de supprimer.
+  */
   private async guarded<T>(run: () => Promise<T>): Promise<T> {
     try {
       return await run();

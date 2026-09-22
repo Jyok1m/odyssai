@@ -8,11 +8,11 @@ import { Link } from "@/i18n/navigation";
 
 import { Constellation } from "./constellation";
 
-/**
- * Colonne centrée plutôt que deux colonnes : le bloc qui suit grandit avec la
- * conversation alors que le hero garde sa hauteur, et rien n'équilibre deux
- * colonnes dont une seule bouge. `children` ferme la pile, sous les boutons.
- */
+/*
+  Colonne centrée plutôt que deux colonnes : le bloc qui suit grandit avec la
+  conversation alors que le hero garde sa hauteur, et rien n'équilibre deux
+  colonnes dont une seule bouge. `children` ferme la pile, sous les boutons.
+*/
 export function Hero({ children }: { children?: ReactNode }) {
   const t = useTranslations("Hero");
 

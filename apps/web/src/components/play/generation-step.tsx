@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { watchGeneration } from "@/lib/world";
 
-/** Les étapes du graphe, dans leur ordre d'exécution. */
+// Les étapes du graphe, dans leur ordre d'exécution.
 const STEPS = [
   "abstraction",
   "charter",
@@ -21,7 +21,7 @@ const STEPS = [
 type Step = (typeof STEPS)[number];
 
 interface Props {
-  /** Appelé quand le monde est prêt : l'assistant relit alors son état. */
+  // Appelé quand le monde est prêt : l'assistant relit alors son état.
   onReady: () => void;
 }
 

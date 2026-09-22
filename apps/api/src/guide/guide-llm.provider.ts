@@ -5,11 +5,11 @@ import { GuideConfig } from '../config/guide-config.js';
 
 export const GUIDE_LLM = Symbol('GUIDE_LLM');
 
-/**
- * Seul endroit ou la cle du fournisseur sort de la configuration. Le client
- * LangSmith n'est construit que si le tracing est actif : sans instance tracee,
- * aucune trace ne peut partir, quoi que dise l'environnement.
- */
+/*
+  Seul endroit ou la cle du fournisseur sort de la configuration. Le client
+  LangSmith n'est construit que si le tracing est actif : sans instance tracee,
+  aucune trace ne peut partir, quoi que dise l'environnement.
+*/
 export const guideLlmProvider = {
   provide: GUIDE_LLM,
   inject: [GuideConfig],

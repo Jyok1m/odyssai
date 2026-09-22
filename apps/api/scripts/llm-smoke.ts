@@ -1,11 +1,11 @@
-/**
- * Un appel reel, pour verifier que la configuration du guide tient debout :
- * modele joignable, usage renseigne, trace deposee si le tracing est actif.
- *
- *   pnpm --filter @odyssai/api llm:smoke
- *
- * Aucune cle ni aucune configuration n'est affichee, seulement le resultat.
- */
+/*
+  Un appel reel, pour verifier que la configuration du guide tient debout :
+  modele joignable, usage renseigne, trace deposee si le tracing est actif.
+
+    pnpm --filter @odyssai/api llm:smoke
+
+  Aucune cle ni aucune configuration n'est affichee, seulement le resultat.
+*/
 import { Client } from 'langsmith';
 import { createLlmClient, type LlmStreamEvent } from '@odyssai/llm';
 import { GuideConfig } from '../dist/config/guide-config.js';

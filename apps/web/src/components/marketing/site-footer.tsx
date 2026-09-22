@@ -6,11 +6,11 @@ import { CookieSettingsButton } from "@/components/legal/cookie-settings-button"
 import { Link } from "@/i18n/navigation";
 import { SITE_NAME } from "@/lib/site";
 
-/**
- * Chemins internes ; next-intl les traduit en URLs localisées. Les pages de
- * contenu et les pages légales partagent la même rangée : la loi demande que
- * les mentions soient atteignables, pas qu'elles soient reléguées.
- */
+/*
+  Chemins internes ; next-intl les traduit en URLs localisées. Les pages de
+  contenu et les pages légales partagent la même rangée : la loi demande que
+  les mentions soient atteignables, pas qu'elles soient reléguées.
+*/
 const NAV_ITEMS = [
   { key: "concept", href: "/concept" },
   { key: "universes", href: "/univers" },
@@ -25,10 +25,10 @@ const NAV_ITEMS = [
   { key: "cookies", href: "/cookies" },
 ] as const;
 
-/**
- * Réseaux. Seul celui qui existe vraiment figure ici ; les autres logos
- * attendent dans `social-icons.tsx`.
- */
+/*
+  Réseaux. Seul celui qui existe vraiment figure ici ; les autres logos
+  attendent dans `social-icons.tsx`.
+*/
 const SOCIAL_ITEMS: {
   name: string;
   href: string;

@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { Prisma, type PrismaClient } from '@odyssai/db';
 
-/**
- * Prisma en memoire, reduit aux tables du parcours. Assez fidele pour que
- * l'aller-retour complet soit un vrai test : les lignes persistent d'un appel
- * a l'autre, ce qu'un `vi.fn()` ne dirait pas.
- */
+/*
+  Prisma en memoire, reduit aux tables du parcours. Assez fidele pour que
+  l'aller-retour complet soit un vrai test : les lignes persistent d'un appel
+  a l'autre, ce qu'un `vi.fn()` ne dirait pas.
+*/
 interface UserRow {
   id: string;
   keycloakId: string;
@@ -73,11 +73,11 @@ interface CreditEntryRow {
   createdAt: Date;
 }
 
-/**
- * Les paliers, en base depuis qu'ils s'editent au tableau de bord. Le double
- * en porte les trois que la migration amorce : sans eux, ouvrir un abonnement
- * n'aurait aucune dotation a servir.
- */
+/*
+  Les paliers, en base depuis qu'ils s'editent au tableau de bord. Le double
+  en porte les trois que la migration amorce : sans eux, ouvrir un abonnement
+  n'aurait aucune dotation a servir.
+*/
 interface PlanRow {
   id: string;
   slug: string;
@@ -126,7 +126,7 @@ function seedPlan(
   };
 }
 
-/** Sert aux tests qui veulent affirmer une dotation sans la recopier. */
+// Sert aux tests qui veulent affirmer une dotation sans la recopier.
 export const PLAN_FIXTURES = SEEDED_PLANS;
 
 interface StripeEventRow {
@@ -149,7 +149,7 @@ interface MessageRow {
   channel: string;
   role: 'user' | 'assistant';
   content: string;
-  /** Rang dans son canal, unique par univers : la base le contraint. */
+  // Rang dans son canal, unique par univers : la base le contraint.
   seq: number;
   createdAt: Date;
 }
@@ -177,7 +177,7 @@ export interface OnboardingStore {
   subscriptions?: SubscriptionRow[];
   creditEntries?: CreditEntryRow[];
   stripeEvents?: StripeEventRow[];
-  /** Absent, les trois paliers amorces par la migration sont servis. */
+  // Absent, les trois paliers amorces par la migration sont servis.
   plans?: PlanRow[];
 }
 
@@ -211,7 +211,7 @@ function project(rows: MessageRow[], select: any): any[] {
   );
 }
 
-/** `Prisma.DbNull` est un marqueur, pas une valeur : la colonne recoit NULL. */
+// `Prisma.DbNull` est un marqueur, pas une valeur : la colonne recoit NULL.
 function value(raw: unknown): unknown {
   return raw === Prisma.DbNull || raw === Prisma.JsonNull ? null : raw;
 }
@@ -264,11 +264,11 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
 
   const double = {
     user: {
-      /**
-       * Deux filtres suffisent, ce sont les seuls que le code pose : le droit
-       * d'administration pour les places de l'alpha, et l'anteriorite pour le
-       * rang des premiers arrives.
-       */
+      /*
+        Deux filtres suffisent, ce sont les seuls que le code pose : le droit
+        d'administration pour les places de l'alpha, et l'anteriorite pour le
+        rang des premiers arrives.
+      */
       count: async ({ where }: any) =>
         store.users.filter((user) => {
           if (where?.isAdmin !== undefined && user.isAdmin !== where.isAdmin) {
@@ -379,7 +379,7 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         row.updatedAt = new Date();
         return hydrate(row, include);
       },
-      /** Cascade sur messages, travaux et rencontres ; SetNull sur le personnage. */
+      // Cascade sur messages, travaux et rencontres ; SetNull sur le personnage.
       delete: async ({ where }: any) => {
         store.universes = store.universes.filter((row) => row.id !== where.id);
         store.messages = store.messages.filter((row) => row.universeId !== where.id);
@@ -590,8 +590,10 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
       findMany: async () => [...(store.creditEntries ?? [])],
     },
 
-    /** La cle primaire porte l'idempotence des webhooks : un meme identifiant
-     * deux fois doit echouer, comme en base. */
+    /*
+      La cle primaire porte l'idempotence des webhooks : un meme identifiant
+      deux fois doit echouer, comme en base.
+    */
     plan: {
       findUnique: async ({ where }: any) => {
         const rows = store.plans ?? SEEDED_PLANS;
@@ -627,8 +629,10 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
       },
     },
 
-    /** Aucune extension dans un double : le rappel long se degrade, et c'est
-     * ce que les tests doivent voir. */
+    /*
+      Aucune extension dans un double : le rappel long se degrade, et c'est
+      ce que les tests doivent voir.
+    */
     $queryRawUnsafe: async () => [{ ok: false }],
 
     guideQuestion: {

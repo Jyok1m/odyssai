@@ -27,12 +27,12 @@ export async function generateMetadata({
   });
 }
 
-/**
- * La page de contact.
- *
- * Pas une `ProsePage` : son contenu est un formulaire, pas du texte, et le fil
- * d'Ariane des pages de contenu n'a rien à y faire.
- */
+/*
+  La page de contact.
+
+  Pas une `ProsePage` : son contenu est un formulaire, pas du texte, et le fil
+  d'Ariane des pages de contenu n'a rien à y faire.
+*/
 export default function Page() {
   const t = useTranslations(NS);
 

@@ -1,11 +1,11 @@
 import { z } from 'zod';
 import { OPENROUTER_ONLY_BODY_KEYS } from '@odyssai/llm';
 
-/**
- * Configuration du worker, validee au demarrage. Contrairement a l'api, le
- * modele de narration y est exige : un worker sans modele ne sait rien faire,
- * et demarrer pour echouer a chaque travail ne rend service a personne.
- */
+/*
+  Configuration du worker, validee au demarrage. Contrairement a l'api, le
+  modele de narration y est exige : un worker sans modele ne sait rien faire,
+  et demarrer pour echouer a chaque travail ne rend service a personne.
+*/
 const EnvSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -18,10 +18,10 @@ const EnvSchema = z
     LLM_NARRATOR_TEMPERATURE: z.coerce.number().min(0).max(2).default(0.6),
     LLM_NARRATOR_MAX_OUTPUT_TOKENS: z.coerce.number().int().positive().default(900),
 
-    /**
-     * Servent au journal d'usage quand le fournisseur ne rend pas le cout.
-     * Zero par defaut : une ligne sans cout vaut mieux qu'un cout invente.
-     */
+    /*
+      Servent au journal d'usage quand le fournisseur ne rend pas le cout.
+      Zero par defaut : une ligne sans cout vaut mieux qu'un cout invente.
+    */
     LLM_NARRATOR_PRICE_INPUT_USD_PER_MTOK: z.coerce.number().nonnegative().default(0),
     LLM_NARRATOR_PRICE_OUTPUT_USD_PER_MTOK: z.coerce.number().nonnegative().default(0),
 
@@ -41,11 +41,11 @@ const EnvSchema = z
       .default('false')
       .transform((value) => value === 'true'),
 
-    /**
-     * Un monde a la fois par worker. Chaque generation fait sept appels et
-     * dure des minutes : en faire tourner plusieurs de front sur une petite
-     * machine allongerait les deux sans rien gagner.
-     */
+    /*
+      Un monde a la fois par worker. Chaque generation fait sept appels et
+      dure des minutes : en faire tourner plusieurs de front sur une petite
+      machine allongerait les deux sans rien gagner.
+    */
     WORKER_CONCURRENCY: z.coerce.number().int().positive().max(8).default(1),
   })
   .superRefine((env, ctx) => {
@@ -126,7 +126,7 @@ export function loadConfig() {
     postgresUrl: env.POSTGRES_URL,
     concurrency: env.WORKER_CONCURRENCY,
     provider: env.LLM_NARRATOR_PROVIDER,
-    /** Jamais journalisee : elle ne sort que vers createLlmClient. */
+    // Jamais journalisee : elle ne sort que vers createLlmClient.
     apiKey:
       env.LLM_NARRATOR_PROVIDER === 'openrouter'
         ? env.OPENROUTER_API_KEY
@@ -137,7 +137,7 @@ export function loadConfig() {
       maxOutputTokens: env.LLM_NARRATOR_MAX_OUTPUT_TOKENS,
       extraBody: extraBody.ok ? extraBody.value : {},
     },
-    /** Sert au journal d'usage quand le fournisseur ne rend pas le cout. */
+    // Sert au journal d'usage quand le fournisseur ne rend pas le cout.
     prices: {
       inputUsdPerMTok: env.LLM_NARRATOR_PRICE_INPUT_USD_PER_MTOK,
       outputUsdPerMTok: env.LLM_NARRATOR_PRICE_OUTPUT_USD_PER_MTOK,

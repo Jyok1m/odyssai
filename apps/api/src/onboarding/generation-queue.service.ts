@@ -9,11 +9,11 @@ import type { Redis } from 'ioredis';
 import { GENERATION_QUEUE, type GenerationJobData } from '@odyssai/schemas';
 import { REDIS } from '../redis/redis.module.js';
 
-/**
- * Publie le travail de generation. Le worker le consomme, l'api ne fait que
- * l'annoncer : elle n'attend rien et ne sait rien de son deroulement autrement
- * que par la table generation_jobs.
- */
+/*
+  Publie le travail de generation. Le worker le consomme, l'api ne fait que
+  l'annoncer : elle n'attend rien et ne sait rien de son deroulement autrement
+  que par la table generation_jobs.
+*/
 @Injectable()
 export class GenerationQueueService implements OnApplicationShutdown {
   private readonly logger = new Logger(GenerationQueueService.name);
@@ -38,12 +38,12 @@ export class GenerationQueueService implements OnApplicationShutdown {
     });
   }
 
-  /**
-   * L'identifiant du travail est celui de l'univers : deux requetes du meme
-   * joueur arrivees ensemble ne lancent qu'une generation, BullMQ refusant un
-   * doublon. La base ne peut pas garantir cela seule, rien n'y empechant deux
-   * lectures concurrentes de voir la meme etape.
-   */
+  /*
+    L'identifiant du travail est celui de l'univers : deux requetes du meme
+    joueur arrivees ensemble ne lancent qu'une generation, BullMQ refusant un
+    doublon. La base ne peut pas garantir cela seule, rien n'y empechant deux
+    lectures concurrentes de voir la meme etape.
+  */
   async enqueue(universeId: string): Promise<void> {
     try {
       await this.queue.add('generate', { universeId }, { jobId: universeId });

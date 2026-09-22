@@ -66,7 +66,7 @@ export class GuideController {
     @Inject(GUIDE_LLM) private readonly llm: LlmClient,
   ) {}
 
-  /** Ni pass ni appel au modele : ce chemin ne coute rien. */
+  // Ni pass ni appel au modele : ce chemin ne coute rien.
   @Get('suggestions')
   suggestions(
     @Query('locale') rawLocale: string | undefined,
@@ -301,7 +301,7 @@ export class GuideController {
     res.write(`data: ${JSON.stringify(event)}\n\n`);
   }
 
-  /** Reponse fixe : meta, un seul delta, done, puis fin. */
+  // Reponse fixe : meta, un seul delta, done, puis fin.
   private writeFixed(
     res: Response,
     source: GuideAnswerSource,
@@ -329,10 +329,10 @@ export class GuideController {
   }
 }
 
-/**
- * UUID v7 : horodatage sur 48 bits puis de l'aleatoire, donc ordonne dans le
- * temps comme les identifiants de `users`. Node ne sait generer que des v4.
- */
+/*
+  UUID v7 : horodatage sur 48 bits puis de l'aleatoire, donc ordonne dans le
+  temps comme les identifiants de `users`. Node ne sait generer que des v4.
+*/
 export function uuidv7(): string {
   const bytes = randomBytes(16);
   const ms = Date.now();

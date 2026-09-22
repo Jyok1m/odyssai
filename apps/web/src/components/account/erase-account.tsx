@@ -8,14 +8,14 @@ import { Button } from "@/components/ui/button";
 import { DangerAction } from "@/components/ui/danger-action";
 import { ProfileError, eraseAccount } from "@/lib/profile";
 
-/**
- * Le départ définitif.
- *
- * L'API efface les données de jeu et ferme la session, mais pas l'identité :
- * elle vit dans le service d'identité, sur lequel l'API n'a volontairement
- * aucun droit. L'écran final mène le joueur là où il la supprimera lui-même,
- * et lui dit ce qui se passe s'il s'arrête en chemin.
- */
+/*
+  Le départ définitif.
+
+  L'API efface les données de jeu et ferme la session, mais pas l'identité :
+  elle vit dans le service d'identité, sur lequel l'API n'a volontairement
+  aucun droit. L'écran final mène le joueur là où il la supprimera lui-même,
+  et lui dit ce qui se passe s'il s'arrête en chemin.
+*/
 export function EraseAccount() {
   const t = useTranslations("Danger");
   const tAccount = useTranslations("Account");

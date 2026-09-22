@@ -27,7 +27,7 @@ interface Props {
   onAdvance: (character: CharacterDraft) => void;
 }
 
-/** Une fiche proposée ferme la conversation et ouvre le formulaire. */
+// Une fiche proposée ferme la conversation et ouvre le formulaire.
 type Proposal = { character: CharacterDraft; missing: string[] } | null;
 
 export function CharacterStep({ initial, saving, error, onAdvance }: Props) {
@@ -275,11 +275,11 @@ export function CharacterStep({ initial, saving, error, onAdvance }: Props) {
   );
 }
 
-/**
- * Rend la clé de traduction et non le texte : le traducteur de next-intl est
- * typé par ses clés, et une fonction qui prendrait un `string` ne lui serait
- * pas assignable.
- */
+/*
+  Rend la clé de traduction et non le texte : le traducteur de next-intl est
+  typé par ses clés, et une fonction qui prendrait un `string` ne lui serait
+  pas assignable.
+*/
 function errorKey(caught: unknown) {
   if (!(caught instanceof CharacterError)) return "errorGeneric" as const;
 

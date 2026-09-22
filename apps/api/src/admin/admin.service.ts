@@ -14,10 +14,10 @@ import { CreditsService } from '../credits/credits.service.js';
 import { PlansService } from '../plans/plans.service.js';
 import { PRISMA } from '../prisma/prisma.module.js';
 
-/** Ce que la liste rend d'un coup. Assez pour un ecran, assez peu pour une requete. */
+// Ce que la liste rend d'un coup. Assez pour un ecran, assez peu pour une requete.
 const PAGE_SIZE = 50;
 
-/** Trente jours, la fenetre des chiffres de la page d'accueil. */
+// Trente jours, la fenetre des chiffres de la page d'accueil.
 const WINDOW_DAYS = 30;
 
 export class UserNotFoundError extends Error {
@@ -27,13 +27,13 @@ export class UserNotFoundError extends Error {
   }
 }
 
-/**
- * Les lectures et les ecritures du tableau de bord.
- *
- * Ce service voit tout, donc il n'est joignable que derriere `AdminGuard`. Il
- * n'expose aucune methode qui accorde le droit d'administrer : celui-la se
- * pose en base, a la main.
- */
+/*
+  Les lectures et les ecritures du tableau de bord.
+
+  Ce service voit tout, donc il n'est joignable que derriere `AdminGuard`. Il
+  n'expose aucune methode qui accorde le droit d'administrer : celui-la se
+  pose en base, a la main.
+*/
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
@@ -91,14 +91,14 @@ export class AdminService {
     };
   }
 
-  /**
-   * La liste des joueurs, filtrable sur le pseudo ou l'adresse.
-   *
-   * Pagination par curseur : la liste s'allonge pendant qu'on la lit, et un
-   * decalage par numero de page ferait sauter ou repeter des lignes. L'`id`
-   * etant un uuid v7, l'ordre decroissant donne les derniers arrives d'abord
-   * et le curseur est simplement le dernier identifiant servi.
-   */
+  /*
+    La liste des joueurs, filtrable sur le pseudo ou l'adresse.
+
+    Pagination par curseur : la liste s'allonge pendant qu'on la lit, et un
+    decalage par numero de page ferait sauter ou repeter des lignes. L'`id`
+    etant un uuid v7, l'ordre decroissant donne les derniers arrives d'abord
+    et le curseur est simplement le dernier identifiant servi.
+  */
   async users(query: {
     search?: string;
     plan?: string;
@@ -141,14 +141,14 @@ export class AdminService {
     };
   }
 
-  /**
-   * Les adresses de ceux qui ont consenti, et rien d'autre.
-   *
-   * Aucun parametre ne permet de demander les autres : l'inverse existerait
-   * comme une case a cocher entre une intention et un envoi non sollicite.
-   * `total` est rendu a cote pour que la proportion se lise sans avoir a
-   * extraire deux fois.
-   */
+  /*
+    Les adresses de ceux qui ont consenti, et rien d'autre.
+
+    Aucun parametre ne permet de demander les autres : l'inverse existerait
+    comme une case a cocher entre une intention et un envoi non sollicite.
+    `total` est rendu a cote pour que la proportion se lise sans avoir a
+    extraire deux fois.
+  */
   async marketingList(): Promise<AdminMarketingList> {
     const [rows, total] = await Promise.all([
       this.prisma.user.findMany({
@@ -209,14 +209,14 @@ export class AdminService {
     };
   }
 
-  /**
-   * Pose ou deplace la reserve d'un joueur.
-   *
-   * L'ecriture passe par le grand livre et non par un `update` direct : il est
-   * en ajout seul, et un solde remis a zero doit s'y lire comme un mouvement
-   * date et motive, pas comme un trou inexplique. `note` est obligatoire pour
-   * cette raison.
-   */
+  /*
+    Pose ou deplace la reserve d'un joueur.
+
+    L'ecriture passe par le grand livre et non par un `update` direct : il est
+    en ajout seul, et un solde remis a zero doit s'y lire comme un mouvement
+    date et motive, pas comme un trou inexplique. `note` est obligatoire pour
+    cette raison.
+  */
   async adjustCredits(
     id: string,
     request: AdjustCreditsRequest,

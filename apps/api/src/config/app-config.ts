@@ -18,8 +18,10 @@ const EnvSchema = z.object({
 
 type Env = z.infer<typeof EnvSchema>;
 
-/** Validee au demarrage : une variable manquante casse le bootstrap, pas la
- * premiere connexion d'un joueur. */
+/*
+  Validee au demarrage : une variable manquante casse le bootstrap, pas la
+  premiere connexion d'un joueur.
+*/
 @Injectable()
 export class AppConfig {
   private readonly env: Env;
@@ -70,11 +72,11 @@ export class AppConfig {
     };
   }
 
-  /**
-   * Console de compte du realm. `referrer` doit nommer un client existant :
-   * c'est ce qui donne au joueur un retour vers le site depuis les pages de
-   * Keycloak, sans quoi il s'y retrouve enferme.
-   */
+  /*
+    Console de compte du realm. `referrer` doit nommer un client existant :
+    c'est ce qui donne au joueur un retour vers le site depuis les pages de
+    Keycloak, sans quoi il s'y retrouve enferme.
+  */
   get accountUrl(): string {
     const url = new URL(`${this.keycloak.issuer}/account`);
     // `referrer` seul, sans `referrer_uri` : Keycloak valide ce dernier contre
@@ -85,10 +87,10 @@ export class AppConfig {
     return url.toString();
   }
 
-  /**
-   * En http local le prefixe __Host- est retire : il impose Secure, et Safari
-   * refuse un cookie Secure sur http://localhost.
-   */
+  /*
+    En http local le prefixe __Host- est retire : il impose Secure, et Safari
+    refuse un cookie Secure sur http://localhost.
+  */
   get cookieSecure(): boolean {
     return this.apiBaseUrl.protocol === 'https:';
   }

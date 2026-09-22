@@ -26,9 +26,9 @@ interface Turn {
   partial?: boolean;
 }
 
-/** Au-delà, le champ défile au lieu de repousser le bouton hors de l'écran. */
+// Au-delà, le champ défile au lieu de repousser le bouton hors de l'écran.
 const TEXTAREA_MAX_PX = 160;
-/** Le compteur n'apparaît qu'à l'approche de la borne, pas à chaque frappe. */
+// Le compteur n'apparaît qu'à l'approche de la borne, pas à chaque frappe.
 const COUNTER_FROM = GUIDE_QUESTION_MAX_CHARS - 50;
 
 export function GuideChat() {

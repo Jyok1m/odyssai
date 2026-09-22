@@ -8,13 +8,13 @@ import {
 } from '@odyssai/schemas';
 import { PRISMA } from '../prisma/prisma.module.js';
 
-/**
- * L'etat de l'alpha, annonce et places restantes.
- *
- * La phase se choisit au tableau de bord ; « complete » se constate. Un
- * administrateur ne doit pas pouvoir annoncer des places qui n'existent plus,
- * donc `full` et `remaining` se calculent et ne s'ecrivent nulle part.
- */
+/*
+  L'etat de l'alpha, annonce et places restantes.
+
+  La phase se choisit au tableau de bord ; « complete » se constate. Un
+  administrateur ne doit pas pouvoir annoncer des places qui n'existent plus,
+  donc `full` et `remaining` se calculent et ne s'ecrivent nulle part.
+*/
 @Injectable()
 export class AlphaService {
   constructor(@Inject(PRISMA) private readonly prisma: PrismaClient) {}
@@ -51,13 +51,13 @@ export class AlphaService {
     return this.status();
   }
 
-  /**
-   * La ligne unique, creee au besoin.
-   *
-   * La migration en pose une, mais une base restauree d'un dump partiel ou un
-   * environnement monte a la main n'en aurait pas, et le site entier tomberait
-   * pour un reglage d'affichage.
-   */
+  /*
+    La ligne unique, creee au besoin.
+
+    La migration en pose une, mais une base restauree d'un dump partiel ou un
+    environnement monte a la main n'en aurait pas, et le site entier tomberait
+    pour un reglage d'affichage.
+  */
   private async settings(): Promise<{
     phase: AlphaStatus['phase'];
     notice: boolean;

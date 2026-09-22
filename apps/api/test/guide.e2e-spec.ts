@@ -29,7 +29,7 @@ interface Harness {
   journal: { create: ReturnType<typeof vi.fn> };
 }
 
-/** Journal reduit a ce que GuideJournalService appelle. */
+// Journal reduit a ce que GuideJournalService appelle.
 function makePrisma() {
   const create = vi.fn(async () => ({}));
   return {
@@ -41,7 +41,7 @@ function makePrisma() {
   };
 }
 
-/** FAQ de test : une seule entree validee, pour que le chemin gratuit existe. */
+// FAQ de test : une seule entree validee, pour que le chemin gratuit existe.
 const fakeFaq = {
   find: (_locale: string, question: string) =>
     question.trim() === FAQ_QUESTION ? makeFaqEntry() : undefined,
@@ -89,7 +89,7 @@ function events(body: string): GuideStreamEvent[] {
     .map((line) => JSON.parse(line.slice('data:'.length).trim()) as GuideStreamEvent);
 }
 
-/** Un pass valide, sans jamais joindre Cloudflare. */
+// Un pass valide, sans jamais joindre Cloudflare.
 async function getPass(app: INestApplication<App>): Promise<string> {
   const siteverify = vi
     .spyOn(globalThis, 'fetch')

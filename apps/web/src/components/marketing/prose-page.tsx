@@ -10,16 +10,16 @@ export type ProseSection = {
   body: string[];
 };
 
-/**
- * Gabarit des pages de contenu. Chaque page lit ses propres messages et passe
- * le texte résolu, ce qui évite un namespace dynamique et garde le typage des
- * clés. `href` est le chemin interne, celui du dossier sous app/[locale] : il
- * ne sert qu'au fil d'Ariane, que toutes ces pages doivent porter.
- *
- * Le kit alterne un chapeau étroit et du contenu qui occupe la largeur : ici
- * la prose garde sa longueur de ligne et c'est le sommaire qui remplit la
- * colonne de droite, comme l'écran de jeu du kit en `1fr 296px`.
- */
+/*
+  Gabarit des pages de contenu. Chaque page lit ses propres messages et passe
+  le texte résolu, ce qui évite un namespace dynamique et garde le typage des
+  clés. `href` est le chemin interne, celui du dossier sous app/[locale] : il
+  ne sert qu'au fil d'Ariane, que toutes ces pages doivent porter.
+
+  Le kit alterne un chapeau étroit et du contenu qui occupe la largeur : ici
+  la prose garde sa longueur de ligne et c'est le sommaire qui remplit la
+  colonne de droite, comme l'écran de jeu du kit en `1fr 296px`.
+*/
 export function ProsePage({
   href,
   title,
@@ -87,11 +87,11 @@ export function ProsePage({
   );
 }
 
-/**
- * Ancres stables tirées des titres. Le rang sert de repli : deux sections
- * homonymes, ou un titre sans aucun caractère latin, produiraient sinon la
- * même ancre et le sommaire renverrait toujours à la première.
- */
+/*
+  Ancres stables tirées des titres. Le rang sert de repli : deux sections
+  homonymes, ou un titre sans aucun caractère latin, produiraient sinon la
+  même ancre et le sommaire renverrait toujours à la première.
+*/
 function toNavSections(sections: ProseSection[]): NavSection[] {
   const seen = new Set<string>();
 

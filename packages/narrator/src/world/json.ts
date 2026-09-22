@@ -15,10 +15,10 @@ export interface JsonUsage {
   costUsd?: number;
 }
 
-/**
- * Certains modeles enrobent leur JSON dans une balise de code malgre la
- * consigne. Le refuser pour cela seul couterait une relance pour rien.
- */
+/*
+  Certains modeles enrobent leur JSON dans une balise de code malgre la
+  consigne. Le refuser pour cela seul couterait une relance pour rien.
+*/
 export function unwrapJson(raw: string): string {
   const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
   return (fenced?.[1] ?? raw).trim();
@@ -36,7 +36,7 @@ export type JsonCallResult =
   | { kind: 'ok'; value: unknown; usage: JsonUsage }
   | { kind: 'invalid_json'; raw: string; usage: JsonUsage };
 
-/** Un appel qui rend du JSON. Le texte est accumule, jamais diffuse. */
+// Un appel qui rend du JSON. Le texte est accumule, jamais diffuse.
 export async function callJson(
   request: JsonCallRequest,
 ): Promise<JsonCallResult> {

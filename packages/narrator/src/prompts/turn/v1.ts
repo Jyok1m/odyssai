@@ -8,42 +8,42 @@ import type {
 import type { PromptMessage } from '../guide/v1.js';
 import { CANON_MARKER } from '../../turn/split-tail.js';
 
-/** Ce que le meneur a sous les yeux pour jouer un tour. */
+// Ce que le meneur a sous les yeux pour jouer un tour.
 export interface TurnContext {
   charter: WorldCharter;
-  /** Entiere, secrets des personnages compris : le meneur les connait. */
+  // Entiere, secrets des personnages compris : le meneur les connait.
   bible: WorldBible;
   character: CharacterSheet;
   canon: CanonFact[];
-  /** Les derniers tours, mot pour mot. */
+  // Les derniers tours, mot pour mot.
   recent: { role: 'user' | 'assistant'; content: string }[];
-  /** Des tours plus anciens, retrouves parce qu'ils ressemblent a la demande. */
+  // Des tours plus anciens, retrouves parce qu'ils ressemblent a la demande.
   recalled: string[];
-  /**
-   * La bande du de, tiree par le code a chaque tour. Le meneur ne s'en sert
-   * que si l'issue etait incertaine.
-   */
+  /*
+    La bande du de, tiree par le code a chaque tour. Le meneur ne s'en sert
+    que si l'issue etait incertaine.
+  */
   band: string;
-  /** Vrai quand le joueur s'en remet au sort sans dire ce qu'il fait. */
+  // Vrai quand le joueur s'en remet au sort sans dire ce qu'il fait.
   fate: boolean;
-  /**
-   * Vrai pour la toute premiere scene, que le meneur joue seul.
-   *
-   * Le joueur n'a alors rien dit : il n'y a pas de `<message_joueur>` dans le
-   * prompt, et la consigne prend sa place.
-   */
+  /*
+    Vrai pour la toute premiere scene, que le meneur joue seul.
+
+    Le joueur n'a alors rien dit : il n'y a pas de `<message_joueur>` dans le
+    prompt, et la consigne prend sa place.
+  */
   opening: boolean;
 }
 
-/**
- * Les consignes sont ecrites dans un francais accentue, contrairement aux
- * commentaires de ce depot. Ce n'est pas du code : c'est le texte que le
- * modele lit pour savoir comment ecrire, et il ecrit comme on lui parle. Le
- * lui donner sans accents, c'est lui montrer une langue fautive et esperer une
- * langue juste. Le titre de la derniere section le montrait bien : prive de
- * son accent, le nom du de se lisait comme la preposition la plus courante de
- * la langue.
- */
+/*
+  Les consignes sont ecrites dans un francais accentue, contrairement aux
+  commentaires de ce depot. Ce n'est pas du code : c'est le texte que le
+  modele lit pour savoir comment ecrire, et il ecrit comme on lui parle. Le
+  lui donner sans accents, c'est lui montrer une langue fautive et esperer une
+  langue juste. Le titre de la derniere section le montrait bien : prive de
+  son accent, le nom du de se lisait comme la preposition la plus courante de
+  la langue.
+*/
 const INSTRUCTIONS: Record<UiLocale, string> = {
   fr: `Tu es le meneur de jeu. Tu mènes, le joueur répond.
 

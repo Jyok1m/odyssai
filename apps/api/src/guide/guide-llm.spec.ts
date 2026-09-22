@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { Client } from 'langsmith';
 import { LlmError, createLlmClient } from '@odyssai/llm';
 
-/** Corps SSE minimal, pour qu'aucun appel ne sorte vraiment. */
+// Corps SSE minimal, pour qu'aucun appel ne sorte vraiment.
 function sseResponse(): Response {
   const body = [
     'data: {"model":"m","choices":[{"delta":{"content":"bonjour"}}]}\n\n',
@@ -24,7 +24,7 @@ function bodyOf(spy: ReturnType<typeof fakeFetch>): Record<string, unknown> {
   return JSON.parse(String(spy.mock.calls[0]![1]!.body)) as Record<string, unknown>;
 }
 
-/** Client LangSmith qui ne joint rien : le tracing ne doit jamais sortir. */
+// Client LangSmith qui ne joint rien : le tracing ne doit jamais sortir.
 function silentLangsmith(): Client {
   return new Client({
     apiUrl: 'https://langsmith.invalid',

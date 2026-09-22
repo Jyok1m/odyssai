@@ -4,7 +4,7 @@ import { routing, type Locale, type Pathname } from "@/i18n/routing";
 import { SITE_URL, urlFor } from "@/lib/seo";
 import { SITE_NAME } from "@/lib/site";
 
-/** `<` échappé : un `</script>` dans une chaîne fermerait la balise. */
+// `<` échappé : un `</script>` dans une chaîne fermerait la balise.
 function JsonLdScript({ data }: { data: object }) {
   return (
     <script
@@ -16,11 +16,11 @@ function JsonLdScript({ data }: { data: object }) {
   );
 }
 
-/**
- * Limitées à ce qui est vérifiable : ni note agrégée, ni offre, ni date de
- * sortie, qui seraient inventées et vaudraient une pénalité pour balisage
- * trompeur.
- */
+/*
+  Limitées à ce qui est vérifiable : ni note agrégée, ni offre, ni date de
+  sortie, qui seraient inventées et vaudraient une pénalité pour balisage
+  trompeur.
+*/
 export async function JsonLd({ locale }: { locale: Locale }) {
   const t = await getTranslations({ locale, namespace: "Metadata" });
   const seo = await getTranslations({ locale, namespace: "Seo" });
@@ -64,7 +64,7 @@ export async function JsonLd({ locale }: { locale: Locale }) {
   );
 }
 
-/** Le site est plat : l'accueil, puis la page. `urlFor` donne le chemin localisé. */
+// Le site est plat : l'accueil, puis la page. `urlFor` donne le chemin localisé.
 export async function BreadcrumbJsonLd({
   locale,
   href,

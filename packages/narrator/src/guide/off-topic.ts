@@ -1,10 +1,10 @@
 import type { LlmStreamEvent } from '@odyssai/llm';
 
-/**
- * Le modele repond exactement ceci quand la question sort du perimetre. Une
- * sentinelle plutot qu'un texte libre : le texte servi au visiteur est ecrit
- * cote serveur, donc ni traduit de travers ni inventif.
- */
+/*
+  Le modele repond exactement ceci quand la question sort du perimetre. Une
+  sentinelle plutot qu'un texte libre : le texte servi au visiteur est ecrit
+  cote serveur, donc ni traduit de travers ni inventif.
+*/
 export const OFF_TOPIC_SENTINEL = '[[HORS_SUJET]]';
 
 export interface GuideUsage {
@@ -20,21 +20,21 @@ export type OffTopicSplit =
   | {
       kind: 'stream';
       chunks: AsyncIterable<string>;
-      /** Definitif une fois `chunks` epuise. */
+      // Definitif une fois `chunks` epuise.
       usage: () => GuideUsage | undefined;
     };
 
-/**
- * Bufferise le debut du flux pour decider s'il s'agit d'un refus.
- *
- * Tant que le buffer reste un prefixe de la sentinelle, on accumule sans rien
- * emettre. Des qu'elle est complete, on coupe l'appel amont : inutile de payer
- * une generation dont rien ne sera servi. Des que le buffer diverge, on rend le
- * buffer puis la suite, sans alteration.
- *
- * La sentinelle arrive souvent coupee entre plusieurs chunks, d'ou la
- * comparaison par prefixe plutot qu'une egalite sur le premier chunk.
- */
+/*
+  Bufferise le debut du flux pour decider s'il s'agit d'un refus.
+
+  Tant que le buffer reste un prefixe de la sentinelle, on accumule sans rien
+  emettre. Des qu'elle est complete, on coupe l'appel amont : inutile de payer
+  une generation dont rien ne sera servi. Des que le buffer diverge, on rend le
+  buffer puis la suite, sans alteration.
+
+  La sentinelle arrive souvent coupee entre plusieurs chunks, d'ou la
+  comparaison par prefixe plutot qu'une egalite sur le premier chunk.
+*/
 export async function splitOffTopic(
   source: AsyncIterable<LlmStreamEvent>,
   abort: AbortController,

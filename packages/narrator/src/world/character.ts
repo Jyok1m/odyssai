@@ -55,14 +55,14 @@ export function buildCharacterMessages(
   return CHARACTER_PROMPT.build(locale, history, message);
 }
 
-/**
- * Un tour de conversation. Le texte est rendu au fil de l'eau, l'usage n'est
- * connu qu'a la fin : l'appelant lit `usage()` une fois le flux epuise.
- *
- * Le marqueur de fiche est retire du texte par `splitTail`, donc ni diffuse ni
- * enregistre : ce qui reste est la phrase adressee au joueur, et l'appelant lit
- * `sheetRequested()` une fois le flux epuise pour savoir s'il faut la dresser.
- */
+/*
+  Un tour de conversation. Le texte est rendu au fil de l'eau, l'usage n'est
+  connu qu'a la fin : l'appelant lit `usage()` une fois le flux epuise.
+
+  Le marqueur de fiche est retire du texte par `splitTail`, donc ni diffuse ni
+  enregistre : ce qui reste est la phrase adressee au joueur, et l'appelant lit
+  `sheetRequested()` une fois le flux epuise pour savoir s'il faut la dresser.
+*/
 export function converseCharacter(request: CharacterTurnRequest): {
   chunks: AsyncIterable<string>;
   sheetRequested: () => boolean;
@@ -112,11 +112,11 @@ export interface CharacterExtractRequest {
   onTraced?: (traced: boolean) => void;
 }
 
-/**
- * `partial` n'est pas un echec : le modele a rendu du JSON, mais des champs
- * n'ont pas tenu le schema. On garde ce qui tient et l'ecran demande le reste,
- * plutot que de tout jeter pour un age fantaisiste.
- */
+/*
+  `partial` n'est pas un echec : le modele a rendu du JSON, mais des champs
+  n'ont pas tenu le schema. On garde ce qui tient et l'ecran demande le reste,
+  plutot que de tout jeter pour un age fantaisiste.
+*/
 export type CharacterExtractResult =
   | { kind: 'ok'; character: CharacterDraft; missing: string[]; usage: CharacterUsage }
   | { kind: 'invalid_json'; usage: CharacterUsage };

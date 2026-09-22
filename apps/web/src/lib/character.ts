@@ -38,7 +38,7 @@ export async function fetchConversation(
   return CharacterConversationSchema.parse(await response.json());
 }
 
-/** Ouvre le flux et rend chaque événement validé. */
+// Ouvre le flux et rend chaque événement validé.
 export async function sendCharacterMessage(
   content: string,
   onEvent: (event: CharacterStreamEvent) => void,
@@ -56,7 +56,7 @@ export async function sendCharacterMessage(
   await readEventStream(response, CharacterStreamEventSchema, onEvent);
 }
 
-/** Une proposition, pas un enregistrement : c'est PUT /onboarding qui écrit. */
+// Une proposition, pas un enregistrement : c'est PUT /onboarding qui écrit.
 export async function extractCharacter(
   signal?: AbortSignal,
 ): Promise<CharacterExtractResponse> {

@@ -2,15 +2,17 @@ import { Injectable, Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { OPENROUTER_ONLY_BODY_KEYS } from '@odyssai/llm';
 
-/**
- * Cles de test Cloudflare. Elles acceptent n'importe quel jeton, ce qui est
- * exactement ce qu'il faut en developpement et exactement ce qu'il ne faut pas
- * en production.
- */
+/*
+  Cles de test Cloudflare. Elles acceptent n'importe quel jeton, ce qui est
+  exactement ce qu'il faut en developpement et exactement ce qu'il ne faut pas
+  en production.
+*/
 const TURNSTILE_TEST_KEY_PREFIXES = ['1x', '2x', '3x'];
 
-/** Le defaut porte sur la chaine, avant la transformation : Zod 4 attend la
- * valeur de sortie si l'ordre est inverse. */
+/*
+  Le defaut porte sur la chaine, avant la transformation : Zod 4 attend la
+  valeur de sortie si l'ordre est inverse.
+*/
 const boolish = (fallback: 'true' | 'false') =>
   z
     .enum(['true', 'false'])
@@ -135,11 +137,11 @@ function parseExtraBody(
   }
 }
 
-/**
- * `trust proxy` d'Express : false, un nombre de proxys, ou une liste d'adresses.
- * Mal regle, req.ip vaut l'adresse du proxy et la limite par IP devient une
- * limite globale.
- */
+/*
+  `trust proxy` d'Express : false, un nombre de proxys, ou une liste d'adresses.
+  Mal regle, req.ip vaut l'adresse du proxy et la limite par IP devient une
+  limite globale.
+*/
 function parseTrustProxy(raw: string): boolean | number | string[] {
   if (raw === 'false' || raw === '') return false;
   if (raw === 'true') return true;
@@ -150,11 +152,11 @@ function parseTrustProxy(raw: string): boolean | number | string[] {
   return raw.split(',').map((part) => part.trim()).filter(Boolean);
 }
 
-/**
- * Configuration du guide, validee au demarrage comme AppConfig. Une classe a
- * part plutot que vingt-cinq variables de plus dans AppConfig : le bootstrap
- * echoue de la meme facon, la lecture reste possible.
- */
+/*
+  Configuration du guide, validee au demarrage comme AppConfig. Une classe a
+  part plutot que vingt-cinq variables de plus dans AppConfig : le bootstrap
+  echoue de la meme facon, la lecture reste possible.
+*/
 @Injectable()
 export class GuideConfig {
   private readonly logger = new Logger(GuideConfig.name);
@@ -196,7 +198,7 @@ export class GuideConfig {
     return this.env.LLM_GUIDE_PROVIDER;
   }
 
-  /** Jamais journalisee ni renvoyee : elle ne sort que vers createLlmClient. */
+  // Jamais journalisee ni renvoyee : elle ne sort que vers createLlmClient.
   get apiKey(): string {
     return this.provider === 'openrouter'
       ? this.env.OPENROUTER_API_KEY

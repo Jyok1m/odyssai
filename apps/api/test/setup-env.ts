@@ -1,7 +1,7 @@
-/**
- * AppModule valide sa configuration a l'instanciation : sans ces variables, le
- * module ne se construit pas. Redis est double dans chaque suite.
- */
+/*
+  AppModule valide sa configuration a l'instanciation : sans ces variables, le
+  module ne se construit pas. Redis est double dans chaque suite.
+*/
 Object.assign(process.env, {
   NODE_ENV: 'test',
   PORT: '3001',

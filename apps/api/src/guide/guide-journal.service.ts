@@ -19,7 +19,7 @@ export interface JournalEntry {
   reasoningTokens?: number;
   costUsd?: number;
   traced: boolean;
-  /** Uniquement pour les reponses generees, jamais pour les textes fixes. */
+  // Uniquement pour les reponses generees, jamais pour les textes fixes.
   answer?: string;
   promptVersion: string;
   corpusVersion: string;
@@ -40,8 +40,10 @@ export class GuideJournalService implements OnModuleInit {
     );
   }
 
-  /** Une erreur d'ecriture est journalisee, jamais relancee : le visiteur a
-   * deja recu sa reponse, et le journal ne vaut pas de casser le flux. */
+  /*
+    Une erreur d'ecriture est journalisee, jamais relancee : le visiteur a
+    deja recu sa reponse, et le journal ne vaut pas de casser le flux.
+  */
   async record(entry: JournalEntry): Promise<void> {
     try {
       await this.prisma.guideQuestion.create({

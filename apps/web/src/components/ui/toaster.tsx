@@ -2,11 +2,11 @@ import { Toaster as HotToaster } from "react-hot-toast";
 
 import { BRAND_INK } from "@/lib/site";
 
-/**
- * react-hot-toast habillé aux valeurs `.toast` du kit. Par `style` et non par
- * des classes : la librairie pose les siens en ligne, et les surcharger en
- * Tailwind demanderait des `!important` partout.
- */
+/*
+  react-hot-toast habillé aux valeurs `.toast` du kit. Par `style` et non par
+  des classes : la librairie pose les siens en ligne, et les surcharger en
+  Tailwind demanderait des `!important` partout.
+*/
 export function Toaster() {
   return (
     <HotToaster

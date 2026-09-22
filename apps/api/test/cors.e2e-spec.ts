@@ -11,13 +11,13 @@ import { REDIS } from './../src/redis/redis.module.js';
 import { FakeRedis } from './../src/auth/testing/doubles.js';
 import { makeOnboardingPrisma } from './../src/onboarding/testing/doubles.js';
 
-/**
- * Le preflight, et rien d'autre.
- *
- * supertest appelle l'application sans jamais en emettre un : une route servie
- * sous un verbe absent de la configuration CORS passait donc tous les tests et
- * echouait dans le navigateur seul. C'est ce qui est arrive a PUT /onboarding.
- */
+/*
+  Le preflight, et rien d'autre.
+
+  supertest appelle l'application sans jamais en emettre un : une route servie
+  sous un verbe absent de la configuration CORS passait donc tous les tests et
+  echouait dans le navigateur seul. C'est ce qui est arrive a PUT /onboarding.
+*/
 describe('CORS (e2e)', () => {
   let app: INestApplication<App>;
   const origin = 'http://localhost:3000';

@@ -12,7 +12,7 @@ import { Link } from "@/i18n/navigation";
 
 import { LocaleSwitcher } from "./locale-switcher";
 
-/** Chemins internes ; next-intl les traduit en URLs localisées. */
+// Chemins internes ; next-intl les traduit en URLs localisées.
 const NAV_ITEMS = [
   { key: "concept", href: "/concept" },
   { key: "universes", href: "/univers" },

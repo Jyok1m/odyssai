@@ -45,10 +45,10 @@ export async function fetchHistory(signal?: AbortSignal): Promise<TurnHistory> {
   return TurnHistorySchema.parse(await response.json());
 }
 
-/**
- * Joue un tour. Le flux porte le récit, puis une conclusion qui dit si le sort
- * a penché, et seulement quand il a servi.
- */
+/*
+  Joue un tour. Le flux porte le récit, puis une conclusion qui dit si le sort
+  a penché, et seulement quand il a servi.
+*/
 export async function playTurn(
   request: TurnRequest,
   onEvent: (event: TurnStreamEvent) => void,

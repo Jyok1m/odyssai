@@ -13,12 +13,12 @@ import { Button } from "@/components/ui/button";
 import { isOutOfCredits } from "@/lib/billing";
 import { TurnError, fetchHistory, playTurn } from "@/lib/turn";
 
-/**
- * La table de jeu.
- *
- * Le meneur mène, le joueur répond. Le dé ne montre jamais son chiffre : deux
- * états seulement, et le détail se lit dans le récit.
- */
+/*
+  La table de jeu.
+
+  Le meneur mène, le joueur répond. Le dé ne montre jamais son chiffre : deux
+  états seulement, et le détail se lit dans le récit.
+*/
 export function GameChat() {
   const t = useTranslations("Game");
 
@@ -126,17 +126,17 @@ export function GameChat() {
     }
   };
 
-  /**
-   * La première scène, jouée dès l'arrivée si rien n'a encore été joué.
-   *
-   * C'est le meneur qui ouvre une partie, pas celui qui la joue : sans cela le
-   * joueur arrive devant un champ vide et doit deviner qu'il commence.
-   *
-   * `opened` et non l'état des messages : le fil se remplit pendant l'appel, et
-   * une condition qui le lirait relancerait une seconde ouverture. L'API refuse
-   * de toute façon dès qu'un tour existe, mais le lui demander deux fois serait
-   * déjà de trop.
-   */
+  /*
+    La première scène, jouée dès l'arrivée si rien n'a encore été joué.
+
+    C'est le meneur qui ouvre une partie, pas celui qui la joue : sans cela le
+    joueur arrive devant un champ vide et doit deviner qu'il commence.
+
+    `opened` et non l'état des messages : le fil se remplit pendant l'appel, et
+    une condition qui le lirait relancerait une seconde ouverture. L'API refuse
+    de toute façon dès qu'un tour existe, mais le lui demander deux fois serait
+    déjà de trop.
+  */
   useEffect(() => {
     if (!loaded || opened.current || messages.length > 0) return;
     opened.current = true;

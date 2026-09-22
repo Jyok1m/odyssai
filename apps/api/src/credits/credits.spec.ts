@@ -27,11 +27,11 @@ describe('bareme', () => {
     );
   });
 
-  /**
-   * Les paliers vivent en base depuis le tableau de bord d'administration ;
-   * seul le slug du palier offert reste une constante, parce que c'est celui
-   * sur lequel un abonnement resilie retombe.
-   */
+  /*
+    Les paliers vivent en base depuis le tableau de bord d'administration ;
+    seul le slug du palier offert reste une constante, parce que c'est celui
+    sur lequel un abonnement resilie retombe.
+  */
   it('garde le slug du palier offert en code', () => {
     expect(FREE_PLAN_SLUG).toBe('free');
   });
@@ -52,10 +52,10 @@ describe('ancrage des periodes', () => {
     );
   });
 
-  /**
-   * Le piege de `setMonth` : le 31 janvier plus un mois donne le 3 mars, parce
-   * que fevrier n'a pas de 31. Un abonne du 31 doit rester au dernier jour.
-   */
+  /*
+    Le piege de `setMonth` : le 31 janvier plus un mois donne le 3 mars, parce
+    que fevrier n'a pas de 31. Un abonne du 31 doit rester au dernier jour.
+  */
   it('ne deborde pas sur le mois suivant', () => {
     expect(nextPeriod(new Date('2026-01-31T10:00:00Z')).toISOString()).toBe(
       '2026-02-28T10:00:00.000Z',
@@ -78,14 +78,14 @@ describe('ancrage des periodes', () => {
   });
 });
 
-/**
- * Le bonus des premiers arrives.
- *
- * La regle tient en deux phrases et se casse en silence : un administrateur y
- * a droit sans occuper une des cent places, et la centieme place se compte sur
- * les inscriptions anterieures, pas sur un compteur. Un test parce qu'une
- * erreur ici ne se verrait qu'au centieme joueur.
- */
+/*
+  Le bonus des premiers arrives.
+
+  La regle tient en deux phrases et se casse en silence : un administrateur y
+  a droit sans occuper une des cent places, et la centieme place se compte sur
+  les inscriptions anterieures, pas sur un compteur. Un test parce qu'une
+  erreur ici ne se verrait qu'au centieme joueur.
+*/
 describe('bonus des cent premiers', () => {
   const plan = { slug: FREE_PLAN_SLUG, monthlyCredits: 0, welcomeCredits: 50 };
 
@@ -149,12 +149,12 @@ describe('bonus des cent premiers', () => {
   });
 });
 
-/**
- * Un administrateur joue sans limite.
- *
- * Ce que ses parties coutent reste compte par `llm_usage` : c'est la reserve
- * qui ne bouge pas, pas la comptabilite.
- */
+/*
+  Un administrateur joue sans limite.
+
+  Ce que ses parties coutent reste compte par `llm_usage` : c'est la reserve
+  qui ne bouge pas, pas la comptabilite.
+*/
 describe('reserve illimitee', () => {
   function serviceFor(isAdmin: boolean, credits: number) {
     const prisma = {
@@ -193,14 +193,14 @@ describe('reserve illimitee', () => {
   });
 });
 
-/**
- * Le roulement de periode.
- *
- * La regle « les credits ne se reportent pas » borne un abonne qui en recoit
- * de nouveaux. Appliquee telle quelle a un palier sans dotation, elle
- * confisquait une reserve offerte que rien ne remplacait : quelqu'un qui
- * s'inscrit et ne joue pas perdait tout au bout d'un mois.
- */
+/*
+  Le roulement de periode.
+
+  La regle « les credits ne se reportent pas » borne un abonne qui en recoit
+  de nouveaux. Appliquee telle quelle a un palier sans dotation, elle
+  confisquait une reserve offerte que rien ne remplacait : quelqu'un qui
+  s'inscrit et ne joue pas perdait tout au bout d'un mois.
+*/
 describe('roulement de periode', () => {
   function serviceFor(plan: { monthlyCredits: number }, credits: number) {
     const passed = new Date(Date.now() - 40 * 24 * 3600 * 1000);
@@ -267,15 +267,15 @@ describe('roulement de periode', () => {
   });
 });
 
-/**
- * Apres une resiliation chez Stripe.
- *
- * Le webhook `customer.subscription.deleted` fait retomber la ligne au palier
- * libre avec le statut `canceled`, sans toucher a la reserve. Reste le
- * roulement de periode : il ne doit plus rien verser, et surtout rien
- * reprendre. Les credits sont payes, ils ne s'evaporent pas parce que
- * l'abonnement s'arrete.
- */
+/*
+  Apres une resiliation chez Stripe.
+
+  Le webhook `customer.subscription.deleted` fait retomber la ligne au palier
+  libre avec le statut `canceled`, sans toucher a la reserve. Reste le
+  roulement de periode : il ne doit plus rien verser, et surtout rien
+  reprendre. Les credits sont payes, ils ne s'evaporent pas parce que
+  l'abonnement s'arrete.
+*/
 describe('apres une resiliation', () => {
   it('garde les credits et n en verse plus', async () => {
     const passed = new Date(Date.now() - 40 * 24 * 3600 * 1000);
@@ -336,13 +336,13 @@ describe('apres une resiliation', () => {
   });
 });
 
-/**
- * Deux requetes du meme joueur qui ouvrent sa reserve en meme temps.
- *
- * L'ecran de compte lit sa reserve pendant que la page de tarifs lit son
- * palier : les deux voient une ligne absente, les deux l'ouvrent, et
- * `subscriptions.user_id` etant unique, l'une des deux perdait en cinq cents.
- */
+/*
+  Deux requetes du meme joueur qui ouvrent sa reserve en meme temps.
+
+  L'ecran de compte lit sa reserve pendant que la page de tarifs lit son
+  palier : les deux voient une ligne absente, les deux l'ouvrent, et
+  `subscriptions.user_id` etant unique, l'une des deux perdait en cinq cents.
+*/
 describe('ouverture concurrente', () => {
   it('relit la ligne plutot que d echouer', async () => {
     const existing = { id: 's1', plan: FREE_PLAN_SLUG, credits: 50 };

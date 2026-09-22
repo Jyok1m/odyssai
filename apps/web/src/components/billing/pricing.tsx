@@ -16,18 +16,18 @@ import {
   startCheckout,
 } from "@/lib/billing";
 
-/**
- * La grille des paliers, le comparatif et la foire aux questions.
- *
- * Tout vient de `GET /billing/catalog`, public et sans session : le barème n'a
- * rien de personnel, et un visiteur doit voir les prix avant de s'inscrire.
- *
- * **Rien n'est écrit en dur ici**, ni un nom de palier, ni un montant, ni une
- * dotation. Les paliers se créent au tableau de bord et leurs noms ne sont pas
- * connus à la compilation ; les montants vivent chez Stripe, les recopier
- * ferait deux vérités. Même les lignes du comparatif se déduisent des
- * chiffres, pour qu'un palier ajouté demain s'y range sans qu'on y touche.
- */
+/*
+  La grille des paliers, le comparatif et la foire aux questions.
+
+  Tout vient de `GET /billing/catalog`, public et sans session : le barème n'a
+  rien de personnel, et un visiteur doit voir les prix avant de s'inscrire.
+
+  **Rien n'est écrit en dur ici**, ni un nom de palier, ni un montant, ni une
+  dotation. Les paliers se créent au tableau de bord et leurs noms ne sont pas
+  connus à la compilation ; les montants vivent chez Stripe, les recopier
+  ferait deux vérités. Même les lignes du comparatif se déduisent des
+  chiffres, pour qu'un palier ajouté demain s'y range sans qu'on y touche.
+*/
 export function Pricing() {
   const t = useTranslations("Pricing");
   const session = useSession();
@@ -136,7 +136,7 @@ export function Pricing() {
   );
 }
 
-/** Une carte de palier. Tout son contenu se déduit des chiffres du catalogue. */
+// Une carte de palier. Tout son contenu se déduit des chiffres du catalogue.
 function PlanCard({
   plan,
   costs,
@@ -156,12 +156,12 @@ function PlanCard({
   const format = useFormatter();
   const [leaving, setLeaving] = useState(false);
 
-  /**
-   * Une navigation de premier niveau, jamais un fetch : la page de Stripe
-   * refuse d'être chargée en second plan. La session est obligatoire pour
-   * ouvrir un paiement, d'où le passage par la connexion pour un visiteur
-   * anonyme, qui revient ensuite sur cette page.
-   */
+  /*
+    Une navigation de premier niveau, jamais un fetch : la page de Stripe
+    refuse d'être chargée en second plan. La session est obligatoire pour
+    ouvrir un paiement, d'où le passage par la connexion pour un visiteur
+    anonyme, qui revient ensuite sur cette page.
+  */
   const choose = async () => {
     setLeaving(true);
     try {
@@ -291,11 +291,11 @@ function Highlight({ children }: { children: React.ReactNode }) {
   );
 }
 
-/**
- * Le comparatif, dans un seul tableau qui défile plutôt qu'en deux structures.
- * Le kit autorise un tableau plus large que la page à condition qu'il porte
- * son propre défilement : la page, elle, ne défile jamais de côté.
- */
+/*
+  Le comparatif, dans un seul tableau qui défile plutôt qu'en deux structures.
+  Le kit autorise un tableau plus large que la page à condition qu'il porte
+  son propre défilement : la page, elle, ne défile jamais de côté.
+*/
 function Comparison({
   catalog,
   featured,

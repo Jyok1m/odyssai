@@ -26,14 +26,14 @@ export async function generateMetadata({
   });
 }
 
-/**
- * La page de tarifs.
- *
- * Ce n'est pas une `ProsePage` : son contenu ne vit pas dans les messages mais
- * dans le catalogue servi par l'API, et il change quand un palier change. Le
- * JSON-LD des pages de contenu ne s'y applique pas non plus, faute de quoi il
- * faudrait y déclarer des offres, que la page ne connaît qu'au chargement.
- */
+/*
+  La page de tarifs.
+
+  Ce n'est pas une `ProsePage` : son contenu ne vit pas dans les messages mais
+  dans le catalogue servi par l'API, et il change quand un palier change. Le
+  JSON-LD des pages de contenu ne s'y applique pas non plus, faute de quoi il
+  faudrait y déclarer des offres, que la page ne connaît qu'au chargement.
+*/
 export default function PricingPage() {
   const t = useTranslations("Pricing");
 

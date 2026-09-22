@@ -17,12 +17,12 @@ function open(): CharacterService {
 }
 
 describe('conversation de creation', () => {
-  /**
-   * La table refuse deux messages de meme rang dans un canal. Le rang n'etant
-   * pas ecrit, tous partaient a zero et le deuxieme message de la conversation
-   * tombait sur la contrainte : la creation de personnage s'arretait au
-   * premier echange.
-   */
+  /*
+    La table refuse deux messages de meme rang dans un canal. Le rang n'etant
+    pas ecrit, tous partaient a zero et le deuxieme message de la conversation
+    tombait sur la contrainte : la creation de personnage s'arretait au
+    premier echange.
+  */
   it('enchaine plusieurs echanges', async () => {
     const characters = open();
 

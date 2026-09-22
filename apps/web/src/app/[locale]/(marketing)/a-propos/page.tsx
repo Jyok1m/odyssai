@@ -27,13 +27,13 @@ export async function generateMetadata({
   });
 }
 
-/**
- * Qui fait OdyssAI, pourquoi, et où en est le projet.
- *
- * Une page de contenu comme les autres, donc elle entre dans le corpus du
- * guide : « c'est qui derrière ce site » est une question qu'on pose avant de
- * confier son adresse électronique à un jeu en alpha.
- */
+/*
+  Qui fait OdyssAI, pourquoi, et où en est le projet.
+
+  Une page de contenu comme les autres, donc elle entre dans le corpus du
+  guide : « c'est qui derrière ce site » est une question qu'on pose avant de
+  confier son adresse électronique à un jeu en alpha.
+*/
 export default function Page() {
   const t = useTranslations(NS);
 

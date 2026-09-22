@@ -9,13 +9,15 @@ import { WorldError, fetchWorld } from "@/lib/world";
 import { GameChat } from "./game-chat";
 import { RestartAction } from "./restart-action";
 
-/**
- * Coquille de jeu. Elle montre le monde généré et le personnage, et ouvre la
- * conversation. Le tour de jeu n'existe pas encore : la saisie est là, inerte,
- * et le dit plutôt que de faire croire à une partie.
- */
-/** `onRestart` fait relire le parcours : le serveur a ramené le joueur à
- * l'inspiration, et l'assistant doit le suivre. */
+/*
+  Coquille de jeu. Elle montre le monde généré et le personnage, et ouvre la
+  conversation. Le tour de jeu n'existe pas encore : la saisie est là, inerte,
+  et le dit plutôt que de faire croire à une partie.
+*/
+/*
+  `onRestart` fait relire le parcours : le serveur a ramené le joueur à
+  l'inspiration, et l'assistant doit le suivre.
+*/
 export function WorldShell({ onRestart }: { onRestart: () => void }) {
   const t = useTranslations("Play");
 

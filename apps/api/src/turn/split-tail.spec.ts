@@ -35,10 +35,10 @@ describe('decoupage en queue', () => {
     expect(tail).toBe('{"kind":"action"}');
   });
 
-  /**
-   * Le cas qui justifie la fenetre glissante : le marqueur arrive coupe, et
-   * aucun de ses morceaux ne doit atteindre le joueur.
-   */
+  /*
+    Le cas qui justifie la fenetre glissante : le marqueur arrive coupe, et
+    aucun de ses morceaux ne doit atteindre le joueur.
+  */
   it('ne laisse fuir aucun fragment d un marqueur coupe en trois', async () => {
     const { prose, tail } = await drain(
       splitTail(stream('Tu avances.', '[[CA', 'NO', 'N]]{"kind":"action"}')),
@@ -90,10 +90,10 @@ describe('decoupage en queue', () => {
     expect(tail).toBe('{}');
   });
 
-  /**
-   * Le cas du marqueur de fiche : il ne porte rien, il signale. Une queue vide
-   * ne dit donc pas s'il est passe, et c'est `seen` qui tranche.
-   */
+  /*
+    Le cas du marqueur de fiche : il ne porte rien, il signale. Une queue vide
+    ne dit donc pas s'il est passe, et c'est `seen` qui tranche.
+  */
   it('signale un marqueur qui ne laisse rien derriere lui', async () => {
     const { prose, tail, seen } = await drain(
       splitTail(stream('Je dresse ta fiche. ', '[[FI', 'CHE]]'), '[[FICHE]]'),

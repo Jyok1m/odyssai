@@ -81,10 +81,10 @@ describe('arbitrage du canon', () => {
     expect(verdict.rejected).toHaveLength(0);
   });
 
-  /**
-   * Le canon nourrit tous les tours suivants : un interdit franchi une fois ne
-   * se referme plus, d'ou un refus plutot qu'un avertissement.
-   */
+  /*
+    Le canon nourrit tous les tours suivants : un interdit franchi une fois ne
+    se referme plus, d'ou un refus plutot qu'un avertissement.
+  */
   it('refuse un fait qui contredit un interdit de la charte', () => {
     const verdict = arbitrateCanon(
       [fact('la garde', 'La garde porte une arme a feu depuis la derniere crue.')],

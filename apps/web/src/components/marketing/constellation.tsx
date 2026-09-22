@@ -1,12 +1,12 @@
-/**
- * Décor du hero, reprise de l'élément `.sky` du kit : les mondes sont des
- * nœuds, les arêtes les passages de l'un à l'autre, et l'étoile de laiton le
- * Lore Général (le point fixe que tous les univers partagent).
- *
- * Les quatre couleurs de monde sont les exemples d'accent du kit. Elles vivent
- * dans des attributs SVG, pas dans des classes, la convention Tailwind ne s'y
- * applique donc pas.
- */
+/*
+  Décor du hero, reprise de l'élément `.sky` du kit : les mondes sont des
+  nœuds, les arêtes les passages de l'un à l'autre, et l'étoile de laiton le
+  Lore Général (le point fixe que tous les univers partagent).
+
+  Les quatre couleurs de monde sont les exemples d'accent du kit. Elles vivent
+  dans des attributs SVG, pas dans des classes, la convention Tailwind ne s'y
+  applique donc pas.
+*/
 const EDGES =
   "M70 110L200 60L300 160L430 90L540 190L500 340L380 270L300 160M380 270L230 320L130 230L70 110M130 230L300 160";
 
@@ -33,7 +33,7 @@ const WORLDS = [
   { cx: 130, cy: 230, r: 6, stroke: "#B7C46A" },
 ];
 
-/** L'étoile à quatre branches du logo, réutilisée telle quelle. */
+// L'étoile à quatre branches du logo, réutilisée telle quelle.
 const LORE_STAR =
   "M0-10C1.2-2.4 2.4-1.2 10 0 2.4 1.2 1.2 2.4 0 10-1.2 2.4-2.4 1.2-10 0-2.4-1.2-1.2-2.4 0-10Z";
 

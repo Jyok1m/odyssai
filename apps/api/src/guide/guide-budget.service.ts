@@ -3,13 +3,13 @@ import { Redis } from 'ioredis';
 import { GuideConfig } from '../config/guide-config.js';
 import { REDIS } from '../redis/redis.module.js';
 
-/** Jour UTC, aligne sur la remise a zero du plafond OpenRouter. */
+// Jour UTC, aligne sur la remise a zero du plafond OpenRouter.
 const BUDGET_TTL_SECONDS = 172_800;
 
-/**
- * Le ratio est volontairement pessimiste : trois caracteres par token surestime
- * le francais, et un budget qui se trompe doit se tromper vers le haut.
- */
+/*
+  Le ratio est volontairement pessimiste : trois caracteres par token surestime
+  le francais, et un budget qui se trompe doit se tromper vers le haut.
+*/
 const CHARS_PER_TOKEN = 3;
 
 export const RESERVE_BUDGET = `
@@ -25,10 +25,10 @@ redis.call('EXPIRE', KEYS[3], ARGV[4])
 return 1
 `;
 
-/**
- * Retire la reservation et ajoute le cout reel. ARGV[2] vide signifie qu'aucun
- * usage n'est remonte : on retient alors le montant reserve, du cote prudent.
- */
+/*
+  Retire la reservation et ajoute le cout reel. ARGV[2] vide signifie qu'aucun
+  usage n'est remonte : on retient alors le montant reserve, du cote prudent.
+*/
 export const SETTLE_BUDGET = `
 local reserved = redis.call('HGET', KEYS[3], ARGV[1])
 if reserved then
@@ -58,7 +58,7 @@ export class GuideBudgetService {
     private readonly config: GuideConfig,
   ) {}
 
-  /** Majorant du cout d'un tour, avant de savoir ce qu'il coutera vraiment. */
+  // Majorant du cout d'un tour, avant de savoir ce qu'il coutera vraiment.
   estimate(promptChars: number): number {
     const { inputUsdPerMTok, outputUsdPerMTok } = this.config.prices;
     const inputTokens = Math.ceil(promptChars / CHARS_PER_TOKEN);
@@ -89,10 +89,10 @@ export class GuideBudgetService {
     return Number(granted) === 1;
   }
 
-  /**
-   * Cout reel, par ordre de preference : celui rendu par le fournisseur, sinon
-   * le calcul a partir des tokens, sinon le montant reserve.
-   */
+  /*
+    Cout reel, par ordre de preference : celui rendu par le fournisseur, sinon
+    le calcul a partir des tokens, sinon le montant reserve.
+  */
   async settle(
     requestId: string,
     usage: UsageForBudget | undefined,

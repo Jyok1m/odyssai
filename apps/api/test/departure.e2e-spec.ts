@@ -20,7 +20,7 @@ const SESSION_ID = 'session-de-test';
 const COOKIE = `odyssai_session=${SESSION_ID}`;
 const UNIVERSE_ID = '01860000-0000-7000-8000-000000000001';
 const CHARACTER_ID = '01860000-0000-7000-8000-000000000002';
-/** Le monde d'accueil : le personnage y a voyage, le sien n'a recu personne. */
+// Le monde d'accueil : le personnage y a voyage, le sien n'a recu personne.
 const HOST_UNIVERSE_ID = '01860000-0000-7000-8000-000000000003';
 
 interface Harness {
@@ -28,7 +28,7 @@ interface Harness {
   store: OnboardingStore;
 }
 
-/** `visited` et `met` disent ce que d'autres joueurs ont deja vu. */
+// `visited` et `met` disent ce que d'autres joueurs ont deja vu.
 async function boot(
   options: { step?: string; visited?: boolean; met?: boolean } = {},
 ): Promise<Harness> {
@@ -162,10 +162,10 @@ describe('depart (e2e)', () => {
     await app.close();
   });
 
-  /**
-   * Le personnage a voyage, son monde non. Les deux questions sont
-   * independantes : la tombe doit survivre a la suppression du monde.
-   */
+  /*
+    Le personnage a voyage, son monde non. Les deux questions sont
+    independantes : la tombe doit survivre a la suppression du monde.
+  */
   it('garde un personnage rencontre, et le dit mort', async () => {
     const { app, store } = await boot({ met: true });
 

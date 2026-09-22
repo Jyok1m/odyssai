@@ -8,13 +8,13 @@ import { Badge, Empty, Feedback, Page, Panel, reasonOf } from "@/components/admi
 import { Button } from "@/components/ui/button";
 import { fetchContactMessages, setContactHandled } from "@/lib/contact";
 
-/**
- * Les messages du formulaire de contact.
- *
- * Ils partent aussi par courriel, mais restent lisibles ici : un envoi peut
- * échouer, et une boîte peut se perdre. `delivered` dit lesquels ne sont
- * jamais partis, ce sont ceux à ne pas manquer.
- */
+/*
+  Les messages du formulaire de contact.
+
+  Ils partent aussi par courriel, mais restent lisibles ici : un envoi peut
+  échouer, et une boîte peut se perdre. `delivered` dit lesquels ne sont
+  jamais partis, ce sont ceux à ne pas manquer.
+*/
 export function ContactView() {
   const [messages, setMessages] = useState<ContactMessage[] | null>(null);
   const [cursor, setCursor] = useState<string | null>(null);

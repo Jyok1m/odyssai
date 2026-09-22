@@ -96,11 +96,11 @@ afterEach(async () => {
 });
 
 describe('Tableau de bord (e2e)', () => {
-  /**
-   * Le test qui compte le plus. `AdminGuard` se pose apres `SessionGuard`, et
-   * l'inversion des deux ouvrirait tout a un anonyme sans qu'aucun type ne
-   * bronche. Chaque route est donc verifiee, pas seulement la premiere.
-   */
+  /*
+    Le test qui compte le plus. `AdminGuard` se pose apres `SessionGuard`, et
+    l'inversion des deux ouvrirait tout a un anonyme sans qu'aucun type ne
+    bronche. Chaque route est donc verifiee, pas seulement la premiere.
+  */
   it.each([
     ['get', '/admin/overview'],
     ['get', '/admin/users'],
@@ -156,10 +156,10 @@ describe('Tableau de bord (e2e)', () => {
     expect(response.body.rows[0].username).toBe('Ael');
   });
 
-  /**
-   * Remettre a zero reste un mouvement : le grand livre est en ajout seul, et
-   * un solde qui tombe sans ecriture serait un trou inexplicable.
-   */
+  /*
+    Remettre a zero reste un mouvement : le grand livre est en ajout seul, et
+    un solde qui tombe sans ecriture serait un trou inexplicable.
+  */
   it('remet une reserve a zero en l ecrivant au grand livre', async () => {
     harness = await boot(true);
     const ael = harness.store.users.find((row) => row.username === 'Ael')!;
@@ -235,7 +235,7 @@ describe('Tableau de bord (e2e)', () => {
     expect(free.removable).toBe(false);
   });
 
-  /** Tout y retombe : le supprimer laisserait des abonnements sans palier. */
+  // Tout y retombe : le supprimer laisserait des abonnements sans palier.
   it('protege le palier offert de la suppression', async () => {
     harness = await boot(true);
 
@@ -271,10 +271,10 @@ describe('Tableau de bord (e2e)', () => {
     expect(response.body.code).toBe('slug_taken');
   });
 
-  /**
-   * Sans montant, rien ne part chez Stripe : un palier offert se cree hors
-   * ligne, ce qui permet d'en ajouter un sans compte de paiement.
-   */
+  /*
+    Sans montant, rien ne part chez Stripe : un palier offert se cree hors
+    ligne, ce qui permet d'en ajouter un sans compte de paiement.
+  */
   it('cree un palier offert sans rien demander a Stripe', async () => {
     harness = await boot(true);
 

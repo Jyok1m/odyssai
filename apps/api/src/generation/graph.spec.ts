@@ -123,11 +123,11 @@ interface WorldLlm extends LlmClient {
   calls: StreamChatRequest[];
 }
 
-/**
- * Faux client qui repond par noeud. Il lit l'etape dans les metadonnees de
- * trace plutot que dans le texte du prompt : c'est la seule facon de savoir
- * quel noeud appelle sans dependre de la formulation des consignes.
- */
+/*
+  Faux client qui repond par noeud. Il lit l'etape dans les metadonnees de
+  trace plutot que dans le texte du prompt : c'est la seule facon de savoir
+  quel noeud appelle sans dependre de la formulation des consignes.
+*/
 function makeWorldLlm(
   scripted: Partial<Record<GenerationNode, unknown[]>> = {},
 ): WorldLlm {
@@ -140,11 +140,11 @@ function makeWorldLlm(
     calls,
     async flushTraces() {},
 
-    /**
-     * Deterministe, et suffisant pour un test : deux textes identiques donnent
-     * le meme vecteur, deux textes differents des vecteurs differents. Aucun
-     * appel ne sort.
-     */
+    /*
+      Deterministe, et suffisant pour un test : deux textes identiques donnent
+      le meme vecteur, deux textes differents des vecteurs differents. Aucun
+      appel ne sort.
+    */
     async embed({ inputs, model }: { inputs: string[]; model: string }) {
       return {
         vectors: inputs.map((text) =>
@@ -211,10 +211,10 @@ describe('graphe de generation', () => {
     expect(outcome.usage).toHaveLength(6);
   });
 
-  /**
-   * L'invariant de tout le chantier : les titres cites s'arretent a la passe
-   * d'abstraction. Aucun prompt de generation ne doit en porter un.
-   */
+  /*
+    L'invariant de tout le chantier : les titres cites s'arretent a la passe
+    d'abstraction. Aucun prompt de generation ne doit en porter un.
+  */
   it('ne transmet aucun titre cite a un noeud', async () => {
     const llm = makeWorldLlm();
     await run(llm, ['Dune', 'Le Nom de la Rose', 'Fondation']);
@@ -270,11 +270,11 @@ describe('graphe de generation', () => {
     await expect(run(llm)).rejects.toThrow(/factions/);
   });
 
-  /**
-   * Un nom peut traverser l'abstraction sans encombre et reapparaitre ici, le
-   * modele l'ayant retrouve seul a partir des themes. Le controle le voit, et
-   * le graphe repasse par le lore.
-   */
+  /*
+    Un nom peut traverser l'abstraction sans encombre et reapparaitre ici, le
+    modele l'ayant retrouve seul a partir des themes. Le controle le voit, et
+    le graphe repasse par le lore.
+  */
   it('reecrit le monde quand le controle trouve un nom emprunte', async () => {
     const llm = makeWorldLlm({
       lore: [{ ...LORE, name: 'Arrakis', history: 'les sables de Arrakis' }, LORE],

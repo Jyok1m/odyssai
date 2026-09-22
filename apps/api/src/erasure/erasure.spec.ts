@@ -3,13 +3,13 @@ import type { PrismaClient } from '@odyssai/db';
 import type Stripe from 'stripe';
 import { ErasureService } from './erasure.service.js';
 
-/**
- * La resiliation au depart.
- *
- * Un abonnement qui survit a son proprietaire preleve quelqu'un qui n'a plus
- * de compte pour l'arreter. C'est le genre de defaut qu'on decouvre par un
- * relance bancaire, donc il se teste.
- */
+/*
+  La resiliation au depart.
+
+  Un abonnement qui survit a son proprietaire preleve quelqu'un qui n'a plus
+  de compte pour l'arreter. C'est le genre de defaut qu'on decouvre par un
+  relance bancaire, donc il se teste.
+*/
 describe('depart et abonnement', () => {
   function serviceFor(
     stripeSubscriptionId: string | null,

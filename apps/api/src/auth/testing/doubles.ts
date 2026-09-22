@@ -13,7 +13,7 @@ const BASE_ENV: Record<string, string> = {
   POSTGRES_URL: 'postgresql://odyssai:secret@127.0.0.1:5432/odyssai_test',
 };
 
-/** AppConfig reel, alimente par un environnement de test. */
+// AppConfig reel, alimente par un environnement de test.
 export function makeConfig(overrides: Record<string, string> = {}): AppConfig {
   const previous = process.env;
   process.env = { ...previous, ...BASE_ENV, ...overrides };
@@ -30,7 +30,7 @@ export interface ResponseDouble {
   cleared: string[];
 }
 
-/** Reponse Express reduite a ce que le controleur utilise. */
+// Reponse Express reduite a ce que le controleur utilise.
 export function makeResponse(): ResponseDouble {
   const cookies = new Map<string, { value: string; options: CookieOptions }>();
   const cleared: string[] = [];
@@ -59,15 +59,15 @@ interface Entry {
   expiresAt: number;
 }
 
-/** Redis reduit aux commandes employees par SessionService. */
+// Redis reduit aux commandes employees par SessionService.
 export class FakeRedis {
   protected readonly store = new Map<string, Entry>();
 
-  /**
-   * Synchrone pour que les commandes publiques restent atomiques : un await
-   * entre le test de presence et l'ecriture laisserait deux appels concurrents
-   * obtenir le meme verrou NX.
-   */
+  /*
+    Synchrone pour que les commandes publiques restent atomiques : un await
+    entre le test de presence et l'ecriture laisserait deux appels concurrents
+    obtenir le meme verrou NX.
+  */
   protected live(key: string): string | null {
     const entry = this.store.get(key);
     if (!entry) return null;
@@ -82,10 +82,10 @@ export class FakeRedis {
     return this.live(key);
   }
 
-  /**
-   * BullMQ duplique la connexion pour ses commandes bloquantes. Le double est
-   * deja isole et n'ouvre rien : se rendre lui-meme suffit.
-   */
+  /*
+    BullMQ duplique la connexion pour ses commandes bloquantes. Le double est
+    deja isole et n'ouvre rien : se rendre lui-meme suffit.
+  */
   duplicate(): this {
     return this;
   }
@@ -120,7 +120,7 @@ export class FakeRedis {
     return this.store.delete(key) ? 1 : 0;
   }
 
-  /** Rejoue le script de liberation : supprime si la valeur colle. */
+  // Rejoue le script de liberation : supprime si la valeur colle.
   async eval(
     _script: string,
     _numKeys: number,

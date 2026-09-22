@@ -9,18 +9,18 @@ export interface TurnVerdict {
   retryAfterSeconds?: number;
 }
 
-/**
- * Fenetres horaire et journaliere par joueur.
- *
- * Le script Lua est celui du guide, importe et non recopie : il ne connait que
- * ses cles, donc rien n'y est propre au guide. Ce qui change est la cle, qui
- * est ici l'identifiant du joueur et non une adresse hachee : il est
- * authentifie, l'anonymisation HMAC n'a plus d'objet.
- *
- * Le guide garde son propre service, avec son pass, ses adresses et son
- * semaphore. Les fusionner demanderait de defaire son couplage a GuideConfig,
- * qui exige une cle Turnstile dont un tour de jeu n'a que faire.
- */
+/*
+  Fenetres horaire et journaliere par joueur.
+
+  Le script Lua est celui du guide, importe et non recopie : il ne connait que
+  ses cles, donc rien n'y est propre au guide. Ce qui change est la cle, qui
+  est ici l'identifiant du joueur et non une adresse hachee : il est
+  authentifie, l'anonymisation HMAC n'a plus d'objet.
+
+  Le guide garde son propre service, avec son pass, ses adresses et son
+  semaphore. Les fusionner demanderait de defaire son couplage a GuideConfig,
+  qui exige une cle Turnstile dont un tour de jeu n'a que faire.
+*/
 @Injectable()
 export class TurnLimitsService {
   constructor(

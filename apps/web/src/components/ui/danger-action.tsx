@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 import { FIELD_DANGER } from "@/components/ui/field";
 
 interface Props {
-  /** Le bouton qui ouvre la demande. */
+  // Le bouton qui ouvre la demande.
   label: string;
   title: string;
   lead: string;
-  /** Ce qui sera supprimé, et ce qui sera gardé. Dit avant de demander. */
+  // Ce qui sera supprimé, et ce qui sera gardé. Dit avant de demander.
   consequences: ReactNode;
   confirmLabel: string;
   busyLabel: string;
@@ -19,14 +19,14 @@ interface Props {
   error?: string | null;
 }
 
-/**
- * Une action sans retour, derrière un mot à taper.
- *
- * Pas une case à cocher ni un second clic : les deux s'obtiennent par réflexe.
- * Recopier un mot demande de lire, ce qui est le seul moment où l'on peut
- * encore changer d'avis. Les conséquences sont affichées avant le champ, pas
- * après : les lire ensuite ne sert plus à rien.
- */
+/*
+  Une action sans retour, derrière un mot à taper.
+
+  Pas une case à cocher ni un second clic : les deux s'obtiennent par réflexe.
+  Recopier un mot demande de lire, ce qui est le seul moment où l'on peut
+  encore changer d'avis. Les conséquences sont affichées avant le champ, pas
+  après : les lire ensuite ne sert plus à rien.
+*/
 export function DangerAction({
   label,
   title,

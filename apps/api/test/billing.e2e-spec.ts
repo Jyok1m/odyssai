@@ -27,14 +27,14 @@ Object.assign(process.env, {
   STRIPE_PRICE_ARPENTEUR: 'price_arpenteur',
 });
 
-/**
- * Le webhook Stripe de bout en bout.
- *
- * Ce qui est verifie ici et nulle part ailleurs : que le corps brut traverse
- * la pile HTTP intact. `rawBody: true` manquant, la signature echoue pour
- * tout le monde, et c'est le genre de panne qu'on met une soiree a
- * comprendre.
- */
+/*
+  Le webhook Stripe de bout en bout.
+
+  Ce qui est verifie ici et nulle part ailleurs : que le corps brut traverse
+  la pile HTTP intact. `rawBody: true` manquant, la signature echoue pour
+  tout le monde, et c'est le genre de panne qu'on met une soiree a
+  comprendre.
+*/
 describe('Facturation (e2e)', () => {
   let app: INestApplication<App>;
   let store: OnboardingStore;
@@ -102,7 +102,7 @@ describe('Facturation (e2e)', () => {
     expect(response.body.costs.worldGeneration).toBe(CREDIT_COSTS.worldGeneration);
   });
 
-  /** Un plan sans prix chez Stripe n'existe pas : l'ecran doit le cacher. */
+  // Un plan sans prix chez Stripe n'existe pas : l'ecran doit le cacher.
   it('ne met en vente que les plans dont le prix est configure', async () => {
     const { body } = await request(app.getHttpServer()).get('/billing/catalog');
     const offers = Object.fromEntries(
@@ -158,10 +158,10 @@ describe('Facturation (e2e)', () => {
     expect(store.creditEntries).toHaveLength(0);
   });
 
-  /**
-   * Le test qui compte : le corps brut arrive intact jusqu'au verificateur de
-   * signature, et le renouvellement credite la reserve.
-   */
+  /*
+    Le test qui compte : le corps brut arrive intact jusqu'au verificateur de
+    signature, et le renouvellement credite la reserve.
+  */
   it('credite la reserve sur une facture payee, une seule fois', async () => {
     const { payload, signature } = signed({
       id: 'evt_renouvellement',

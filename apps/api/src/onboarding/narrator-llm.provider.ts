@@ -6,15 +6,15 @@ import { NarratorConfig } from '../config/narrator-config.js';
 
 export const NARRATOR_LLM = Symbol('NARRATOR_LLM');
 
-/**
- * Client du narrateur. Les coordonnees LangSmith viennent de GuideConfig : ce
- * sont celles du compte, pas celles du guide, et les dupliquer dans une seconde
- * configuration ferait deux verites a tenir.
- *
- * Le client est construit meme sans modele retenu. Il ne sert alors a rien,
- * mais c'est le controleur qui refuse, avec un code que le front sait lire,
- * plutot qu'une injection qui echoue au demarrage.
- */
+/*
+  Client du narrateur. Les coordonnees LangSmith viennent de GuideConfig : ce
+  sont celles du compte, pas celles du guide, et les dupliquer dans une seconde
+  configuration ferait deux verites a tenir.
+
+  Le client est construit meme sans modele retenu. Il ne sert alors a rien,
+  mais c'est le controleur qui refuse, avec un code que le front sait lire,
+  plutot qu'une injection qui echoue au demarrage.
+*/
 export const narratorLlmProvider = {
   provide: NARRATOR_LLM,
   inject: [NarratorConfig, GuideConfig],

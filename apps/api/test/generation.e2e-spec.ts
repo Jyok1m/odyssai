@@ -304,10 +304,10 @@ describe('/onboarding/generation et /world (e2e)', () => {
     await app.close();
   });
 
-  /**
-   * Le secret d'un personnage se decouvre en jeu. Il est en base, il ne doit
-   * pas partir dans la reponse, et c'est le schema de vue qui le garantit.
-   */
+  /*
+    Le secret d'un personnage se decouvre en jeu. Il est en base, il ne doit
+    pas partir dans la reponse, et c'est le schema de vue qui le garantit.
+  */
   it('ne laisse pas fuiter les secrets des personnages', async () => {
     const app = await boot({ step: 'ready', ready: true });
 

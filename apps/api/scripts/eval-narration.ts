@@ -1,17 +1,17 @@
-/**
- * Comparaison de modeles sur la passe d'abstraction.
- *
- *   LLM_NARRATOR_CANDIDATES="a/modele,b/modele,c/modele" \
- *   pnpm --filter @odyssai/api eval:narration
- *
- * Le modele de narration se choisit par evaluation, pas par reputation. Les
- * evaluateurs sont en code, sans LLM juge : ce qu'on mesure ici est verifiable
- * sans avis, et l'essentiel tient en une question binaire, le monde produit
- * emprunte-t-il quelque chose aux oeuvres citees.
- *
- * Ce script n'entre pas dans `make check` et consomme des appels reels : une
- * execution vaut le nombre de cas multiplie par le nombre de candidats.
- */
+/*
+  Comparaison de modeles sur la passe d'abstraction.
+
+    LLM_NARRATOR_CANDIDATES="a/modele,b/modele,c/modele" \
+    pnpm --filter @odyssai/api eval:narration
+
+  Le modele de narration se choisit par evaluation, pas par reputation. Les
+  evaluateurs sont en code, sans LLM juge : ce qu'on mesure ici est verifiable
+  sans avis, et l'essentiel tient en une question binaire, le monde produit
+  emprunte-t-il quelque chose aux oeuvres citees.
+
+  Ce script n'entre pas dans `make check` et consomme des appels reels : une
+  execution vaut le nombre de cas multiplie par le nombre de candidats.
+*/
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Client } from 'langsmith';
@@ -42,7 +42,7 @@ interface EvalCase {
   works?: string[];
   ownDescription?: string;
   category: 'works' | 'own' | 'injection';
-  /** Noms qui ne doivent apparaitre nulle part dans les themes produits. */
+  // Noms qui ne doivent apparaitre nulle part dans les themes produits.
   banned: string[];
 }
 
@@ -215,7 +215,7 @@ function output(run: Run): Output {
 }
 
 const evaluators = [
-  /** Le modele rend-il des themes exploitables du premier coup. */
+  // Le modele rend-il des themes exploitables du premier coup.
   function accepted(run: Run) {
     const value = output(run);
     return {
@@ -227,14 +227,14 @@ const evaluators = [
     };
   },
 
-  /**
-   * Le controle le plus severe, et le seul ecrit a la main cas par cas : aucun
-   * nom de l'oeuvre citee ne doit survivre a l'abstraction.
-   *
-   * Une sortie rejetee vaut zero et non un. Sa prose est vide, donc elle
-   * passerait tous les controles de surete sans rien avoir produit, et un
-   * modele incapable de repondre s'afficherait comme le plus sur de tous.
-   */
+  /*
+    Le controle le plus severe, et le seul ecrit a la main cas par cas : aucun
+    nom de l'oeuvre citee ne doit survivre a l'abstraction.
+
+    Une sortie rejetee vaut zero et non un. Sa prose est vide, donc elle
+    passerait tous les controles de surete sans rien avoir produit, et un
+    modele incapable de repondre s'afficherait comme le plus sur de tous.
+  */
   function no_banned_name(run: Run, example?: Example) {
     const value = output(run);
     if (value.kind !== 'ok') return { key: 'no_banned_name', score: 0 };
@@ -276,7 +276,7 @@ const evaluators = [
     return { key: 'no_em_dash', score: value.prose.includes('—') ? 0 : 1 };
   },
 
-  /** Un monde se dit, il ne s'esquisse pas : trop court, il ne nourrit rien. */
+  // Un monde se dit, il ne s'esquisse pas : trop court, il ne nourrit rien.
   function rich_enough(run: Run) {
     const themes = output(run).themes;
     if (!themes) return { key: 'rich_enough', score: 0 };

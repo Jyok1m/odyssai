@@ -39,13 +39,13 @@ import { uuidv7 } from '../guide/guide.controller.js';
 const PING_INTERVAL_MS = 15_000;
 const CHANNEL = 'game_turn' as const;
 
-/**
- * Le tour de jeu.
- *
- * Le de est lance a chaque tour par le code, et le modele n'en recoit que la
- * bande. Pas de classement prealable pour decider s'il faut lancer : ce serait
- * le modele qui deciderait, et la decision appartient au code.
- */
+/*
+  Le tour de jeu.
+
+  Le de est lance a chaque tour par le code, et le modele n'en recoit que la
+  bande. Pas de classement prealable pour decider s'il faut lancer : ce serait
+  le modele qui deciderait, et la decision appartient au code.
+*/
 @Controller('turn')
 @UseGuards(SessionGuard)
 export class TurnController {
@@ -124,14 +124,14 @@ export class TurnController {
     const world = await this.memory.world(user.id);
     if (!world) throw new NotFoundException({ code: 'not_ready' });
 
-    /**
-     * La langue du tour, et non celle du compte.
-     *
-     * Le joueur peut ecrire dans n'importe quelle langue : le meneur repond
-     * dans la sienne, et les consignes prennent la version anglaise des que
-     * ce n'est plus du francais. Le compte ne bouge pas : une phrase lachee
-     * en anglais ne doit pas faire basculer tout le site de quelqu'un.
-     */
+    /*
+      La langue du tour, et non celle du compte.
+
+      Le joueur peut ecrire dans n'importe quelle langue : le meneur repond
+      dans la sienne, et les consignes prennent la version anglaise des que
+      ce n'est plus du francais. Le compte ne bouge pas : une phrase lachee
+      en anglais ne doit pas faire basculer tout le site de quelqu'un.
+    */
     let locale = user.locale;
 
     // Avant la limite et avant tout appel : un message refuse ne doit ni
@@ -154,13 +154,13 @@ export class TurnController {
       if (seen.language && seen.language !== 'fr') locale = 'en';
     }
 
-    /**
-     * Une ouverture ne vaut que pour une partie qui n'a pas commence.
-     *
-     * Sans cette garde, un rechargement de page en rejouerait une, et chaque
-     * fois pour un credit. C'est la table qui tranche, pas l'ecran : lui peut
-     * toujours demander, elle seule sait si quelque chose a deja ete joue.
-     */
+    /*
+      Une ouverture ne vaut que pour une partie qui n'a pas commence.
+
+      Sans cette garde, un rechargement de page en rejouerait une, et chaque
+      fois pour un credit. C'est la table qui tranche, pas l'ecran : lui peut
+      toujours demander, elle seule sait si quelque chose a deja ete joue.
+    */
     if (request.kind === 'open') {
       const played = await this.prisma.turn.count({
         where: { universeId: world.universeId },
@@ -228,14 +228,14 @@ export class TurnController {
     this.openStream(res);
     const ping = setInterval(() => res.write(': ping\n\n'), PING_INTERVAL_MS);
 
-    /**
-     * Le depart du joueur arrete la diffusion, pas la generation.
-     *
-     * C'est l'inverse du guide, ou couper l'appel amont est juste : plus
-     * personne ne lit. Ici le bloc de queue doit arriver pour que le canon
-     * s'ecrive, et le tour doit s'enregistrer pour que le joueur le retrouve
-     * en revenant.
-     */
+    /*
+      Le depart du joueur arrete la diffusion, pas la generation.
+
+      C'est l'inverse du guide, ou couper l'appel amont est juste : plus
+      personne ne lit. Ici le bloc de queue doit arriver pour que le canon
+      s'ecrive, et le tour doit s'enregistrer pour que le joueur le retrouve
+      en revenant.
+    */
     let streaming = true;
     const onClose = () => {
       streaming = false;

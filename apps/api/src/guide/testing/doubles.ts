@@ -5,10 +5,10 @@ import { ACQUIRE_SLOT, INCREMENT_WINDOWS } from '../guide-limits.service.js';
 import { RESERVE_BUDGET, SETTLE_BUDGET } from '../guide-budget.service.js';
 import { CONSUME_PASS } from '../guide-pass.service.js';
 
-/**
- * Redis du guide. Les scripts sont reconnus par identite plutot que rejoues :
- * le double doit rendre le meme resultat que Lua, pas l'interpreter.
- */
+/*
+  Redis du guide. Les scripts sont reconnus par identite plutot que rejoues :
+  le double doit rendre le meme resultat que Lua, pas l'interpreter.
+*/
 export class GuideFakeRedis extends FakeRedis {
   private readonly zsets = new Map<string, Map<string, number>>();
 
@@ -109,7 +109,7 @@ export interface FakeLlm extends LlmClient {
   aborted: boolean;
 }
 
-/** Client LLM de test. Aucun appel ne sort, aucune trace ne part. */
+// Client LLM de test. Aucun appel ne sort, aucune trace ne part.
 export function makeFakeLlm(options: FakeLlmOptions = {}): FakeLlm {
   const calls: StreamChatRequest[] = [];
   const state = { aborted: false };
@@ -122,11 +122,11 @@ export function makeFakeLlm(options: FakeLlmOptions = {}): FakeLlm {
       return state.aborted;
     },
 
-    /**
-     * Deterministe, et suffisant pour un test : deux textes identiques donnent
-     * le meme vecteur, deux textes differents des vecteurs differents. Aucun
-     * appel ne sort.
-     */
+    /*
+      Deterministe, et suffisant pour un test : deux textes identiques donnent
+      le meme vecteur, deux textes differents des vecteurs differents. Aucun
+      appel ne sort.
+    */
     async embed({ inputs, model }: { inputs: string[]; model: string }) {
       return {
         vectors: inputs.map((text) =>

@@ -25,7 +25,7 @@ import { fetchUsers } from "@/lib/admin";
 import { MarketingExport } from "./marketing-export";
 import { UserPanel } from "./user-panel";
 
-/** Assez long pour ne pas interroger à chaque touche, assez court pour suivre. */
+// Assez long pour ne pas interroger à chaque touche, assez court pour suivre.
 const SEARCH_DELAY_MS = 300;
 
 export function UsersView() {

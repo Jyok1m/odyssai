@@ -1,13 +1,13 @@
-/**
- * Genere le corpus du guide depuis les messages next-intl du site vitrine.
- *
- * Le fichier produit est commite : c'est plus simple et plus reproductible que
- * de faire dependre le cache turbo de fichiers d'un autre paquet. `corpus:check`
- * regenere en memoire et echoue si le fichier commite a derive.
- *
- *   node scripts/build-guide-corpus.mts            ecrit le fichier
- *   node scripts/build-guide-corpus.mts --check    verifie sans ecrire
- */
+/*
+  Genere le corpus du guide depuis les messages next-intl du site vitrine.
+
+  Le fichier produit est commite : c'est plus simple et plus reproductible que
+  de faire dependre le cache turbo de fichiers d'un autre paquet. `corpus:check`
+  regenere en memoire et echoue si le fichier commite a derive.
+
+    node scripts/build-guide-corpus.mts            ecrit le fichier
+    node scripts/build-guide-corpus.mts --check    verifie sans ecrire
+*/
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -20,7 +20,7 @@ const OUTPUT = join(HERE, '..', 'src', 'generated', 'guide-corpus.ts');
 const LOCALES = ['fr', 'en'] as const;
 type Locale = (typeof LOCALES)[number];
 
-/** Seules les pages de contenu. Le reste du site est de la navigation. */
+// Seules les pages de contenu. Le reste du site est de la navigation.
 const PAGES = [
   'Concept',
   'Universes',
@@ -57,7 +57,7 @@ const PAGE_TITLES: Record<Locale, Record<(typeof PAGES)[number], string>> = {
   },
 };
 
-/** SEO, navigation et appels a l'action n'apprennent rien sur le jeu. */
+// SEO, navigation et appels a l'action n'apprennent rien sur le jeu.
 const DROPPED_KEYS = new Set(['metaTitle', 'metaDescription', 'glossaryCta']);
 
 interface Section {
@@ -75,12 +75,12 @@ interface Faq {
   answer?: string;
 }
 
-/**
- * Seules ces cles sont lues. Tout le reste d'un namespace, libelles de boutons
- * et messages d'attente compris, est ignore sans avoir a etre liste : une page
- * qui melange contenu et interface, comme celle des tarifs, n'apporte au guide
- * que ce qui apprend quelque chose.
- */
+/*
+  Seules ces cles sont lues. Tout le reste d'un namespace, libelles de boutons
+  et messages d'attente compris, est ignore sans avoir a etre liste : une page
+  qui melange contenu et interface, comme celle des tarifs, n'apporte au guide
+  que ce qui apprend quelque chose.
+*/
 interface Page {
   lead?: string;
   intro?: unknown;
@@ -89,11 +89,11 @@ interface Page {
   faq?: Faq[];
 }
 
-/**
- * Retire les balises de texte riche et les placeholders ICU. Aucun des deux
- * n'apparait dans ces namespaces aujourd'hui : la passe reste defensive, pour
- * qu'un ajout futur n'injecte pas de balisage dans le prompt.
- */
+/*
+  Retire les balises de texte riche et les placeholders ICU. Aucun des deux
+  n'apparait dans ces namespaces aujourd'hui : la passe reste defensive, pour
+  qu'un ajout futur n'injecte pas de balisage dans le prompt.
+*/
 function clean(raw: string): string {
   return raw
     .replace(/<[^>]*>/g, '')

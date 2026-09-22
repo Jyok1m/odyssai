@@ -30,11 +30,11 @@ export interface AbstractionRequest {
   onTraced?: (traced: boolean) => void;
 }
 
-/**
- * `borrowed_names` n'est pas une panne : le modele a rendu des themes valides,
- * mais il y a laisse un nom venu des oeuvres citees. La generation ne doit pas
- * partir avec, et l'appelant relance.
- */
+/*
+  `borrowed_names` n'est pas une panne : le modele a rendu des themes valides,
+  mais il y a laisse un nom venu des oeuvres citees. La generation ne doit pas
+  partir avec, et l'appelant relance.
+*/
 export type AbstractionRejection =
   | 'invalid_json'
   | 'invalid_shape'
@@ -62,19 +62,19 @@ export function buildAbstractionMessages(input: AbstractionInput) {
   return ABSTRACTION_PROMPT.build(input.inspiration, input.locale);
 }
 
-/**
- * Certains modeles enrobent leur JSON dans une balise de code malgre la
- * consigne. Le refuser pour cela seul couterait une relance pour rien.
- */
+/*
+  Certains modeles enrobent leur JSON dans une balise de code malgre la
+  consigne. Le refuser pour cela seul couterait une relance pour rien.
+*/
 function unwrap(raw: string): string {
   const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
   return (fenced?.[1] ?? raw).trim();
 }
 
-/**
- * La passe d'abstraction. Elle convertit ce que le joueur a cite en themes, et
- * c'est la seule etape a voir les titres.
- */
+/*
+  La passe d'abstraction. Elle convertit ce que le joueur a cite en themes, et
+  c'est la seule etape a voir les titres.
+*/
 export async function abstractWorld(
   request: AbstractionRequest,
 ): Promise<AbstractionResult> {

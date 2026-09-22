@@ -2,16 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { z } from 'zod';
 import { OPENROUTER_ONLY_BODY_KEYS } from '@odyssai/llm';
 
-/**
- * Le modele de narration se choisit par evaluation, pas par reputation : il n'y
- * a donc pas de defaut ici. `LLM_NARRATOR_CANDIDATES` porte les modeles a
- * comparer, `LLM_NARRATOR_MODEL` celui qui a gagne.
- *
- * Vide, la configuration n'empeche pas l'api de demarrer : la narration
- * n'existe encore ni dans une route ni dans un worker, et faire tomber le
- * bootstrap pour une variable qu'aucun chemin de requete ne lit ferait echouer
- * loin de la cause. Ceux qui en ont besoin le disent eux-memes.
- */
+/*
+  Le modele de narration se choisit par evaluation, pas par reputation : il n'y
+  a donc pas de defaut ici. `LLM_NARRATOR_CANDIDATES` porte les modeles a
+  comparer, `LLM_NARRATOR_MODEL` celui qui a gagne.
+
+  Vide, la configuration n'empeche pas l'api de demarrer : la narration
+  n'existe encore ni dans une route ni dans un worker, et faire tomber le
+  bootstrap pour une variable qu'aucun chemin de requete ne lit ferait echouer
+  loin de la cause. Ceux qui en ont besoin le disent eux-memes.
+*/
 const EnvSchema = z
   .object({
     LLM_NARRATOR_PROVIDER: z.enum(['openrouter', 'openai']).default('openrouter'),
@@ -33,22 +33,22 @@ const EnvSchema = z
       .nonnegative()
       .default(0),
 
-    /**
-     * Bornes d'un joueur authentifie. Le guide se defend d'un visiteur anonyme
-     * par cinq couches ; ici l'identite suffit, il ne reste qu'a empecher qu'un
-     * compte a lui seul epuise le budget.
-     */
+    /*
+      Bornes d'un joueur authentifie. Le guide se defend d'un visiteur anonyme
+      par cinq couches ; ici l'identite suffit, il ne reste qu'a empecher qu'un
+      compte a lui seul epuise le budget.
+    */
     TURN_RATE_PER_HOUR: z.coerce.number().int().positive().default(60),
     TURN_RATE_PER_DAY: z.coerce.number().int().positive().default(300),
 
-    /**
-     * Le classificateur de moderation. Vide, seule la couche lexicale tourne :
-     * elle arrete l'evidence, pas le reste.
-     */
+    /*
+      Le classificateur de moderation. Vide, seule la couche lexicale tourne :
+      elle arrete l'evidence, pas le reste.
+    */
     MODERATION_MODEL: z.string().default('qwen/qwen3-8b'),
     MODERATION_MAX_OUTPUT_TOKENS: z.coerce.number().int().positive().default(40),
 
-    /** Modele d'embeddings, pour la memoire longue du meneur. */
+    // Modele d'embeddings, pour la memoire longue du meneur.
     LLM_EMBED_MODEL: z.string().default('openai/text-embedding-3-small'),
     LLM_EMBED_DIMENSIONS: z.coerce.number().int().positive().default(1536),
 
@@ -117,7 +117,7 @@ export class NarratorConfig {
     this.extraBody = extraBody.ok ? extraBody.value : {};
   }
 
-  /** Faux tant qu'aucun modele n'a ete retenu par l'evaluation. */
+  // Faux tant qu'aucun modele n'a ete retenu par l'evaluation.
   get configured(): boolean {
     return this.env.LLM_NARRATOR_MODEL.length > 0;
   }
@@ -126,7 +126,7 @@ export class NarratorConfig {
     return this.env.LLM_NARRATOR_PROVIDER;
   }
 
-  /** Jamais journalisee ni renvoyee : elle ne sort que vers createLlmClient. */
+  // Jamais journalisee ni renvoyee : elle ne sort que vers createLlmClient.
   get apiKey(): string {
     return this.provider === 'openrouter'
       ? this.env.OPENROUTER_API_KEY
@@ -142,7 +142,7 @@ export class NarratorConfig {
     };
   }
 
-  /** Les modeles a comparer. Lus par le script d'evaluation seul. */
+  // Les modeles a comparer. Lus par le script d'evaluation seul.
   get turnLimits() {
     return {
       perHour: this.env.TURN_RATE_PER_HOUR,
@@ -157,14 +157,14 @@ export class NarratorConfig {
       // Un verdict n'a pas a etre cree : zero pour qu'il soit reproductible.
       temperature: 0,
       maxOutputTokens: this.env.MODERATION_MAX_OUTPUT_TOKENS,
-      /**
-       * Le meme corps que la narration, et non une variable de plus : c'est le
-       * meme fournisseur et ce sont les memes exigences. Sans lui, le
-       * classificateur facturait 140 a 178 jetons de raisonnement au tarif de
-       * sortie pour rendre un verdict d'une ligne, soit les deux tiers de ce
-       * que coute une moderation, et le texte du joueur partait sans
-       * `data_collection: deny`.
-       */
+      /*
+        Le meme corps que la narration, et non une variable de plus : c'est le
+        meme fournisseur et ce sont les memes exigences. Sans lui, le
+        classificateur facturait 140 a 178 jetons de raisonnement au tarif de
+        sortie pour rendre un verdict d'une ligne, soit les deux tiers de ce
+        que coute une moderation, et le texte du joueur partait sans
+        `data_collection: deny`.
+      */
       extraBody: this.extraBody,
     };
   }

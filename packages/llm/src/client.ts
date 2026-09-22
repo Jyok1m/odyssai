@@ -5,10 +5,10 @@ import { LlmError, isRetryableStatus } from './errors.js';
 import { LLM_PROVIDERS, type LlmProvider } from './providers.js';
 
 export interface LlmTracing {
-  /** Client LangSmith construit par l'api, avec apiUrl et apiKey explicites. */
+  // Client LangSmith construit par l'api, avec apiUrl et apiKey explicites.
   client: Client;
   projectName: string;
-  /** Part des appels tracee, entre 0 et 1. */
+  // Part des appels tracee, entre 0 et 1.
   sampleRate: number;
 }
 
@@ -16,7 +16,7 @@ export interface CreateLlmClientOptions {
   provider: LlmProvider;
   apiKey: string;
   tracing?: LlmTracing;
-  /** Injecte par les tests, pour qu'aucun appel ne sorte vraiment. */
+  // Injecte par les tests, pour qu'aucun appel ne sorte vraiment.
   fetch?: typeof globalThis.fetch;
 }
 
@@ -34,11 +34,11 @@ export interface StreamChatRequest {
   extraBody?: Record<string, unknown>;
   signal?: AbortSignal;
   trace?: LlmTrace;
-  /**
-   * Appele avec la decision d'echantillonnage, avant l'appel. Le journal doit
-   * savoir si la requete est tracee pour qu'on retrouve la trace par sa
-   * metadonnee, et la decision se prend ici.
-   */
+  /*
+    Appele avec la decision d'echantillonnage, avant l'appel. Le journal doit
+    savoir si la requete est tracee pour qu'on retrouve la trace par sa
+    metadonnee, et la decision se prend ici.
+  */
   onTraced?: (traced: boolean) => void;
 }
 
@@ -53,11 +53,11 @@ export type LlmStreamEvent =
       costUsd?: number;
     };
 
-/**
- * Un lot d'embeddings. Les textes partent ensemble : le fournisseur facture au
- * token, pas a l'appel, et un aller-retour par phrase multiplierait la latence
- * sans rien economiser.
- */
+/*
+  Un lot d'embeddings. Les textes partent ensemble : le fournisseur facture au
+  token, pas a l'appel, et un aller-retour par phrase multiplierait la latence
+  sans rien economiser.
+*/
 export interface EmbedRequest {
   model: string;
   inputs: string[];
@@ -65,7 +65,7 @@ export interface EmbedRequest {
 }
 
 export interface EmbedResult {
-  /** Un vecteur par entree, dans le meme ordre. */
+  // Un vecteur par entree, dans le meme ordre.
   vectors: number[][];
   model: string;
   inputTokens: number;
@@ -73,22 +73,22 @@ export interface EmbedResult {
 
 export interface LlmClient {
   readonly provider: LlmProvider;
-  /** URL du registre reellement utilisee, pour verification et journalisation. */
+  // URL du registre reellement utilisee, pour verification et journalisation.
   readonly baseUrl: string;
   streamChat(request: StreamChatRequest): AsyncIterable<LlmStreamEvent>;
   embed(request: EmbedRequest): Promise<EmbedResult>;
   flushTraces(): Promise<void>;
 }
 
-/**
- * Construit le client du fournisseur.
- *
- * `apiKey`, `baseURL`, `organization` et `project` sont passes explicitement,
- * y compris a null. Sans cela le SDK lit de lui-meme OPENAI_API_KEY,
- * OPENAI_BASE_URL, OPENAI_ORG_ID et OPENAI_PROJECT_ID dans l'environnement :
- * avec le fournisseur openrouter et une cle OpenRouter absente, la cle OpenAI
- * partirait chez OpenRouter.
- */
+/*
+  Construit le client du fournisseur.
+
+  `apiKey`, `baseURL`, `organization` et `project` sont passes explicitement,
+  y compris a null. Sans cela le SDK lit de lui-meme OPENAI_API_KEY,
+  OPENAI_BASE_URL, OPENAI_ORG_ID et OPENAI_PROJECT_ID dans l'environnement :
+  avec le fournisseur openrouter et une cle OpenRouter absente, la cle OpenAI
+  partirait chez OpenRouter.
+*/
 export function createLlmClient(options: CreateLlmClientOptions): LlmClient {
   const { provider, apiKey, tracing } = options;
 
@@ -121,12 +121,12 @@ export function createLlmClient(options: CreateLlmClientOptions): LlmClient {
     provider,
     baseUrl: spec.baseUrl,
 
-    /**
-     * Les embeddings ne sont ni diffuses ni traces : ce n'est pas une
-     * generation, il n'y a rien a lire au fil de l'eau et rien a relire dans
-     * LangSmith. L'ordre des vecteurs suit celui des entrees, et le
-     * fournisseur peut le rendre desordonne : on trie sur `index`.
-     */
+    /*
+      Les embeddings ne sont ni diffuses ni traces : ce n'est pas une
+      generation, il n'y a rien a lire au fil de l'eau et rien a relire dans
+      LangSmith. L'ordre des vecteurs suit celui des entrees, et le
+      fournisseur peut le rendre desordonne : on trie sur `index`.
+    */
     async embed(request: EmbedRequest): Promise<EmbedResult> {
       const response = await raw.embeddings.create(
         { model: request.model, input: request.inputs },
@@ -213,7 +213,7 @@ export function createLlmClient(options: CreateLlmClientOptions): LlmClient {
   };
 }
 
-/** Usage tel qu'il arrive vraiment, extensions de fournisseur comprises. */
+// Usage tel qu'il arrive vraiment, extensions de fournisseur comprises.
 interface UsageChunk {
   prompt_tokens?: number;
   completion_tokens?: number;

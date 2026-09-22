@@ -26,7 +26,7 @@ import { GUIDE_LLM, guideLlmProvider } from './guide-llm.provider.js';
 export class GuideModule implements OnApplicationShutdown {
   constructor(@Inject(GUIDE_LLM) private readonly llm: LlmClient) {}
 
-  /** Sans ce vidage, les derniers lots de traces partent avec le processus. */
+  // Sans ce vidage, les derniers lots de traces partent avec le processus.
   async onApplicationShutdown(): Promise<void> {
     await this.llm.flushTraces();
   }

@@ -1,15 +1,15 @@
 import { z } from 'zod';
 import { normalizeWorkTitle } from './onboarding.js';
 
-/**
- * Un mot qui commence par une majuscule ailleurs qu'en tete de phrase est tenu
- * pour un nom propre. La regle est grossiere et le sait : en francais comme en
- * anglais, presque rien d'autre ne porte la majuscule au milieu d'une phrase.
- *
- * Elle se trompe donc plutot dans le sens du refus, ce qui coute une relance et
- * jamais un monde emprunte. L'apostrophe separe les mots, sans quoi « l'Ordre »
- * passerait pour un seul mot commencant par une minuscule.
- */
+/*
+  Un mot qui commence par une majuscule ailleurs qu'en tete de phrase est tenu
+  pour un nom propre. La regle est grossiere et le sait : en francais comme en
+  anglais, presque rien d'autre ne porte la majuscule au milieu d'une phrase.
+
+  Elle se trompe donc plutot dans le sens du refus, ce qui coute une relance et
+  jamais un monde emprunte. L'apostrophe separe les mots, sans quoi « l'Ordre »
+  passerait pour un seul mot commencant par une minuscule.
+*/
 const SENTENCE_BREAK = /[.!?…:;]+\s+|\n+/;
 const WORD = /\p{L}[\p{L}\p{M}-]*/gu;
 
@@ -31,10 +31,10 @@ export function findProperNouns(text: string): string[] {
   return [...found];
 }
 
-/**
- * Mots de liaison assez longs pour passer le filtre de longueur sans rien
- * designer. Les plus courts tombent d'eux-memes.
- */
+/*
+  Mots de liaison assez longs pour passer le filtre de longueur sans rien
+  designer. Les plus courts tombent d'eux-memes.
+*/
 const WEAK_WORDS = new Set([
   'dans', 'avec', 'pour', 'sans', 'sous', 'chez', 'entre', 'leur', 'leurs',
   'cette', 'celui', 'celle', 'tout', 'tous', 'toute', 'toutes', 'plus',
@@ -48,18 +48,18 @@ function significantWords(title: string): string[] {
     .filter((word) => word.length >= 4 && !WEAK_WORDS.has(word));
 }
 
-/**
- * Dernier etage de la garde : relit un texte genere contre les titres saisis.
- *
- * Seuls les mots portant une majuscule sont compares, la ou `findProperNouns`
- * ignore les tetes de phrase : c'est un nom emprunte que l'on cherche, pas un
- * mot commun. Un lore qui parle d'une rose dans un jardin passe, un lore qui
- * fonde l'ordre de la Rose ne passe pas.
- *
- * Elle attrape les noms, pas les intrigues : un monde qui reprendrait la trame
- * d'une oeuvre sans en citer un seul nom lui echapperait. C'est la passe
- * d'abstraction qui porte cette part la, en ne transmettant que des themes.
- */
+/*
+  Dernier etage de la garde : relit un texte genere contre les titres saisis.
+
+  Seuls les mots portant une majuscule sont compares, la ou `findProperNouns`
+  ignore les tetes de phrase : c'est un nom emprunte que l'on cherche, pas un
+  mot commun. Un lore qui parle d'une rose dans un jardin passe, un lore qui
+  fonde l'ordre de la Rose ne passe pas.
+
+  Elle attrape les noms, pas les intrigues : un monde qui reprendrait la trame
+  d'une oeuvre sans en citer un seul nom lui echapperait. C'est la passe
+  d'abstraction qui porte cette part la, en ne transmettant que des themes.
+*/
 export function findBorrowedNames(text: string, works: string[]): string[] {
   const banned = new Map<string, string>();
   for (const title of works) {
@@ -91,7 +91,7 @@ export function findBorrowedNames(text: string, works: string[]): string[] {
   return [...borrowed];
 }
 
-/** Prose sans nom propre : c'est l'etage du schema, pas celui du prompt. */
+// Prose sans nom propre : c'est l'etage du schema, pas celui du prompt.
 const Prose = (max: number) =>
   z
     .string()
@@ -102,30 +102,30 @@ const Prose = (max: number) =>
       message: 'aucun nom propre',
     });
 
-/**
- * Sortie de la passe d'abstraction, et seule chose que les etapes suivantes de
- * la generation recoivent. Les titres saisis s'arretent avant.
- */
+/*
+  Sortie de la passe d'abstraction, et seule chose que les etapes suivantes de
+  la generation recoivent. Les titres saisis s'arretent avant.
+*/
 export const WorldThemesSchema = z.object({
-  /** Le ton dominant, ce que le monde fait ressentir. */
+  // Le ton dominant, ce que le monde fait ressentir.
   tone: Prose(200),
-  /** Le cadre physique : ou l'on est, de quoi c'est fait. */
+  // Le cadre physique : ou l'on est, de quoi c'est fait.
   setting: Prose(400),
-  /** Comment le pouvoir se tient, et sur quoi il repose. */
+  // Comment le pouvoir se tient, et sur quoi il repose.
   power: Prose(400),
-  /** Ce qui echappe a l'explication, et jusqu'ou. */
+  // Ce qui echappe a l'explication, et jusqu'ou.
   mystery: Prose(400),
-  /** Les lignes de fracture dont naissent les histoires. */
+  // Les lignes de fracture dont naissent les histoires.
   tensions: z.array(Prose(200)).min(2).max(5),
-  /** Les motifs qui reviennent : objets, gestes, lieux. */
+  // Les motifs qui reviennent : objets, gestes, lieux.
   motifs: z.array(Prose(120)).min(3).max(8),
-  /** Ce que ce monde ne contient pas. Aussi structurant que le reste. */
+  // Ce que ce monde ne contient pas. Aussi structurant que le reste.
   forbidden: z.array(Prose(120)).min(1).max(5),
 });
 
 export type WorldThemes = z.infer<typeof WorldThemesSchema>;
 
-/** Toute la prose des themes, mise bout a bout pour le controle final. */
+// Toute la prose des themes, mise bout a bout pour le controle final.
 export function themesProse(themes: WorldThemes): string {
   return [
     themes.tone,
@@ -138,24 +138,24 @@ export function themesProse(themes: WorldThemes): string {
   ].join('\n');
 }
 
-/** Prose de monde. Les noms propres y sont attendus : ce sont ceux du monde. */
+// Prose de monde. Les noms propres y sont attendus : ce sont ceux du monde.
 const Text = (max: number) => z.string().trim().min(3).max(max);
 
 const Name = z.string().trim().min(2).max(80);
 
-/**
- * Ce qui existe ou non dans ce monde, et comment il se raconte. Le narrateur la
- * respecte en toutes circonstances : c'est elle qui empeche un monde sans magie
- * d'en voir apparaitre au troisieme tour.
- */
+/*
+  Ce qui existe ou non dans ce monde, et comment il se raconte. Le narrateur la
+  respecte en toutes circonstances : c'est elle qui empeche un monde sans magie
+  d'en voir apparaitre au troisieme tour.
+*/
 export const WorldCharterSchema = z.object({
   premise: Text(600),
   tone: Text(300),
-  /** Ce que ce monde rend possible. */
+  // Ce que ce monde rend possible.
   allowed: z.array(Text(200)).min(2).max(8),
-  /** Ce qu'il ne contient pas. Aussi structurant que le reste. */
+  // Ce qu'il ne contient pas. Aussi structurant que le reste.
   forbidden: z.array(Text(200)).min(2).max(8),
-  /** Consignes de narration propres a ce monde. */
+  // Consignes de narration propres a ce monde.
   narratorRules: z.array(Text(200)).min(2).max(6),
 });
 
@@ -167,7 +167,7 @@ export const WorldLoreSchema = z.object({
   geography: Text(1200),
   history: Text(1200),
   dailyLife: Text(1200),
-  /** Teinte de l'accent, que l'interface applique en entrant dans ce monde. */
+  // Teinte de l'accent, que l'interface applique en entrant dans ce monde.
   accentHue: z.number().int().min(0).max(359),
 });
 
@@ -194,10 +194,10 @@ export type Politics = z.infer<typeof PoliticsSchema>;
 export const NpcSchema = z.object({
   name: Name,
   role: Text(200),
-  /** Nom d'une faction existante, ou null pour un independant. */
+  // Nom d'une faction existante, ou null pour un independant.
   faction: Name.nullable(),
   drive: Text(300),
-  /** Ce que le joueur ignore encore. Jamais rendu a l'ecran tel quel. */
+  // Ce que le joueur ignore encore. Jamais rendu a l'ecran tel quel.
   secret: Text(400),
 });
 
@@ -212,14 +212,14 @@ export const AffinitySchema = z.object({
 
 export type Affinity = z.infer<typeof AffinitySchema>;
 
-/**
- * Le monde genere, en JSON valide a l'ecriture comme a la lecture. Les sortir
- * en tables propres demanderait de dessiner tout le schema du jeu, ce que ce
- * chantier n'a pas a trancher.
- *
- * La charte vit a part, dans sa propre colonne : elle est lue a chaque tour de
- * jeu, la bible seulement quand le narrateur a besoin du detail.
- */
+/*
+  Le monde genere, en JSON valide a l'ecriture comme a la lecture. Les sortir
+  en tables propres demanderait de dessiner tout le schema du jeu, ce que ce
+  chantier n'a pas a trancher.
+
+  La charte vit a part, dans sa propre colonne : elle est lue a chaque tour de
+  jeu, la bible seulement quand le narrateur a besoin du detail.
+*/
 export const WorldBibleSchema = z.object({
   lore: WorldLoreSchema,
   factions: z.array(FactionSchema).min(2).max(5),
@@ -230,7 +230,7 @@ export const WorldBibleSchema = z.object({
 
 export type WorldBible = z.infer<typeof WorldBibleSchema>;
 
-/** Toute la prose du monde, pour le controle final contre les titres saisis. */
+// Toute la prose du monde, pour le controle final contre les titres saisis.
 export function bibleProse(charter: WorldCharter, bible: WorldBible): string {
   return [
     charter.premise,
@@ -262,42 +262,42 @@ export function bibleProse(charter: WorldCharter, bible: WorldBible): string {
   ].join('\n');
 }
 
-/**
- * Essais par noeud du graphe de generation. Un modele rate rarement deux fois
- * de la meme facon, et un troisieme essai coute plus qu'il ne rattrape.
- *
- * Ici plutot que dans narrator : c'est un reglage, et `@odyssai/engine` en
- * tient l'index pour qu'aucun bouton ne se cache dans un paquet.
- */
+/*
+  Essais par noeud du graphe de generation. Un modele rate rarement deux fois
+  de la meme facon, et un troisieme essai coute plus qu'il ne rattrape.
+
+  Ici plutot que dans narrator : c'est un reglage, et `@odyssai/engine` en
+  tient l'index pour qu'aucun bouton ne se cache dans un paquet.
+*/
 export const GENERATION_ATTEMPTS_PER_NODE = 2;
 
-/**
- * Reprises du lore apres un nom emprunte detecte par le controle final. Au
- * dela, la generation echoue : une boucle qui insiste couterait sept appels de
- * plus sans garantie de converger.
- */
+/*
+  Reprises du lore apres un nom emprunte detecte par le controle final. Au
+  dela, la generation echoue : une boucle qui insiste couterait sept appels de
+  plus sans garantie de converger.
+*/
 export const GENERATION_REWRITES_MAX = 1;
 
-/**
- * File de generation, partagee par l'api qui publie et le worker qui consomme.
- * Le nom et la forme du travail sont un contrat : les laisser chacun de son
- * cote ferait deux verites, et une faute de frappe passerait inapercue.
- */
+/*
+  File de generation, partagee par l'api qui publie et le worker qui consomme.
+  Le nom et la forme du travail sont un contrat : les laisser chacun de son
+  cote ferait deux verites, et une faute de frappe passerait inapercue.
+*/
 // BullMQ refuse les deux points : ils separent ses propres cles Redis.
 export const GENERATION_QUEUE = 'odyssai-generation';
 
-/**
- * Le travail ne porte que l'identifiant de l'univers. Tout le reste se relit en
- * base : une charge utile qui embarquerait la fiche vieillirait dans la file,
- * et un joueur qui corrige sa saisie verrait generer l'ancienne.
- */
+/*
+  Le travail ne porte que l'identifiant de l'univers. Tout le reste se relit en
+  base : une charge utile qui embarquerait la fiche vieillirait dans la file,
+  et un joueur qui corrige sa saisie verrait generer l'ancienne.
+*/
 export const GenerationJobDataSchema = z.object({
   universeId: z.uuid(),
 });
 
 export type GenerationJobData = z.infer<typeof GenerationJobDataSchema>;
 
-/** Evenements du flux d'avancement, un objet JSON par ligne `data:`. */
+// Evenements du flux d'avancement, un objet JSON par ligne `data:`.
 export const GenerationStreamEventSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('progress'),
@@ -326,13 +326,13 @@ export const GenerationStreamEventSchema = z.discriminatedUnion('type', [
 
 export type GenerationStreamEvent = z.infer<typeof GenerationStreamEventSchema>;
 
-/**
- * Ce que le navigateur recoit du monde.
- *
- * Les secrets des personnages n'y sont pas, et c'est le schema qui le garantit
- * plutot qu'un `delete` cote serveur : un champ qu'un type ne porte pas ne peut
- * pas fuiter par distraction. Ils se decouvriront en jeu.
- */
+/*
+  Ce que le navigateur recoit du monde.
+
+  Les secrets des personnages n'y sont pas, et c'est le schema qui le garantit
+  plutot qu'un `delete` cote serveur : un champ qu'un type ne porte pas ne peut
+  pas fuiter par distraction. Ils se decouvriront en jeu.
+*/
 export const PublicNpcSchema = NpcSchema.omit({ secret: true });
 
 export type PublicNpc = z.infer<typeof PublicNpcSchema>;
@@ -360,7 +360,7 @@ export const WorldViewSchema = z.object({
 export type WorldView = z.infer<typeof WorldViewSchema>;
 
 export const WorldErrorBodySchema = z.object({
-  /** `not_ready` dit que le monde n'est pas encore genere, pas qu'il manque. */
+  // `not_ready` dit que le monde n'est pas encore genere, pas qu'il manque.
   code: z.enum(['not_ready', 'not_found']),
 });
 

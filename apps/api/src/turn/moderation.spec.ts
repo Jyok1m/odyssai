@@ -23,10 +23,10 @@ describe('moderation lexicale', () => {
     expect(isClean('les salopes')).toBe(false);
   });
 
-  /**
-   * Le vrai danger de cette couche. Chacune de ces phrases a ete refusee par
-   * une version anterieure, et chacune est du francais parfaitement ordinaire.
-   */
+  /*
+    Le vrai danger de cette couche. Chacune de ces phrases a ete refusee par
+    une version anterieure, et chacune est du francais parfaitement ordinaire.
+  */
   it.each([
     'je reconnais le lieu',
     'la reconnaissance du territoire',

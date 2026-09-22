@@ -14,9 +14,9 @@ const TX_PREFIX = 'odyssai:oauth:tx:';
 const SESSION_PREFIX = 'odyssai:session:';
 const LOCK_PREFIX = 'odyssai:session:lock:';
 
-/** Duree de vie d'un aller-retour vers Keycloak. */
+// Duree de vie d'un aller-retour vers Keycloak.
 const TX_TTL_SECONDS = 600;
-/** Marge avant expiration en deca de laquelle on renouvelle par anticipation. */
+// Marge avant expiration en deca de laquelle on renouvelle par anticipation.
 const REFRESH_MARGIN_MS = 30_000;
 const LOCK_TTL_MS = 5_000;
 const LOCK_WAIT_ATTEMPTS = 20;
@@ -32,8 +32,10 @@ export type Transaction = z.infer<typeof Transaction>;
 
 const StoredSession = z.object({
   sub: z.string().min(1),
-  /** Ligne applicative du joueur. Absent des sessions ouvertes avant le
-   * provisionnement : le guard retombe alors sur une resolution par `sub`. */
+  /*
+    Ligne applicative du joueur. Absent des sessions ouvertes avant le
+    provisionnement : le guard retombe alors sur une resolution par `sub`.
+  */
   userId: z.uuid().optional(),
   email: z.email(),
   emailVerified: z.boolean(),
@@ -47,10 +49,10 @@ const StoredSession = z.object({
 
 export type StoredSession = z.infer<typeof StoredSession>;
 
-/**
- * Libere un verrou seulement si on en est encore proprietaire : un GET suivi
- * d'un DEL laisserait la place a une expiration entre les deux.
- */
+/*
+  Libere un verrou seulement si on en est encore proprietaire : un GET suivi
+  d'un DEL laisserait la place a une expiration entre les deux.
+*/
 const RELEASE_LOCK = `
 if redis.call('get', KEYS[1]) == ARGV[1] then
   return redis.call('del', KEYS[1])
@@ -58,10 +60,10 @@ end
 return 0
 `;
 
-/**
- * Sessions serveur. Le navigateur ne detient qu'un identifiant opaque : les
- * jetons restent dans Redis, hors de portee d'un script injecte dans la page.
- */
+/*
+  Sessions serveur. Le navigateur ne detient qu'un identifiant opaque : les
+  jetons restent dans Redis, hors de portee d'un script injecte dans la page.
+*/
 @Injectable()
 export class SessionService {
   private readonly logger = new Logger(SessionService.name);
@@ -95,7 +97,7 @@ export class SessionService {
     };
   }
 
-  /** Lit et supprime d'un coup : un code d'autorisation rejoue ne trouve rien. */
+  // Lit et supprime d'un coup : un code d'autorisation rejoue ne trouve rien.
   async consumeTransaction(state: string): Promise<Transaction | null> {
     const raw = await this.redis.getdel(`${TX_PREFIX}${state}`);
     if (!raw) return null;
@@ -114,7 +116,7 @@ export class SessionService {
     return id;
   }
 
-  /** Session courante, renouvelee si l'access token arrive a echeance. */
+  // Session courante, renouvelee si l'access token arrive a echeance.
   async read(id: string): Promise<StoredSession | null> {
     const session = await this.peek(id);
     if (!session) return null;
@@ -123,7 +125,7 @@ export class SessionService {
     return this.renew(id, session);
   }
 
-  /** Session telle qu'elle est stockee, sans tentative de renouvellement. */
+  // Session telle qu'elle est stockee, sans tentative de renouvellement.
   async peek(id: string): Promise<StoredSession | null> {
     const raw = await this.redis.get(`${SESSION_PREFIX}${id}`);
     if (!raw) return null;
@@ -140,12 +142,12 @@ export class SessionService {
     await this.redis.del(`${SESSION_PREFIX}${id}`);
   }
 
-  /**
-   * Sous verrou : le realm est en rotation stricte, un refresh token ne sert
-   * qu'une fois. Deux requetes qui renouvelleraient chacune de leur cote
-   * feraient invalider la session entiere, Keycloak lisant le second appel
-   * comme un rejeu.
-   */
+  /*
+    Sous verrou : le realm est en rotation stricte, un refresh token ne sert
+    qu'une fois. Deux requetes qui renouvelleraient chacune de leur cote
+    feraient invalider la session entiere, Keycloak lisant le second appel
+    comme un rejeu.
+  */
   private async renew(
     id: string,
     current: StoredSession,
@@ -188,7 +190,7 @@ export class SessionService {
     }
   }
 
-  /** Attend le renouvellement mene par une requete concurrente. */
+  // Attend le renouvellement mene par une requete concurrente.
   private async waitForRenewal(
     id: string,
     current: StoredSession,
@@ -239,11 +241,11 @@ function toStoredSession(
   };
 }
 
-/**
- * Keycloak omet refresh_expires_in quand le jeton est hors ligne ou sans
- * expiration propre : on retombe alors sur la duree maximale de session SSO du
- * realm, dix heures. Elle borne la cle Redis et l'age du cookie de session.
- */
+/*
+  Keycloak omet refresh_expires_in quand le jeton est hors ligne ou sans
+  expiration propre : on retombe alors sur la duree maximale de session SSO du
+  realm, dix heures. Elle borne la cle Redis et l'age du cookie de session.
+*/
 export function refreshLifetimeSeconds(tokens: TokenSet): number {
   return tokens.refresh_expires_in && tokens.refresh_expires_in > 0
     ? tokens.refresh_expires_in
@@ -254,7 +256,7 @@ function refreshDeadline(tokens: TokenSet): number {
   return Date.now() + refreshLifetimeSeconds(tokens) * 1000;
 }
 
-/** 256 bits d'entropie pour un identifiant de session opaque. */
+// 256 bits d'entropie pour un identifiant de session opaque.
 function randomToken(): string {
   return randomBytes(32).toString('base64url');
 }
@@ -267,7 +269,7 @@ function safeJsonParse(raw: string): unknown {
   }
 }
 
-/** Comparaison a duree constante de deux valeurs opaques. */
+// Comparaison a duree constante de deux valeurs opaques.
 export function safeCompare(a: string, b: string): boolean {
   const left = Buffer.from(a);
   const right = Buffer.from(b);

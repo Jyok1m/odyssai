@@ -22,10 +22,10 @@ describe('configuration Stripe', () => {
     expect(config.enabled).toBe(false);
   });
 
-  /**
-   * Le garde-fou qui compte : une cle live sur un poste de developpement
-   * debiterait de vraies cartes.
-   */
+  /*
+    Le garde-fou qui compte : une cle live sur un poste de developpement
+    debiterait de vraies cartes.
+  */
   it('refuse une cle live hors production', () => {
     expect(() =>
       build({
@@ -66,11 +66,11 @@ describe('configuration Stripe', () => {
     ).toThrow(/STRIPE_WEBHOOK_SECRET/);
   });
 
-  /**
-   * La copie de dev tourne avec NODE_ENV=production, l'image etant la meme que
-   * celle de la production : c'est ODYSSAI_ENV qui distingue les deux, et c'est
-   * tout l'interet de la variable.
-   */
+  /*
+    La copie de dev tourne avec NODE_ENV=production, l'image etant la meme que
+    celle de la production : c'est ODYSSAI_ENV qui distingue les deux, et c'est
+    tout l'interet de la variable.
+  */
   it('accepte une cle de test sur une copie batie en production', () => {
     const config = build({
       NODE_ENV: 'production',
@@ -83,11 +83,11 @@ describe('configuration Stripe', () => {
     expect(config.live).toBe(false);
   });
 
-  /**
-   * Les identifiants de prix ne sont plus lus ici : ils vivent dans la table
-   * `plans`, ecrits par le tableau de bord d'administration. En variable
-   * d'environnement, mettre un palier en vente demandait un deploiement.
-   */
+  /*
+    Les identifiants de prix ne sont plus lus ici : ils vivent dans la table
+    `plans`, ecrits par le tableau de bord d'administration. En variable
+    d'environnement, mettre un palier en vente demandait un deploiement.
+  */
   it('ne lit plus aucun identifiant de prix', () => {
     const config = build({
       STRIPE_PRIVATE_KEY: 'sk_test_factice',

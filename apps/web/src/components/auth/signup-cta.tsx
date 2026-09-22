@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { ALPHA_OPEN } from "@/lib/flags";
 
-/**
- * Appel à l'action principal. Trois réponses selon l'état : l'inscription pour
- * un visiteur, rien pour un joueur connecté tant que l'alpha est fermée, et
- * l'entrée en jeu une fois qu'elle est ouverte.
- */
+/*
+  Appel à l'action principal. Trois réponses selon l'état : l'inscription pour
+  un visiteur, rien pour un joueur connecté tant que l'alpha est fermée, et
+  l'entrée en jeu une fois qu'elle est ouverte.
+*/
 export function SignupCta({ children }: { children: string }) {
   const tPlay = useTranslations("Play");
   const session = useSession();

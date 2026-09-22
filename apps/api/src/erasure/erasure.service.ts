@@ -5,19 +5,19 @@ import { PrismaClient } from '@odyssai/db';
 import { PRISMA } from '../prisma/prisma.module.js';
 import { STRIPE } from '../stripe/stripe.module.js';
 
-/**
- * Ce qui arrive a un monde et a un personnage quand leur joueur s'en va.
- *
- * Deux questions independantes : un personnage peut avoir ete rencontre
- * ailleurs sans que son monde ait jamais recu de visiteur, puisque c'est lui
- * qui voyage. La table `encounters` repond aux deux, et personne n'y ecrit
- * encore : tant que la traversee entre univers n'existe pas, les deux
- * reponses sont non, et tout est supprime. C'est le comportement juste.
- *
- * Un module a part, et non une methode d'OnboardingService : MeController vit
- * dans AuthModule, qu'OnboardingModule importe deja, et l'inverse ferait un
- * cycle.
- */
+/*
+  Ce qui arrive a un monde et a un personnage quand leur joueur s'en va.
+
+  Deux questions independantes : un personnage peut avoir ete rencontre
+  ailleurs sans que son monde ait jamais recu de visiteur, puisque c'est lui
+  qui voyage. La table `encounters` repond aux deux, et personne n'y ecrit
+  encore : tant que la traversee entre univers n'existe pas, les deux
+  reponses sont non, et tout est supprime. C'est le comportement juste.
+
+  Un module a part, et non une methode d'OnboardingService : MeController vit
+  dans AuthModule, qu'OnboardingModule importe deja, et l'inverse ferait un
+  cycle.
+*/
 @Injectable()
 export class ErasureService {
   private readonly logger = new Logger(ErasureService.name);
@@ -30,10 +30,10 @@ export class ErasureService {
     @Inject(STRIPE) private readonly stripe: Stripe | null,
   ) {}
 
-  /**
-   * Applique la regle au monde du joueur. Ne touche pas a sa ligne `users` :
-   * recommencer une partie n'est pas partir.
-   */
+  /*
+    Applique la regle au monde du joueur. Ne touche pas a sa ligne `users` :
+    recommencer une partie n'est pas partir.
+  */
   async releaseWorld(userId: string): Promise<DepartureOutcome> {
     const universe = await this.prisma.universe.findUnique({
       where: { ownerId: userId },
@@ -107,11 +107,11 @@ export class ErasureService {
     return outcome;
   }
 
-  /**
-   * Le depart complet. La ligne `users` part apres le monde : la relation est
-   * en SetNull, donc la supprimer d'abord laisserait un monde orphelin que
-   * plus rien ne saurait rattacher a la regle.
-   */
+  /*
+    Le depart complet. La ligne `users` part apres le monde : la relation est
+    en SetNull, donc la supprimer d'abord laisserait un monde orphelin que
+    plus rien ne saurait rattacher a la regle.
+  */
   async eraseAccount(userId: string): Promise<DepartureOutcome> {
     await this.endBilling(userId);
     const outcome = await this.releaseWorld(userId);
@@ -119,26 +119,26 @@ export class ErasureService {
     return outcome;
   }
 
-  /**
-   * Resilie l'abonnement Stripe du partant, immediatement.
-   *
-   * **Avant la suppression, et non apres** : `subscriptions` est en cascade sur
-   * `users`, donc effacer la ligne emporte l'identifiant Stripe avec elle.
-   * Plus personne ne saurait quoi annuler, et le joueur continuerait d'etre
-   * preleve pour un compte qui n'existe plus.
-   *
-   * Immediatement et non a la fin de la periode : le compte disparait, et il
-   * n'y a personne pour profiter du temps restant. Aucun remboursement n'est
-   * demande, ce qui a ete facture l'a ete.
-   *
-   * Un echec n'arrete pas le depart. Le droit a l'effacement ne se suspend pas
-   * a la disponibilite d'un tiers, mais un abonnement qui survit a son
-   * proprietaire preleve quelqu'un qui ne peut plus rien annuler : il se crie
-   * dans les journaux, avec l'identifiant, pour etre rattrape a la main.
-   *
-   * Le client Stripe, lui, reste : ses factures doivent survivre au compte de
-   * jeu, et elles ne portent plus rien qui s'y rattache.
-   */
+  /*
+    Resilie l'abonnement Stripe du partant, immediatement.
+
+    **Avant la suppression, et non apres** : `subscriptions` est en cascade sur
+    `users`, donc effacer la ligne emporte l'identifiant Stripe avec elle.
+    Plus personne ne saurait quoi annuler, et le joueur continuerait d'etre
+    preleve pour un compte qui n'existe plus.
+
+    Immediatement et non a la fin de la periode : le compte disparait, et il
+    n'y a personne pour profiter du temps restant. Aucun remboursement n'est
+    demande, ce qui a ete facture l'a ete.
+
+    Un echec n'arrete pas le depart. Le droit a l'effacement ne se suspend pas
+    a la disponibilite d'un tiers, mais un abonnement qui survit a son
+    proprietaire preleve quelqu'un qui ne peut plus rien annuler : il se crie
+    dans les journaux, avec l'identifiant, pour etre rattrape a la main.
+
+    Le client Stripe, lui, reste : ses factures doivent survivre au compte de
+    jeu, et elles ne portent plus rien qui s'y rattache.
+  */
   private async endBilling(userId: string): Promise<void> {
     const subscription = await this.prisma.subscription.findUnique({
       where: { userId },

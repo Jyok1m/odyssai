@@ -3,31 +3,31 @@ import { CREDIT_COSTS } from '@odyssai/engine';
 import type { UiLocale } from '@odyssai/schemas';
 import { PlansService } from '../plans/plans.service.js';
 
-/**
- * Les paliers, en clair, pour le guide.
- *
- * Le corpus est genere depuis les messages du site, ou aucun montant ne
- * figure : les prix vivent chez Stripe et les dotations en base, et les
- * recopier dans un fichier de traduction ferait deux verites. Le guide les
- * recoit donc a part, releves au moment de la question.
- *
- * Rien n'est mis en cache, comme dans `PlansService` : une lecture de plus
- * avant un appel au modele est negligeable, et un cache ferait citer un prix
- * que l'administrateur croit avoir change.
- */
+/*
+  Les paliers, en clair, pour le guide.
+
+  Le corpus est genere depuis les messages du site, ou aucun montant ne
+  figure : les prix vivent chez Stripe et les dotations en base, et les
+  recopier dans un fichier de traduction ferait deux verites. Le guide les
+  recoit donc a part, releves au moment de la question.
+
+  Rien n'est mis en cache, comme dans `PlansService` : une lecture de plus
+  avant un appel au modele est negligeable, et un cache ferait citer un prix
+  que l'administrateur croit avoir change.
+*/
 @Injectable()
 export class GuidePricingService {
   private readonly logger = new Logger(GuidePricingService.name);
 
   constructor(private readonly plans: PlansService) {}
 
-  /**
-   * Une ligne par palier, plus le bareme par action.
-   *
-   * Vide en cas d'echec : le prompt sait se passer du bloc, et le modele a
-   * consigne de ne jamais citer un prix quand il est absent. Mieux vaut un
-   * guide qui renvoie vers la page des tarifs qu'un guide qui invente.
-   */
+  /*
+    Une ligne par palier, plus le bareme par action.
+
+    Vide en cas d'echec : le prompt sait se passer du bloc, et le modele a
+    consigne de ne jamais citer un prix quand il est absent. Mieux vaut un
+    guide qui renvoie vers la page des tarifs qu'un guide qui invente.
+  */
   async block(locale: UiLocale): Promise<string> {
     try {
       const plans = await this.plans.all();

@@ -11,22 +11,22 @@ import { fetchAlphaStatus } from "@/lib/alpha";
 export const ALPHA_FULL_PARAM = "auth_error";
 export const ALPHA_FULL_CODE = "alpha_full";
 
-/**
- * Le bandeau de l'alpha.
- *
- * Deux choses au même endroit, et volontairement : l'annonce permanente des
- * places, et le refus qu'on reçoit après avoir essayé de s'inscrire une fois
- * de trop. Deux bandeaux superposés se seraient disputé le haut de la page,
- * et le refus doit de toute façon effacer l'annonce, qui devient fausse.
- *
- * Un bandeau et non un toast : une pré-inscription refusée n'est pas une
- * notification de trois secondes. La personne doit pouvoir lire, relire, et
- * comprendre qu'il n'y a rien à réessayer.
- *
- * `useSearchParams` sous `Suspense` garde le prérendu statique du layout. Le
- * paramètre reste dans l'URL tant que le bandeau n'est pas fermé : la
- * fermeture de l'alpha ne s'annule pas en actualisant la page.
- */
+/*
+  Le bandeau de l'alpha.
+
+  Deux choses au même endroit, et volontairement : l'annonce permanente des
+  places, et le refus qu'on reçoit après avoir essayé de s'inscrire une fois
+  de trop. Deux bandeaux superposés se seraient disputé le haut de la page,
+  et le refus doit de toute façon effacer l'annonce, qui devient fausse.
+
+  Un bandeau et non un toast : une pré-inscription refusée n'est pas une
+  notification de trois secondes. La personne doit pouvoir lire, relire, et
+  comprendre qu'il n'y a rien à réessayer.
+
+  `useSearchParams` sous `Suspense` garde le prérendu statique du layout. Le
+  paramètre reste dans l'URL tant que le bandeau n'est pas fermé : la
+  fermeture de l'alpha ne s'annule pas en actualisant la page.
+*/
 export function AlphaNotice() {
   const t = useTranslations("Auth");
   const params = useSearchParams();
@@ -94,10 +94,10 @@ export function AlphaNotice() {
   );
 }
 
-/**
- * L'annonce, selon la phase choisie au tableau de bord et le compte des
- * places. « Complète » n'est pas une phase : c'est ce qui reste qui le dit.
- */
+/*
+  L'annonce, selon la phase choisie au tableau de bord et le compte des
+  places. « Complète » n'est pas une phase : c'est ce qui reste qui le dit.
+*/
 function Announcement({ status }: { status: AlphaStatus }) {
   const t = useTranslations("Auth");
 

@@ -1,17 +1,17 @@
 import type { UiLocale } from '@odyssai/schemas';
 import type { PromptMessage } from '../guide/v1.js';
 
-/**
- * Le classificateur.
- *
- * Ni OpenRouter ni la cle actuelle ne donnent acces a un point de moderation
- * dedie : c'est donc un petit modele de conversation qui juge. Il ne narre
- * rien et ne reformule rien, il rend un verdict.
- *
- * Il lit la phrase entiere, la ou la couche lexicale ne compte que des
- * lettres : c'est lui qui distingue une insulte d'un mot innocent, et une
- * scene dure d'une scene obscene.
- */
+/*
+  Le classificateur.
+
+  Ni OpenRouter ni la cle actuelle ne donnent acces a un point de moderation
+  dedie : c'est donc un petit modele de conversation qui juge. Il ne narre
+  rien et ne reformule rien, il rend un verdict.
+
+  Il lit la phrase entiere, la ou la couche lexicale ne compte que des
+  lettres : c'est lui qui distingue une insulte d'un mot innocent, et une
+  scene dure d'une scene obscene.
+*/
 const INSTRUCTIONS: Record<UiLocale, string> = {
   fr: `Tu modères les messages d'un joueur dans un jeu de rôle narratif pour adultes.
 

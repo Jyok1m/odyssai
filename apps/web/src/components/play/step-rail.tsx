@@ -1,7 +1,7 @@
 import { useTranslations } from "next-intl";
 import type { OnboardingStep } from "@odyssai/schemas";
 
-/** Les trois étapes que le joueur remplit. La génération n'en est pas une. */
+// Les trois étapes que le joueur remplit. La génération n'en est pas une.
 const STEPS = ["username", "inspiration", "character"] as const;
 
 export function StepRail({ current }: { current: OnboardingStep }) {

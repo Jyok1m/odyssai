@@ -7,21 +7,21 @@ import { NarratorConfig } from '../config/narrator-config.js';
 import { NARRATOR_LLM } from '../onboarding/narrator-llm.provider.js';
 import { UsageService } from '../usage/usage.service.js';
 
-/**
- * Deux couches, dans cet ordre.
- *
- * La lexicale d'abord : instantanee, gratuite, elle arrete ce qui est
- * manifeste sans qu'aucun octet ne sorte. Le classificateur ensuite, qui lit
- * la phrase entiere et tranche ce qu'une liste de mots ne saura jamais
- * trancher : une scene dure contre une scene obscene, un juron adresse a une
- * situation contre une insulte adressee a quelqu'un.
- *
- * Aucun point de moderation dedie n'est joignable avec les cles du projet :
- * OpenRouter ne sert pas /moderations et la cle OpenAI est vide. Le
- * classificateur est donc un petit modele de conversation, ce qui coute un
- * appel par message.
- */
-/** Laisser passer, et sans avis sur la langue. */
+/*
+  Deux couches, dans cet ordre.
+
+  La lexicale d'abord : instantanee, gratuite, elle arrete ce qui est
+  manifeste sans qu'aucun octet ne sorte. Le classificateur ensuite, qui lit
+  la phrase entiere et tranche ce qu'une liste de mots ne saura jamais
+  trancher : une scene dure contre une scene obscene, un juron adresse a une
+  situation contre une insulte adressee a quelqu'un.
+
+  Aucun point de moderation dedie n'est joignable avec les cles du projet :
+  OpenRouter ne sert pas /moderations et la cle OpenAI est vide. Le
+  classificateur est donc un petit modele de conversation, ce qui coute un
+  appel par message.
+*/
+// Laisser passer, et sans avis sur la langue.
 const OPEN: ModerationVerdict = { allow: true, reason: null, language: null };
 
 @Injectable()
@@ -34,8 +34,10 @@ export class ModerationService {
     private readonly usage: UsageService,
   ) {}
 
-  /** `userId` sert au journal : la moderation n'est jamais facturee au
-   * joueur, mais elle coute, et ce cout doit se voir. */
+  /*
+    `userId` sert au journal : la moderation n'est jamais facturee au
+    joueur, mais elle coute, et ce cout doit se voir.
+  */
   async check(
     text: string,
     locale: UiLocale,
@@ -76,7 +78,7 @@ export class ModerationService {
     }
   }
 
-  /** Le texte du modele : la couche lexicale seule, sans appel ni latence. */
+  // Le texte du modele : la couche lexicale seule, sans appel ni latence.
   clean(text: string): boolean {
     return screenText(text).length === 0;
   }

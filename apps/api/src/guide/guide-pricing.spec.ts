@@ -34,13 +34,13 @@ function serviceFor(all: () => Promise<unknown>) {
   return new GuidePricingService({ all } as unknown as PlansService);
 }
 
-/**
- * Le bloc des tarifs.
- *
- * C'est la seule chose que le guide apprend hors du corpus, et un montant faux
- * s'y lirait comme une promesse. Un test parce que la page de tarifs et le
- * guide doivent dire le meme prix.
- */
+/*
+  Le bloc des tarifs.
+
+  C'est la seule chose que le guide apprend hors du corpus, et un montant faux
+  s'y lirait comme une promesse. Un test parce que la page de tarifs et le
+  guide doivent dire le meme prix.
+*/
 describe('tarifs servis au guide', () => {
   it('donne un montant par palier et le bareme par action', async () => {
     const block = await serviceFor(async () => PLANS).block('fr');
@@ -59,11 +59,11 @@ describe('tarifs servis au guide', () => {
     expect(block).toContain('pas encore en vente');
   });
 
-  /**
-   * Le prompt a consigne de ne jamais citer un prix quand le bloc est absent :
-   * un guide qui renvoie vers la page des tarifs vaut mieux qu'un guide qui
-   * invente, et une base indisponible ne doit pas faire tomber la reponse.
-   */
+  /*
+    Le prompt a consigne de ne jamais citer un prix quand le bloc est absent :
+    un guide qui renvoie vers la page des tarifs vaut mieux qu'un guide qui
+    invente, et une base indisponible ne doit pas faire tomber la reponse.
+  */
   it('rend une chaine vide plutot que d echouer', async () => {
     const block = await serviceFor(async () => {
       throw new Error('base indisponible');

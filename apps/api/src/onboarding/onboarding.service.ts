@@ -15,7 +15,7 @@ import { PRISMA } from '../prisma/prisma.module.js';
 import { CreditsService } from '../credits/credits.service.js';
 import { GenerationQueueService } from './generation-queue.service.js';
 
-/** L'etape visee n'est pas ouverte : on n'ecrit pas plus loin qu'on n'est. */
+// L'etape visee n'est pas ouverte : on n'ecrit pas plus loin qu'on n'est.
 export class WrongStepError extends Error {
   constructor() {
     super('etape non ouverte');
@@ -23,7 +23,7 @@ export class WrongStepError extends Error {
   }
 }
 
-/** La saisie a ete sauvegardee, mais elle ne suffit pas pour avancer. */
+// La saisie a ete sauvegardee, mais elle ne suffit pas pour avancer.
 export class IncompleteError extends Error {
   constructor() {
     super('saisie incomplete');
@@ -31,7 +31,7 @@ export class IncompleteError extends Error {
   }
 }
 
-/** La generation est lancee ou finie : le parcours n'accepte plus d'ecriture. */
+// La generation est lancee ou finie : le parcours n'accepte plus d'ecriture.
 export class LockedError extends Error {
   constructor() {
     super('parcours ferme');
@@ -39,15 +39,15 @@ export class LockedError extends Error {
   }
 }
 
-/** Les etapes que le joueur remplit lui-meme, dans l'ordre. */
+// Les etapes que le joueur remplit lui-meme, dans l'ordre.
 const EDITABLE = ['inspiration', 'character'] as const;
 
 type EditableStep = (typeof EDITABLE)[number];
 
-/**
- * `failed` reste ouvert : c'est la seule sortie d'une generation qui n'a pas
- * abouti, et la refermer laisserait le joueur sans recours.
- */
+/*
+  `failed` reste ouvert : c'est la seule sortie d'une generation qui n'a pas
+  abouti, et la refermer laisserait le joueur sans recours.
+*/
 function openUpTo(step: OnboardingStep): number {
   if (step === 'failed') return EDITABLE.length - 1;
   return (EDITABLE as readonly string[]).indexOf(step);
@@ -57,7 +57,7 @@ export function isLocked(step: OnboardingStep): boolean {
   return step === 'generating' || step === 'ready';
 }
 
-/** On ecrit a son etape ou en deca, jamais au dela. */
+// On ecrit a son etape ou en deca, jamais au dela.
 export function canWriteAt(target: EditableStep, current: OnboardingStep): boolean {
   return (EDITABLE as readonly string[]).indexOf(target) <= openUpTo(current);
 }
@@ -76,7 +76,7 @@ export class OnboardingService {
     private readonly credits: CreditsService,
   ) {}
 
-  /** Lecture seule : une visite ne cree jamais de ligne. */
+  // Lecture seule : une visite ne cree jamais de ligne.
   async getState(user: User): Promise<OnboardingState> {
     const universe = await this.prisma.universe.findUnique({
       where: { ownerId: user.id },
@@ -119,11 +119,11 @@ export class OnboardingService {
     return this.toState(user, universe);
   }
 
-  /**
-   * Les themes sont une fonction pure de l'inspiration : les laisser en place
-   * apres une modification ferait generer un monde a partir d'une saisie que le
-   * joueur a depuis changee.
-   */
+  /*
+    Les themes sont une fonction pure de l'inspiration : les laisser en place
+    apres une modification ferait generer un monde a partir d'une saisie que le
+    joueur a depuis changee.
+  */
   private async saveInspiration(
     universeId: string,
     inspiration: InspirationDraft,
@@ -225,10 +225,10 @@ export class OnboardingService {
       : { mode: 'own', ownDescription: universe.ownDescription ?? '' };
   }
 
-  /**
-   * Le JSON relu est valide comme il a ete ecrit : une colonne Json n'a pas de
-   * forme, et rien ne garantit qu'une version anterieure y ait mis la meme.
-   */
+  /*
+    Le JSON relu est valide comme il a ete ecrit : une colonne Json n'a pas de
+    forme, et rien ne garantit qu'une version anterieure y ait mis la meme.
+  */
   private toCharacter(
     row: { name: string | null; gender: string | null; age: number | null; personality: unknown; attributes: unknown } | null,
   ): CharacterDraft | null {

@@ -6,7 +6,7 @@ import { TurnController } from './turn.controller.js';
 import { TurnLimitsService } from './turn-limits.service.js';
 import { TurnMemoryService } from './turn-memory.service.js';
 
-/** OnboardingModule fournit NARRATOR_LLM, deja construit et trace. */
+// OnboardingModule fournit NARRATOR_LLM, deja construit et trace.
 @Module({
   imports: [AuthModule, OnboardingModule, ModerationModule],
   controllers: [TurnController],

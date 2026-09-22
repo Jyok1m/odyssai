@@ -4,25 +4,25 @@ import { z } from 'zod';
 const EnvSchema = z.object({
   SMTP_HOST: z.string().default(''),
   SMTP_PORT: z.coerce.number().int().positive().default(587),
-  /** Ce que le destinataire lit avant l'adresse. */
+  // Ce que le destinataire lit avant l'adresse.
   SMTP_FROM_NAME: z.string().default('Message @ Odyssai'),
   SMTP_USER: z.string().default(''),
   SMTP_PASSWORD: z.string().default(''),
-  /** Ou arrivent les messages du formulaire de contact. */
+  // Ou arrivent les messages du formulaire de contact.
   CONTACT_TO: z.string().default(''),
 });
 
-/**
- * La messagerie sortante.
- *
- * Tout est facultatif, comme Stripe : sans configuration, `enabled` est faux,
- * le formulaire de contact continue d'enregistrer en base, et seul l'envoi se
- * tait. On developpe sans serveur de messagerie.
- *
- * Le compte depend de la copie du site et non du code : `no-reply-dev@` sur la
- * copie de developpement, `no-reply@` en production. Les deux images etant
- * identiques, c'est l'environnement qui les distingue.
- */
+/*
+  La messagerie sortante.
+
+  Tout est facultatif, comme Stripe : sans configuration, `enabled` est faux,
+  le formulaire de contact continue d'enregistrer en base, et seul l'envoi se
+  tait. On developpe sans serveur de messagerie.
+
+  Le compte depend de la copie du site et non du code : `no-reply-dev@` sur la
+  copie de developpement, `no-reply@` en production. Les deux images etant
+  identiques, c'est l'environnement qui les distingue.
+*/
 @Injectable()
 export class MailConfig {
   private readonly logger = new Logger(MailConfig.name);
@@ -62,7 +62,7 @@ export class MailConfig {
     };
   }
 
-  /** L'expediteur, et la boite qui recoit. */
+  // L'expediteur, et la boite qui recoit.
   get from(): string {
     return `${this.env.SMTP_FROM_NAME} <${this.env.SMTP_USER}>`;
   }

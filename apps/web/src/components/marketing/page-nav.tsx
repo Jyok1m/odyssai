@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 
 export type NavSection = { id: string; title: string };
 
-/**
- * Sommaire de la page, dans la colonne de droite. Client uniquement pour la
- * section courante : le reste de `ProsePage` doit rester rendu au serveur.
- */
+/*
+  Sommaire de la page, dans la colonne de droite. Client uniquement pour la
+  section courante : le reste de `ProsePage` doit rester rendu au serveur.
+*/
 export function PageNav({
   label,
   sections,

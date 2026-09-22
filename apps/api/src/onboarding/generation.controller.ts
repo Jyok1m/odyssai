@@ -23,25 +23,27 @@ import { PRISMA } from '../prisma/prisma.module.js';
 
 const PING_INTERVAL_MS = 15_000;
 
-/**
- * Cadence de relecture. La generation dure des minutes et avance par paliers :
- * interroger la base plus souvent ne montrerait rien de plus.
- */
+/*
+  Cadence de relecture. La generation dure des minutes et avance par paliers :
+  interroger la base plus souvent ne montrerait rien de plus.
+*/
 const POLL_INTERVAL_MS = 2_000;
 
-/** Au dela, le flux se ferme et le navigateur rouvre : sept appels de modele
- * peuvent trainer, mais pas indefiniment. */
+/*
+  Au dela, le flux se ferme et le navigateur rouvre : sept appels de modele
+  peuvent trainer, mais pas indefiniment.
+*/
 const STREAM_MAX_MS = 600_000;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/**
- * Avancement de la generation, et monde une fois qu'il existe.
- *
- * L'avancement se lit dans `generation_jobs` plutot que par un canal Redis
- * publie par le worker : la table est deja la source de verite, elle survit a
- * un redemarrage, et deux instances d'api y lisent la meme chose.
- */
+/*
+  Avancement de la generation, et monde une fois qu'il existe.
+
+  L'avancement se lit dans `generation_jobs` plutot que par un canal Redis
+  publie par le worker : la table est deja la source de verite, elle survit a
+  un redemarrage, et deux instances d'api y lisent la meme chose.
+*/
 @Controller()
 @UseGuards(SessionGuard)
 export class GenerationController {

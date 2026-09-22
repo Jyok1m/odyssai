@@ -6,15 +6,15 @@ import { normalizeQuestion, questionHash } from './normalize.js';
 
 const FaqEntrySchema = z.object({
   id: z.string().min(1),
-  /** Plusieurs formulations de la meme question, toutes indexees. */
+  // Plusieurs formulations de la meme question, toutes indexees.
   questions: z.array(z.string().min(1)).min(1),
   answer: z.string().min(1),
   suggested: z.boolean(),
-  /**
-   * Seules les entrees relues et validees a la main sont servies. Une reponse
-   * generee par le modele n'atterrit jamais ici : mettre en cache une sortie du
-   * LLM permettrait a un visiteur d'empoisonner ce que voient les autres.
-   */
+  /*
+    Seules les entrees relues et validees a la main sont servies. Une reponse
+    generee par le modele n'atterrit jamais ici : mettre en cache une sortie du
+    LLM permettrait a un visiteur d'empoisonner ce que voient les autres.
+  */
   validated: z.boolean(),
 });
 
@@ -23,13 +23,13 @@ export type FaqEntry = z.infer<typeof FaqEntrySchema>;
 const FaqFileSchema = z.array(FaqEntrySchema);
 
 export interface FaqIndex {
-  /** Entrees validees, indexees par empreinte de question normalisee. */
+  // Entrees validees, indexees par empreinte de question normalisee.
   byHash: Map<string, FaqEntry>;
-  /** Entrees validees et suggerees, dans l'ordre du fichier. */
+  // Entrees validees et suggerees, dans l'ordre du fichier.
   suggestions: { id: string; question: string }[];
 }
 
-/** Les fichiers vivent a la racine du paquet, hors de `src`. */
+// Les fichiers vivent a la racine du paquet, hors de `src`.
 function defaultFaqDir(): string {
   return join(__dirname, '..', '..', 'faq');
 }

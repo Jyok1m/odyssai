@@ -47,13 +47,13 @@ import { LockedError, WrongStepError } from './onboarding.service.js';
 
 const PING_INTERVAL_MS = 15_000;
 
-/**
- * Etape 3 du parcours : la conversation qui donne sa fiche au personnage.
- *
- * Le modele propose, le schema tranche, le joueur corrige. L'extraction ne
- * garde donc rien en base : elle rend une proposition, et c'est
- * PUT /onboarding qui ecrit ce que le joueur a valide.
- */
+/*
+  Etape 3 du parcours : la conversation qui donne sa fiche au personnage.
+
+  Le modele propose, le schema tranche, le joueur corrige. L'extraction ne
+  garde donc rien en base : elle rend une proposition, et c'est
+  PUT /onboarding qui ecrit ce que le joueur a valide.
+*/
 @Controller('onboarding/character')
 @UseGuards(SessionGuard)
 export class CharacterController {
@@ -255,7 +255,7 @@ export class CharacterController {
     }
   }
 
-  /** Traduit les refus du parcours en codes que le front sait lire. */
+  // Traduit les refus du parcours en codes que le front sait lire.
   private async guard<T>(run: () => Promise<T>): Promise<T> {
     try {
       return await run();

@@ -72,11 +72,11 @@ describe('passe d abstraction', () => {
     expect(value.reason).toBe('invalid_shape');
   });
 
-  /**
-   * Le cas qui justifie le troisieme etage : en tete de phrase, la majuscule ne
-   * dit rien, donc le schema laisse passer. Seule la relecture contre les
-   * titres saisis voit l emprunt.
-   */
+  /*
+    Le cas qui justifie le troisieme etage : en tete de phrase, la majuscule ne
+    dit rien, donc le schema laisse passer. Seule la relecture contre les
+    titres saisis voit l emprunt.
+  */
   it('refuse un nom emprunte que le schema laisse passer', async () => {
     const { result } = run({
       ...CLEAN,

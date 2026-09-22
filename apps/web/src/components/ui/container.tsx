@@ -1,16 +1,16 @@
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from "react";
 
 type ContainerProps<T extends ElementType> = {
-  /** Balise ou composant à rendre. `div` par défaut. */
+  // Balise ou composant à rendre. `div` par défaut.
   as?: T;
   className?: string;
   children?: ReactNode;
 } & Omit<ComponentPropsWithoutRef<T>, "as" | "className" | "children">;
 
-/**
- * Borne la largeur du contenu et gère les gouttières responsives, sur le
- * `.wrap` du kit (1120 px). Rien de plus.
- */
+/*
+  Borne la largeur du contenu et gère les gouttières responsives, sur le
+  `.wrap` du kit (1120 px). Rien de plus.
+*/
 export function Container<T extends ElementType = "div">({
   as,
   className,

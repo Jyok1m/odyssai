@@ -25,7 +25,7 @@ import { AlphaFullError, UsersService } from '../users/users.service.js';
 import { OidcService } from './oidc.service.js';
 import { SessionService, refreshLifetimeSeconds, safeCompare } from './session.service.js';
 
-/** Retour de Keycloak : succes (code, state) et echec (error) sur la meme route. */
+// Retour de Keycloak : succes (code, state) et echec (error) sur la meme route.
 const CallbackQuery = z.object({
   code: z.string().min(1).max(2048).optional(),
   state: z.string().min(1).max(512).optional(),
@@ -36,11 +36,11 @@ const CallbackQuery = z.object({
 
 type Redirection = { url: string; statusCode: number };
 
-/**
- * Authentification en mandataire : le navigateur ne parle a Keycloak que par
- * ses pages, et ne detient jamais de jeton. signin et signup sont le meme flot
- * Authorization Code + PKCE, la seconde visant la page d'inscription du realm.
- */
+/*
+  Authentification en mandataire : le navigateur ne parle a Keycloak que par
+  ses pages, et ne detient jamais de jeton. signin et signup sont le meme flot
+  Authorization Code + PKCE, la seconde visant la page d'inscription du realm.
+*/
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
@@ -69,15 +69,15 @@ export class AuthController {
     @Query('locale') locale: string | undefined,
     @Res({ passthrough: true }) res: Response,
   ): Promise<Redirection> {
-    /**
-     * Refuse avant d'envoyer vers le realm.
-     *
-     * La garde qui compte est celle du provisionnement, au retour : l'adresse
-     * d'inscription de Keycloak est publique et personne ne passe forcement
-     * par ici. Mais laisser creer une identite qui n'aura jamais de joueur
-     * derriere elle est un cadeau empoisonne : l'api n'a aucun droit sur le
-     * realm et ne pourra pas l'effacer.
-     */
+    /*
+      Refuse avant d'envoyer vers le realm.
+
+      La garde qui compte est celle du provisionnement, au retour : l'adresse
+      d'inscription de Keycloak est publique et personne ne passe forcement
+      par ici. Mais laisser creer une identite qui n'aura jamais de joueur
+      derriere elle est un cadeau empoisonne : l'api n'a aucun droit sur le
+      realm et ne pourra pas l'effacer.
+    */
     if (await this.users.alphaFull()) {
       this.logger.warn("inscription refusee avant le realm : alpha complete");
       return this.failure('alpha_full');
@@ -154,7 +154,7 @@ export class AuthController {
     }
   }
 
-  /** Ne renvoie jamais de jeton. */
+  // Ne renvoie jamais de jeton.
   @Get('session')
   async session(
     @Req() req: Request,
@@ -198,11 +198,11 @@ export class AuthController {
     };
   }
 
-  /**
-   * Rend l'URL de fin de session du realm, que le front doit suivre pour
-   * fermer aussi la session SSO. En POST : avec SameSite=Lax le cookie ne part
-   * pas sur un POST venu d'un autre site, ce qui bloque la deconnexion forcee.
-   */
+  /*
+    Rend l'URL de fin de session du realm, que le front doit suivre pour
+    fermer aussi la session SSO. En POST : avec SameSite=Lax le cookie ne part
+    pas sur un POST venu d'un autre site, ce qui bloque la deconnexion forcee.
+  */
   @Post('signout')
   @HttpCode(HttpStatus.OK)
   async signOut(

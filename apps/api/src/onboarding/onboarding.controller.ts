@@ -28,13 +28,13 @@ import {
   WrongStepError,
 } from './onboarding.service.js';
 
-/**
- * Le parcours d'entree en jeu, de bout en bout dans une seule ressource. Un
- * appel suffit a reprendre exactement la ou le joueur s'etait arrete, et
- * chaque saisie s'enregistre sans attendre qu'elle soit complete.
- *
- * Le pseudo n'est pas ici : il appartient au profil, et PATCH /me le pose.
- */
+/*
+  Le parcours d'entree en jeu, de bout en bout dans une seule ressource. Un
+  appel suffit a reprendre exactement la ou le joueur s'etait arrete, et
+  chaque saisie s'enregistre sans attendre qu'elle soit complete.
+
+  Le pseudo n'est pas ici : il appartient au profil, et PATCH /me le pose.
+*/
 @Controller('onboarding')
 @UseGuards(SessionGuard)
 export class OnboardingController {
@@ -48,14 +48,14 @@ export class OnboardingController {
     return this.onboarding.getState(user);
   }
 
-  /**
-   * Recommencer. Le monde et le personnage sont traites selon la regle du
-   * depart, puis le joueur repart a l'etape inspiration.
-   *
-   * Refuse pendant la generation, comme les ecritures le sont : effacer un
-   * monde qu'un worker est en train d'ecrire le ferait echouer sur une ligne
-   * disparue plutot que de l'arreter proprement.
-   */
+  /*
+    Recommencer. Le monde et le personnage sont traites selon la regle du
+    depart, puis le joueur repart a l'etape inspiration.
+
+    Refuse pendant la generation, comme les ecritures le sont : effacer un
+    monde qu'un worker est en train d'ecrire le ferait echouer sur une ligne
+    disparue plutot que de l'arreter proprement.
+  */
   @Delete()
   async restart(@CurrentUser() user: User): Promise<DepartureOutcome> {
     const state = await this.onboarding.getState(user);

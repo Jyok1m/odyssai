@@ -4,10 +4,10 @@ import { findFaqAnswer, loadFaq, type FaqEntry, type FaqIndex } from '@odyssai/n
 
 const LOCALES: UiLocale[] = ['fr', 'en'];
 
-/**
- * FAQ chargee une fois au demarrage. Un fichier invalide ou une formulation en
- * double fait echouer le bootstrap, pas la premiere question d'un visiteur.
- */
+/*
+  FAQ chargee une fois au demarrage. Un fichier invalide ou une formulation en
+  double fait echouer le bootstrap, pas la premiere question d'un visiteur.
+*/
 @Injectable()
 export class GuideFaqService implements OnModuleInit {
   private readonly logger = new Logger(GuideFaqService.name);

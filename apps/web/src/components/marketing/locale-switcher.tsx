@@ -5,11 +5,11 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 
-/**
- * Les noms de langue restent dans leur propre langue : un anglophone tombé
- * sur la version française doit pouvoir reconnaître « English ». Ils ne
- * passent donc pas par les fichiers de messages.
- */
+/*
+  Les noms de langue restent dans leur propre langue : un anglophone tombé
+  sur la version française doit pouvoir reconnaître « English ». Ils ne
+  passent donc pas par les fichiers de messages.
+*/
 const LOCALE_NAMES = {
   fr: { short: "FR", native: "Français" },
   en: { short: "EN", native: "English" },

@@ -1,22 +1,22 @@
-/**
- * Assez d'un schéma Zod pour valider, sans faire de zod une dépendance de
- * `apps/web` : les schémas arrivent déjà compilés depuis `@odyssai/schemas`.
- */
+/*
+  Assez d'un schéma Zod pour valider, sans faire de zod une dépendance de
+  `apps/web` : les schémas arrivent déjà compilés depuis `@odyssai/schemas`.
+*/
 interface Parser<T> {
   safeParse(value: unknown): { success: true; data: T } | { success: false };
 }
 
-/**
- * Lecteur de flux SSE, commun au guide et à la conversation de personnage.
- *
- * Le découpage se fait sur `\n\n` en gardant le reste : un événement arrive
- * souvent coupé entre deux morceaux du corps, et le recoller est la seule
- * chose qui distingue ce lecteur d'un simple `split`.
- *
- * Chaque événement passe par le schéma partagé avant d'être rendu, et un
- * événement invalide est ignoré plutôt que de faire tomber le flux : le reste
- * de la réponse a encore de la valeur.
- */
+/*
+  Lecteur de flux SSE, commun au guide et à la conversation de personnage.
+
+  Le découpage se fait sur `\n\n` en gardant le reste : un événement arrive
+  souvent coupé entre deux morceaux du corps, et le recoller est la seule
+  chose qui distingue ce lecteur d'un simple `split`.
+
+  Chaque événement passe par le schéma partagé avant d'être rendu, et un
+  événement invalide est ignoré plutôt que de faire tomber le flux : le reste
+  de la réponse a encore de la valeur.
+*/
 export async function readEventStream<T>(
   response: Response,
   schema: Parser<T>,

@@ -14,12 +14,12 @@ export interface GuideModelConfig {
 export interface GuideInput {
   question: string;
   locale: UiLocale;
-  /**
-   * Ce que le corpus ne peut pas porter : les paliers et leurs montants, qui
-   * vivent en base et chez Stripe. Le corpus est genere depuis les messages du
-   * site, ou aucun prix ne figure, et c'est voulu : les recopier ferait deux
-   * verites. Releve a chaque question, donc toujours juste.
-   */
+  /*
+    Ce que le corpus ne peut pas porter : les paliers et leurs montants, qui
+    vivent en base et chez Stripe. Le corpus est genere depuis les messages du
+    site, ou aucun prix ne figure, et c'est voulu : les recopier ferait deux
+    verites. Releve a chaque question, donc toujours juste.
+  */
   live?: string;
 }
 
@@ -40,10 +40,10 @@ export type GuideResult = OffTopicSplit & {
 export const GUIDE_PROMPT_VERSION = GUIDE_PROMPT.id;
 export { GUIDE_CORPUS, GUIDE_CORPUS_VERSION };
 
-/**
- * Messages envoyes au modele. Exportee a part pour que l'api puisse mesurer le
- * prompt complet avant d'appeler, et reserver le budget en consequence.
- */
+/*
+  Messages envoyes au modele. Exportee a part pour que l'api puisse mesurer le
+  prompt complet avant d'appeler, et reserver le budget en consequence.
+*/
 export function buildGuideMessages(input: GuideInput): PromptMessage[] {
   return GUIDE_PROMPT.build(
     input.locale,
@@ -53,10 +53,10 @@ export function buildGuideMessages(input: GuideInput): PromptMessage[] {
   );
 }
 
-/**
- * Un tour de guide. Le client LLM est injecte : le paquet ne lit jamais
- * l'environnement et ne construit jamais de client lui-meme.
- */
+/*
+  Un tour de guide. Le client LLM est injecte : le paquet ne lit jamais
+  l'environnement et ne construit jamais de client lui-meme.
+*/
 export async function guide(request: GuideRequest): Promise<GuideResult> {
   const { llm, config, input, signal, trace, onTraced } = request;
 

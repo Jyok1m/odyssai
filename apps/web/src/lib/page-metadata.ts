@@ -4,11 +4,11 @@ import { routing, type Locale, type Pathname } from "@/i18n/routing";
 import { OG_LOCALE, alternatesFor, urlFor } from "@/lib/seo";
 import { SITE_NAME } from "@/lib/site";
 
-/**
- * Métadonnées d'une page de contenu. Next remplace les clés au lieu de les
- * fusionner en profondeur : `openGraph` doit donc redéclarer son image, sinon
- * celle du layout racine disparaît de la page.
- */
+/*
+  Métadonnées d'une page de contenu. Next remplace les clés au lieu de les
+  fusionner en profondeur : `openGraph` doit donc redéclarer son image, sinon
+  celle du layout racine disparaît de la page.
+*/
 export function pageMetadata({
   locale,
   href,

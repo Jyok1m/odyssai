@@ -8,7 +8,7 @@ import {
 
 import { API_BASE_URL } from "./api";
 
-/** Public : le formulaire s'adresse aussi à qui n'a pas de compte. */
+// Public : le formulaire s'adresse aussi à qui n'a pas de compte.
 export async function sendContact(request: ContactRequest): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/contact`, {
     method: "POST",

@@ -8,13 +8,13 @@ import { useSession } from "@/components/auth/session-provider";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 
-/**
- * Trois états : inconnu pendant la lecture de la session, invitation à se
- * connecter, puis accès au compte. `stacked` est la forme du panneau mobile.
- *
- * La déconnexion n'est pas ici : elle vit sur la page du compte, où elle n'a
- * pas à occuper une place permanente à côté de la navigation.
- */
+/*
+  Trois états : inconnu pendant la lecture de la session, invitation à se
+  connecter, puis accès au compte. `stacked` est la forme du panneau mobile.
+
+  La déconnexion n'est pas ici : elle vit sur la page du compte, où elle n'a
+  pas à occuper une place permanente à côté de la navigation.
+*/
 export function AuthMenu({
   size = "sm",
   stacked = false,
@@ -73,10 +73,10 @@ export function AuthMenu({
   );
 }
 
-/**
- * Silhouette de compte. `currentColor` et `viewBox` à 24 comme les icônes de
- * marque : la taille et la couleur restent décidées par le parent.
- */
+/*
+  Silhouette de compte. `currentColor` et `viewBox` à 24 comme les icônes de
+  marque : la taille et la couleur restent décidées par le parent.
+*/
 function AccountIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg

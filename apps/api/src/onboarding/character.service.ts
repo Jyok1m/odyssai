@@ -10,7 +10,7 @@ import { PrismaClient, type User } from '@odyssai/db';
 import { PRISMA } from '../prisma/prisma.module.js';
 import { LockedError, WrongStepError } from './onboarding.service.js';
 
-/** Les tours sont epuises. La fiche reste extractible de ce qui a ete dit. */
+// Les tours sont epuises. La fiche reste extractible de ce qui a ete dit.
 export class ConversationOverError extends Error {
   constructor() {
     super('conversation close');
@@ -18,7 +18,7 @@ export class ConversationOverError extends Error {
   }
 }
 
-/** Trop peu d'echanges pour proposer quoi que ce soit. */
+// Trop peu d'echanges pour proposer quoi que ce soit.
 export class TooShortError extends Error {
   constructor() {
     super('conversation trop courte');
@@ -32,11 +32,11 @@ const CHANNEL = 'character_creation' as const;
 export class CharacterService {
   constructor(@Inject(PRISMA) private readonly prisma: PrismaClient) {}
 
-  /**
-   * Resout l'univers du joueur et verifie qu'il est bien a cette etape. Toutes
-   * les routes de la conversation passent par la : l'etat vit en base, et un
-   * ecran ne suffit pas a garantir qu'on y est.
-   */
+  /*
+    Resout l'univers du joueur et verifie qu'il est bien a cette etape. Toutes
+    les routes de la conversation passent par la : l'etat vit en base, et un
+    ecran ne suffit pas a garantir qu'on y est.
+  */
   async open(user: User): Promise<string> {
     const universe = await this.prisma.universe.findUnique({
       where: { ownerId: user.id },
@@ -68,7 +68,7 @@ export class CharacterService {
     );
   }
 
-  /** Historique dans la forme attendue par le prompt, sans les horodatages. */
+  // Historique dans la forme attendue par le prompt, sans les horodatages.
   async history(universeId: string): Promise<ConversationTurn[]> {
     const rows = await this.prisma.conversationMessage.findMany({
       where: { universeId, channel: CHANNEL },
@@ -79,10 +79,10 @@ export class CharacterService {
     return rows.map((row) => ({ role: row.role, content: row.content }));
   }
 
-  /**
-   * Le message du joueur est ecrit avant l'appel au modele, pas apres : une
-   * coupure en cours de reponse ne doit pas lui faire perdre ce qu'il a tape.
-   */
+  /*
+    Le message du joueur est ecrit avant l'appel au modele, pas apres : une
+    coupure en cours de reponse ne doit pas lui faire perdre ce qu'il a tape.
+  */
   async recordUser(universeId: string, content: string): Promise<void> {
     const turns = await this.turnsUsed(universeId);
     if (turns >= CHARACTER_TURNS_MAX) throw new ConversationOverError();
@@ -94,14 +94,14 @@ export class CharacterService {
     await this.record(universeId, 'assistant', content);
   }
 
-  /**
-   * Ecrit un message avec son rang.
-   *
-   * `seq` a un defaut a zero et une contrainte d'unicite par canal : ne pas le
-   * renseigner faisait passer le premier message et echouer tous les suivants,
-   * puisqu'ils visaient tous le rang zero. Le tour de jeu le calculait deja,
-   * cette conversation ne l'avait jamais fait.
-   */
+  /*
+    Ecrit un message avec son rang.
+
+    `seq` a un defaut a zero et une contrainte d'unicite par canal : ne pas le
+    renseigner faisait passer le premier message et echouer tous les suivants,
+    puisqu'ils visaient tous le rang zero. Le tour de jeu le calculait deja,
+    cette conversation ne l'avait jamais fait.
+  */
   private async record(
     universeId: string,
     role: 'user' | 'assistant',
@@ -118,12 +118,12 @@ export class CharacterService {
     });
   }
 
-  /**
-   * Le rang suivant dans ce canal, comme le fait le tour de jeu. La colonne a
-   * un defaut a zero, qui ne vaut que pour la premiere ligne : sans rang
-   * explicite, le deuxieme message tombait sur la contrainte d'unicite
-   * (univers, canal, rang) et la conversation s'arretait au premier echange.
-   */
+  /*
+    Le rang suivant dans ce canal, comme le fait le tour de jeu. La colonne a
+    un defaut a zero, qui ne vaut que pour la premiere ligne : sans rang
+    explicite, le deuxieme message tombait sur la contrainte d'unicite
+    (univers, canal, rang) et la conversation s'arretait au premier echange.
+  */
   private async nextSeq(universeId: string): Promise<number> {
     const last = await this.prisma.conversationMessage.findFirst({
       where: { universeId, channel: CHANNEL },
@@ -134,7 +134,7 @@ export class CharacterService {
     return last ? last.seq + 1 : 0;
   }
 
-  /** Assez d'echanges pour qu'une fiche ait de quoi se remplir. */
+  // Assez d'echanges pour qu'une fiche ait de quoi se remplir.
   async assertExtractable(universeId: string): Promise<void> {
     if ((await this.turnsUsed(universeId)) < CHARACTER_TURNS_MIN) {
       throw new TooShortError();

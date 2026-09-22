@@ -28,7 +28,7 @@ export class PlanInUseError extends Error {
   }
 }
 
-/** Le palier offert ne se retire ni ne s'archive : tout y retombe. */
+// Le palier offert ne se retire ni ne s'archive : tout y retombe.
 export class PlanProtectedError extends Error {
   constructor() {
     super(`le palier ${FREE_PLAN_SLUG} ne peut etre ni archive ni supprime`);
@@ -50,20 +50,20 @@ export class StripeUnavailableError extends Error {
   }
 }
 
-/**
- * Le CRUD des paliers, base et Stripe ensemble.
- *
- * Un prix Stripe est **immuable** : on ne modifie pas un montant, on cree un
- * nouveau prix et on desactive l'ancien. C'est le piege central de cette
- * classe, et la raison pour laquelle `amountCents` n'est pas un simple champ.
- * Les abonnes en cours gardent le prix qu'ils ont signe jusqu'a leur prochaine
- * facture : Stripe ne rejoue pas un abonnement sur un nouveau prix, et c'est
- * le comportement voulu.
- *
- * Les ecritures chez Stripe passent avant l'ecriture en base : un produit cree
- * sans ligne chez nous se voit et se nettoie, une ligne qui pointe un prix
- * inexistant ferait echouer un paiement.
- */
+/*
+  Le CRUD des paliers, base et Stripe ensemble.
+
+  Un prix Stripe est **immuable** : on ne modifie pas un montant, on cree un
+  nouveau prix et on desactive l'ancien. C'est le piege central de cette
+  classe, et la raison pour laquelle `amountCents` n'est pas un simple champ.
+  Les abonnes en cours gardent le prix qu'ils ont signe jusqu'a leur prochaine
+  facture : Stripe ne rejoue pas un abonnement sur un nouveau prix, et c'est
+  le comportement voulu.
+
+  Les ecritures chez Stripe passent avant l'ecriture en base : un produit cree
+  sans ligne chez nous se voit et se nettoie, une ligne qui pointe un prix
+  inexistant ferait echouer un paiement.
+*/
 @Injectable()
 export class AdminPlansService {
   private readonly logger = new Logger(AdminPlansService.name);
@@ -153,17 +153,17 @@ export class AdminPlansService {
       );
     }
 
-    /**
-     * Le montant change : un prix Stripe etant immuable, on en cree un et on
-     * desactive l'ancien. Sans cela le tableau de bord mentirait, affichant un
-     * montant que Stripe ne facture pas.
-     *
-     * Le montant inchange passe aussi quand aucun prix n'existe. Un palier
-     * peut porter un montant sans prix : une migration l'a pose, ou un appel
-     * a Stripe a echoue apres l'ecriture. Comparer les seuls montants le
-     * laissait invendable a vie, et le remettre en vente demandait de changer
-     * le prix puis de le remettre.
-     */
+    /*
+      Le montant change : un prix Stripe etant immuable, on en cree un et on
+      desactive l'ancien. Sans cela le tableau de bord mentirait, affichant un
+      montant que Stripe ne facture pas.
+
+      Le montant inchange passe aussi quand aucun prix n'existe. Un palier
+      peut porter un montant sans prix : une migration l'a pose, ou un appel
+      a Stripe a echoue apres l'ecriture. Comparer les seuls montants le
+      laissait invendable a vie, et le remettre en vente demandait de changer
+      le prix puis de le remettre.
+    */
     if (
       request.amountCents !== undefined &&
       (request.amountCents !== plan.amountCents || (await this.unusable(plan)))
@@ -197,13 +197,13 @@ export class AdminPlansService {
     return this.toAdmin(updated, subscribers);
   }
 
-  /**
-   * Supprime, ou refuse.
-   *
-   * Un palier que quelqu'un porte ne se supprime pas : la cle etrangere le
-   * refuserait de toute facon, et le grand livre doit rester lisible. On
-   * l'archive a la place, ce que l'ecran propose.
-   */
+  /*
+    Supprime, ou refuse.
+
+    Un palier que quelqu'un porte ne se supprime pas : la cle etrangere le
+    refuserait de toute facon, et le grand livre doit rester lisible. On
+    l'archive a la place, ce que l'ecran propose.
+  */
   async remove(id: string): Promise<void> {
     const plan = await this.prisma.plan.findUnique({ where: { id } });
     if (!plan) throw new PlanNotFoundError(id);
@@ -228,13 +228,13 @@ export class AdminPlansService {
     return this.stripe;
   }
 
-  /**
-   * Cree le produit et son prix.
-   *
-   * La cle d'idempotence est derivee du slug et du montant : une requete
-   * rejouee apres une coupure reseau retombe sur le meme produit au lieu d'en
-   * creer un second, invisible depuis chez nous.
-   */
+  /*
+    Cree le produit et son prix.
+
+    La cle d'idempotence est derivee du slug et du montant : une requete
+    rejouee apres une coupure reseau retombe sur le meme produit au lieu d'en
+    creer un second, invisible depuis chez nous.
+  */
   private async createPrice(
     name: string,
     slug: string,
@@ -264,15 +264,15 @@ export class AdminPlansService {
     return { productId: product.id, priceId: price.id };
   }
 
-  /** Nouveau prix sur le meme produit, ancien desactive. */
-  /**
-   * Vrai quand le palier porte un montant qu'aucun prix actif ne facture.
-   *
-   * Un prix absent, une migration l'ayant pose sans passer par Stripe, ou un
-   * prix desactive par un aller-retour de montant : dans les deux cas le
-   * paiement echouerait, et il faut le refaire. La lecture chez Stripe ne coute
-   * qu'a la modification d'un palier, ce qui arrive quelques fois par an.
-   */
+  // Nouveau prix sur le meme produit, ancien desactive.
+  /*
+    Vrai quand le palier porte un montant qu'aucun prix actif ne facture.
+
+    Un prix absent, une migration l'ayant pose sans passer par Stripe, ou un
+    prix desactive par un aller-retour de montant : dans les deux cas le
+    paiement echouerait, et il faut le refaire. La lecture chez Stripe ne coute
+    qu'a la modification d'un palier, ce qui arrive quelques fois par an.
+  */
   private async unusable(plan: Plan): Promise<boolean> {
     if (plan.amountCents === null) return false;
     // Sans cle, il n'y a rien a reparer et rien a interroger : renommer un
@@ -326,23 +326,23 @@ export class AdminPlansService {
       ),
     );
 
-    /**
-     * La cle d'idempotence rend le prix deja cree pour ce montant, dans l'etat
-     * ou il est. Un aller-retour de montant le laisse desactive, et Stripe
-     * refuse un prix inactif au paiement : « The price specified is inactive ».
-     * On le remet en service plutot que d'ecrire en base un prix invendable.
-     */
+    /*
+      La cle d'idempotence rend le prix deja cree pour ce montant, dans l'etat
+      ou il est. Un aller-retour de montant le laisse desactive, et Stripe
+      refuse un prix inactif au paiement : « The price specified is inactive ».
+      On le remet en service plutot que d'ecrire en base un prix invendable.
+    */
     const price = created.active
       ? created
       : await this.callStripe(() =>
           this.client().prices.update(created.id, { active: true }),
         );
 
-    /**
-     * Ne pas desactiver ce qu'on vient de remettre en service. Avec la meme
-     * cle d'idempotence, l'ancien prix et le nouveau sont le meme objet, et
-     * l'ordre « creer puis desactiver l'ancien » se retournait contre lui.
-     */
+    /*
+      Ne pas desactiver ce qu'on vient de remettre en service. Avec la meme
+      cle d'idempotence, l'ancien prix et le nouveau sont le meme objet, et
+      l'ordre « creer puis desactiver l'ancien » se retournait contre lui.
+    */
     if (plan.stripePriceId && plan.stripePriceId !== price.id) {
       await this.deactivate(plan.stripePriceId);
     }
@@ -350,10 +350,10 @@ export class AdminPlansService {
     return { amountCents, stripePriceId: price.id };
   }
 
-  /**
-   * Desactive un prix. Stripe ne les supprime pas : les factures passees y
-   * renvoient, et un prix efface rendrait l'historique illisible.
-   */
+  /*
+    Desactive un prix. Stripe ne les supprime pas : les factures passees y
+    renvoient, et un prix efface rendrait l'historique illisible.
+  */
   private async deactivate(priceId: string): Promise<void> {
     await this.callStripe(() => this.client().prices.update(priceId, { active: false }));
   }
@@ -362,10 +362,10 @@ export class AdminPlansService {
     return this.prisma.subscription.count({ where: { plan: slug } });
   }
 
-  /**
-   * Le message de Stripe peut porter une partie de la requete : seul le code
-   * d'erreur sort d'ici, jamais le corps.
-   */
+  /*
+    Le message de Stripe peut porter une partie de la requete : seul le code
+    d'erreur sort d'ici, jamais le corps.
+  */
   private async callStripe<T>(run: () => Promise<T>): Promise<T> {
     try {
       return await run();

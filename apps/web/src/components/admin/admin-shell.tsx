@@ -29,13 +29,13 @@ const NAVIGATION = [
   { name: "Messages", href: "/admin/messages", icon: EnvelopeIcon },
 ] as const;
 
-/**
- * La coque du tableau de bord : barre latérale, bandeau, et le garde d'entrée.
- *
- * Le garde est ici une commodité, jamais une sécurité : c'est `AdminGuard`,
- * côté API, qui refuse vraiment. Cacher l'écran à qui n'y a pas droit évite
- * seulement d'afficher une page de tableaux vides et d'erreurs 403.
- */
+/*
+  La coque du tableau de bord : barre latérale, bandeau, et le garde d'entrée.
+
+  Le garde est ici une commodité, jamais une sécurité : c'est `AdminGuard`,
+  côté API, qui refuse vraiment. Cacher l'écran à qui n'y a pas droit évite
+  seulement d'afficher une page de tableaux vides et d'erreurs 403.
+*/
 export function AdminShell({ children }: { children: ReactNode }) {
   const session = useSession();
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
@@ -190,9 +190,9 @@ function Sidebar({
 }: {
   profile: PlayerProfile;
   pathname: string;
-  /** Messages a traiter, pour la pastille. Zero n'en affiche aucune. */
+  // Messages a traiter, pour la pastille. Zero n'en affiche aucune.
   pending: number;
-  /** Fourni par la version mobile seule : celle de bureau ne se ferme pas. */
+  // Fourni par la version mobile seule : celle de bureau ne se ferme pas.
   onNavigate?: () => void;
 }) {
   return (

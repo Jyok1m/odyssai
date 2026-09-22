@@ -14,17 +14,17 @@ import { FIELD, FIELD_AREA } from "@/components/ui/field";
 
 interface Props {
   initial: CharacterDraft;
-  /** Champs que le modèle n'a pas su tirer de la conversation. */
+  // Champs que le modèle n'a pas su tirer de la conversation.
   missing: string[];
   saving: boolean;
   error: string | null;
   onSubmit: (character: CharacterDraft) => void;
 }
 
-/**
- * Les champs que l'API peut dire manquants. Filtrer dessus type la clé de
- * traduction, et évite d'afficher une clé brute si l'API en nommait un autre.
- */
+/*
+  Les champs que l'API peut dire manquants. Filtrer dessus type la clé de
+  traduction, et évite d'afficher une clé brute si l'API en nommait un autre.
+*/
 const SHEET_FIELDS = ["name", "gender", "age", "personality", "attributes"] as const;
 
 type SheetField = (typeof SHEET_FIELDS)[number];
@@ -33,7 +33,7 @@ function isSheetField(value: string): value is SheetField {
   return (SHEET_FIELDS as readonly string[]).includes(value);
 }
 
-/** Une ligne d'attribut : un nom, une valeur de 1 à 5. */
+// Une ligne d'attribut : un nom, une valeur de 1 à 5.
 interface Attribute {
   key: string;
   value: number;

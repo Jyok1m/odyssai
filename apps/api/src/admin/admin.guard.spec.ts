@@ -22,12 +22,12 @@ describe('garde d administration', () => {
     );
   });
 
-  /**
-   * Le cas qui compte : ce garde doit etre pose apres SessionGuard, qui depose
-   * le joueur. Seul, il ne voit rien, et doit refuser plutot que laisser
-   * passer. Une erreur d'ordre dans un decorateur ouvrirait sinon tout le
-   * tableau de bord a un anonyme.
-   */
+  /*
+    Le cas qui compte : ce garde doit etre pose apres SessionGuard, qui depose
+    le joueur. Seul, il ne voit rien, et doit refuser plutot que laisser
+    passer. Une erreur d'ordre dans un decorateur ouvrirait sinon tout le
+    tableau de bord a un anonyme.
+  */
   it('refuse quand aucune session n a ete resolue', () => {
     expect(() => guard.canActivate(contextFor(undefined))).toThrow(ForbiddenException);
   });

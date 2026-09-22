@@ -20,7 +20,7 @@ const SiteverifyResponse = z.object({
   'error-codes': z.array(z.string()).optional(),
 });
 
-/** Decremente et refuse a zero, sans laisser passer deux requetes simultanees. */
+// Decremente et refuse a zero, sans laisser passer deux requetes simultanees.
 export const CONSUME_PASS = `
 local left = tonumber(redis.call('GET', KEYS[1]) or '-1')
 if left < 1 then return -1 end
@@ -36,10 +36,10 @@ export class GuidePassService {
     private readonly config: GuideConfig,
   ) {}
 
-  /**
-   * En cas de panne reseau on refuse plutot que de laisser passer : un
-   * siteverify injoignable ne doit pas ouvrir la porte a tout le monde.
-   */
+  /*
+    En cas de panne reseau on refuse plutot que de laisser passer : un
+    siteverify injoignable ne doit pas ouvrir la porte a tout le monde.
+  */
   async verifyTurnstile(token: string, ip?: string): Promise<boolean> {
     const body = new URLSearchParams({
       secret: this.config.pass.turnstileSecret,
@@ -87,7 +87,7 @@ export class GuidePassService {
     return id;
   }
 
-  /** Rend le nombre de questions restantes, ou null si le pass est epuise. */
+  // Rend le nombre de questions restantes, ou null si le pass est epuise.
   async consume(id: string): Promise<number | null> {
     const left = await this.redis.eval(CONSUME_PASS, 1, `${PASS_PREFIX}${id}`);
     const value = Number(left);

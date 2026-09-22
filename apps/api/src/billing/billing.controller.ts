@@ -23,12 +23,12 @@ import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
 import { BillingDisabledError, BillingService } from './billing.service.js';
 
-/**
- * Abonnements et reserve de credits.
- *
- * Le garde est pose methode par methode, et non sur la classe : le webhook
- * n'est pas appele par un navigateur et n'a pas de session.
- */
+/*
+  Abonnements et reserve de credits.
+
+  Le garde est pose methode par methode, et non sur la classe : le webhook
+  n'est pas appele par un navigateur et n'a pas de session.
+*/
 @Controller('billing')
 export class BillingController {
   private readonly logger = new Logger(BillingController.name);
@@ -41,8 +41,10 @@ export class BillingController {
     return this.billing.summary(user);
   }
 
-  /** Sans garde : le bareme n'a rien de personnel, et la page de tarifs doit
-   * pouvoir s'afficher avant de s'inscrire. */
+  /*
+    Sans garde : le bareme n'a rien de personnel, et la page de tarifs doit
+    pouvoir s'afficher avant de s'inscrire.
+  */
   @Get('catalog')
   catalog(): Promise<BillingCatalog> {
     return this.billing.catalog();
@@ -60,26 +62,26 @@ export class BillingController {
     return { url: await this.guarded(() => this.billing.checkout(user, parsed.data.plan)) };
   }
 
-  /**
-   * Le portail de Stripe : moyen de paiement, factures, resiliation. Rien de
-   * tout cela n'a a etre reconstruit, et surtout pas une saisie de carte.
-   */
+  /*
+    Le portail de Stripe : moyen de paiement, factures, resiliation. Rien de
+    tout cela n'a a etre reconstruit, et surtout pas une saisie de carte.
+  */
   @Post('portal')
   @UseGuards(SessionGuard)
   async portal(@CurrentUser() user: User): Promise<BillingRedirect> {
     return { url: await this.guarded(() => this.billing.portal(user)) };
   }
 
-  /**
-   * L'entree des evenements Stripe.
-   *
-   * Le corps brut est indispensable : la signature se calcule sur les octets
-   * recus, et le JSON re-serialise par Nest ne les reproduit pas. D'ou
-   * `rawBody: true` au demarrage.
-   *
-   * Une signature invalide vaut 400 : Stripe ne rejoue pas un 4xx, et il n'y a
-   * rien a rejouer puisque l'appel ne vient pas de lui.
-   */
+  /*
+    L'entree des evenements Stripe.
+
+    Le corps brut est indispensable : la signature se calcule sur les octets
+    recus, et le JSON re-serialise par Nest ne les reproduit pas. D'ou
+    `rawBody: true` au demarrage.
+
+    Une signature invalide vaut 400 : Stripe ne rejoue pas un 4xx, et il n'y a
+    rien a rejouer puisque l'appel ne vient pas de lui.
+  */
   @Post('webhook')
   @HttpCode(200)
   async webhook(@Req() req: RawBodyRequest<Request>): Promise<{ received: true }> {
@@ -104,7 +106,7 @@ export class BillingController {
     return { received: true };
   }
 
-  /** Sans cle Stripe, la vente n'existe pas : c'est une indisponibilite, pas une erreur du joueur. */
+  // Sans cle Stripe, la vente n'existe pas : c'est une indisponibilite, pas une erreur du joueur.
   private async guarded(run: () => Promise<string>): Promise<string> {
     try {
       return await run();

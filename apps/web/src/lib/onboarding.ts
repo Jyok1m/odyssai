@@ -10,15 +10,15 @@ import {
 
 import { API_BASE_URL } from "./api";
 
-/**
- * Refus de l'API sur le parcours. `incomplete` n'est pas une panne : la saisie
- * est bien enregistrée, c'est le passage à l'étape suivante qui est refusé.
- */
+/*
+  Refus de l'API sur le parcours. `incomplete` n'est pas une panne : la saisie
+  est bien enregistrée, c'est le passage à l'étape suivante qui est refusé.
+*/
 export class OnboardingError extends Error {
   readonly code:
     | OnboardingErrorBody["code"]
     | "unauthenticated"
-    /** L'API n'a pas répondu : réseau coupé, ou origine refusée. */
+    // L'API n'a pas répondu : réseau coupé, ou origine refusée.
     | "unreachable"
     | "unknown";
 
@@ -64,11 +64,11 @@ export async function saveOnboarding(
   return OnboardingStateSchema.parse(await response.json());
 }
 
-/**
- * `fetch` rejette sur un échec réseau, et aussi quand le navigateur bloque la
- * réponse pour cause d'origine non autorisée. Les deux méritent d'être dits :
- * confondus avec un refus de l'API, ils donnent un message qui n'apprend rien.
- */
+/*
+  `fetch` rejette sur un échec réseau, et aussi quand le navigateur bloque la
+  réponse pour cause d'origine non autorisée. Les deux méritent d'être dits :
+  confondus avec un refus de l'API, ils donnent un message qui n'apprend rien.
+*/
 async function send(
   input: string,
   init: RequestInit,
@@ -84,10 +84,10 @@ async function send(
   }
 }
 
-/**
- * Recommencer. Le monde et le personnage sont traités selon la règle du
- * départ, et le joueur repart à l'inspiration.
- */
+/*
+  Recommencer. Le monde et le personnage sont traités selon la règle du
+  départ, et le joueur repart à l'inspiration.
+*/
 export async function restartOnboarding(
   signal?: AbortSignal,
 ): Promise<DepartureOutcome> {

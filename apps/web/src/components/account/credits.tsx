@@ -14,13 +14,13 @@ import {
   openPortal,
 } from "@/lib/billing";
 
-/**
- * La réserve du joueur.
- *
- * Aucun montant en euros ici : les prix vivent chez Stripe, qui les affiche
- * sur sa propre page. Les recopier ferait deux vérités, et la fausse serait
- * la nôtre.
- */
+/*
+  La réserve du joueur.
+
+  Aucun montant en euros ici : les prix vivent chez Stripe, qui les affiche
+  sur sa propre page. Les recopier ferait deux vérités, et la fausse serait
+  la nôtre.
+*/
 export function Credits() {
   const t = useTranslations("Billing");
   const format = useFormatter();

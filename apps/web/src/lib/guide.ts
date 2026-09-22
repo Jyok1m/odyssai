@@ -10,7 +10,7 @@ import {
 import { API_BASE_URL } from "./api";
 import { readEventStream } from "./sse";
 
-/** Clé de test Cloudflare, qui accepte tout : elle ne vaut que pour le dev. */
+// Clé de test Cloudflare, qui accepte tout : elle ne vaut que pour le dev.
 const TEST_SITE_KEY = "1x00000000000000000000AA";
 const TURNSTILE_SCRIPT =
   "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
@@ -18,7 +18,7 @@ const TURNSTILE_SCRIPT =
 export const TURNSTILE_SITE_KEY =
   process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? TEST_SITE_KEY;
 
-/** Refus rendu avant l'ouverture du flux. Le code vient de l'API. */
+// Refus rendu avant l'ouverture du flux. Le code vient de l'API.
 export class GuideRequestError extends Error {
   readonly code: GuideErrorBody["code"] | "unknown";
   readonly retryAfterSeconds?: number;
@@ -54,7 +54,7 @@ export async function requestGuidePass(turnstileToken: string): Promise<void> {
   if (!response.ok) throw await toRequestError(response);
 }
 
-/** Ouvre le flux et rend chaque événement validé. */
+// Ouvre le flux et rend chaque événement validé.
 export async function askGuide(
   body: { question: string; locale: UiLocale },
   onEvent: (event: GuideStreamEvent) => void,
@@ -109,10 +109,10 @@ function turnstile(): TurnstileApi | undefined {
 
 let scriptPromise: Promise<void> | undefined;
 
-/**
- * Chargé au premier refus seulement, jamais au chargement de la page : une
- * question servie par la FAQ ne doit coûter aucun script tiers au visiteur.
- */
+/*
+  Chargé au premier refus seulement, jamais au chargement de la page : une
+  question servie par la FAQ ne doit coûter aucun script tiers au visiteur.
+*/
 function loadTurnstileScript(): Promise<void> {
   scriptPromise ??= new Promise<void>((resolve, reject) => {
     if (turnstile()) {

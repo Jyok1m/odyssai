@@ -8,18 +8,18 @@ import { reasonOf } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
 import { fetchMarketingEmails } from "@/lib/admin";
 
-/**
- * L'extraction des adresses consenties.
- *
- * Le fichier est fabriqué ici, dans le navigateur, à partir de la réponse
- * JSON : un point d'API qui rendrait directement un fichier demanderait une
- * navigation de premier niveau, donc de sortir le cookie de session de son
- * `credentials: include`.
- *
- * L'API ne sait rendre **que** ceux qui ont consenti : il n'existe aucun
- * paramètre pour demander les autres, et ce bouton ne peut donc pas extraire
- * une liste qu'il ne faudrait pas.
- */
+/*
+  L'extraction des adresses consenties.
+
+  Le fichier est fabriqué ici, dans le navigateur, à partir de la réponse
+  JSON : un point d'API qui rendrait directement un fichier demanderait une
+  navigation de premier niveau, donc de sortir le cookie de session de son
+  `credentials: include`.
+
+  L'API ne sait rendre **que** ceux qui ont consenti : il n'existe aucun
+  paramètre pour demander les autres, et ce bouton ne peut donc pas extraire
+  une liste qu'il ne faudrait pas.
+*/
 export function MarketingExport() {
   const [busy, setBusy] = useState(false);
 

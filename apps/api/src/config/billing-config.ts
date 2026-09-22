@@ -1,34 +1,34 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { z } from 'zod';
 
-/**
- * Stripe, et rien d'autre.
- *
- * La cle et le secret de webhook, rien d'autre. Les identifiants de prix
- * vivaient ici : ils sont passes dans la table `plans`, ou le tableau de bord
- * d'administration les ecrit lui-meme en creant le produit chez Stripe. Les
- * garder en variable d'environnement obligeait a un deploiement pour mettre un
- * palier en vente.
- *
- * Tout est optionnel : sans cle, la facturation se tait et le palier libre
- * suffit a jouer. C'est ce qui permet de developper sans compte Stripe.
- */
+/*
+  Stripe, et rien d'autre.
+
+  La cle et le secret de webhook, rien d'autre. Les identifiants de prix
+  vivaient ici : ils sont passes dans la table `plans`, ou le tableau de bord
+  d'administration les ecrit lui-meme en creant le produit chez Stripe. Les
+  garder en variable d'environnement obligeait a un deploiement pour mettre un
+  palier en vente.
+
+  Tout est optionnel : sans cle, la facturation se tait et le palier libre
+  suffit a jouer. C'est ce qui permet de developper sans compte Stripe.
+*/
 const EnvSchema = z
   .object({
-    /**
-     * Le deploiement, et non la facon dont Node est bati.
-     *
-     * `NODE_ENV` ne peut pas servir ici : les deux copies du site tournent
-     * avec `NODE_ENV=production`, l'image etant la meme, alors que celle de
-     * dev doit justement travailler en mode test chez Stripe. Sans cette
-     * variable, la copie de dev refuserait de demarrer ou debiterait de
-     * vraies cartes, et les deux sont inacceptables.
-     */
+    /*
+      Le deploiement, et non la facon dont Node est bati.
+
+      `NODE_ENV` ne peut pas servir ici : les deux copies du site tournent
+      avec `NODE_ENV=production`, l'image etant la meme, alors que celle de
+      dev doit justement travailler en mode test chez Stripe. Sans cette
+      variable, la copie de dev refuserait de demarrer ou debiterait de
+      vraies cartes, et les deux sont inacceptables.
+    */
     ODYSSAI_ENV: z
       .enum(['development', 'staging', 'production'])
       .default('development'),
 
-    /** Nommee ainsi parce que c'est le nom deja pose dans le .env du projet. */
+    // Nommee ainsi parce que c'est le nom deja pose dans le .env du projet.
     STRIPE_PRIVATE_KEY: z.string().default(''),
     STRIPE_WEBHOOK_SECRET: z.string().default(''),
   })
@@ -94,7 +94,7 @@ export class BillingConfig {
     return this.env.STRIPE_PRIVATE_KEY.startsWith('sk_live_');
   }
 
-  /** Jamais journalisee ni renvoyee : elle ne sort que vers le SDK. */
+  // Jamais journalisee ni renvoyee : elle ne sort que vers le SDK.
   get secretKey(): string {
     return this.env.STRIPE_PRIVATE_KEY;
   }

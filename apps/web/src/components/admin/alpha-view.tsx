@@ -21,14 +21,14 @@ const PHASES: { id: AlphaPhase; label: string; hint: string }[] = [
   },
 ];
 
-/**
- * L'état de l'alpha, tel qu'on l'annonce.
- *
- * Deux phases seulement. « Complète » n'est pas un choix : c'est le constat
- * que les places sont prises, et il s'affiche ici sans pouvoir se régler. Un
- * tableau de bord qui pourrait annoncer des places déjà occupées ferait mentir
- * le site, et c'est la porte d'entrée qui trancherait, pas l'annonce.
- */
+/*
+  L'état de l'alpha, tel qu'on l'annonce.
+
+  Deux phases seulement. « Complète » n'est pas un choix : c'est le constat
+  que les places sont prises, et il s'affiche ici sans pouvoir se régler. Un
+  tableau de bord qui pourrait annoncer des places déjà occupées ferait mentir
+  le site, et c'est la porte d'entrée qui trancherait, pas l'annonce.
+*/
 export function AlphaView() {
   const [status, setStatus] = useState<AlphaStatus | null>(null);
   const [error, setError] = useState<string | null>(null);

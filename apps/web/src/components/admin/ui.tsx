@@ -1,13 +1,13 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-/**
- * Les primitives du tableau de bord.
- *
- * Elles n'entrent pas dans `components/ui` : le kit habille le jeu, celles-ci
- * habillent un back-office et n'ont pas à s'y retrouver par inadvertance. Les
- * tokens, eux, sont bien ceux du kit : un seul thème sur tout le site.
- */
+/*
+  Les primitives du tableau de bord.
+
+  Elles n'entrent pas dans `components/ui` : le kit habille le jeu, celles-ci
+  habillent un back-office et n'ont pas à s'y retrouver par inadvertance. Les
+  tokens, eux, sont bien ceux du kit : un seul thème sur tout le site.
+*/
 
 export function Page({
   title,
@@ -35,14 +35,14 @@ export function Page({
   );
 }
 
-/**
- * Des cartes separees, et non un bloc segmente par des filets.
- *
- * Le motif precedent collait quatre chiffres dans un seul cadre avec un
- * `gap-px` colore : lisible, mais rien ne s'y distinguait et rien n'y etait
- * cliquable. Separees, elles peuvent porter une icone, un lien, et reagir au
- * survol quand elles menent quelque part.
- */
+/*
+  Des cartes separees, et non un bloc segmente par des filets.
+
+  Le motif precedent collait quatre chiffres dans un seul cadre avec un
+  `gap-px` colore : lisible, mais rien ne s'y distinguait et rien n'y etait
+  cliquable. Separees, elles peuvent porter une icone, un lien, et reagir au
+  survol quand elles menent quelque part.
+*/
 export function StatGrid({ children }: { children: ReactNode }) {
   return (
     <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -51,7 +51,7 @@ export function StatGrid({ children }: { children: ReactNode }) {
   );
 }
 
-/** Les teintes d'icone disponibles. Une par nature de chiffre, pas au hasard. */
+// Les teintes d'icone disponibles. Une par nature de chiffre, pas au hasard.
 const STAT_TONES = {
   accent: "bg-accent/12 text-accent",
   brass: "bg-brass/12 text-brass",
@@ -72,7 +72,7 @@ export function Stat({
   unit?: string;
   icon?: ReactNode;
   tone?: keyof typeof STAT_TONES;
-  /** Rend la carte cliquable. Absent, elle reste un simple chiffre. */
+  // Rend la carte cliquable. Absent, elle reste un simple chiffre.
   href?: string;
 }) {
   const body = (
@@ -134,11 +134,11 @@ export function Panel({
   );
 }
 
-/**
- * Un tableau reste large : il défile horizontalement dans son propre cadre
- * plutôt que de pousser la page entière, ce qui casserait la mise en page à
- * la largeur d'un téléphone.
- */
+/*
+  Un tableau reste large : il défile horizontalement dans son propre cadre
+  plutôt que de pousser la page entière, ce qui casserait la mise en page à
+  la largeur d'un téléphone.
+*/
 export function TableFrame({ children }: { children: ReactNode }) {
   return (
     <div className="overflow-x-auto">
@@ -201,7 +201,7 @@ export function Badge({
   );
 }
 
-/** Le statut tel que Stripe le dit, rendu lisible sans le trahir. */
+// Le statut tel que Stripe le dit, rendu lisible sans le trahir.
 export function StatusBadge({ status }: { status: string }) {
   if (status === "active") return <Badge tone="accent">actif</Badge>;
   if (status === "canceled") return <Badge>résilié</Badge>;
@@ -221,7 +221,7 @@ export function Feedback({ error }: { error: string | null }) {
   );
 }
 
-/** Les montants viennent de Stripe en centimes : jamais de flottant en base. */
+// Les montants viennent de Stripe en centimes : jamais de flottant en base.
 export function money(cents: number | null, currency: string): string {
   if (cents === null) return "offert";
   return new Intl.NumberFormat("fr-FR", { style: "currency", currency }).format(
@@ -237,7 +237,7 @@ export function date(iso: string): string {
   }).format(new Date(iso));
 }
 
-/** Un message par cause : « impossible » ne dit pas laquelle. */
+// Un message par cause : « impossible » ne dit pas laquelle.
 export function reasonOf(caught: unknown): string {
   const code =
     caught && typeof caught === "object" && "code" in caught

@@ -13,17 +13,17 @@ import { Button } from "@/components/ui/button";
 import { FIELD, FIELD_AREA } from "@/components/ui/field";
 import { sendContact } from "@/lib/contact";
 
-/**
- * Le formulaire de contact.
- *
- * Ouvert à qui n'a pas de compte : c'est souvent celui-là qui a le plus besoin
- * d'écrire, et exiger une session ferait taire un visiteur qui n'arrive pas à
- * s'inscrire.
- *
- * L'envoi ne dit jamais si le courriel est parti : le message est enregistré
- * avant, et un serveur de messagerie en panne n'est pas l'affaire de celui qui
- * écrit.
- */
+/*
+  Le formulaire de contact.
+
+  Ouvert à qui n'a pas de compte : c'est souvent celui-là qui a le plus besoin
+  d'écrire, et exiger une session ferait taire un visiteur qui n'arrive pas à
+  s'inscrire.
+
+  L'envoi ne dit jamais si le courriel est parti : le message est enregistré
+  avant, et un serveur de messagerie en panne n'est pas l'affaire de celui qui
+  écrit.
+*/
 export function ContactForm() {
   const t = useTranslations("Contact");
 

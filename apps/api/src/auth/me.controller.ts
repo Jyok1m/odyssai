@@ -28,14 +28,14 @@ import { CurrentUser } from './current-user.decorator.js';
 import { SessionService } from './session.service.js';
 import { SessionGuard } from './session.guard.js';
 
-/**
- * Profil de jeu du joueur connecte. Distinct de /auth/session, qui ne dit que
- * l'etat d'authentification et ce que le realm en sait : le pseudo, la langue
- * et les droits de maitre du jeu n'existent que dans la base applicative.
- *
- * L'email et le mot de passe ne sont pas modifiables ici : ils appartiennent
- * au realm, et la console de compte de Keycloak les sert.
- */
+/*
+  Profil de jeu du joueur connecte. Distinct de /auth/session, qui ne dit que
+  l'etat d'authentification et ce que le realm en sait : le pseudo, la langue
+  et les droits de maitre du jeu n'existent que dans la base applicative.
+
+  L'email et le mot de passe ne sont pas modifiables ici : ils appartiennent
+  au realm, et la console de compte de Keycloak les sert.
+*/
 @Controller('me')
 @UseGuards(SessionGuard)
 export class MeController {
@@ -91,15 +91,15 @@ export class MeController {
     }
   }
 
-  /**
-   * Le depart. Efface les donnees de jeu selon la regle, la ligne du joueur,
-   * et ferme la session.
-   *
-   * L'identite reste : elle appartient au realm, et l'api n'a volontairement
-   * aucun droit dessus. `accountUrl` mene le joueur la ou il la supprimera
-   * lui-meme. Tant qu'il ne l'a pas fait, se reconnecter ici recree un joueur
-   * vide, ce que l'ecran doit lui dire.
-   */
+  /*
+    Le depart. Efface les donnees de jeu selon la regle, la ligne du joueur,
+    et ferme la session.
+
+    L'identite reste : elle appartient au realm, et l'api n'a volontairement
+    aucun droit dessus. `accountUrl` mene le joueur la ou il la supprimera
+    lui-meme. Tant qu'il ne l'a pas fait, se reconnecter ici recree un joueur
+    vide, ce que l'ecran doit lui dire.
+  */
   @Delete()
   async erase(
     @CurrentUser() user: User,

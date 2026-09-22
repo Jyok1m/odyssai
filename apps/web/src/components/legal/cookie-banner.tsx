@@ -12,14 +12,14 @@ import {
   subscribeConsent,
 } from "@/lib/consent";
 
-/**
- * Bandeau de choix sur les cookies. Il ne s'affiche qu'après montage : le choix
- * vit dans un cookie lisible côté navigateur, et le rendre au prérendu figerait
- * un bandeau visible dans des pages statiques servies à tout le monde.
- *
- * Les deux réponses ont le même poids visuel : un refus grisé ou relégué en
- * lien discret vicie le consentement, et la CNIL le sanctionne comme tel.
- */
+/*
+  Bandeau de choix sur les cookies. Il ne s'affiche qu'après montage : le choix
+  vit dans un cookie lisible côté navigateur, et le rendre au prérendu figerait
+  un bandeau visible dans des pages statiques servies à tout le monde.
+
+  Les deux réponses ont le même poids visuel : un refus grisé ou relégué en
+  lien discret vicie le consentement, et la CNIL le sanctionne comme tel.
+*/
 export function CookieBanner() {
   const t = useTranslations("CookieBanner");
   const open = useSyncExternalStore(

@@ -1,16 +1,16 @@
-/**
- * Choix sur les cookies non essentiels, dans un cookie et non dans
- * localStorage : c'est une preuve de consentement, elle doit rester lisible
- * côté serveur. Six mois, la durée au-delà de laquelle la CNIL veut que le
- * choix soit redemandé ; `version` permet de le redemander plus tôt.
- */
+/*
+  Choix sur les cookies non essentiels, dans un cookie et non dans
+  localStorage : c'est une preuve de consentement, elle doit rester lisible
+  côté serveur. Six mois, la durée au-delà de laquelle la CNIL veut que le
+  choix soit redemandé ; `version` permet de le redemander plus tôt.
+*/
 export const CONSENT_COOKIE = "odyssai_consent";
 export const CONSENT_VERSION = 1;
 const SIX_MONTHS_SECONDS = 60 * 60 * 24 * 182;
 
 export type Consent = {
   version: number;
-  /** Mesure d'audience. Aucun outil branché aujourd'hui. */
+  // Mesure d'audience. Aucun outil branché aujourd'hui.
   analytics: boolean;
 };
 
@@ -67,12 +67,12 @@ export function subscribeConsent(listener: () => void): () => void {
   return () => listeners.delete(listener);
 }
 
-/** Un booléen et non un objet : useSyncExternalStore compare par identité. */
+// Un booléen et non un objet : useSyncExternalStore compare par identité.
 export function isBannerOpen(): boolean {
   return forcedOpen || readConsent() === null;
 }
 
-/** Au rendu serveur, aucun cookie n'est lisible : le bandeau reste fermé. */
+// Au rendu serveur, aucun cookie n'est lisible : le bandeau reste fermé.
 export function isBannerOpenOnServer(): boolean {
   return false;
 }

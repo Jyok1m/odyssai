@@ -9,13 +9,13 @@ const IDENTITY = {
   emailVerified: true,
 };
 
-/**
- * Les places de l'alpha.
- *
- * La regle se joue au provisionnement et nulle part ailleurs : c'est la seule
- * ecriture qui fait naitre un joueur. Un test parce qu'une erreur ici ne se
- * verrait qu'au centieme inscrit, c'est a dire trop tard.
- */
+/*
+  Les places de l'alpha.
+
+  La regle se joue au provisionnement et nulle part ailleurs : c'est la seule
+  ecriture qui fait naitre un joueur. Un test parce qu'une erreur ici ne se
+  verrait qu'au centieme inscrit, c'est a dire trop tard.
+*/
 describe('places de l alpha', () => {
   function serviceFor(taken: number, known: boolean) {
     const prisma = {

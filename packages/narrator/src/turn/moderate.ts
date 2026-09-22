@@ -11,12 +11,12 @@ export interface ModerateRequest {
     model: string;
     temperature: number;
     maxOutputTokens: number;
-    /**
-     * Meme role que pour la narration : couper le raisonnement, refuser la
-     * collecte. Un verdict d'une ligne n'a rien a deliberer, et le texte qui
-     * arrive ici est precisement celui qu'on ne veut pas voir servir de
-     * donnee d'entrainement.
-     */
+    /*
+      Meme role que pour la narration : couper le raisonnement, refuser la
+      collecte. Un verdict d'une ligne n'a rien a deliberer, et le texte qui
+      arrive ici est precisement celui qu'on ne veut pas voir servir de
+      donnee d'entrainement.
+    */
     extraBody?: Record<string, unknown>;
   };
   locale: UiLocale;
@@ -24,20 +24,20 @@ export interface ModerateRequest {
   signal?: AbortSignal;
 }
 
-/**
- * Le verdict du classificateur.
- *
- * Une sortie illisible vaut acceptation, et c'est deliberé : un modele qui ne
- * repond pas ne doit pas empecher de jouer. La couche lexicale, elle, a deja
- * tourne et n'a rien laisse passer d'evident ; ce qui arrive ici est du
- * jugement, pas de l'evidence.
- */
-/** Ce qu'on retient quand le classificateur n'a rien dit d'exploitable. */
+/*
+  Le verdict du classificateur.
+
+  Une sortie illisible vaut acceptation, et c'est deliberé : un modele qui ne
+  repond pas ne doit pas empecher de jouer. La couche lexicale, elle, a deja
+  tourne et n'a rien laisse passer d'evident ; ce qui arrive ici est du
+  jugement, pas de l'evidence.
+*/
+// Ce qu'on retient quand le classificateur n'a rien dit d'exploitable.
 const OPEN: ModerationVerdict = { allow: true, reason: null, language: null };
 
 export interface ModerationResult {
   verdict: ModerationVerdict;
-  /** Un appel par message joueur : l'ignorer creait un angle mort complet. */
+  // Un appel par message joueur : l'ignorer creait un angle mort complet.
   usage: TailUsage;
 }
 

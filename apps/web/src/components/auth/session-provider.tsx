@@ -6,29 +6,29 @@ import type { ReactNode } from "react";
 
 import { fetchSession } from "@/lib/api";
 
-/**
- * `loading` n'est pas un détail : les pages sont prérendues, la session n'est
- * connue qu'après le premier appel à l'API, et l'interface doit pouvoir ne rien
- * affirmer entre-temps plutôt qu'afficher un état anonyme qu'elle démentirait.
- */
+/*
+  `loading` n'est pas un détail : les pages sont prérendues, la session n'est
+  connue qu'après le premier appel à l'API, et l'interface doit pouvoir ne rien
+  affirmer entre-temps plutôt qu'afficher un état anonyme qu'elle démentirait.
+*/
 export type Session =
   | { status: "loading"; user: null }
   | { status: "anonymous"; user: null }
   | { status: "authenticated"; user: SessionUser };
 
-/**
- * Next répond avant que Nest ait fini de compiler : environ une seconde et
- * demie mesurée sur un démarrage à froid. Ces reprises couvrent ce trou sans
- * faire patienter longtemps quand l'API est vraiment absente.
- */
+/*
+  Next répond avant que Nest ait fini de compiler : environ une seconde et
+  demie mesurée sur un démarrage à froid. Ces reprises couvrent ce trou sans
+  faire patienter longtemps quand l'API est vraiment absente.
+*/
 const RETRY_DELAYS_MS = [400, 900, 1800];
 
 const SessionContext = createContext<Session>({ status: "loading", user: null });
 
-/**
- * Côté navigateur et non au rendu serveur : le cookie appartient à l'origine de
- * l'API et n'arrive jamais dans la requête reçue par Next.
- */
+/*
+  Côté navigateur et non au rendu serveur : le cookie appartient à l'origine de
+  l'API et n'arrive jamais dans la requête reçue par Next.
+*/
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session>({
     status: "loading",

@@ -36,28 +36,28 @@ const llm = createLlmClient({
     : undefined,
 });
 
-/**
- * Le checkpointer cree ses tables au premier demarrage, dans son propre schema
- * Postgres et non dans `public`.
- *
- * C'est ce qui les met hors de portee de Prisma : `migrate diff` compare le
- * schema declare a ce qu'il trouve dans `public`, et y voyait des tables qu'il
- * ne connaissait pas. Chaque migration proposait donc de les supprimer, ce qui
- * aurait efface l'etat de reprise de toutes les generations en cours. Elles
- * appartiennent a LangGraph, qui en decide la forme ; les isoler le dit.
- */
+/*
+  Le checkpointer cree ses tables au premier demarrage, dans son propre schema
+  Postgres et non dans `public`.
+
+  C'est ce qui les met hors de portee de Prisma : `migrate diff` compare le
+  schema declare a ce qu'il trouve dans `public`, et y voyait des tables qu'il
+  ne connaissait pas. Chaque migration proposait donc de les supprimer, ce qui
+  aurait efface l'etat de reprise de toutes les generations en cours. Elles
+  appartiennent a LangGraph, qui en decide la forme ; les isoler le dit.
+*/
 const checkpointer = PostgresSaver.fromConnString(config.postgresUrl, {
   schema: 'langgraph',
 });
 await checkpointer.setup();
 
-/**
- * Meme classe a l'execution, deux identites de type a la compilation :
- * `packages/narrator` est en CommonJS, donc ses declarations resolvent
- * @langchain/core par la condition `require`, tandis que ce worker, en ESM,
- * le resout par `import`. Le jour ou narrator passera en ESM, cette conversion
- * tombera d'elle-meme.
- */
+/*
+  Meme classe a l'execution, deux identites de type a la compilation :
+  `packages/narrator` est en CommonJS, donc ses declarations resolvent
+  @langchain/core par la condition `require`, tandis que ce worker, en ESM,
+  le resout par `import`. Le jour ou narrator passera en ESM, cette conversion
+  tombera d'elle-meme.
+*/
 const saver = checkpointer as unknown as Parameters<
   typeof generate
 >[0]['checkpointer'];
@@ -100,7 +100,7 @@ log(
   `worker pret sur ${GENERATION_QUEUE}, ${config.concurrency} monde(s) a la fois, modele ${config.model.model}`,
 );
 
-/** Le travail en cours va au bout : le couper laisserait un monde a moitie ecrit. */
+// Le travail en cours va au bout : le couper laisserait un monde a moitie ecrit.
 async function shutdown(signal: string): Promise<void> {
   log(`${signal} : arret apres le travail en cours`);
   await worker.close();

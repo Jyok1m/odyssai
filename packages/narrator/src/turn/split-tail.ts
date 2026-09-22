@@ -1,11 +1,11 @@
 import type { LlmStreamEvent } from '@odyssai/llm';
 
-/**
- * Ce qui separe le recit rendu au joueur du bloc rendu a la base.
- *
- * Volontairement improbable en prose francaise : un meneur n'ecrit pas deux
- * crochets ouvrants suivis d'un mot en majuscules.
- */
+/*
+  Ce qui separe le recit rendu au joueur du bloc rendu a la base.
+
+  Volontairement improbable en prose francaise : un meneur n'ecrit pas deux
+  crochets ouvrants suivis d'un mot en majuscules.
+*/
 export const CANON_MARKER = '[[CANON]]';
 
 export interface TailUsage {
@@ -17,28 +17,28 @@ export interface TailUsage {
 }
 
 export interface TailSplit {
-  /** Le recit, sans jamais un fragment du marqueur. */
+  // Le recit, sans jamais un fragment du marqueur.
   chunks: AsyncIterable<string>;
-  /** Ce qui suit le marqueur. Definitif une fois `chunks` epuise. */
+  // Ce qui suit le marqueur. Definitif une fois `chunks` epuise.
   tail: () => string;
-  /**
-   * Vrai si le marqueur est passe. Distinct d'une queue non vide : un marqueur
-   * pose en dernier ne laisse rien derriere lui, et c'est le cas de celui qui
-   * ne sert qu'a signaler, sans rien porter.
-   */
+  /*
+    Vrai si le marqueur est passe. Distinct d'une queue non vide : un marqueur
+    pose en dernier ne laisse rien derriere lui, et c'est le cas de celui qui
+    ne sert qu'a signaler, sans rien porter.
+  */
   seen: () => boolean;
-  /** Definitif une fois `chunks` epuise. */
+  // Definitif une fois `chunks` epuise.
   usage: () => TailUsage;
 }
 
-/**
- * Longueur du suffixe du tampon qu'il faut retenir parce qu'il pourrait etre
- * le debut du marqueur.
- *
- * On retient le plus long suffixe qui soit un prefixe du marqueur, et non une
- * fenetre fixe : « le recit s'ouvre [[ » relache ses crochets des que la suite
- * diverge, au lieu de faire attendre le joueur pour rien.
- */
+/*
+  Longueur du suffixe du tampon qu'il faut retenir parce qu'il pourrait etre
+  le debut du marqueur.
+
+  On retient le plus long suffixe qui soit un prefixe du marqueur, et non une
+  fenetre fixe : « le recit s'ouvre [[ » relache ses crochets des que la suite
+  diverge, au lieu de faire attendre le joueur pour rien.
+*/
 function heldBack(buffer: string, marker: string): number {
   const max = Math.min(buffer.length, marker.length - 1);
 
@@ -49,18 +49,18 @@ function heldBack(buffer: string, marker: string): number {
   return 0;
 }
 
-/**
- * Coupe un flux en deux : la prose devant, le bloc structure derriere.
- *
- * L'inverse de `splitOffTopic`, qui decide avant le premier octet parce que sa
- * sentinelle est en tete. Ici le marqueur est en queue et la prose doit partir
- * au fil de l'eau : on ne peut donc pas attendre la fin, il faut retenir en
- * permanence ce qui pourrait etre un debut de marqueur.
- *
- * Le flux n'est jamais avorte, meme quand le joueur est parti : le bloc de
- * queue doit arriver pour que le canon s'ecrive. C'est a l'appelant d'arreter
- * la diffusion sans arreter la generation.
- */
+/*
+  Coupe un flux en deux : la prose devant, le bloc structure derriere.
+
+  L'inverse de `splitOffTopic`, qui decide avant le premier octet parce que sa
+  sentinelle est en tete. Ici le marqueur est en queue et la prose doit partir
+  au fil de l'eau : on ne peut donc pas attendre la fin, il faut retenir en
+  permanence ce qui pourrait etre un debut de marqueur.
+
+  Le flux n'est jamais avorte, meme quand le joueur est parti : le bloc de
+  queue doit arriver pour que le canon s'ecrive. C'est a l'appelant d'arreter
+  la diffusion sans arreter la generation.
+*/
 export function splitTail(
   source: AsyncIterable<LlmStreamEvent>,
   marker: string = CANON_MARKER,

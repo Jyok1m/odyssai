@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@odyssai/db';
 
-/**
- * Un double centre sur l'administration.
- *
- * Distinct de `makeOnboardingPrisma`, qui porte deja tout le parcours
- * d'entree : y ajouter les agregats, les comptages et le CRUD des paliers
- * l'aurait rendu illisible pour les tests qui n'en ont que faire.
- */
+/*
+  Un double centre sur l'administration.
+
+  Distinct de `makeOnboardingPrisma`, qui porte deja tout le parcours
+  d'entree : y ajouter les agregats, les comptages et le CRUD des paliers
+  l'aurait rendu illisible pour les tests qui n'en ont que faire.
+*/
 
 export interface AdminUserRow {
   id: string;
@@ -70,7 +70,7 @@ export interface AdminStore {
   entries: AdminEntryRow[];
 }
 
-/** Les trois paliers que la migration amorce. */
+// Les trois paliers que la migration amorce.
 export function seededPlans(): AdminPlanRow[] {
   const at = new Date('2026-01-01T00:00:00Z');
   return [

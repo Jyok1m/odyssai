@@ -1,10 +1,10 @@
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from "react";
 
-/**
- * Variantes .btn du kit. Chaque variante fixe sa propre couleur de bordure :
- * deux utilitaires de `border-color` sur le même élément sont arbitrés par
- * l'ordre dans la feuille CSS, pas par l'ordre dans className.
- */
+/*
+  Variantes .btn du kit. Chaque variante fixe sa propre couleur de bordure :
+  deux utilitaires de `border-color` sur le même élément sont arbitrés par
+  l'ordre dans la feuille CSS, pas par l'ordre dans className.
+*/
 const VARIANTS = {
   primary: "border-transparent bg-accent text-on-accent hover:bg-accent-hover",
   secondary: "border-line text-vellum hover:border-vellum-3 hover:bg-mist",

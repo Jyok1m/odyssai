@@ -16,23 +16,23 @@ import {
 
 import { API_BASE_URL } from "./api";
 
-/**
- * Ce que ce module attend d'un schéma, et rien de plus.
- *
- * Zod n'est pas une dépendance de `apps/web` : les schémas arrivent tout
- * construits depuis `@odyssai/schemas`, et les typer structurellement évite
- * d'ajouter le paquet ici juste pour nommer `z.ZodType`.
- */
+/*
+  Ce que ce module attend d'un schéma, et rien de plus.
+
+  Zod n'est pas une dépendance de `apps/web` : les schémas arrivent tout
+  construits depuis `@odyssai/schemas`, et les typer structurellement évite
+  d'ajouter le paquet ici juste pour nommer `z.ZodType`.
+*/
 interface Parser<T> {
   parse(input: unknown): T;
 }
 
-/**
- * Client du tableau de bord.
- *
- * Tout passe derrière `AdminGuard` : un 403 ici n'est pas une panne, c'est la
- * réponse normale à quelqu'un qui n'a pas le droit, et l'écran le dit.
- */
+/*
+  Client du tableau de bord.
+
+  Tout passe derrière `AdminGuard` : un 403 ici n'est pas une panne, c'est la
+  réponse normale à quelqu'un qui n'a pas le droit, et l'écran le dit.
+*/
 export class AdminError extends Error {
   readonly code:
     | "forbidden"
@@ -47,7 +47,7 @@ export class AdminError extends Error {
     | "unreachable"
     | "unknown";
 
-  /** Ce que l'API a joint au refus, par exemple le nombre d'abonnés. */
+  // Ce que l'API a joint au refus, par exemple le nombre d'abonnés.
   readonly detail?: string;
 
   constructor(code: AdminError["code"], detail?: string) {
@@ -77,7 +77,7 @@ export async function fetchUsers(
   return read(url.toString(), AdminUserPageSchema, signal);
 }
 
-/** Les adresses de ceux qui ont consenti, et rien d'autre. */
+// Les adresses de ceux qui ont consenti, et rien d'autre.
 export async function fetchMarketingEmails(
   signal?: AbortSignal,
 ): Promise<AdminMarketingList> {
@@ -107,7 +107,7 @@ export async function adjustCredits(
   );
 }
 
-/** Résilie chez Stripe. Le retour au palier libre viendra du webhook. */
+// Résilie chez Stripe. Le retour au palier libre viendra du webhook.
 export async function cancelSubscription(id: string): Promise<void> {
   await send(`${API_BASE_URL}/admin/users/${id}/subscription`, {
     method: "DELETE",

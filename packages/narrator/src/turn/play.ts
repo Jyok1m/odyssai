@@ -32,13 +32,13 @@ export interface PlayTurnRequest {
 }
 
 export interface PlayedTurn {
-  /** Le recit, au fil de l'eau. */
+  // Le recit, au fil de l'eau.
   chunks: AsyncIterable<string>;
-  /**
-   * Ce que le modele a rendu en queue. Definitif une fois `chunks` epuise.
-   * Un bloc absent ou illisible rend le tour par defaut : le recit tient
-   * quand meme, seul le canon ne grandit pas.
-   */
+  /*
+    Ce que le modele a rendu en queue. Definitif une fois `chunks` epuise.
+    Un bloc absent ou illisible rend le tour par defaut : le recit tient
+    quand meme, seul le canon ne grandit pas.
+  */
   delta: () => TurnDelta;
   usage: () => TailUsage;
 }
@@ -51,7 +51,7 @@ export function buildTurnMessages(
   return TURN_PROMPT.build(locale, context, message);
 }
 
-/** Un bloc absent vaut une action sans de et sans fait invente. */
+// Un bloc absent vaut une action sans de et sans fait invente.
 const DEFAULT_DELTA: TurnDelta = { kind: 'action', usedDie: false, facts: [] };
 
 function unwrap(raw: string): string {
@@ -59,13 +59,13 @@ function unwrap(raw: string): string {
   return (fenced?.[1] ?? raw).trim();
 }
 
-/**
- * Lit le bloc de queue sans jamais jeter.
- *
- * Le recit est deja parti au joueur quand cette fonction s'execute : une
- * exception ici lui retirerait un tour qu'il a lu. On degrade donc, champ par
- * champ, comme le fait l'extraction de fiche de personnage.
- */
+/*
+  Lit le bloc de queue sans jamais jeter.
+
+  Le recit est deja parti au joueur quand cette fonction s'execute : une
+  exception ici lui retirerait un tour qu'il a lu. On degrade donc, champ par
+  champ, comme le fait l'extraction de fiche de personnage.
+*/
 export function readDelta(tail: string): TurnDelta {
   if (!tail.trim()) return DEFAULT_DELTA;
 
@@ -105,13 +105,13 @@ export function readDelta(tail: string): TurnDelta {
   };
 }
 
-/**
- * Un tour de jeu.
- *
- * Le flux n'est jamais avorte, meme si le joueur s'en va : le bloc de queue
- * doit arriver pour que le canon s'ecrive. C'est a l'appelant d'arreter la
- * diffusion sans arreter la generation.
- */
+/*
+  Un tour de jeu.
+
+  Le flux n'est jamais avorte, meme si le joueur s'en va : le bloc de queue
+  doit arriver pour que le canon s'ecrive. C'est a l'appelant d'arreter la
+  diffusion sans arreter la generation.
+*/
 export function playTurn(request: PlayTurnRequest): PlayedTurn {
   const { llm, config, locale, context, message, signal, trace } = request;
 

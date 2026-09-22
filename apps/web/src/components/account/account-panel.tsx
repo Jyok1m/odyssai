@@ -16,7 +16,7 @@ import { ProfileError, fetchProfile, updateUsername } from "@/lib/profile";
 import { Credits } from "./credits";
 import { EraseAccount } from "./erase-account";
 
-/** `confirming` est la seconde frappe : le pseudo ne se choisit qu'une fois. */
+// `confirming` est la seconde frappe : le pseudo ne se choisit qu'une fois.
 type Step = "idle" | "editing" | "confirming" | "saving";
 
 export function AccountPanel() {
@@ -237,7 +237,7 @@ export function AccountPanel() {
   );
 }
 
-/** Un message par cause : « impossible d'enregistrer » ne dit pas laquelle. */
+// Un message par cause : « impossible d'enregistrer » ne dit pas laquelle.
 function profileErrorKey(code: ProfileError["code"]) {
   switch (code) {
     case "username_taken":

@@ -6,13 +6,13 @@ export interface PromptMessage {
   content: string;
 }
 
-/**
- * Consignes du guide, par locale.
- *
- * Elles sont dans le message systeme, avant le corpus, et la question arrive en
- * dernier : ce prefixe ne change jamais d'un visiteur a l'autre, donc le cache
- * de prompt du fournisseur le reconnait. Inverser l'ordre le rendrait inutile.
- */
+/*
+  Consignes du guide, par locale.
+
+  Elles sont dans le message systeme, avant le corpus, et la question arrive en
+  dernier : ce prefixe ne change jamais d'un visiteur a l'autre, donc le cache
+  de prompt du fournisseur le reconnait. Inverser l'ordre le rendrait inutile.
+*/
 const INSTRUCTIONS: Record<UiLocale, string> = {
   fr: `Tu es le guide d'OdyssAI, un jeu de role narratif multivers. Tu reponds aux visiteurs du site, uniquement a partir du corpus fourni plus bas.
 

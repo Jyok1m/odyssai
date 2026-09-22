@@ -1,10 +1,10 @@
 import type { SVGProps } from "react";
 
-/**
- * Logos des réseaux en SVG inline : ils prennent `currentColor`, donc l'état de
- * survol du lien, sans requête supplémentaire. `viewBox` à 24 pour tous, la
- * taille est décidée par la classe du parent.
- */
+/*
+  Logos des réseaux en SVG inline : ils prennent `currentColor`, donc l'état de
+  survol du lien, sans requête supplémentaire. `viewBox` à 24 pour tous, la
+  taille est décidée par la classe du parent.
+*/
 type IconProps = SVGProps<SVGSVGElement>;
 
 export function GitHubIcon(props: IconProps) {

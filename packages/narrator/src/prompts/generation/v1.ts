@@ -1,18 +1,18 @@
 import type { CharacterSheet, UiLocale, WorldThemes } from '@odyssai/schemas';
 import type { PromptMessage } from '../guide/v1.js';
 
-/**
- * Prompts de generation du monde, un par noeud du graphe.
- *
- * Aucun d'eux ne recoit les titres cites : le contexte qu'ils prennent n'a pas
- * de champ pour les porter. C'est la forme du type qui tient l'invariant, et
- * non une consigne qu'on pourrait oublier d'ecrire.
- */
+/*
+  Prompts de generation du monde, un par noeud du graphe.
+
+  Aucun d'eux ne recoit les titres cites : le contexte qu'ils prennent n'a pas
+  de champ pour les porter. C'est la forme du type qui tient l'invariant, et
+  non une consigne qu'on pourrait oublier d'ecrire.
+*/
 export interface GenerationContext {
   themes: WorldThemes;
-  /** Fiche du joueur. Texte joueur, donc delimitee dans le prompt. */
+  // Fiche du joueur. Texte joueur, donc delimitee dans le prompt.
   character: CharacterSheet;
-  /** Rempli au fur et a mesure : chaque noeud lit ce que les autres ont ecrit. */
+  // Rempli au fur et a mesure : chaque noeud lit ce que les autres ont ecrit.
   produced?: Record<string, unknown>;
 }
 

@@ -49,11 +49,11 @@ const AccessTokenClaims = z.object({
   realm_access: z.object({ roles: z.array(z.string()) }).optional(),
 });
 
-/**
- * Dialogue OpenID Connect avec Keycloak : uniquement Authorization Code + PKCE.
- * Aucun mot de passe ne passe par ici, et le client etant confidentiel chaque
- * appel au point de jeton est authentifie par le secret.
- */
+/*
+  Dialogue OpenID Connect avec Keycloak : uniquement Authorization Code + PKCE.
+  Aucun mot de passe ne passe par ici, et le client etant confidentiel chaque
+  appel au point de jeton est authentifie par le secret.
+*/
 @Injectable()
 export class OidcService {
   private readonly logger = new Logger(OidcService.name);
@@ -62,7 +62,7 @@ export class OidcService {
 
   constructor(private readonly config: AppConfig) {}
 
-  /** Paresseuse et memorisee : l'API demarre meme si Keycloak est injoignable. */
+  // Paresseuse et memorisee : l'API demarre meme si Keycloak est injoignable.
   private metadata(): Promise<z.infer<typeof Discovery>> {
     this.discovery ??= this.fetchMetadata().catch((error: unknown) => {
       this.discovery = undefined;
@@ -110,10 +110,10 @@ export class OidcService {
     return this.buildAuthorizeUrl(authorization_endpoint, params);
   }
 
-  /**
-   * Le point d'inscription n'est pas publie par la decouverte : c'est une
-   * extension Keycloak, obtenue en remplacant le segment final de /auth.
-   */
+  /*
+    Le point d'inscription n'est pas publie par la decouverte : c'est une
+    extension Keycloak, obtenue en remplacant le segment final de /auth.
+  */
   async registrationUrl(params: AuthorizationParams): Promise<string> {
     const { authorization_endpoint } = await this.metadata();
     return this.buildAuthorizeUrl(
@@ -210,7 +210,7 @@ export class OidcService {
     }
   }
 
-  /** URL de fin de session Keycloak, pour fermer aussi la session SSO. */
+  // URL de fin de session Keycloak, pour fermer aussi la session SSO.
   async logoutUrl(idToken: string): Promise<string> {
     const metadata = await this.metadata();
     const endpoint =
@@ -226,10 +226,10 @@ export class OidcService {
     return url.toString();
   }
 
-  /**
-   * L'id_token porte l'identite et le nonce, l'access token porte les roles du
-   * realm. Rien n'est lu dans un jeton qui n'a pas ete verifie contre le JWKS.
-   */
+  /*
+    L'id_token porte l'identite et le nonce, l'access token porte les roles du
+    realm. Rien n'est lu dans un jeton qui n'a pas ete verifie contre le JWKS.
+  */
   async verifyIdentity(
     tokens: TokenSet,
     expectedNonce: string,

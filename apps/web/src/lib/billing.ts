@@ -37,7 +37,7 @@ export async function fetchBillingSummary(
   return BillingSummarySchema.parse(await response.json());
 }
 
-/** Le catalogue est public : il se lit sans session, avant même de s'inscrire. */
+// Le catalogue est public : il se lit sans session, avant même de s'inscrire.
 export async function fetchCatalog(signal?: AbortSignal): Promise<BillingCatalog> {
   const response = await send(`${API_BASE_URL}/billing/catalog`, {
     headers: { Accept: "application/json" },
@@ -48,16 +48,16 @@ export async function fetchCatalog(signal?: AbortSignal): Promise<BillingCatalog
   return BillingCatalogSchema.parse(await response.json());
 }
 
-/**
- * Rend l'URL de paiement, que l'appelant doit suivre par une navigation de
- * premier niveau : la page de Stripe refuse d'être chargée en second plan, et
- * c'est elle, jamais nous, qui reçoit le numéro de carte.
- */
+/*
+  Rend l'URL de paiement, que l'appelant doit suivre par une navigation de
+  premier niveau : la page de Stripe refuse d'être chargée en second plan, et
+  c'est elle, jamais nous, qui reçoit le numéro de carte.
+*/
 export async function startCheckout(plan: string): Promise<string> {
   return redirect(`${API_BASE_URL}/billing/checkout`, JSON.stringify({ plan }));
 }
 
-/** Le portail de Stripe : moyen de paiement, factures, résiliation. */
+// Le portail de Stripe : moyen de paiement, factures, résiliation.
 export async function openPortal(): Promise<string> {
   return redirect(`${API_BASE_URL}/billing/portal`);
 }
@@ -97,11 +97,11 @@ async function toBillingError(response: Response): Promise<BillingError> {
   return new BillingError(code === "billing_disabled" ? code : "unknown");
 }
 
-/**
- * Le refus pour réserve vide, quel que soit l'appel qui l'a rencontré : le
- * tour, la conversation de personnage et la génération de monde le rendent
- * tous sous le même code, chacun dans sa propre classe d'erreur.
- */
+/*
+  Le refus pour réserve vide, quel que soit l'appel qui l'a rencontré : le
+  tour, la conversation de personnage et la génération de monde le rendent
+  tous sous le même code, chacun dans sa propre classe d'erreur.
+*/
 export function isOutOfCredits(caught: unknown): boolean {
   return (
     caught instanceof Error &&

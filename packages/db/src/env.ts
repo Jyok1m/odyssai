@@ -1,12 +1,12 @@
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-/**
- * Charge le .env de la racine du monorepo en remontant depuis `from`, chaque
- * application demarrant dans son propre repertoire. L'environnement deja en
- * place gagne : en production il n'y a pas de fichier et rien n'ecrase ce que
- * fournit l'orchestrateur.
- */
+/*
+  Charge le .env de la racine du monorepo en remontant depuis `from`, chaque
+  application demarrant dans son propre repertoire. L'environnement deja en
+  place gagne : en production il n'y a pas de fichier et rien n'ecrase ce que
+  fournit l'orchestrateur.
+*/
 export function loadRootEnvFile(from: string = process.cwd()): void {
   let directory = from;
 

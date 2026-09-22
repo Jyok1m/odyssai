@@ -3,13 +3,13 @@ import type { MetadataRoute } from "next";
 import { routing, type Pathname } from "@/i18n/routing";
 import { urlFor } from "@/lib/seo";
 
-/**
- * Chemins internes publics, déclinés par locale avec les hreflang des autres.
- * Toute nouvelle route publique doit être ajoutée ici.
- *
- * Pas de `lastModified` : une date recalculée à chaque build est un signal
- * faux, et pire qu'une absence de date pour un crawler.
- */
+/*
+  Chemins internes publics, déclinés par locale avec les hreflang des autres.
+  Toute nouvelle route publique doit être ajoutée ici.
+
+  Pas de `lastModified` : une date recalculée à chaque build est un signal
+  faux, et pire qu'une absence de date pour un crawler.
+*/
 const PATHS: { href: Pathname; priority: number }[] = [
   { href: "/", priority: 1 },
   { href: "/concept", priority: 0.8 },

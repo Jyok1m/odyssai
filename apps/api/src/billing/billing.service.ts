@@ -10,7 +10,7 @@ import { PlansService } from '../plans/plans.service.js';
 import { PRISMA } from '../prisma/prisma.module.js';
 import { STRIPE } from '../stripe/stripe.module.js';
 
-/** Stripe n'est pas configure : rien a vendre, et le palier libre suffit. */
+// Stripe n'est pas configure : rien a vendre, et le palier libre suffit.
 export class BillingDisabledError extends Error {
   constructor() {
     super('facturation indisponible');
@@ -31,13 +31,13 @@ export class BillingService {
     private readonly plans: PlansService,
   ) {}
 
-  /**
-   * Ce qui se vend et ce que cela coute.
-   *
-   * `purchasable` est faux tant que le prix d'un plan n'est pas configure chez
-   * Stripe : l'ecran cache alors l'offre plutot que de proposer un bouton qui
-   * repondrait 503.
-   */
+  /*
+    Ce qui se vend et ce que cela coute.
+
+    `purchasable` est faux tant que le prix d'un plan n'est pas configure chez
+    Stripe : l'ecran cache alors l'offre plutot que de proposer un bouton qui
+    repondrait 503.
+  */
   async catalog(): Promise<BillingCatalog> {
     const plans = await this.plans.all();
 
@@ -62,13 +62,13 @@ export class BillingService {
     };
   }
 
-  /**
-   * L'etat de la reserve, tel que l'ecran de compte l'affiche.
-   *
-   * `purchasable` vient de la configuration et non du plan : sans cle Stripe,
-   * l'ecran doit cacher la vente plutot que proposer un bouton qui repondrait
-   * 503.
-   */
+  /*
+    L'etat de la reserve, tel que l'ecran de compte l'affiche.
+
+    `purchasable` vient de la configuration et non du plan : sans cle Stripe,
+    l'ecran doit cacher la vente plutot que proposer un bouton qui repondrait
+    503.
+  */
   async summary(user: User): Promise<BillingSummary> {
     const subscription = await this.credits.ensure(user.id);
     const plan = await this.plans.bySlug(subscription.plan);
@@ -92,13 +92,13 @@ export class BillingService {
     return this.stripe;
   }
 
-  /**
-   * Le client Stripe du joueur, cree au besoin.
-   *
-   * `users.email` n'est pas unique : c'est l'identifiant Stripe stocke chez
-   * nous qui fait le lien, jamais l'adresse. On passe quand meme `metadata`
-   * pour retrouver le joueur depuis le tableau de bord Stripe.
-   */
+  /*
+    Le client Stripe du joueur, cree au besoin.
+
+    `users.email` n'est pas unique : c'est l'identifiant Stripe stocke chez
+    nous qui fait le lien, jamais l'adresse. On passe quand meme `metadata`
+    pour retrouver le joueur depuis le tableau de bord Stripe.
+  */
   private async customerOf(user: User): Promise<string> {
     const subscription = await this.credits.ensure(user.id);
     if (subscription.stripeCustomerId) return subscription.stripeCustomerId;
@@ -116,12 +116,12 @@ export class BillingService {
     return customer.id;
   }
 
-  /**
-   * Une session de paiement. La saisie de carte reste chez Stripe.
-   *
-   * Un palier archive ne se souscrit plus, meme si quelqu'un a garde l'onglet
-   * ouvert : le retirer de la vente doit vraiment le retirer.
-   */
+  /*
+    Une session de paiement. La saisie de carte reste chez Stripe.
+
+    Un palier archive ne se souscrit plus, meme si quelqu'un a garde l'onglet
+    ouvert : le retirer de la vente doit vraiment le retirer.
+  */
   async checkout(user: User, slug: string): Promise<string> {
     const plan = await this.plans.bySlug(slug);
     if (plan.archived || !plan.stripePriceId) throw new BillingDisabledError();
@@ -145,11 +145,11 @@ export class BillingService {
     return session.url;
   }
 
-  /**
-   * Le portail de Stripe, pour changer de moyen de paiement ou resilier.
-   * Construire cet ecran nous-memes n'apporterait rien et exposerait des
-   * donnees de carte.
-   */
+  /*
+    Le portail de Stripe, pour changer de moyen de paiement ou resilier.
+    Construire cet ecran nous-memes n'apporterait rien et exposerait des
+    donnees de carte.
+  */
   async portal(user: User): Promise<string> {
     const session = await this.client().billingPortal.sessions.create({
       customer: await this.customerOf(user),
@@ -159,41 +159,41 @@ export class BillingService {
     return session.url;
   }
 
-  /**
-   * Ou revenir apres Stripe.
-   *
-   * Le chemin est construit ici et non recu du navigateur : accepter une URL
-   * de retour du client ouvrirait une redirection arbitraire. Les deux
-   * chemins localises sont recopies de `routing.ts` du web, faute de source
-   * partagee entre les deux applications.
-   */
+  /*
+    Ou revenir apres Stripe.
+
+    Le chemin est construit ici et non recu du navigateur : accepter une URL
+    de retour du client ouvrirait une redirection arbitraire. Les deux
+    chemins localises sont recopies de `routing.ts` du web, faute de source
+    partagee entre les deux applications.
+  */
   private accountUrl(user: User): string {
     const path = user.locale === 'en' ? '/en/account' : '/fr/compte';
     return new URL(path, this.app.webBaseUrl).toString();
   }
 
-  /**
-   * Resilie l'abonnement d'un joueur, immediatement.
-   *
-   * Reserve au tableau de bord : un joueur passe par le portail de Stripe,
-   * qui lui propose de resilier a la fin de la periode payee. Ici c'est une
-   * intervention, donc elle coupe tout de suite et le webhook
-   * `customer.subscription.deleted` fera retomber la ligne au palier libre.
-   *
-   * Aucun remboursement n'est demande : ce qui a ete facture l'a ete, et le
-   * rendre est une decision commerciale qui se prend chez Stripe.
-   */
+  /*
+    Resilie l'abonnement d'un joueur, immediatement.
+
+    Reserve au tableau de bord : un joueur passe par le portail de Stripe,
+    qui lui propose de resilier a la fin de la periode payee. Ici c'est une
+    intervention, donc elle coupe tout de suite et le webhook
+    `customer.subscription.deleted` fera retomber la ligne au palier libre.
+
+    Aucun remboursement n'est demande : ce qui a ete facture l'a ete, et le
+    rendre est une decision commerciale qui se prend chez Stripe.
+  */
   async cancelSubscription(stripeSubscriptionId: string): Promise<void> {
     await this.client().subscriptions.cancel(stripeSubscriptionId);
     this.logger.warn(`abonnement resilie par un administrateur : ${stripeSubscriptionId}`);
   }
 
-  /**
-   * Verifie la signature, puis traite une seule fois.
-   *
-   * La signature se calcule sur le corps brut : un `JSON.stringify` ne
-   * reproduit pas l'octet pres, et la verification echouerait.
-   */
+  /*
+    Verifie la signature, puis traite une seule fois.
+
+    La signature se calcule sur le corps brut : un `JSON.stringify` ne
+    reproduit pas l'octet pres, et la verification echouerait.
+  */
   async handle(raw: Buffer, signature: string): Promise<void> {
     const event = this.client().webhooks.constructEvent(
       raw,
@@ -254,7 +254,7 @@ export class BillingService {
     });
   }
 
-  /** Relit l'abonnement chez Stripe quand l'evenement n'en porte que l'identifiant. */
+  // Relit l'abonnement chez Stripe quand l'evenement n'en porte que l'identifiant.
   private async syncById(
     subscription: string | Stripe.Subscription | null,
   ): Promise<void> {
@@ -292,7 +292,7 @@ export class BillingService {
     });
   }
 
-  /** Retour au palier libre, une fois les relances de Stripe epuisees. */
+  // Retour au palier libre, une fois les relances de Stripe epuisees.
   private async downgrade(subscription: Stripe.Subscription): Promise<void> {
     const local = await this.find(String(subscription.customer));
     if (!local) return;
@@ -309,12 +309,12 @@ export class BillingService {
     this.logger.log(`retour au palier libre : ${local.userId}`);
   }
 
-  /**
-   * Le renouvellement credite la reserve et deplace l'ancre.
-   *
-   * L'ancre vient de la facture, pas du calendrier : un abonne du 20 ne doit
-   * pas voir sa reserve repartir le 1er.
-   */
+  /*
+    Le renouvellement credite la reserve et deplace l'ancre.
+
+    L'ancre vient de la facture, pas du calendrier : un abonne du 20 ne doit
+    pas voir sa reserve repartir le 1er.
+  */
   private async renew(invoice: Stripe.Invoice): Promise<void> {
     // L'ordre des webhooks n'est pas garanti : `invoice.paid` peut preceder
     // `customer.subscription.created`. Sans cette relecture, le plan encore

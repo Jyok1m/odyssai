@@ -1,12 +1,12 @@
-/**
- * Experience LangSmith sur le jeu d'evaluation du guide.
- *
- *   pnpm --filter @odyssai/api eval:guide
- *
- * Les evaluateurs sont en code, sans LLM juge : ce qu'on mesure ici est
- * verifiable sans avis, et un juge couterait plus cher que ce qu'il apporte.
- * Ce script n'entre pas dans `make check` et consomme des appels reels.
- */
+/*
+  Experience LangSmith sur le jeu d'evaluation du guide.
+
+    pnpm --filter @odyssai/api eval:guide
+
+  Les evaluateurs sont en code, sans LLM juge : ce qu'on mesure ici est
+  verifiable sans avis, et un juge couterait plus cher que ce qu'il apporte.
+  Ce script n'entre pas dans `make check` et consomme des appels reels.
+*/
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Client } from 'langsmith';
@@ -135,7 +135,7 @@ function output(run: Run): { answer: string; offTopic: boolean } {
 }
 
 const evaluators = [
-  /** Le refus tombe-t-il sur les bonnes questions, et seulement sur elles. */
+  // Le refus tombe-t-il sur les bonnes questions, et seulement sur elles.
   function off_topic_match(run: Run, example?: Example) {
     const { category } = meta(example);
     const expected = category === 'off_topic';
@@ -158,7 +158,7 @@ const evaluators = [
     return { key: 'no_em_dash', score: output(run).answer.includes('—') ? 0 : 1 };
   },
 
-  /** Part des faits attendus effectivement presents, apres normalisation. */
+  // Part des faits attendus effectivement presents, apres normalisation.
   function facts_coverage(run: Run, example?: Example) {
     const { facts } = meta(example);
     if (facts.length === 0) return { key: 'facts_coverage', score: 1 };

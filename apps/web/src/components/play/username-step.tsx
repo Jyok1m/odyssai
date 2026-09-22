@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { FIELD } from "@/components/ui/field";
 import { ProfileError, updateUsername } from "@/lib/profile";
 
-/** `confirming` est la seconde frappe : le pseudo ne se choisit qu'une fois. */
+// `confirming` est la seconde frappe : le pseudo ne se choisit qu'une fois.
 type Phase = "editing" | "confirming" | "saving";
 
 export function UsernameStep({ onDone }: { onDone: () => void }) {
@@ -98,7 +98,7 @@ export function UsernameStep({ onDone }: { onDone: () => void }) {
   );
 }
 
-/** Un message par cause : « impossible d'enregistrer » ne dit pas laquelle. */
+// Un message par cause : « impossible d'enregistrer » ne dit pas laquelle.
 function profileErrorKey(code: ProfileError["code"]) {
   switch (code) {
     case "username_taken":

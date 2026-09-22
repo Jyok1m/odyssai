@@ -7,19 +7,19 @@ import { Button } from "@/components/ui/button";
 import { FIELD } from "@/components/ui/field";
 
 interface Props {
-  /** `null` pour une création. */
+  // `null` pour une création.
   plan: AdminPlan | null;
   onCancel: () => void;
   onSubmit: (values: CreatePlanRequest | UpdatePlanRequest) => Promise<void>;
 }
 
-/**
- * Le formulaire d'un palier.
- *
- * Le slug ne s'édite qu'à la création : il est écrit dans chaque abonnement et
- * dans le grand livre, et le changer réécrirait l'histoire. La devise non plus,
- * un prix Stripe portant la sienne.
- */
+/*
+  Le formulaire d'un palier.
+
+  Le slug ne s'édite qu'à la création : il est écrit dans chaque abonnement et
+  dans le grand livre, et le changer réécrirait l'histoire. La devise non plus,
+  un prix Stripe portant la sienne.
+*/
 export function PlanForm({ plan, onCancel, onSubmit }: Props) {
   const [slug, setSlug] = useState(plan?.slug ?? "");
   const [name, setName] = useState(plan?.name ?? "");
@@ -206,12 +206,12 @@ export function PlanForm({ plan, onCancel, onSubmit }: Props) {
   );
 }
 
-/**
- * Une case a cocher avec son explication.
- *
- * `peer` et non un etat React pour le style : la case reste la source de
- * verite de son propre aspect, et le focus se voit sans JavaScript.
- */
+/*
+  Une case a cocher avec son explication.
+
+  `peer` et non un etat React pour le style : la case reste la source de
+  verite de son propre aspect, et le focus se voit sans JavaScript.
+*/
 function Toggle({
   id,
   checked,

@@ -3,10 +3,10 @@ export type GlossaryEntry = {
   meaning: string;
 };
 
-/**
- * Une liste de définitions et non un tableau : c'est la sémantique juste
- * pour un glossaire, et deux colonnes de prose se lisent mal sur mobile.
- */
+/*
+  Une liste de définitions et non un tableau : c'est la sémantique juste
+  pour un glossaire, et deux colonnes de prose se lisent mal sur mobile.
+*/
 export function GlossaryList({ entries }: { entries: GlossaryEntry[] }) {
   return (
     <dl className="mt-14 max-w-headline divide-y divide-line overflow-hidden rounded-card border border-line">

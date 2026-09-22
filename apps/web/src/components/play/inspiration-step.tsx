@@ -25,12 +25,12 @@ interface Props {
   onAdvance: (draft: InspirationDraft) => void;
 }
 
-/** Les lignes vides ne partent pas : le schéma exige deux caractères. */
+// Les lignes vides ne partent pas : le schéma exige deux caractères.
 function filled(works: string[]): string[] {
   return works.map((work) => work.trim()).filter((work) => work.length >= 2);
 }
 
-/** Marque les répétitions, pas la première occurrence : c'est elle qui reste. */
+// Marque les répétitions, pas la première occurrence : c'est elle qui reste.
 function duplicates(works: string[]): Set<number> {
   const firstSeen = new Map<string, number>();
   const marked = new Set<number>();

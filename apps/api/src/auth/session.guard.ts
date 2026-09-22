@@ -15,10 +15,10 @@ export interface AuthenticatedRequest extends Request {
   odyssaiUser: User;
 }
 
-/**
- * Resout la session serveur depuis le cookie opaque et la depose sur la
- * requete : les controleurs de jeu n'ont jamais a manipuler de jeton.
- */
+/*
+  Resout la session serveur depuis le cookie opaque et la depose sur la
+  requete : les controleurs de jeu n'ont jamais a manipuler de jeton.
+*/
 @Injectable()
 export class SessionGuard implements CanActivate {
   constructor(

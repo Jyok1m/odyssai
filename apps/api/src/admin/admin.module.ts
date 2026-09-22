@@ -8,12 +8,12 @@ import { AdminGuard } from './admin.guard.js';
 import { AdminPlansService } from './admin-plans.service.js';
 import { AdminService } from './admin.service.js';
 
-/**
- * AuthModule pour `SessionGuard`, que Nest construit dans le module qui
- * l'applique. BillingModule pour la resiliation, qui passe par le meme
- * service que le portail du joueur. AlphaModule pour l'etat annonce, dont la
- * lecture est publique et l'ecriture reservee.
- */
+/*
+  AuthModule pour `SessionGuard`, que Nest construit dans le module qui
+  l'applique. BillingModule pour la resiliation, qui passe par le meme
+  service que le portail du joueur. AlphaModule pour l'etat annonce, dont la
+  lecture est publique et l'ecriture reservee.
+*/
 @Module({
   imports: [AuthModule, BillingModule, AlphaModule, ContactModule],
   controllers: [AdminController],
