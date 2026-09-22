@@ -37,15 +37,20 @@ export class ErasureService {
     user: Pick<User, 'id' | 'currentUniverseId'>,
   ): Promise<DepartureOutcome> {
     const where = currentStory(user);
-    const universe = where
-      ? await this.prisma.universe.findUnique({
-          where,
-          include: { character: { select: { id: true } } },
-        })
-      : null;
+    if (!where) return { world: 'none', character: 'none' };
+    return this.releaseStory(user.id, where.id);
+  }
+
+  // La meme regle pour une histoire designee, ouverte ou non. Celle d'un
+  // autre joueur n'est pas trouvee, donc rien ne part.
+  async releaseStory(userId: string, universeId: string): Promise<DepartureOutcome> {
+    const universe = await this.prisma.universe.findUnique({
+      where: { id: universeId, ownerId: userId },
+      include: { character: { select: { id: true } } },
+    });
 
     if (!universe) return { world: 'none', character: 'none' };
-    return this.release(user.id, universe);
+    return this.release(userId, universe);
   }
 
   private async release(

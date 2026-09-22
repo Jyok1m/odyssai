@@ -332,25 +332,44 @@
         "faction": "faction"
       }
     },
-    "stories": {
-      "title": "Your stories",
-      "untitled": "Untitled story",
-      "new": "New story",
-      "full": "You already run as many stories as you can.",
-      "error": "Cannot read your stories right now.",
-      "step": {
-        "inspiration": "inspiration",
-        "character": "character",
-        "generating": "being built",
-        "ready": "ready",
-        "failed": "to resume"
-      }
-    },
     "errorUnreachable": "The API is not answering. Check that it is running, and that you are on the usual address of the site.",
     "errorSignedOut": "Your session has expired. Sign in again, what you typed is kept.",
     "errorRefused": "This save was refused. Reload the page to pick up the current step.",
     "backToInspiration": "Back to my inspiration",
     "backToCharacter": "Back to my character"
+  },
+  "Stories": {
+    "title": "Your stories",
+    "lead": "Each story has its own world and character. They all draw on the same credit reserve.",
+    "tabs": {
+      "label": "Game",
+      "play": "Play",
+      "stories": "My stories"
+    },
+    "new": "New story",
+    "count": "{count} of {max}",
+    "full": "You already run as many stories as you can ({max}).",
+    "empty": "No story yet.",
+    "untitled": "Untitled story",
+    "open": "open",
+    "play": "Play",
+    "continue": "Continue",
+    "loading": "Reading your stories.",
+    "error": "Cannot read your stories right now.",
+    "locked": "This story is being built: wait until it is done before deleting it.",
+    "signedOut": "Sign in to find your stories.",
+    "step": {
+      "inspiration": "inspiration",
+      "character": "character",
+      "generating": "being built",
+      "ready": "ready",
+      "failed": "to resume"
+    },
+    "outcome": {
+      "kept": "This world had already received visitors: it is kept, detached from you and emptied of your input.",
+      "remembered": "Other players had met this character: it stays in their tales, now dead.",
+      "gone": "Story deleted."
+    }
   },
   "Concept": {
     "metaTitle": "Concept",
@@ -951,6 +970,13 @@
       "gone": "The conversation and the draft sheet are erased.",
       "credits": "The credits spent on these messages are not refunded.",
       "kept": "Your inspiration and themes remain."
+    },
+    "story": {
+      "label": "Delete",
+      "title": "Delete this story",
+      "lead": "Its world and its character will be given up. Your other stories stay.",
+      "confirm": "Delete",
+      "busy": "Erasing."
     }
   },
   "Game": {

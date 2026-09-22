@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -12,10 +13,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { z } from 'zod';
-import type { Stories, Story } from '@odyssai/schemas';
+import type { DepartureOutcome, Stories, Story } from '@odyssai/schemas';
 import type { User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
+import { ErasureService } from '../erasure/erasure.service.js';
 import {
   StoriesFullError,
   StoriesService,
@@ -30,7 +32,10 @@ import {
 @Controller('stories')
 @UseGuards(SessionGuard)
 export class StoriesController {
-  constructor(private readonly stories: StoriesService) {}
+  constructor(
+    private readonly stories: StoriesService,
+    private readonly erasure: ErasureService,
+  ) {}
 
   @Get()
   list(@CurrentUser() user: User): Promise<Stories> {
@@ -52,9 +57,7 @@ export class StoriesController {
 
   @Put(':id/current')
   async select(@CurrentUser() user: User, @Param('id') id: string): Promise<Story> {
-    if (!z.uuid().safeParse(id).success) {
-      throw new BadRequestException({ code: 'validation_error' });
-    }
+    this.assertId(id);
 
     try {
       return await this.stories.select(user, id);
@@ -63,6 +66,38 @@ export class StoriesController {
         throw new NotFoundException({ code: 'not_found' });
       }
       throw error;
+    }
+  }
+
+  /*
+    Supprimer une histoire, ouverte ou non, selon la regle du depart. Refuse
+    pendant la generation, comme le recommencement : effacer un monde qu'un
+    worker ecrit le ferait echouer sur une ligne disparue.
+  */
+  @Delete(':id')
+  async remove(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+  ): Promise<DepartureOutcome> {
+    this.assertId(id);
+
+    let step: Story['step'];
+    try {
+      ({ step } = await this.stories.find(user, id));
+    } catch (error: unknown) {
+      if (error instanceof StoryNotFoundError) {
+        throw new NotFoundException({ code: 'not_found' });
+      }
+      throw error;
+    }
+    if (step === 'generating') throw new ConflictException({ code: 'locked' });
+
+    return this.erasure.releaseStory(user.id, id);
+  }
+
+  private assertId(id: string): void {
+    if (!z.uuid().safeParse(id).success) {
+      throw new BadRequestException({ code: 'validation_error' });
     }
   }
 }

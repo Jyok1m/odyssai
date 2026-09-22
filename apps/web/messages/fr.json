@@ -332,25 +332,44 @@
         "faction": "faction"
       }
     },
-    "stories": {
-      "title": "Tes histoires",
-      "untitled": "Histoire sans nom",
-      "new": "Nouvelle histoire",
-      "full": "Tu mènes déjà autant d'histoires que possible.",
-      "error": "Impossible de lire tes histoires pour le moment.",
-      "step": {
-        "inspiration": "inspiration",
-        "character": "personnage",
-        "generating": "en construction",
-        "ready": "prête",
-        "failed": "à reprendre"
-      }
-    },
     "errorUnreachable": "L'API ne répond pas. Vérifie qu'elle tourne, et que tu es bien sur l'adresse habituelle du site.",
     "errorSignedOut": "Ta session a expiré. Reconnecte-toi, ta saisie est gardée.",
     "errorRefused": "Cet enregistrement a été refusé. Recharge la page pour repartir de l'étape en cours.",
     "backToInspiration": "Revenir à mon inspiration",
     "backToCharacter": "Revenir à mon personnage"
+  },
+  "Stories": {
+    "title": "Tes histoires",
+    "lead": "Chaque histoire a son monde et son personnage. Elles puisent toutes dans la même réserve de crédits.",
+    "tabs": {
+      "label": "Jeu",
+      "play": "Jouer",
+      "stories": "Mes histoires"
+    },
+    "new": "Nouvelle histoire",
+    "count": "{count} sur {max}",
+    "full": "Tu mènes déjà autant d'histoires que possible ({max}).",
+    "empty": "Aucune histoire pour l'instant.",
+    "untitled": "Histoire sans nom",
+    "open": "ouverte",
+    "play": "Jouer",
+    "continue": "Continuer",
+    "loading": "Lecture de tes histoires.",
+    "error": "Impossible de lire tes histoires pour le moment.",
+    "locked": "Cette histoire est en construction : attends la fin avant de la supprimer.",
+    "signedOut": "Connecte-toi pour retrouver tes histoires.",
+    "step": {
+      "inspiration": "inspiration",
+      "character": "personnage",
+      "generating": "en construction",
+      "ready": "prête",
+      "failed": "à reprendre"
+    },
+    "outcome": {
+      "kept": "Ce monde avait déjà reçu des visiteurs : il est conservé, détaché de toi et vidé de tes saisies.",
+      "remembered": "D'autres joueurs avaient croisé ce personnage : il reste dans leurs récits, désormais mort.",
+      "gone": "Histoire supprimée."
+    }
   },
   "Concept": {
     "metaTitle": "Concept",
@@ -951,6 +970,13 @@
       "gone": "La conversation et le brouillon de fiche sont effacés.",
       "credits": "Les crédits dépensés pour ces messages ne sont pas rendus.",
       "kept": "Ton inspiration et tes thèmes restent."
+    },
+    "story": {
+      "label": "Supprimer",
+      "title": "Supprimer cette histoire",
+      "lead": "Son monde et son personnage seront abandonnés. Tes autres histoires restent.",
+      "confirm": "Supprimer",
+      "busy": "Effacement."
     }
   },
   "Game": {

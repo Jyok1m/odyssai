@@ -92,14 +92,19 @@ export class StoriesService {
   }
 
   async select(user: Owner, universeId: string): Promise<Story> {
+    const row = await this.find(user, universeId);
+    await this.open(user.id, row.id);
+    return this.toStory(row, row.id);
+  }
+
+  // Une histoire du joueur, ou rien : celle d'un autre n'existe pas pour lui.
+  async find(user: Owner, universeId: string): Promise<Summary> {
     const row = await this.prisma.universe.findUnique({
       where: { id: universeId, ownerId: user.id },
       select: SUMMARY,
     });
     if (!row) throw new StoryNotFoundError();
-
-    await this.open(user.id, row.id);
-    return this.toStory(row, row.id);
+    return row;
   }
 
   private async open(userId: string, universeId: string): Promise<void> {

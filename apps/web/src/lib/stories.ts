@@ -1,6 +1,8 @@
 import {
+  DepartureOutcomeSchema,
   StoriesSchema,
   StorySchema,
+  type DepartureOutcome,
   type Stories,
   type StoriesErrorBody,
   type Story,
@@ -53,6 +55,25 @@ export async function selectStory(id: string, signal?: AbortSignal): Promise<Sto
 
   if (!response.ok) throw await toStoriesError(response);
   return StorySchema.parse(await response.json());
+}
+
+/*
+  Supprimer une histoire, ouverte ou non. Son sort est décidé par l'API selon
+  ce que d'autres joueurs en ont vu, comme au recommencement.
+*/
+export async function deleteStory(
+  id: string,
+  signal?: AbortSignal,
+): Promise<DepartureOutcome> {
+  const response = await fetch(`${API_BASE_URL}/stories/${id}`, {
+    method: "DELETE",
+    credentials: "include",
+    headers: { Accept: "application/json" },
+    signal,
+  });
+
+  if (!response.ok) throw await toStoriesError(response);
+  return DepartureOutcomeSchema.parse(await response.json());
 }
 
 async function toStoriesError(response: Response): Promise<StoriesError> {

@@ -4,7 +4,13 @@ import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { App } from 'supertest/types.js';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { STORIES_MAX, type OnboardingState, type Stories, type Story } from '@odyssai/schemas';
+import {
+  STORIES_MAX,
+  type DepartureOutcome,
+  type OnboardingState,
+  type Stories,
+  type Story,
+} from '@odyssai/schemas';
 import { AppModule } from './../src/app.module.js';
 import { PRISMA } from './../src/prisma/prisma.module.js';
 import { REDIS } from './../src/redis/redis.module.js';
@@ -78,6 +84,10 @@ function start(app: INestApplication<App>) {
 
 function select(app: INestApplication<App>, id: string) {
   return request(app.getHttpServer()).put(`/stories/${id}/current`).set('Cookie', COOKIE);
+}
+
+function remove(app: INestApplication<App>, id: string) {
+  return request(app.getHttpServer()).delete(`/stories/${id}`).set('Cookie', COOKIE);
 }
 
 /*
@@ -181,6 +191,61 @@ describe('/stories (e2e)', () => {
     expect(state.universeId).toBeNull();
     expect(state.step).toBe('inspiration');
     expect(second.id).not.toBe(first.id);
+    await app.close();
+  });
+
+  it('supprime une histoire fermee sans toucher a l ouverte', async () => {
+    const first = (await start(app).expect(201)).body as Story;
+    const second = (await start(app).expect(201)).body as Story;
+
+    const outcome = (await remove(app, first.id).expect(200)).body as DepartureOutcome;
+    expect(outcome.world).toBe('deleted');
+
+    expect(store.universes.map((row) => row.id)).toEqual([second.id]);
+    expect(store.users[0]!.currentUniverseId).toBe(second.id);
+    await app.close();
+  });
+
+  it('supprimer l histoire ouverte laisse le joueur sans histoire ouverte', async () => {
+    const first = (await start(app).expect(201)).body as Story;
+    const second = (await start(app).expect(201)).body as Story;
+
+    await remove(app, second.id).expect(200);
+
+    expect(store.universes.map((row) => row.id)).toEqual([first.id]);
+    expect(store.users[0]!.currentUniverseId).toBeNull();
+    await app.close();
+  });
+
+  it('refuse de supprimer une histoire en construction', async () => {
+    const story = (await start(app).expect(201)).body as Story;
+    store.universes[0]!.step = 'generating';
+
+    await remove(app, story.id).expect(409);
+    expect(store.universes).toHaveLength(1);
+    await app.close();
+  });
+
+  it('ne supprime pas l histoire d un autre', async () => {
+    const other = '01860000-0000-7000-8000-00000000dead';
+    store.universes.push({
+      id: other,
+      ownerId: 'quelqu-un-d-autre',
+      step: 'ready',
+      mode: 'works',
+      works: [],
+      ownDescription: null,
+      themes: null,
+      charter: null,
+      bible: null,
+      name: 'Ailleurs',
+      accentHue: 10,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await remove(app, other).expect(404);
+    expect(store.universes).toHaveLength(1);
     await app.close();
   });
 

@@ -32,7 +32,8 @@ export const StoriesSchema = z.object({
 export type Stories = z.infer<typeof StoriesSchema>;
 
 export const StoriesErrorBodySchema = z.object({
-  code: z.enum(['not_found', 'stories_full', 'validation_error']),
+  // `locked` : l'histoire est en construction, on ne l'efface pas sous le worker.
+  code: z.enum(['not_found', 'stories_full', 'locked', 'validation_error']),
 });
 
 export type StoriesErrorBody = z.infer<typeof StoriesErrorBodySchema>;

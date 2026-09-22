@@ -35,6 +35,7 @@ export const routing = defineRouting({
     // servi reste en francais : le joueur ne voit pas d'anglais dans sa barre
     // d'adresse.
     "/play": { fr: "/jouer", en: "/play" },
+    "/play/stories": { fr: "/jouer/histoires", en: "/play/stories" },
   },
 });
 
