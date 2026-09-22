@@ -942,6 +942,9 @@
     "errorUnreachable": "The API is not answering. Check that it is running, and that you are on the usual address of the site.",
     "errorSignedOut": "Your session has expired. Sign in again, your game is kept.",
     "errorUnavailable": "The game master is not available right now.",
-    "errorRefused": "This message was refused. The game accepts violence and dark subjects, but not insults or explicit content."
+    "errorRefused": "This message was refused. The game accepts violence and dark subjects, but not insults or explicit content.",
+    "storyOpen": "Read the story",
+    "storyClose": "Back to the thread",
+    "storyEmpty": "The story will be written here, turn after turn."
   }
 }

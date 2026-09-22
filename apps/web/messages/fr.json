@@ -942,6 +942,9 @@
     "errorUnreachable": "L'API ne répond pas. Vérifie qu'elle tourne, et que tu es bien sur l'adresse habituelle du site.",
     "errorSignedOut": "Ta session a expiré. Reconnecte-toi, ta partie est gardée.",
     "errorUnavailable": "Le meneur n'est pas disponible pour le moment.",
-    "errorRefused": "Ce message a été refusé. Le jeu accepte la violence et les sujets sombres, mais pas les insultes ni le contenu explicite."
+    "errorRefused": "Ce message a été refusé. Le jeu accepte la violence et les sujets sombres, mais pas les insultes ni le contenu explicite.",
+    "storyOpen": "Lire le récit",
+    "storyClose": "Revenir au fil",
+    "storyEmpty": "Le récit s'écrira ici, au fil de la partie."
   }
 }

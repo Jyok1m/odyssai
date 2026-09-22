@@ -53,3 +53,25 @@ export function publicOutcome(band: OutcomeBand): PublicOutcome {
     ? 'defavorable'
     : 'favorable';
 }
+
+/*
+  Les situations dont l'issue se tranche au de.
+
+  C'est le code qui decide, comme il decide du lancer : laisser le modele juger
+  de l'incertitude revenait a lui laisser le de. Mesure sur douze tours, il ne
+  s'en servait qu'une fois, et racontait une reussite sur une bande d'echec.
+
+  La liste est volontairement courte : un geste qui peut rater et dont l'echec
+  change quelque chose. Une question sur le monde, un deplacement ou une
+  confidence n'ont rien a trancher.
+*/
+const SETTLED_BY_DIE = new Set<string>([
+  'violence',
+  'contrainte',
+  'tromperie',
+  'entreprise',
+]);
+
+export function settledByDie(situation: string | null): boolean {
+  return situation !== null && SETTLED_BY_DIE.has(situation);
+}

@@ -9,6 +9,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 import { OutOfCredits } from "@/components/billing/out-of-credits";
+import { Story } from "@/components/play/story";
 import { Button } from "@/components/ui/button";
 import { isOutOfCredits } from "@/lib/billing";
 import { TurnError, fetchHistory, playTurn } from "@/lib/turn";
@@ -24,6 +25,9 @@ export function GameChat() {
 
   const [messages, setMessages] = useState<TurnMessage[]>([]);
   const [input, setInput] = useState("");
+  // La lecture du récit, à côté du fil et non à sa place : on y revient pour
+  // relire, puis on reprend la partie là où elle était.
+  const [reading, setReading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Distinct du message d'erreur : la réserve vide n'est pas une panne, et ce
@@ -149,7 +153,18 @@ export function GameChat() {
 
   return (
     <section className="rounded-card border border-line bg-abyss p-4 shadow-2xl shadow-ink/50 sm:p-6">
-      <ol
+      <div className="mb-4 flex justify-end">
+        <Button
+          variant="ghost"
+          size="sm"
+          type="button"
+          onClick={() => setReading((open) => !open)}
+        >
+          {reading ? t("storyClose") : t("storyOpen")}
+        </Button>
+      </div>
+
+      {reading ? <Story messages={messages} /> : <ol
         ref={thread}
         className="flex max-h-[32rem] flex-col gap-5 overflow-y-auto overscroll-contain px-1"
       >
@@ -182,7 +197,7 @@ export function GameChat() {
             )}
           </li>
         ))}
-      </ol>
+      </ol>}
 
       <form
         className="mt-5"

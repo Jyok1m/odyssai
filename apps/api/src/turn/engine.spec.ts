@@ -6,6 +6,7 @@ import {
   bandOf,
   publicOutcome,
   rollD20,
+  settledByDie,
 } from '@odyssai/engine';
 import type { CanonFact, WorldCharter } from '@odyssai/schemas';
 
@@ -130,5 +131,30 @@ describe('arbitrage du canon', () => {
 
     expect(verdict.accepted).toHaveLength(1);
     expect(verdict.rejected).toHaveLength(1);
+  });
+});
+
+/*
+  L'usage du de appartient au code, comme son lancer. Mesure sur douze tours,
+  le modele ne s'en servait qu'une fois et racontait une reussite sur une
+  bande d'echec : lui laisser juger de l'incertitude revenait a lui laisser
+  le de.
+*/
+describe('ce qui se tranche au de', () => {
+  it('tranche un geste qui peut rater', () => {
+    for (const situation of ['violence', 'contrainte', 'tromperie', 'entreprise']) {
+      expect(settledByDie(situation), situation).toBe(true);
+    }
+  });
+
+  it('ne tranche pas ce qui ne se rate pas', () => {
+    for (const situation of ['lore', 'meta', 'attente', 'intimite', 'exploration']) {
+      expect(settledByDie(situation), situation).toBe(false);
+    }
+  });
+
+  // Verdict illisible, etiquette inconnue, ouverture : rien a trancher.
+  it('ne tranche rien sans situation', () => {
+    expect(settledByDie(null)).toBe(false);
   });
 });

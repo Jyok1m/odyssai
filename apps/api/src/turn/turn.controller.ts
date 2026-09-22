@@ -23,7 +23,13 @@ import {
 } from '@odyssai/schemas';
 import type { LlmClient } from '@odyssai/llm';
 import { GUIDANCE, TURN_PROMPT_VERSION, playTurn } from '@odyssai/narrator';
-import { arbitrateCanon, bandOf, publicOutcome, rollD20 } from '@odyssai/engine';
+import {
+  arbitrateCanon,
+  bandOf,
+  publicOutcome,
+  rollD20,
+  settledByDie,
+} from '@odyssai/engine';
 import { PrismaClient, type User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
@@ -273,6 +279,8 @@ export class TurnController {
           fate,
           opening,
           guidance: guidance.map((card) => card.text),
+          // Une ouverture ne tranche rien : le joueur n'a encore rien tente.
+          mustUseDie: !opening && settledByDie(situation),
         },
         message: fate ? "Je ne sais pas quoi faire, que le sort decide." : said,
         trace: {
