@@ -18,6 +18,9 @@ COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/worker/package.json apps/worker/
 COPY packages/schemas/package.json packages/schemas/
 COPY packages/db/package.json packages/db/
+# engine : le semis des entites a l'ecriture du monde. Oublie ici, le build
+# passait en local (le workspace entier est present) et tombait dans l'image.
+COPY packages/engine/package.json packages/engine/
 COPY packages/llm/package.json packages/llm/
 COPY packages/narrator/package.json packages/narrator/
 # --child-concurrency=1 : l'extraction de plusieurs centaines de paquets en
@@ -27,6 +30,7 @@ RUN pnpm install --frozen-lockfile --child-concurrency=1 --filter=@odyssai/worke
 
 COPY packages/schemas packages/schemas
 COPY packages/db packages/db
+COPY packages/engine packages/engine
 COPY packages/llm packages/llm
 COPY packages/narrator packages/narrator
 COPY apps/worker apps/worker
@@ -34,11 +38,12 @@ COPY apps/worker apps/worker
 # turbo n'est pas installe par l'install filtree : on ordonne a la main. C'est
 # aussi pourquoi `generate` s'appelle ici : le client Prisma est une tache turbo
 # a part, dont `build` depend, et non un prescript de `build`. Sans elle tsc ne
-# trouve pas le client et packages/db ne compile pas. narrator depend de llm et
-# de schemas.
+# trouve pas le client et packages/db ne compile pas. engine depend de schemas,
+# narrator de llm et de schemas.
 RUN pnpm --filter @odyssai/schemas build \
  && pnpm --filter @odyssai/db generate \
  && pnpm --filter @odyssai/db build \
+ && pnpm --filter @odyssai/engine build \
  && pnpm --filter @odyssai/llm build \
  && pnpm --filter @odyssai/narrator build \
  && pnpm --filter @odyssai/worker build
