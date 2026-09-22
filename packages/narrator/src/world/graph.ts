@@ -9,6 +9,7 @@ import {
   NpcSchema,
   PoliticsSchema,
   WorldBibleSchema,
+  WorldArcSchema,
   WorldCharterSchema,
   WorldLoreSchema,
   bibleProse,
@@ -20,6 +21,7 @@ import {
   type Politics,
   type UiLocale,
   type WorldBible,
+  type WorldArc,
   type WorldCharter,
   type WorldLore,
   type WorldThemes,
@@ -74,6 +76,7 @@ const GenerationState = Annotation.Root({
   politics: Annotation<Politics | undefined>,
   npcs: Annotation<Npc[] | undefined>,
   affinities: Annotation<Affinity[] | undefined>,
+  arc: Annotation<WorldArc | undefined>,
 
   // Noms empruntes releves par le controle, s'il y en a.
   borrowed: Annotation<string[] | undefined>,
@@ -187,6 +190,7 @@ function validate(state: GenerationStateType): Partial<GenerationStateType> {
     politics: state.politics,
     npcs: state.npcs,
     affinities: state.affinities,
+    arc: state.arc,
   });
 
   if (!bible.success) {
@@ -217,6 +221,7 @@ const WRITE = {
   politics: 'write_politics',
   characters: 'write_characters',
   affinities: 'write_affinities',
+  arc: 'write_arc',
 } as const satisfies Record<GenerationNode, string>;
 
 function afterValidation(
@@ -268,6 +273,12 @@ export function buildGenerationGraph(deps: GraphDeps) {
         under('affinities'),
       ),
     )
+    /*
+      L'arc vient apres tout le reste : il se sert des factions et des
+      personnages, et une histoire ecrite avant eux n'aurait rien a quoi se
+      raccrocher.
+    */
+    .addNode(WRITE.arc, node(deps, 'arc', 'arc', WorldArcSchema, under('arc')))
     .addNode('validation', validate)
     .addEdge(START, WRITE.charter)
     .addEdge(WRITE.charter, WRITE.lore)
@@ -275,7 +286,8 @@ export function buildGenerationGraph(deps: GraphDeps) {
     .addEdge(WRITE.factions, WRITE.politics)
     .addEdge(WRITE.politics, WRITE.characters)
     .addEdge(WRITE.characters, WRITE.affinities)
-    .addEdge(WRITE.affinities, 'validation')
+    .addEdge(WRITE.affinities, WRITE.arc)
+    .addEdge(WRITE.arc, 'validation')
     .addConditionalEdges('validation', afterValidation, [WRITE.lore, END]);
 }
 

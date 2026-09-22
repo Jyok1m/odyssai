@@ -386,6 +386,8 @@ export class TurnController {
           opening,
           guidance: guidance.map((card) => card.text),
           inventory: world.inventory,
+          arc: world.bible.arc,
+          act: world.act ?? undefined,
           // Une ouverture ne tranche rien : le joueur n'a encore rien tente.
           asking,
           mustUseDie: settled,
@@ -442,6 +444,17 @@ export class TurnController {
         objet qu'il n'a pas declare ici n'entre pas, quoi que son recit ait
         raconte.
       */
+      /*
+        L'acte avance d'un cran au plus, et ne recule jamais : le modele
+        declare, le code borne. Au dela du dernier, la partie passe en
+        aventure libre et n'en sort plus.
+      */
+      const acts = world.bible.arc?.acts.length ?? 0;
+      const act =
+        world.act !== null && delta.actDone && world.act <= acts
+          ? world.act + 1
+          : null;
+
       const carried = carryAfter(
         world.inventory,
         delta.gained,
@@ -465,6 +478,14 @@ export class TurnController {
             content: answer,
           },
         }),
+        ...(act
+          ? [
+              this.prisma.universe.update({
+                where: { id: world.universeId },
+                data: { arcAct: act },
+              }),
+            ]
+          : []),
         this.prisma.turn.create({
           data: {
             universeId: world.universeId,

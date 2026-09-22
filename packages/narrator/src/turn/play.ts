@@ -56,6 +56,7 @@ const DEFAULT_DELTA: TurnDelta = {
   kind: 'action',
   usedDie: false,
   facts: [],
+  actDone: false,
   gained: [],
   lost: [],
 };
@@ -122,6 +123,7 @@ export function readDelta(tail: string): TurnDelta {
     kind: source.kind === 'question' ? 'question' : 'action',
     usedDie: source.usedDie === true,
     facts: facts.slice(0, CANON_FACTS_PER_TURN_MAX),
+    actDone: source.actDone === true,
     gained: items(source.gained),
     lost: items(source.lost),
   };

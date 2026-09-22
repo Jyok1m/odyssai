@@ -198,6 +198,7 @@ export const GenerationStepSchema = z.enum([
   'politics',
   'characters',
   'affinities',
+  'arc',
   'validation',
 ]);
 

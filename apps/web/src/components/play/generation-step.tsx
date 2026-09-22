@@ -1,22 +1,18 @@
 "use client";
 
+import { GenerationStepSchema } from "@odyssai/schemas";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { watchGeneration } from "@/lib/world";
 
-// Les étapes du graphe, dans leur ordre d'exécution.
-const STEPS = [
-  "abstraction",
-  "charter",
-  "lore",
-  "factions",
-  "politics",
-  "characters",
-  "affinities",
-  "validation",
-] as const;
+/*
+  Les étapes du graphe, dans leur ordre d'exécution. Reprises du schéma
+  partagé plutôt que recopiées : une étape ajoutée au graphe doit se voir ici
+  sans qu'on y pense, et `arc` avait justement pris la recopie en défaut.
+*/
+const STEPS = GenerationStepSchema.options;
 
 type Step = (typeof STEPS)[number];
 

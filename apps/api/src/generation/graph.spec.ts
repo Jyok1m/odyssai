@@ -111,6 +111,29 @@ const AFFINITIES = [
   },
 ];
 
+/*
+  Une histoire de trois actes, sans nom propre : la garde sur les emprunts
+  relit la prose de l'arc comme celle du lore.
+*/
+const ARC = {
+  hook: 'Le puits du hameau est a sec depuis trois jours et personne ne sait pourquoi.',
+  stakes: 'Sans eau, le hameau se videra avant la fin du mois.',
+  acts: [
+    {
+      goal: 'Comprendre ce qui a tari le puits.',
+      done: 'La galerie sous le puits est trouvee.',
+    },
+    {
+      goal: 'Decouvrir qui a detourne la nappe, et pourquoi.',
+      done: 'Le nom du commanditaire est connu du hameau.',
+    },
+    {
+      goal: 'Rendre l eau au hameau, ou en trouver une autre.',
+      done: 'Le puits coule de nouveau, ou le hameau boit ailleurs.',
+    },
+  ],
+};
+
 const PAYLOADS: Record<GenerationNode, unknown> = {
   charter: CHARTER,
   lore: LORE,
@@ -118,6 +141,7 @@ const PAYLOADS: Record<GenerationNode, unknown> = {
   politics: POLITICS,
   characters: { npcs: NPCS },
   affinities: { affinities: AFFINITIES },
+  arc: ARC,
 };
 
 interface WorldLlm extends LlmClient {
@@ -207,8 +231,10 @@ describe('graphe de generation', () => {
     expect(outcome.bible.factions).toHaveLength(2);
     expect(outcome.bible.npcs).toHaveLength(3);
     // Six noeuds creatifs, un appel chacun. Le controle n'en fait aucun.
-    expect(llm.calls).toHaveLength(6);
-    expect(outcome.usage).toHaveLength(6);
+    // Un appel par noeud d'ecriture : la validation, elle, est du code.
+    const writes = Object.keys(PAYLOADS).length;
+    expect(llm.calls).toHaveLength(writes);
+    expect(outcome.usage).toHaveLength(writes);
   });
 
   /*
@@ -252,7 +278,8 @@ describe('graphe de generation', () => {
     const outcome = await run(llm);
 
     expect(outcome.bible.lore.name).toBe('Sarek');
-    expect(llm.calls).toHaveLength(7);
+    // Un appel par noeud, plus le lore rejoue une fois.
+    expect(llm.calls).toHaveLength(Object.keys(PAYLOADS).length + 1);
   });
 
   it('echoue en nommant l etape apres deux essais rates', async () => {
@@ -285,7 +312,7 @@ describe('graphe de generation', () => {
     expect(outcome.bible.lore.name).toBe('Sarek');
     // Six noeuds, puis lore et les quatre suivants rejoues, plus le second
     // passage du controle.
-    expect(llm.calls.length).toBeGreaterThan(6);
+    expect(llm.calls.length).toBeGreaterThan(Object.keys(PAYLOADS).length);
   });
 
   it('abandonne si le nom emprunte revient a la reecriture', async () => {

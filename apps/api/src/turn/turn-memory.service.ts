@@ -44,6 +44,11 @@ export interface TurnWorld {
   progress: Progress;
   // Ce que le personnage porte, des noms et rien d'autre.
   inventory: string[];
+  /*
+    Ou en est l'histoire. Absent pour un monde genere avant l'arc : le meneur
+    joue alors comme il jouait, sans but a atteindre.
+  */
+  act: number | null;
 }
 
 export interface TurnMemory {
@@ -136,6 +141,7 @@ export class TurnMemoryService implements OnModuleInit {
       works: universe.works,
       progress: (universe.character?.progress ?? {}) as Progress,
       inventory: universe.character?.inventory ?? [],
+      act: universe.bible && bible.data.arc ? (universe.arcAct ?? 1) : null,
     };
   }
 

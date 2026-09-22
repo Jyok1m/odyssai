@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { normalizeWorkTitle } from './onboarding.js';
+import { GenerationStepSchema, normalizeWorkTitle } from './onboarding.js';
 
 /*
   Une majuscule hors tete de phrase vaut nom propre. La regle est grossiere et
@@ -213,12 +213,48 @@ export type Affinity = z.infer<typeof AffinitySchema>;
   La charte vit a part, dans sa propre colonne : elle est lue a chaque tour de
   jeu, la bible seulement quand le narrateur a besoin du detail.
 */
+/*
+  L'histoire dans laquelle le heros est parachute.
+
+  Trois actes, un but par acte et le signe qui dit qu'il est acheve : le
+  modele a besoin de savoir vers quoi il mene, et le code a besoin d'un critere
+  pour avancer sans le croire sur parole.
+
+  Une fois le troisieme acte clos, la partie ne s'arrete pas : elle passe en
+  aventure libre et l'histoire continue de s'ecrire au fil de l'eau. Un arc
+  donne un depart, il ne donne pas une fin.
+*/
+export const ArcActSchema = z.object({
+  // Ce vers quoi cet acte tend.
+  goal: Text(300),
+  // A quoi on reconnait qu'il est acheve.
+  done: Text(200),
+});
+
+export type ArcAct = z.infer<typeof ArcActSchema>;
+
+export const WorldArcSchema = z.object({
+  // La situation d'ouverture, celle ou le joueur arrive.
+  hook: Text(400),
+  // Ce qui pousse, et ce que cela coute de ne rien faire.
+  stakes: Text(400),
+  acts: z.tuple([ArcActSchema, ArcActSchema, ArcActSchema]),
+});
+
+export type WorldArc = z.infer<typeof WorldArcSchema>;
+
 export const WorldBibleSchema = z.object({
   lore: WorldLoreSchema,
   factions: z.array(FactionSchema).min(2).max(5),
   politics: PoliticsSchema,
   npcs: z.array(NpcSchema).min(3).max(6),
   affinities: z.array(AffinitySchema).min(3).max(10),
+  /*
+    Facultatif : les mondes generes avant cette etape n'en ont pas, et une
+    bible que le schema refuserait rendrait leur partie injouable. Sans arc,
+    le meneur joue comme il jouait.
+  */
+  arc: WorldArcSchema.optional(),
 });
 
 export type WorldBible = z.infer<typeof WorldBibleSchema>;
@@ -295,18 +331,12 @@ export const GenerationStreamEventSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('progress'),
     status: z.enum(['queued', 'running']),
-    step: z
-      .enum([
-        'abstraction',
-        'charter',
-        'lore',
-        'factions',
-        'politics',
-        'characters',
-        'affinities',
-        'validation',
-      ])
-      .nullable(),
+    /*
+      La liste etait recopiee ici, et `arc` l'a prise en defaut : une etape
+      ajoutee au graphe ne se voyait pas dans le flux. Une valeur n'a qu'une
+      definition, et c'est celle du schema partage.
+    */
+    step: GenerationStepSchema.nullable(),
     attempts: z.number().int().nonnegative(),
   }),
   z.object({ type: z.literal('ready'), name: z.string() }),

@@ -210,6 +210,11 @@ model Universe {
   /// Teinte de l'accent, que l'interface applique en entrant dans ce monde.
   accentHue Int? @map("accent_hue")
 
+  /// Ou en est l'histoire : 1, 2 ou 3 pendant l'arc, 4 une fois le troisieme
+  /// acte clos. Le joueur continue alors ses propres aventures, et le monde
+  /// s'ecrit au fil de l'eau. Nul pour un monde genere avant l'arc.
+  arcAct Int? @map("arc_act")
+
   character  Character?
   messages   ConversationMessage[]
   jobs       GenerationJob[]
@@ -687,6 +692,7 @@ enum GenerationStep {
   politics
   characters
   affinities
+  arc
   validation
 
   @@map("generation_step")

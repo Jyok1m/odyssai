@@ -22,7 +22,8 @@ export type GenerationNode =
   | 'factions'
   | 'politics'
   | 'characters'
-  | 'affinities';
+  | 'affinities'
+  | 'arc';
 
 const COMMON: Record<UiLocale, string> = {
   fr: `Règles communes :
@@ -50,7 +51,7 @@ const NODES: Record<GenerationNode, Record<UiLocale, string>> = {
 
 Clés : premise, tone, allowed, forbidden, narratorRules.
 - premise : ce qu'est ce monde, en deux phrases.
-- tone : ce qu'il fait ressentir.
+- tone : ce qu'il fait ressentir. **Tous les mondes ne sont pas sombres.** Une aventure peut être lumineuse, drôle, contemplative, chaleureuse, mélancolique, épique ou inquiétante : choisis ce que les thèmes appellent vraiment, et non le registre grave par réflexe.
 - allowed : de deux à huit choses que ce monde rend possible.
 - forbidden : de deux à huit choses qu'il ne contient pas. Sois précis : un interdit vague ne tient rien.
 - narratorRules : de deux à six consignes de narration propres à ce monde.`,
@@ -58,7 +59,7 @@ Clés : premise, tone, allowed, forbidden, narratorRules.
 
 Keys: premise, tone, allowed, forbidden, narratorRules.
 - premise: what this world is, in two sentences.
-- tone: what it makes you feel.
+- tone: what it makes you feel. **Not every world is dark.** An adventure can be bright, funny, contemplative, warm, wistful, epic or unsettling: pick what the themes actually call for, not the grave register out of reflex.
 - allowed: two to eight things this world makes possible.
 - forbidden: two to eight things it does not contain. Be precise: a vague ban holds nothing.
 - narratorRules: two to six narration rules specific to this world.`,
@@ -134,6 +135,37 @@ Each object: name, role, faction, drive, secret.
 - drive is what they want, phrased so it can come into conflict.
 - secret is what the player does not know yet, and can discover in play.
 - At least one of them has a reason to care about the player's character.`,
+  },
+
+  arc: {
+    fr: `Tu écris l'histoire dans laquelle ce personnage est parachuté, à partir du monde qui vient d'être écrit.
+
+Clés : hook, stakes, acts.
+- hook : la situation où le joueur arrive, en deux ou trois phrases. Un lieu, quelqu'un, et une chose qui ne va pas. Elle doit concerner ce personnage-là, pas n'importe qui.
+- stakes : ce qui pousse, et ce que cela coûte de ne rien faire.
+- acts : exactement trois objets, chacun avec goal et done.
+  - goal : ce vers quoi cet acte tend.
+  - done : à quoi on reconnaît qu'il est achevé. Un fait observable, pas un sentiment : « la porte du sanctuaire est ouverte », jamais « il comprend enfin ».
+
+Le premier acte part de la situation d'ouverture, le deuxième complique, le troisième résout. Sers-toi des factions et des personnages déjà écrits : une histoire qui n'utilise rien du monde aurait pu se passer ailleurs.
+
+**Ce n'est pas forcément sombre ni tendu.** Une enquête tranquille, une dette à rembourser, une fête à sauver, un voyage : le ton de la charte commande, pas le réflexe dramatique.
+
+Et ce n'est pas une fin : quand le troisième acte se clôt, le joueur continue ses propres aventures. Écris une histoire qui se termine, pas un monde qui s'arrête.`,
+    en: `You write the story this character is dropped into, from the world just written.
+
+Keys: hook, stakes, acts.
+- hook: the situation the player arrives in, in two or three sentences. A place, someone, and one thing that is wrong. It must concern this character, not just anyone.
+- stakes: what pushes, and what doing nothing would cost.
+- acts: exactly three objects, each with goal and done.
+  - goal: what this act works towards.
+  - done: how you can tell it is over. An observable fact, not a feeling: "the sanctuary door stands open", never "he finally understands".
+
+The first act starts from the opening situation, the second complicates, the third resolves. Use the factions and characters already written: a story that uses nothing of the world could have happened anywhere.
+
+**It need not be dark or tense.** A quiet investigation, a debt to repay, a feast to save, a journey: the charter's tone commands, not the dramatic reflex.
+
+And it is not an ending: when the third act closes, the player carries on with their own adventures. Write a story that ends, not a world that stops.`,
   },
 
   affinities: {

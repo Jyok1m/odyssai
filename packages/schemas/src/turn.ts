@@ -98,6 +98,13 @@ export const TurnDeltaSchema = z.object({
     raconte, le moteur ne le calcule pas. Sinon « je fabrique une epee qui tue
     tout » serait obei, et l'etat du jeu se deciderait dans la prose.
   */
+  /*
+    Vrai quand ce que le meneur vient de raconter acheve l'acte en cours.
+
+    Le code n'avance que d'un cran et ne recule jamais : une declaration ne
+    doit pas pouvoir sauter la moitie d'une histoire, ni la rejouer.
+  */
+  actDone: z.boolean().default(false),
   gained: z.array(z.string().trim().min(2).max(60)).max(ITEMS_PER_TURN_MAX).default([]),
   lost: z.array(z.string().trim().min(2).max(60)).max(ITEMS_PER_TURN_MAX).default([]),
 });
