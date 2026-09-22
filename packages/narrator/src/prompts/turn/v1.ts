@@ -37,6 +37,11 @@ export interface TurnContext {
     tour sur douze.
   */
   mustUseDie: boolean;
+  /*
+    Vrai quand le joueur pose une question au meneur au lieu d'agir. La scene
+    ne bouge pas : il demande de quoi se reperer, il ne tente rien.
+  */
+  asking: boolean;
   // Vrai quand le joueur s'en remet au sort sans dire ce qu'il fait.
   fate: boolean;
   /*
@@ -219,13 +224,31 @@ Last, **the scene**: a precise place, someone at their side, and one thing that 
 Three proper names at most, each introduced in three words as it lands. Two hundred and fifty words for this scene and this one only: the hundred and fifty limit does not apply to it. The die is not used here, and you do not end on a question.`,
 };
 
+const ASKING: Record<UiLocale, string> = {
+  fr: `Le joueur te pose une question, il n'agit pas. Réponds-lui comme un meneur à sa table.
+
+- **La scène ne bouge pas.** Personne n'entre, rien ne se rapproche, le temps ne passe pas. Tu réponds, c'est tout.
+- Réponds de l'intérieur du monde, avec ce que la charte, le lore et le canon contiennent, et sans détour : ce qu'il demande, il peut le savoir ou l'apprendre.
+- Si le lore ne le dit pas, **invente une réponse qui tient avec le reste** et note-la comme un fait de canon : elle deviendra vraie pour toujours. C'est toi qui décides de ce monde.
+- S'il demande quelque chose que son personnage ne peut pas savoir, dis-le par ce qu'il sait : une rumeur, un on-dit, une ignorance assumée. « Tu l'ignores » est une réponse, et elle vaut mieux qu'une invention gratuite.
+- Cent mots au plus, et tu ne termines pas par une question.`,
+
+  en: `The player is asking you a question, not acting. Answer them the way a game master would at the table.
+
+- **The scene does not move.** Nobody comes in, nothing draws nearer, no time passes. You answer, that is all.
+- Answer from inside the world, with what the charter, the lore and the canon hold, and without detour: what they ask, they may know or find out.
+- If the lore does not say, **invent an answer that holds with the rest** and record it as a canon fact: it becomes true for good. This world is yours to decide.
+- If they ask something their character cannot know, say so through what they do know: a rumour, hearsay, an admitted ignorance. "You do not know" is an answer, and it beats an idle invention.
+- One hundred words at most, and you do not end on a question.`,
+};
+
 const FATE: Record<UiLocale, string> = {
   fr: "Le joueur ne sait pas quoi faire et s'en remet au sort. C'est à toi de décider ce qui lui arrive, et la bande dit si cela tourne en sa faveur.",
   en: 'The player does not know what to do and defers to fate. It is yours to decide what happens to them, and the band says whether it turns in their favour.',
 };
 
 export const TURN_PROMPT = {
-  id: 'turn/v12',
+  id: 'turn/v13',
 
   build(
     locale: UiLocale,
@@ -250,6 +273,7 @@ export const TURN_PROMPT = {
         ? `<rappels>\n${context.guidance.join('\n\n')}\n</rappels>`
         : '',
       context.opening ? OPENING[locale] : '',
+      context.asking ? ASKING[locale] : '',
       context.fate ? FATE[locale] : '',
     ]
       .filter(Boolean)

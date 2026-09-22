@@ -9,6 +9,16 @@
 export const CREDIT_COSTS = {
   // L'unite de reference.
   turn: 1,
+  /*
+    Une question au meneur : le meme appel qu'un tour, donc le meme cout.
+
+    C'est un curseur assume et non une evidence. La mettre a zero ouvrirait un
+    canal vers le modele que seules les limites horaires borneraient ; la
+    laisser a un decourage exactement ce qu'on veut encourager, un joueur qui
+    demande plutot qu'un joueur qui subit. Elle se baisse ici, sans rien
+    toucher d'autre.
+  */
+  question: 1,
   // Meme ordre de cout qu'un tour.
   characterMessage: 1,
   // Sept appels au mieux, vingt-trois au pire. C'est le gros poste.

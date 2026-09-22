@@ -322,6 +322,23 @@ export function GameChat() {
         >
           {t("rollDie")}
         </Button>
+
+        {/* Le même champ, l'autre geste : demander au lieu de tenter. La
+            scène ne bouge pas, et le dé ne sert pas. */}
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={busy || input.trim().length === 0}
+          onClick={() => {
+            const content = input.trim();
+            if (!content) return;
+            setInput("");
+            void play({ kind: "ask", content });
+          }}
+        >
+          {t("askAction")}
+        </Button>
+
         <p className="text-ui-sm text-vellum-3">{t("dieHint")}</p>
       </div>
 

@@ -4,6 +4,7 @@ import {
   OUTCOME_BANDS,
   arbitrateCanon,
   bandOf,
+  creditsFor,
   publicOutcome,
   rollD20,
   settledByDie,
@@ -156,5 +157,20 @@ describe('ce qui se tranche au de', () => {
   // Verdict illisible, etiquette inconnue, ouverture : rien a trancher.
   it('ne tranche rien sans situation', () => {
     expect(settledByDie(null)).toBe(false);
+  });
+});
+
+/*
+  Une question au meneur a son propre curseur : c'est le meme appel qu'un
+  tour, mais le facturer plein tarif decouragerait exactement ce qu'on veut
+  encourager, un joueur qui demande plutot qu'un joueur qui subit.
+*/
+describe('ce qu une question coute', () => {
+  it('a son entree au bareme', () => {
+    expect(creditsFor('question')).toBeGreaterThanOrEqual(0);
+  });
+
+  it('ne coute pas plus qu un tour', () => {
+    expect(creditsFor('question')).toBeLessThanOrEqual(creditsFor('turn'));
   });
 });

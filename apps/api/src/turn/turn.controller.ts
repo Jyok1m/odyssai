@@ -167,7 +167,7 @@ export class TurnController {
 
     // Avant la limite et avant tout appel : un message refuse ne doit ni
     // consommer un tour, ni atteindre le modele, ni entrer en base.
-    if (request.kind === 'say') {
+    if (request.kind === 'say' || request.kind === 'ask') {
       const seen = await this.moderation.check(
         request.content,
         user.locale,
@@ -220,7 +220,15 @@ export class TurnController {
 
     const fate = request.kind === 'fate';
     const opening = request.kind === 'open';
-    if (request.kind === 'say') said = request.content;
+    const asking = request.kind === 'ask';
+    if (request.kind === 'say' || asking) said = request.content;
+
+    /*
+      Une question ne se tranche pas au de : le joueur ne tente rien. Elle
+      annule aussi ce qui attendait un jet, comme n'importe quelle autre
+      chose que le joueur decide de faire a la place.
+    */
+    if (asking) await this.pending.drop(user.id);
 
     /*
       Premier temps : l'action se tranche au de, donc rien n'est genere et
@@ -246,7 +254,11 @@ export class TurnController {
     // depenser, et le joueur n'a pas de facture surprise.
     let debit: string | null = null;
     try {
-      debit = await this.credits.spend('turn' as const, user.id, world.universeId);
+      debit = await this.credits.spend(
+        asking ? ('question' as const) : ('turn' as const),
+        user.id,
+        world.universeId,
+      );
     } catch (error: unknown) {
       if (error instanceof OutOfCreditsError) {
         throw new HttpException(
@@ -281,7 +293,7 @@ export class TurnController {
       verifier un de apres coup ne peuvent pas dependre d'une declaration.
       Sa reponse ne sert donc plus que pour les tours qu'on lui laisse juger.
     */
-    const settled = !opening && settledByDie(situation);
+    const settled = !opening && !asking && settledByDie(situation);
 
     // Ecrit avant l'appel : une coupure en cours de reponse ne doit pas faire
     // perdre au joueur ce qu'il a tape. Rien a ecrire a l'ouverture, ou la
@@ -338,6 +350,7 @@ export class TurnController {
           opening,
           guidance: guidance.map((card) => card.text),
           // Une ouverture ne tranche rien : le joueur n'a encore rien tente.
+          asking,
           mustUseDie: settled,
         },
         message: fate ? "Je ne sais pas quoi faire, que le sort decide." : said,

@@ -46,6 +46,18 @@ export const TurnRequestSchema = z.discriminatedUnion('kind', [
     jet lance.
   */
   z.object({ kind: z.literal('roll') }),
+  /*
+    Une question posee au meneur, hors de l'action.
+
+    Le joueur ne tente rien : il demande de quoi se reperer. Le de ne sert
+    donc pas, la scene n'avance pas, et le meneur repond avec ce que le lore
+    contient. Ce qu'il invente pour repondre entre au canon comme le reste :
+    c'est lui qui decide, et une reponse donnee une fois reste vraie.
+  */
+  z.object({
+    kind: z.literal('ask'),
+    content: z.string().trim().min(1).max(TURN_MESSAGE_MAX_CHARS),
+  }),
 ]);
 
 export type TurnRequest = z.infer<typeof TurnRequestSchema>;
