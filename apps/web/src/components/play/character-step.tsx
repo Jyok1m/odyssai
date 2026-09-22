@@ -12,6 +12,7 @@ import { OutOfCredits } from "@/components/billing/out-of-credits";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { Button } from "@/components/ui/button";
 import { DangerAction } from "@/components/ui/danger-action";
+import { Spinner } from "@/components/ui/spinner";
 import { isOutOfCredits } from "@/lib/billing";
 import {
   CharacterError,
@@ -293,13 +294,19 @@ export function CharacterStep({ initial, saving, error, onAdvance }: Props) {
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-4">
-        <Button
-          type="button"
-          disabled={!canExtract || streaming || drafting}
-          onClick={() => void draft()}
-        >
-          {drafting ? t("character.drafting") : t("character.draft")}
-        </Button>
+        {/* L'extraction ne diffuse rien : sans ce cercle, rien ne bougeait à
+            l'écran pendant l'appel, et le bouton grisé se lisait comme cassé. */}
+        {drafting ? (
+          <Spinner label={t("character.drafting")} />
+        ) : (
+          <Button
+            type="button"
+            disabled={!canExtract || streaming}
+            onClick={() => void draft()}
+          >
+            {t("character.draft")}
+          </Button>
+        )}
 
         <p className="text-ui-sm text-vellum-3">
           {!canExtract
