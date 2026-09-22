@@ -120,7 +120,7 @@ De la page d'accueil au monde généré. `GET/PUT /onboarding` derrière `Sessio
 - En revanche le **nom du personnage n'est pas soumis à la garde sur les emprunts** : le joueur nomme son personnage, c'est sa décision. La garde protège le monde généré, pas les choix du joueur.
 - Le coût est borné par le nombre de tours (`CHARACTER_TURNS_MAX`), pas par une limite d'adresse : le joueur est authentifié. `CHARACTER_TURNS_MIN` décide quand la fiche devient extractible.
 - Le premier message n'est pas enregistré : tant que le joueur n'a rien dit, il n'y a pas de conversation, et l'écrire en créerait une que l'extraction compterait pour rien.
-- **Le récit se relit à part** : un bouton bascule le fil en lecture continue (`components/play/story.tsx`), les phrases du joueur retirées. Aucun appel de plus, `GET /turn` rendait déjà tous les messages ; il manquait la vue. L'échelle y est `text-narration` et non celle du fil, parce qu'on lit d'un trait au lieu d'alterner avec ce qu'on a tapé.
+- **Le récit se relit à part** : un bouton bascule le fil en lecture continue (`components/play/story.tsx`), les phrases du joueur retirées. Aucun appel de plus, `GET /turn` rendait déjà tous les messages ; il manquait la vue. L'échelle est celle du fil : c'est le même texte, et le relire ne doit pas donner l'impression d'un autre document.
 - `apps/web/src/lib/sse.ts` porte le lecteur de flux, partagé par le guide et la conversation. Ne pas le recopier dans un troisième appelant.
 
 ## Génération de monde

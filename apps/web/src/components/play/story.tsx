@@ -8,8 +8,8 @@ import { useTranslations } from "next-intl";
   c'est l'histoire, pas ses propres commandes.
 
   Les mêmes messages que le fil, filtrés ici et non redemandés : `GET /turn`
-  les rend déjà tous. Et `text-narration` plutôt que l'échelle du fil, parce
-  qu'on lit d'un trait au lieu d'alterner avec ce qu'on a tapé.
+  les rend déjà tous. Même échelle que lui aussi : c'est le même texte, et le
+  relire ne doit pas donner l'impression d'un autre document.
 */
 export function Story({ messages }: { messages: TurnMessage[] }) {
   const t = useTranslations("Game");
@@ -27,7 +27,7 @@ export function Story({ messages }: { messages: TurnMessage[] }) {
       {scenes.map((scene, index) => (
         <article key={scene.id}>
           {index > 0 ? <hr className="mb-6 border-line" /> : null}
-          <p className="font-voice text-narration whitespace-pre-wrap text-vellum">
+          <p className="font-voice text-ui-sm whitespace-pre-wrap text-vellum">
             {scene.content}
           </p>
         </article>
