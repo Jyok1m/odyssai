@@ -76,10 +76,19 @@ model User {
 
   lastLoginAt DateTime? @map("last_login_at") @db.Timestamptz(3)
 
+  /// L'histoire ouverte, parmi les siennes. Nulle tant que le joueur n'en a
+  /// commence aucune, ou quand celle qu'il avait ouverte a ete supprimee
+  /// (SetNull) : il repart alors sur une histoire neuve, les autres restent
+  /// a portee. Toute lecture de l'histoire courante filtre aussi sur le
+  /// proprietaire : le pointeur ne vaut pas preuve.
+  currentUniverseId String?   @map("current_universe_id") @db.Uuid
+  currentUniverse   Universe? @relation("CurrentUniverse", fields: [currentUniverseId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  universe     Universe?
+  /// Plusieurs histoires par joueur, sur la meme reserve de credits.
+  universes    Universe[] @relation("Owner")
   encounters   Encounter[]
   llmUsage     LlmUsage[]
   subscription Subscription?
@@ -170,15 +179,19 @@ model Universe {
   id String @id @default(uuid(7)) @db.Uuid
 
   /// Nullable : un monde deja visite par d'autres joueurs survit au depart de
-  /// celui qui l'a fait naitre, detache de lui. NULL n'entre pas dans la
-  /// contrainte d'unicite en Postgres, donc plusieurs mondes orphelins
-  /// cohabitent sans se gener.
+  /// celui qui l'a fait naitre, detache de lui. Plus unique : un joueur mene
+  /// plusieurs histoires, et `users.current_universe_id` dit laquelle est
+  /// ouverte.
   ///
   /// SetNull et non Cascade : c'est le service d'effacement qui decide du sort
   /// d'un monde, pas la base. Contrepartie assumee, supprimer un utilisateur a
   /// la main laisse desormais son monde orphelin au lieu de l'emporter.
-  ownerId String? @unique @map("owner_id") @db.Uuid
-  owner   User?   @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  ownerId String? @map("owner_id") @db.Uuid
+  owner   User?   @relation("Owner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  /// Les joueurs qui ont cette histoire ouverte : son proprietaire, ou
+  /// personne.
+  openedBy User[] @relation("CurrentUniverse")
 
   step OnboardingStep @default(inspiration)
 
@@ -226,6 +239,7 @@ model Universe {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
+  @@index([ownerId])
   @@map("universes")
 }
 

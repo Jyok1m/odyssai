@@ -23,7 +23,7 @@ describe('depart et abonnement', () => {
           stripeSubscriptionId ? { stripeSubscriptionId } : null,
         ),
       },
-      universe: { findUnique: vi.fn().mockResolvedValue(null) },
+      universe: { findMany: vi.fn().mockResolvedValue([]) },
       user: {
         delete: vi.fn(() => {
           order.push('user.delete');

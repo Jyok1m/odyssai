@@ -21,6 +21,7 @@ import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
 import { OutOfCreditsError } from '../credits/credits.service.js';
 import { ErasureService } from '../erasure/erasure.service.js';
+import { StoriesFullError } from '../stories/stories.service.js';
 import {
   IncompleteError,
   LockedError,
@@ -49,8 +50,9 @@ export class OnboardingController {
   }
 
   /*
-    Recommencer. Le monde et le personnage sont traites selon la regle du
-    depart, puis le joueur repart a l'etape inspiration.
+    Recommencer l'histoire ouverte. Son monde et son personnage sont traites
+    selon la regle du depart, puis le joueur repart a l'etape inspiration,
+    sur une histoire neuve ; les autres restent a portee.
 
     Refuse pendant la generation, comme les ecritures le sont : effacer un
     monde qu'un worker est en train d'ecrire le ferait echouer sur une ligne
@@ -63,7 +65,7 @@ export class OnboardingController {
       throw new ConflictException({ code: 'locked' });
     }
 
-    return this.erasure.releaseWorld(user.id);
+    return this.erasure.releaseWorld(user);
   }
 
   @Put()
@@ -90,6 +92,9 @@ export class OnboardingController {
       }
       if (error instanceof LockedError) {
         throw new ConflictException({ code: 'locked' });
+      }
+      if (error instanceof StoriesFullError) {
+        throw new ConflictException({ code: 'stories_full' });
       }
       // 422 et non 409 : la saisie est ecrite, c'est le passage a l'etape
       // suivante qui est refuse, et le front doit pouvoir les distinguer.

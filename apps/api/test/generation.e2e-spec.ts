@@ -104,7 +104,11 @@ interface Options {
 }
 
 async function boot(options: Options): Promise<INestApplication<App>> {
-  const user = makeUser({ username: 'Joueuse', usernameFolded: 'joueuse' });
+  const user = makeUser({
+    username: 'Joueuse',
+    usernameFolded: 'joueuse',
+    currentUniverseId: UNIVERSE_ID,
+  });
 
   const store: OnboardingStore = {
     users: [user],

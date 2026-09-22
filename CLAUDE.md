@@ -1,6 +1,6 @@
 # OdyssAI
 
-Jeu narratif multivers narré par IA. Chaque joueur a son propre univers ; les univers peuvent se croiser et partagent un Lore Général commun.
+Jeu narratif multivers narré par IA. Chaque joueur mène ses propres univers, plusieurs à la fois s'il le veut ; les univers peuvent se croiser et partagent un Lore Général commun.
 
 ## Stack
 
@@ -97,7 +97,7 @@ De la page d'accueil au monde généré. `GET/PUT /onboarding` derrière `Sessio
 - **Deux schémas par étape** dans `packages/schemas/src/onboarding.ts` : un brouillon permissif enregistré au fil de la saisie, un strict qui conditionne le passage à l'étape suivante. Le parcours doit être reprenable, donc une saisie à moitié remplie doit pouvoir s'écrire en base.
 - `advance: true` sur une saisie incomplète **enregistre quand même**, puis répond 422 `incomplete` : rien de ce que le joueur a tapé ne se perd parce qu'il a cliqué trop tôt.
 - L'étape `username` n'existe pas dans l'énumération de la base : elle se déduit de la présence d'un pseudo, et le poser passe par `PATCH /me`, pas par cette ressource.
-- La ligne `universes` naît au premier enregistrement, jamais à la lecture : `GET /onboarding` n'écrit rien.
+- La ligne `universes` naît au premier enregistrement, jamais à la lecture : `GET /onboarding` n'écrit rien. Depuis les histoires multiples, c'est `StoriesService.start` qui la crée quand aucune histoire n'est ouverte.
 - On écrit à son étape ou en deçà, jamais au delà. `generating` et `ready` ferment le parcours ; `failed` reste ouvert, c'est la seule sortie d'une génération qui n'a pas abouti.
 - Les thèmes sont effacés à chaque modification de l'inspiration : ils en sont une fonction pure, et un thème périmé ferait générer un monde à partir d'une saisie que le joueur a changée.
 - `characters.name` est nullable : la fiche s'écrit en plusieurs fois, la présence du nom est exigée par le schéma strict, pas par la table.
@@ -241,6 +241,7 @@ Un vrai jeu de rôle donne une histoire à tout ce qu'il nomme. La bible en donn
 - `encounters.universe_id` est l'univers **où** la rencontre a eu lieu, pas celui d'où vient le personnage. C'est ce qui rend les deux questions réellement indépendantes, et un test l'a démontré en échouant sur une fixture qui les confondait.
 - Personne n'écrit dans `encounters` : la traversée entre univers reste à construire. Les deux prédicats sont donc faux et tout est supprimé, ce qui est juste tant que personne ne peut se croiser.
 - Un monde gardé est **vidé des mots du joueur** : `works`, `own_description` et toute la conversation de création. Ce qui reste est le texte du modèle, sans lien avec une personne. C'est ce qui permet de le conserver sans trahir la page Confidentialité, qui le dit désormais explicitement.
+- `DELETE /onboarding` ne touche que l'histoire ouverte (voir « Plusieurs histoires par joueur »), `DELETE /me` toutes.
 - `universes.owner_id` et `characters.universe_id` sont nullables en `SetNull`, pas en `Cascade` : c'est le service qui décide du sort d'un monde, pas la base. Contrepartie, supprimer un utilisateur à la main laisse son monde orphelin. Le worker refuse de générer pour un monde sans propriétaire.
 - **L'API n'a aucun droit sur Keycloak**, et n'en gagne aucun : `DELETE /me` efface le jeu et ferme la session, puis rend `accountUrl` pour que le joueur supprime son identité lui-même. Le rôle ansible active pour cela l'action requise `delete_account` et le rôle client `account/delete-account`.
 - La confirmation est un **mot à taper** (`DangerAction`), pas une case ni un second clic : les deux s'obtiennent par réflexe, recopier un mot demande de lire.
@@ -248,6 +249,19 @@ Un vrai jeu de rôle donne une histoire à tout ce qu'il nomme. La bible en donn
 - Un échec chez Stripe **n'arrête pas le départ** : le droit à l'effacement ne se suspend pas à la disponibilité d'un tiers. Il part en `logger.error` avec l'identifiant, pour être rattrapé à la main. C'est le seul cas où quelqu'un continuerait d'être prélevé sans pouvoir s'y opposer.
 - Le client Stripe reste, seul l'abonnement part : les factures doivent survivre au compte de jeu, c'est une obligation comptable, et elles ne portent plus rien qui s'y rattache.
 - `ErasureService` prend le client Stripe de `StripeModule`, qui est global. Passer par `BillingService` ferait `AuthModule` vers `ErasureModule` vers `BillingModule` vers `AuthModule`, et un `forwardRef` pour une ligne d'annulation se paierait cher.
+
+### Plusieurs histoires par joueur
+
+`universes.owner_id` n'est plus unique : un joueur mène plusieurs histoires, sur la même réserve de crédits. `users.current_universe_id` dit laquelle est **ouverte**, et c'est elle que lisent le parcours, la génération, `GET /world` et le tour de jeu.
+
+- **Le pointeur ne vaut pas preuve.** `currentStory(user)` (`apps/api/src/stories/stories.service.ts`) rend le filtre `{ id, ownerId }`, jamais `{ id }` seul : un pointeur qui viserait le monde d'un autre lirait `null`. Pure, pour que l'effacement et le tour n'aient pas à importer le module.
+- `GET /stories` liste, `POST /stories` en commence une (vide, à l'inspiration, ouverte aussitôt), `PUT /stories/:id/current` en ouvre une autre. Le contrôleur vit dans `OnboardingModule`, qui a déjà le garde de session : un `StoriesModule` qui importerait `AuthModule` ferait Auth vers Erasure vers Stories vers Auth.
+- **Sans histoire ouverte, la première écriture du parcours en commence une** : c'est ce qui remplace l'`upsert` par propriétaire, et ce qui garde le premier parcours identique. `GET /onboarding` n'écrit toujours rien.
+- **Recommencer n'efface que l'histoire ouverte.** Un monde supprimé retire le pointeur par la base (`SetNull`), un monde gardé (détaché) le retire par le service : le joueur repart sur une histoire neuve, les autres restent à portée. Supprimer le compte passe toutes les histoires par la même règle, et `DepartureOutcome` en garde le pire cas visible : gardé prime sur supprimé.
+- `STORIES_MAX` (`packages/schemas/src/stories.ts`) borne le nombre : une histoire vide ne coûte rien, mais au-delà de quelques-unes la liste cesse d'être un choix.
+- La migration a ouvert, pour chaque joueur existant, la seule histoire qu'il avait. Le pointeur d'un joueur qui n'en avait aucune reste nul, ce qui est l'état d'un nouveau joueur.
+- **Côté web, chaque écran est clé par l'histoire ouverte** (`storyKey` dans `OnboardingWizard`) : `InspirationStep` et `CharacterStep` initialisent leur état depuis `initial`, et sans la clé, changer d'histoire garderait la saisie de la précédente. `StorySwitcher` ne s'affiche qu'à partir d'une histoire : à la première visite le joueur est déjà sur une histoire neuve.
+- Un test e2e (`test/stories.e2e-spec.ts`) joue l'aller-retour, y compris qu'ouvrir le monde d'un autre répond 404 sans dire qu'il existe.
 
 ### Le checkpointer LangGraph vit dans son propre schéma
 

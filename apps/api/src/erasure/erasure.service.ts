@@ -1,9 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
 import type { DepartureOutcome } from '@odyssai/schemas';
-import { PrismaClient } from '@odyssai/db';
+import { PrismaClient, type User } from '@odyssai/db';
 import { PRISMA } from '../prisma/prisma.module.js';
 import { STRIPE } from '../stripe/stripe.module.js';
+import { currentStory } from '../stories/stories.service.js';
 
 /*
   Ce qui arrive a un monde et a un personnage quand leur joueur s'en va.
@@ -28,17 +29,29 @@ export class ErasureService {
   ) {}
 
   /*
-    Applique la regle au monde du joueur. Ne touche pas a sa ligne `users` :
-    recommencer une partie n'est pas partir.
+    Applique la regle a l'histoire ouverte du joueur, et a elle seule : ses
+    autres histoires restent. Ne touche pas a sa ligne `users` : recommencer
+    une partie n'est pas partir.
   */
-  async releaseWorld(userId: string): Promise<DepartureOutcome> {
-    const universe = await this.prisma.universe.findUnique({
-      where: { ownerId: userId },
-      include: { character: { select: { id: true } } },
-    });
+  async releaseWorld(
+    user: Pick<User, 'id' | 'currentUniverseId'>,
+  ): Promise<DepartureOutcome> {
+    const where = currentStory(user);
+    const universe = where
+      ? await this.prisma.universe.findUnique({
+          where,
+          include: { character: { select: { id: true } } },
+        })
+      : null;
 
     if (!universe) return { world: 'none', character: 'none' };
+    return this.release(user.id, universe);
+  }
 
+  private async release(
+    userId: string,
+    universe: { id: string; character: { id: string } | null },
+  ): Promise<DepartureOutcome> {
     const characterId = universe.character?.id;
 
     // Le visiteur n'est jamais le proprietaire : on ne se rencontre pas
@@ -83,6 +96,12 @@ export class ErasureService {
           where: { id: universe.id },
           data: { ownerId: null, works: [], ownDescription: null },
         });
+        // Un monde detache n'est plus une histoire ouverte. Un monde supprime,
+        // lui, est retire du pointeur par la base (SetNull).
+        await tx.user.updateMany({
+          where: { id: userId, currentUniverseId: universe.id },
+          data: { currentUniverseId: null },
+        });
       } else {
         // La cascade emporte messages, travaux et rencontres. Le personnage
         // garde, lui, a deja ete detache par le SetNull.
@@ -106,15 +125,26 @@ export class ErasureService {
   }
 
   /*
-    Le depart complet. La ligne `users` part apres le monde : la relation est
-    en SetNull, donc la supprimer d'abord laisserait un monde orphelin que
+    Le depart complet : toutes les histoires du joueur, l'ouverte comme les
+    autres. La ligne `users` part apres les mondes : la relation est en
+    SetNull, donc la supprimer d'abord laisserait des mondes orphelins que
     plus rien ne saurait rattacher a la regle.
   */
   async eraseAccount(userId: string): Promise<DepartureOutcome> {
     await this.endBilling(userId);
-    const outcome = await this.releaseWorld(userId);
+
+    const universes = await this.prisma.universe.findMany({
+      where: { ownerId: userId },
+      include: { character: { select: { id: true } } },
+    });
+
+    const outcomes: DepartureOutcome[] = [];
+    for (const universe of universes) {
+      outcomes.push(await this.release(userId, universe));
+    }
+
     await this.prisma.user.delete({ where: { id: userId } });
-    return outcome;
+    return merge(outcomes);
   }
 
   /*
@@ -151,4 +181,26 @@ export class ErasureService {
       );
     }
   }
+}
+
+/*
+  Le sort de plusieurs mondes en un seul : ce qui a ete garde prime sur ce
+  qui a ete supprime, parce que c'est ce que le joueur doit savoir.
+*/
+function merge(outcomes: DepartureOutcome[]): DepartureOutcome {
+  const worlds = outcomes.map((outcome) => outcome.world);
+  const characters = outcomes.map((outcome) => outcome.character);
+
+  return {
+    world: worlds.includes('kept')
+      ? 'kept'
+      : worlds.includes('deleted')
+        ? 'deleted'
+        : 'none',
+    character: characters.includes('remembered')
+      ? 'remembered'
+      : characters.includes('deleted')
+        ? 'deleted'
+        : 'none',
+  };
 }

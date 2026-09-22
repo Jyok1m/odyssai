@@ -12,11 +12,12 @@ import {
   type WorldBible,
   type WorldCharter,
 } from '@odyssai/schemas';
-import { PrismaClient } from '@odyssai/db';
+import { PrismaClient, type User } from '@odyssai/db';
 import { PRISMA } from '../prisma/prisma.module.js';
 import { NarratorConfig } from '../config/narrator-config.js';
 import { NARRATOR_LLM } from '../onboarding/narrator-llm.provider.js';
 import { UsageService } from '../usage/usage.service.js';
+import { currentStory } from '../stories/stories.service.js';
 
 // Les deux bornes viennent de l'index de reglages : c'est `recentTurns` qui
 // decide de ce que coute un tour, et le curseur doit se voir avec les autres.
@@ -111,12 +112,15 @@ export class TurnMemoryService implements OnModuleInit {
     return this.vectors;
   }
 
-  // Le monde, ou `null` si la partie n'est pas jouable.
-  async world(userId: string): Promise<TurnWorld | null> {
-    const universe = await this.prisma.universe.findUnique({
-      where: { ownerId: userId },
-      include: { character: true, entities: { orderBy: { createdAt: 'asc' } } },
-    });
+  // Le monde de l'histoire ouverte, ou `null` si la partie n'est pas jouable.
+  async world(user: Pick<User, 'id' | 'currentUniverseId'>): Promise<TurnWorld | null> {
+    const where = currentStory(user);
+    const universe = where
+      ? await this.prisma.universe.findUnique({
+          where,
+          include: { character: true, entities: { orderBy: { createdAt: 'asc' } } },
+        })
+      : null;
 
     if (!universe || universe.step !== 'ready') return null;
 

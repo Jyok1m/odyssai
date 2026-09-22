@@ -9,6 +9,7 @@ import type { ConversationTurn } from '@odyssai/narrator';
 import { PrismaClient, type User } from '@odyssai/db';
 import { PRISMA } from '../prisma/prisma.module.js';
 import { LockedError, WrongStepError } from './onboarding.service.js';
+import { currentStory } from '../stories/stories.service.js';
 
 // Les tours sont epuises. La fiche reste extractible de ce qui a ete dit.
 export class ConversationOverError extends Error {
@@ -38,10 +39,13 @@ export class CharacterService {
     ecran ne suffit pas a garantir qu'on y est.
   */
   async open(user: User): Promise<string> {
-    const universe = await this.prisma.universe.findUnique({
-      where: { ownerId: user.id },
-      select: { id: true, step: true },
-    });
+    const where = currentStory(user);
+    const universe = where
+      ? await this.prisma.universe.findUnique({
+          where,
+          select: { id: true, step: true },
+        })
+      : null;
 
     if (!universe) throw new WrongStepError();
     if (universe.step === 'generating' || universe.step === 'ready') {

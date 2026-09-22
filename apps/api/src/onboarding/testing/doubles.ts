@@ -15,6 +15,8 @@ interface UserRow {
   emailVerified: boolean;
   locale: 'fr' | 'en';
   isAdmin: boolean;
+  // L'histoire ouverte : SetNull quand elle est supprimee, comme en base.
+  currentUniverseId: string | null;
   lastLoginAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -234,6 +236,7 @@ export function makeUser(overrides: Partial<UserRow> = {}): UserRow {
     emailVerified: true,
     locale: 'fr',
     isAdmin: false,
+    currentUniverseId: null,
     lastLoginAt: now,
     createdAt: now,
     updatedAt: now,
@@ -312,6 +315,16 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         const row = store.users.find((user) => user.id === where.id)!;
         return { ...assign(row, data) };
       },
+      updateMany: async ({ where, data }: any) => {
+        const rows = store.users.filter(
+          (user) =>
+            user.id === where.id &&
+            (where.currentUniverseId === undefined ||
+              user.currentUniverseId === where.currentUniverseId),
+        );
+        for (const row of rows) assign(row, data);
+        return { count: rows.length };
+      },
       // SetNull sur universes.owner_id : le monde survit, detache.
       delete: async ({ where }: any) => {
         const row = store.users.find((user) => user.id === where.id)!;
@@ -325,8 +338,11 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
 
     universe: {
       findUnique: async ({ where, include, select }: any) => {
-        const row = store.universes.find((universe) =>
-          where.id ? universe.id === where.id : universe.ownerId === where.ownerId,
+        // `id` est la cle ; `ownerId` s'y ajoute comme filtre, jamais seul.
+        const row = store.universes.find(
+          (universe) =>
+            universe.id === where.id &&
+            (where.ownerId === undefined || universe.ownerId === where.ownerId),
         );
         if (!row) return null;
         if (!select) return hydrate(row, include);
@@ -350,32 +366,43 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         if (!row) throw new Error('univers absent');
         return row;
       },
-      upsert: async ({ where, create, update, select }: any) => {
-        let row = store.universes.find(
-          (universe) => universe.ownerId === where.ownerId,
-        );
-
-        if (row) {
-          assign(row, update);
-        } else {
-          const now = new Date();
-          row = {
-            id: randomUUID(),
-            ownerId: create.ownerId,
-            step: 'inspiration',
-            mode: null,
-            works: [],
-            ownDescription: null,
-            themes: null,
-            charter: null,
-            bible: null,
-            name: null,
-            accentHue: null,
-            createdAt: now,
-            updatedAt: now,
-          };
-          store.universes.push(row);
-        }
+      findMany: async ({ where, orderBy, select, include }: any = {}) => {
+        const rows = store.universes
+          .filter((row) => where?.ownerId === undefined || row.ownerId === where.ownerId)
+          .sort((a, b) =>
+            (orderBy?.createdAt === 'desc' ? -1 : 1) *
+            (a.createdAt.getTime() - b.createdAt.getTime()),
+          );
+        return rows.map((row) => {
+          const hydrated = hydrate(row, include) as Record<string, unknown>;
+          if (!select) return hydrated;
+          return Object.fromEntries(
+            Object.keys(select).map((key) => [key, hydrated[key]]),
+          );
+        });
+      },
+      count: async ({ where }: any = {}) =>
+        store.universes.filter(
+          (row) => where?.ownerId === undefined || row.ownerId === where.ownerId,
+        ).length,
+      create: async ({ data, select }: any) => {
+        const now = new Date();
+        const row: UniverseRow = {
+          id: randomUUID(),
+          ownerId: data.ownerId ?? null,
+          step: 'inspiration',
+          mode: null,
+          works: [],
+          ownDescription: null,
+          themes: null,
+          charter: null,
+          bible: null,
+          name: null,
+          accentHue: null,
+          createdAt: now,
+          updatedAt: now,
+        };
+        store.universes.push(row);
 
         if (!select) return { ...row };
         return Object.fromEntries(
@@ -388,9 +415,13 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         row.updatedAt = new Date();
         return hydrate(row, include);
       },
-      // Cascade sur messages, travaux et rencontres ; SetNull sur le personnage.
+      // Cascade sur messages, travaux et rencontres ; SetNull sur le
+      // personnage et sur l'histoire ouverte des joueurs.
       delete: async ({ where }: any) => {
         store.universes = store.universes.filter((row) => row.id !== where.id);
+        for (const user of store.users) {
+          if (user.currentUniverseId === where.id) user.currentUniverseId = null;
+        }
         store.messages = store.messages.filter((row) => row.universeId !== where.id);
         store.jobs = store.jobs.filter((row) => row.universeId !== where.id);
         store.encounters = (store.encounters ?? []).filter(

@@ -14,6 +14,7 @@ import { Prisma, PrismaClient, type User } from '@odyssai/db';
 import { PRISMA } from '../prisma/prisma.module.js';
 import { CreditsService } from '../credits/credits.service.js';
 import { GenerationQueueService } from './generation-queue.service.js';
+import { StoriesService, currentStory } from '../stories/stories.service.js';
 
 // L'etape visee n'est pas ouverte : on n'ecrit pas plus loin qu'on n'est.
 export class WrongStepError extends Error {
@@ -74,17 +75,21 @@ export class OnboardingService {
     @Inject(PRISMA) private readonly prisma: PrismaClient,
     private readonly queue: GenerationQueueService,
     private readonly credits: CreditsService,
+    private readonly stories: StoriesService,
   ) {}
 
   // Lecture seule : une visite ne cree jamais de ligne.
   async getState(user: User): Promise<OnboardingState> {
-    const universe = await this.prisma.universe.findUnique({
-      where: { ownerId: user.id },
-      include: {
-        character: true,
-        jobs: { orderBy: { createdAt: 'desc' }, take: 1 },
-      },
-    });
+    const where = currentStory(user);
+    const universe = where
+      ? await this.prisma.universe.findUnique({
+          where,
+          include: {
+            character: true,
+            jobs: { orderBy: { createdAt: 'desc' }, take: 1 },
+          },
+        })
+      : null;
 
     return this.toState(user, universe);
   }
@@ -94,14 +99,16 @@ export class OnboardingService {
     // parcours, et le dupliquer ici en ferait une seconde ecriture a tenir.
     if (!user.username) throw new WrongStepError();
 
-    // La ligne est creee au premier enregistrement, pas a la premiere visite.
-    // Un joueur absent n'est jamais verrouille, l'ordre est donc sans risque.
-    const existing = await this.prisma.universe.upsert({
-      where: { ownerId: user.id },
-      create: { ownerId: user.id },
-      update: {},
-      select: { id: true, step: true },
-    });
+    // La ligne est creee au premier enregistrement, pas a la premiere visite :
+    // sans histoire ouverte, cette ecriture en commence une.
+    const where = currentStory(user);
+    const opened = where
+      ? await this.prisma.universe.findUnique({
+          where,
+          select: { id: true, step: true },
+        })
+      : null;
+    const existing = opened ?? (await this.stories.start(user));
 
     if (isLocked(existing.step)) throw new LockedError();
     if (!canWriteAt(update.step, existing.step)) throw new WrongStepError();

@@ -87,7 +87,7 @@ export class TurnController {
 
   @Get()
   async history(@CurrentUser() user: User): Promise<TurnHistory> {
-    const world = await this.memory.world(user.id);
+    const world = await this.memory.world(user);
     if (!world) throw new NotFoundException({ code: 'not_ready' });
 
     const [messages, turns, canon] = await Promise.all([
@@ -141,7 +141,7 @@ export class TurnController {
 
     const request = parsed.data;
 
-    const world = await this.memory.world(user.id);
+    const world = await this.memory.world(user);
     if (!world) throw new NotFoundException({ code: 'not_ready' });
 
     /*

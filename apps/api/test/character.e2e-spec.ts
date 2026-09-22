@@ -43,8 +43,12 @@ async function boot(options: {
   chunks?: string[];
   model?: string;
 } = {}): Promise<Harness> {
-  const user = makeUser({ username: 'Joueuse', usernameFolded: 'joueuse' });
   const universeId = '01860000-0000-7000-8000-000000000001';
+  const user = makeUser({
+    username: 'Joueuse',
+    usernameFolded: 'joueuse',
+    currentUniverseId: universeId,
+  });
 
   const store: OnboardingStore = {
     users: [user],

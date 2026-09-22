@@ -332,6 +332,20 @@
         "faction": "faction"
       }
     },
+    "stories": {
+      "title": "Tes histoires",
+      "untitled": "Histoire sans nom",
+      "new": "Nouvelle histoire",
+      "full": "Tu mènes déjà autant d'histoires que possible.",
+      "error": "Impossible de lire tes histoires pour le moment.",
+      "step": {
+        "inspiration": "inspiration",
+        "character": "personnage",
+        "generating": "en construction",
+        "ready": "prête",
+        "failed": "à reprendre"
+      }
+    },
     "errorUnreachable": "L'API ne répond pas. Vérifie qu'elle tourne, et que tu es bien sur l'adresse habituelle du site.",
     "errorSignedOut": "Ta session a expiré. Reconnecte-toi, ta saisie est gardée.",
     "errorRefused": "Cet enregistrement a été refusé. Recharge la page pour repartir de l'étape en cours.",
@@ -904,7 +918,7 @@
     "restart": {
       "label": "Recommencer une partie",
       "title": "Recommencer",
-      "lead": "Ton monde et ton personnage actuels seront abandonnés, et tu repartiras de l'inspiration.",
+      "lead": "Ton histoire ouverte, son monde et son personnage, sera abandonnée, et tu repartiras de l'inspiration. Tes autres histoires restent.",
       "confirm": "Recommencer",
       "busy": "Effacement.",
       "kept": "Ton monde a déjà reçu des visiteurs : il est conservé, détaché de toi et vidé de tes saisies.",

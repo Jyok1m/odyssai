@@ -21,6 +21,7 @@ import { RestartAction } from "./restart-action";
 import { WorldShell } from "./world-shell";
 import { InspirationStep, type SaveStatus } from "./inspiration-step";
 import { StepRail } from "./step-rail";
+import { StorySwitcher } from "./story-switcher";
 import { UsernameStep } from "./username-step";
 
 /*
@@ -206,15 +207,35 @@ export function OnboardingWizard() {
     return <p className="text-ui-sm text-vellum-3">{t("loading")}</p>;
   }
 
+  /*
+    Les histoires du joueur, au-dessus de tout. Chaque écran est clé par
+    l'histoire ouverte : en changer doit refaire partir la saisie, la
+    conversation et la table de l'état de celle-là, pas garder celui de la
+    précédente.
+  */
+  const storyKey = state.universeId ?? "new";
+  const switcher =
+    state.step !== "username" ? (
+      <StorySwitcher current={state.universeId} step={state.step} onChange={reload} />
+    ) : null;
+
   // Le monde prêt n'est plus un parcours : il prend tout l'écran, sans titre
   // d'assistant ni fil d'étapes au-dessus de lui.
-  if (state.step === "ready") return <WorldShell onRestart={reload} />;
+  if (state.step === "ready") {
+    return (
+      <div className="space-y-8">
+        {switcher}
+        <WorldShell key={storyKey} onRestart={reload} />
+      </div>
+    );
+  }
 
   if (state.step === "generating") {
     return (
       <div className="space-y-10">
         {header(t("title"), t("lead"))}
-        <GenerationStep onReady={reload} />
+        {switcher}
+        <GenerationStep key={storyKey} onReady={reload} />
       </div>
     );
   }
@@ -233,6 +254,7 @@ export function OnboardingWizard() {
   return (
     <div className="space-y-10">
       {header(t("title"), t("lead"))}
+      {switcher}
       <StepRail current={failedRun ? "inspiration" : showing} />
 
       {empty ? (
@@ -251,6 +273,7 @@ export function OnboardingWizard() {
         <UsernameStep onDone={reload} />
       ) : showing === "character" ? (
         <CharacterStep
+          key={storyKey}
           initial={state.character}
           saving={status === "saving"}
           error={error}
@@ -258,6 +281,7 @@ export function OnboardingWizard() {
         />
       ) : (
         <InspirationStep
+          key={storyKey}
           initial={state.inspiration}
           status={status}
           error={error}

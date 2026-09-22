@@ -32,7 +32,11 @@ interface Harness {
 async function boot(
   options: { step?: string; visited?: boolean; met?: boolean } = {},
 ): Promise<Harness> {
-  const user = makeUser({ username: 'Joueuse', usernameFolded: 'joueuse' });
+  const user = makeUser({
+    username: 'Joueuse',
+    usernameFolded: 'joueuse',
+    currentUniverseId: UNIVERSE_ID,
+  });
   const stranger = makeUser({ keycloakId: 'autre-joueur' });
 
   const encounters = [];

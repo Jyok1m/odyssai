@@ -332,6 +332,20 @@
         "faction": "faction"
       }
     },
+    "stories": {
+      "title": "Your stories",
+      "untitled": "Untitled story",
+      "new": "New story",
+      "full": "You already run as many stories as you can.",
+      "error": "Cannot read your stories right now.",
+      "step": {
+        "inspiration": "inspiration",
+        "character": "character",
+        "generating": "being built",
+        "ready": "ready",
+        "failed": "to resume"
+      }
+    },
     "errorUnreachable": "The API is not answering. Check that it is running, and that you are on the usual address of the site.",
     "errorSignedOut": "Your session has expired. Sign in again, what you typed is kept.",
     "errorRefused": "This save was refused. Reload the page to pick up the current step.",
@@ -904,7 +918,7 @@
     "restart": {
       "label": "Start a new game",
       "title": "Start over",
-      "lead": "Your current world and character will be given up, and you will start again from the inspiration step.",
+      "lead": "Your open story, its world and its character, will be given up, and you will start again from the inspiration step. Your other stories stay.",
       "confirm": "Start over",
       "busy": "Erasing.",
       "kept": "Your world had already received visitors: it is kept, detached from you and emptied of what you typed.",

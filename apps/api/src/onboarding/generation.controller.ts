@@ -20,6 +20,7 @@ import { PrismaClient, type User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
 import { PRISMA } from '../prisma/prisma.module.js';
+import { currentStory } from '../stories/stories.service.js';
 
 const PING_INTERVAL_MS = 15_000;
 
@@ -65,17 +66,20 @@ export class GenerationController {
     res.on('close', onClose);
 
     const deadline = Date.now() + STREAM_MAX_MS;
+    const where = currentStory(user);
 
     try {
       while (open && Date.now() < deadline) {
-        const universe = await this.prisma.universe.findUnique({
-          where: { ownerId: user.id },
-          select: {
-            step: true,
-            name: true,
-            jobs: { orderBy: { createdAt: 'desc' }, take: 1 },
-          },
-        });
+        const universe = where
+          ? await this.prisma.universe.findUnique({
+              where,
+              select: {
+                step: true,
+                name: true,
+                jobs: { orderBy: { createdAt: 'desc' }, take: 1 },
+              },
+            })
+          : null;
 
         if (!universe) {
           this.write(res, { type: 'error', code: 'internal_error' });
@@ -117,10 +121,13 @@ export class GenerationController {
 
   @Get('world')
   async world(@CurrentUser() user: User): Promise<WorldView> {
-    const universe = await this.prisma.universe.findUnique({
-      where: { ownerId: user.id },
-      include: { character: true, entities: { orderBy: { createdAt: 'asc' } } },
-    });
+    const where = currentStory(user);
+    const universe = where
+      ? await this.prisma.universe.findUnique({
+          where,
+          include: { character: true, entities: { orderBy: { createdAt: 'asc' } } },
+        })
+      : null;
 
     if (!universe) throw new NotFoundException({ code: 'not_found' });
     if (universe.step !== 'ready') {

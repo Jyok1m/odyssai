@@ -253,6 +253,8 @@ export type OnboardingUpdate = z.infer<typeof OnboardingUpdateSchema>;
 export const OnboardingErrorBodySchema = z.object({
   code: z.enum([
     'validation_error',
+    // Aucune histoire ouverte, et plus de place pour en commencer une.
+    'stories_full',
     // L'etape envoyee n'est pas celle ou en est le joueur.
     'wrong_step',
     // Le contenu ne suffit pas pour avancer, mais il a ete sauvegarde.
