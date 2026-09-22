@@ -15,6 +15,7 @@ export interface RecordedUsage {
 
 export type UsageKind =
   | 'turn'
+  | 'dialogue'
   | 'moderation'
   | 'embedding'
   | 'character'

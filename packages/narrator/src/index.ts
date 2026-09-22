@@ -11,6 +11,8 @@ export * from './prompts/generation/v1.js';
 export * from './prompts/character-extract/v1.js';
 export * from './prompts/guide/v1.js';
 export * from './prompts/turn/v1.js';
+export * from './prompts/dialogue/v1.js';
+export * from './turn/dialogue.js';
 export * from './prompts/moderation/v1.js';
 export * from './turn/moderate.js';
 export * from './turn/play.js';

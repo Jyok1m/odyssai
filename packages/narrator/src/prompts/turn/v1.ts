@@ -64,6 +64,12 @@ export interface TurnContext {
   // Vrai quand le joueur s'en remet au sort sans dire ce qu'il fait.
   fate: boolean;
   /*
+    La replique du personnage a qui le joueur s'adresse, jouee par le modele
+    de jeu de role avant ce tour. Le meneur la rend telle quelle : c'est le
+    personnage qui a parle, pas lui. Absente la plupart du temps.
+  */
+  line?: { speaker: string; text: string };
+  /*
     Vrai pour la toute premiere scene, que le meneur joue seul.
 
     Le joueur n'a alors rien dit : il n'y a pas de `<message_joueur>` dans le
@@ -124,6 +130,7 @@ Comment ils parlent :
 - Ce qu'il dit l'engage : une promesse tenue ou trahie plus tard vaut mieux qu'une réponse complaisante sur le moment.
 - **Un personnage ne résout jamais la scène à la place du joueur.** Il peut avoir peur, vouloir quelque chose, dire ce qu'il sait, demander de l'aide. Il ne dicte pas le geste à faire : « prends ce tuyau, tire sur la valve rouge » fait du joueur un exécutant, et c'est le questionnaire à choix multiples sous un autre nom.
 - Quand quelqu'un sait quoi faire, il le fait lui-même et le joueur en voit le résultat. Et si le joueur demande « qu'est-ce qu'on fait ? », on lui répond par un avis, une crainte ou une intention, jamais par une marche à suivre.
+- **Quand un bloc « replique » est présent, ce personnage a déjà parlé** : sa phrase est la sienne, tu la rends telle quelle entre guillemets, à sa place dans la scène, et tu bâtis la suite dessus. Tu ne la réécris pas, tu n'en changes ni le sens ni le ton ; tu corriges seulement une faute de langue s'il y en a une. Tu n'écris pas une seconde réplique pour lui dans ce tour.
 
 Ce que le monde sait :
 - Le bloc « entites » porte, pour chaque personne, objet, lieu ou faction déjà posé, ce qui est su et ce qui est caché. **Tu t'en sers.** Un personnage qui a un secret le porte dans ce qu'il dit et dans ce qu'il tait ; un objet qui a une histoire pèse dans la main.
@@ -214,6 +221,7 @@ How they speak:
 - What they say binds them: a promise kept or broken later is worth more than an obliging answer on the spot.
 - **A character never solves the scene in the player's place.** They may be afraid, want something, say what they know, ask for help. They do not dictate the move to make: "grab that pipe, pull the red valve" turns the player into someone carrying out orders, and that is the multiple-choice questionnaire under another name.
 - When someone knows what to do, they do it themselves and the player sees the result. And if the player asks "what do we do?", they are answered with an opinion, a fear or an intent, never with a set of instructions.
+- **When a "replique" block is present, that character has already spoken**: the line is theirs, you render it as is, in quotation marks, where it belongs in the scene, and you build what follows on it. You do not rewrite it, you change neither its meaning nor its tone; you only fix a language mistake if there is one. You write no second line for them this turn.
 
 What the world knows:
 - The "entites" block carries, for every person, object, place or faction already set, what is known and what is hidden. **Use it.** A character with a secret carries it in what they say and what they withhold; an object with a history weighs in the hand.
@@ -348,7 +356,7 @@ function arcBlock(context: TurnContext): string {
 }
 
 export const TURN_PROMPT = {
-  id: 'turn/v18',
+  id: 'turn/v19',
 
   build(
     locale: UiLocale,
@@ -378,6 +386,9 @@ export const TURN_PROMPT = {
       `<de>\nbande : ${context.band}${context.mustUseDie ? '\ntranche : oui' : ''}\n</de>`,
       context.guidance.length > 0
         ? `<rappels>\n${context.guidance.join('\n\n')}\n</rappels>`
+        : '',
+      context.line
+        ? `<replique>\n${context.line.speaker} : ${JSON.stringify(context.line.text)}\n</replique>`
         : '',
       context.opening ? OPENING[locale] : '',
       context.asking ? ASKING[locale] : '',

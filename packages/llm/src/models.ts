@@ -18,6 +18,7 @@
 */
 export type LlmRole =
   | 'turn'
+  | 'dialogue'
   | 'generation'
   | 'lore'
   | 'character'
@@ -35,6 +36,13 @@ export const LLM_MODELS: Record<LlmRole, LlmModelSpec> = {
   // qualite se voit a chaque tour : un dense, pas un MoE a trois milliards
   // actifs.
   turn: { model: 'qwen/qwen3.8-27b', temperature: 0.85, maxOutputTokens: 900 },
+
+  /*
+    La replique d'un personnage, quand le joueur s'adresse a lui. Un modele
+    de jeu de role, pas un assistant : il tient une voix, refuse, ment, et ne
+    lisse pas. Une a trois phrases, que le meneur reprend telles quelles.
+  */
+  dialogue: { model: 'gryphe/mythomax-l2-13b', temperature: 0.9, maxOutputTokens: 160 },
 
   // Sept appels par monde, amortis sur vingt-cinq credits : la qualite y est
   // presque gratuite, et c'est elle qui decide de la coherence de tout ce qui

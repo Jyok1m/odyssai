@@ -20,6 +20,13 @@ export const CREDIT_COSTS = {
   */
   question: 1,
   /*
+    La replique d'un personnage par le modele de jeu de role, quand le joueur
+    s'adresse a quelqu'un. Fondue dans le tour : treize milliards de
+    parametres pour trois phrases, un dixieme du meneur. Le curseur existe
+    pour le jour ou ce ne serait plus vrai.
+  */
+  dialogue: 0,
+  /*
     Un fragment de lore, pour une entite que le meneur vient de poser. Un
     appel de plus par entite, au plus deux par tour : c'est le prix de la
     coherence, et il se voit sur la facture plutot que d'etre fondu dans le

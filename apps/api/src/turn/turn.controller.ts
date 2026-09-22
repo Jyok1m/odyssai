@@ -30,6 +30,8 @@ import {
   TURN_PROMPT_VERSION,
   describeEntity,
   playTurn,
+  speakLine,
+  DIALOGUE_PROMPT_VERSION,
 } from '@odyssai/narrator';
 import {
   arbitrateCanon,
@@ -43,6 +45,7 @@ import {
   usesAfter,
   carryAfter,
   revealLore,
+  interlocutorOf,
 } from '@odyssai/engine';
 import { PrismaClient, type User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
@@ -389,6 +392,69 @@ export class TurnController {
     const turnId = uuidv7();
     let answer = '';
 
+    /*
+      A qui le joueur parle, si c'est a quelqu'un : ce personnage repond par
+      le modele de jeu de role, et le meneur rend sa replique telle quelle.
+      Le code choisit l'interlocuteur, jamais le modele. Un echec ici ne
+      coute rien au tour : le meneur fait parler le personnage lui-meme,
+      comme avant.
+    */
+    const speaker =
+      opening || asking || fate
+        ? null
+        : interlocutorOf({
+            message: said,
+            situation,
+            entities: world.entities,
+            recent: memory.recent,
+          });
+    let line: { speaker: string; text: string } | null = null;
+
+    if (speaker) {
+      try {
+        await this.credits.spend('dialogue', user.id, world.universeId);
+        const spoken = await speakLine({
+          llm: this.llm,
+          config: this.config.modelFor('dialogue'),
+          locale,
+          context: {
+            charter: world.charter,
+            npc: speaker,
+            player: world.character.name,
+            recent: memory.recent,
+          },
+          message: said,
+          works: world.works,
+          trace: {
+            name: 'dialogue',
+            metadata: {
+              turn_id: turnId,
+              universe_id: world.universeId,
+              prompt_version: DIALOGUE_PROMPT_VERSION,
+              speaker: speaker.name,
+            },
+          },
+        });
+
+        await this.usage.record({
+          kind: 'dialogue',
+          provider: this.config.provider,
+          userId: user.id,
+          universeId: world.universeId,
+          usage: spoken.usage,
+          prices: this.config.prices,
+        });
+
+        // Relue par la couche lexicale, comme la reponse du meneur : une
+        // replique refusee est une replique absente, jamais un tour perdu.
+        if (spoken.kind === 'ok' && this.moderation.clean(spoken.line)) {
+          line = { speaker: speaker.name, text: spoken.line };
+        }
+      } catch (error: unknown) {
+        this.logger.warn(`replique de ${speaker.name} en echec : ${String(error)}`);
+      }
+    }
+
     try {
       const turn = playTurn({
         llm: this.llm,
@@ -408,6 +474,7 @@ export class TurnController {
           // Une ouverture ne tranche rien : le joueur n'a encore rien tente.
           asking,
           mustUseDie: settled,
+          line: line ?? undefined,
         },
         message: fate ? "Je ne sais pas quoi faire, que le sort decide." : said,
         trace: {
@@ -621,6 +688,8 @@ export class TurnController {
             learned: arbitrated.accepted.length,
             situation,
             guidance: guidance.map((card) => card.id),
+            speaker: line?.speaker ?? null,
+            line: line?.text ?? null,
             provider: this.config.provider,
             model: usage.model ?? this.config.modelFor('turn').model,
             inputTokens: usage.inputTokens,

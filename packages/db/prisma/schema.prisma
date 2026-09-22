@@ -663,6 +663,11 @@ model Turn {
   /// reellement recu, et mesurer a quelle frequence le rappel se declenche.
   guidance String[] @default([])
 
+  /// Le personnage qui a parle par le modele de dialogue, et sa replique :
+  /// pour relire apres coup ce que le meneur a recu, et ce qu'il en a fait.
+  speaker String? @db.VarChar(80)
+  line    String?
+
   provider     String?
   model        String?
   inputTokens  Int?    @map("input_tokens")

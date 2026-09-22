@@ -315,6 +315,16 @@ Le narrateur est un meneur : il mène, le joueur répond. `POST /turn` en SSE, `
 - L'image Postgres doit être `pgvector/pgvector:pg18`. L'officielle n'embarque pas l'extension.
 - `TurnLimitsService` **importe** le script Lua du guide plutôt que de le recopier : il ne connaît que ses clés. La clé est ici l'identifiant du joueur, l'anonymisation HMAC n'ayant plus d'objet pour un authentifié.
 
+### Les personnages parlent par un modèle de jeu de rôle
+
+Le meneur écrivait les répliques lui-même, dans sa propre voix, et tous les personnages finissaient par parler comme lui. Un second modèle, `gryphe/mythomax-l2-13b` (rôle `dialogue` dans `models.ts`), joue le personnage à qui le joueur s'adresse : un finetune de jeu de rôle tient une voix, refuse, ment, et ne lisse pas, ce qu'un assistant fait mal.
+
+- **Le code choisit qui parle, jamais le modèle** (`interlocutorOf`, `packages/engine/src/dialogue.ts`) : le personnage nommé dans le message, sinon le dernier nommé par le meneur au tour précédent, celui qui est en scène. Seulement quand la situation est un acte de parole (`SPEECH_SITUATIONS`) : on n'interroge pas une porte, et on ne négocie pas en frappant. Ni à l'ouverture, ni sur une question au meneur, ni sur un appel au sort.
+- **Il joue avant le meneur, et le meneur rend sa phrase telle quelle** (`turn/v19`, bloc `<replique>`). Il voit la carte du personnage, caché compris, le ton de la charte, les deux derniers tours et le message du joueur. Il ne raconte rien, ne décrit rien, ne parle pas pour le joueur : c'est le meneur qui tient la scène, lui ne tient qu'une voix.
+- **Ce qu'un modèle de jeu de rôle rend malgré la consigne se nettoie** (`cleanLine`) : le nom en tête, les guillemets, les didascalies entre astérisques, la tirade coupée à la fin d'une phrase. Relu par la couche lexicale et par la garde sur les emprunts, comme la réponse du meneur : une réplique refusée est une réplique absente, jamais un tour perdu. Le meneur la fait alors parler lui-même, comme avant.
+- **Fondu dans le tour** (`CREDIT_COSTS.dialogue` à zéro) : treize milliards de paramètres pour trois phrases, un dixième du meneur. Le curseur existe pour le jour où ce ne serait plus vrai. `llm_usage` le journalise sous `dialogue`, et `turns.speaker` et `turns.line` gardent qui a parlé et ce qu'il a dit, pour relire ce que le meneur a reçu et ce qu'il en a fait.
+- **Un risque connu, et assumé** : MythoMax est un modèle Llama 2, dont le français est moins sûr que celui du meneur. La consigne au meneur est de corriger une faute de langue sans toucher au sens ni au ton. Si le français des répliques ne tient pas, c'est le modèle du rôle `dialogue` qu'on change, pas la mécanique.
+
 ### Les fiches de maîtrise
 
 Ce qui ne vaut que dans une situation précise ne tient pas dans le prompt : rappelé à chaque tour, il coûterait des jetons sans rien apprendre et diluerait les consignes permanentes. Vingt fiches vivent donc dans `packages/narrator/src/guidance/v1.ts`, bilingues comme les prompts, et n'entrent qu'à l'appel de la situation.
