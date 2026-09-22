@@ -101,6 +101,18 @@ De la page d'accueil au monde généré. `GET/PUT /onboarding` derrière `Sessio
 - On écrit à son étape ou en deçà, jamais au delà. `generating` et `ready` ferment le parcours ; `failed` reste ouvert, c'est la seule sortie d'une génération qui n'a pas abouti.
 - Les thèmes sont effacés à chaque modification de l'inspiration : ils en sont une fonction pure, et un thème périmé ferait générer un monde à partir d'une saisie que le joueur a changée.
 - `characters.name` est nullable : la fiche s'écrit en plusieurs fois, la présence du nom est exigée par le schéma strict, pas par la table.
+
+### Le socle chiffré, et les talents
+
+Les attributs étaient un dictionnaire à clés libres que le modèle remplissait avec ce qui passait dans la conversation : une fiche portait « Kendo », « Tir à l'arc » et « Discrétion », la suivante « vigueur ». Ce sont des **compétences**, pas des attributs, et aucune règle ne pouvait s'écrire dessus. Le commentaire du schéma annonçait déjà le déplacement vers le moteur.
+
+- **Cinq attributs fixes** : `corps`, `adresse`, `esprit`, `presence`, `instinct`. Sans accent, parce que le modèle les lit et les recopie : entourés de français accentué, il corrigerait `presence` et le schéma refuserait sa sortie.
+- **Un à cinq, et trois est le milieu**, donc le modificateur nul. Passer en trois-dix-huit aurait cassé les fiches existantes sans rien apporter sur un dé de vingt. `modifierOf` rend la valeur moins trois, de -2 à +2 : deux points valent dix pour cent sur un d20, assez pour qu'une force se sente sans qu'elle décide à la place du dé.
+- **`attributeFor` dit quel attribut un jet sollicite**, d'après la situation et donc par le code. Demander au modèle lequel s'applique reviendrait à le laisser choisir le plus haut de la fiche. `instinct` n'y figure pas encore, faute de situation qui l'appelle : il se lit et nourrit le récit, un attribut n'a pas besoin d'être calculé pour exister.
+- **`bandFor` borne le total aux faces** plutôt que de le laisser déborder, `bandOf` refusant ce qui n'est pas un jet valide. Conséquence assumée : un bonus peut porter un dix-neuf au critique, et un malus enfoncer un deux.
+- Hors d'un jet tranché, **le modificateur reste nul** : le meneur juge alors lui-même de l'incertitude, et mêler sa liberté au socle rendrait le résultat illisible.
+- Les **talents** (`characters.talents`) recueillent ce que le modèle nommait librement : la couleur, là où les attributs sont le calcul. Le moteur ne les lit pas, le meneur si.
+- La migration convertit dans ce sens : les anciennes clés deviennent des talents, le socle part à trois. Sans elle, `CharacterSheetSchema` refuserait la fiche, donc `TurnMemoryService.world()` rendrait `null`, donc **la partie deviendrait injouable** : le schéma strict est relu à chaque tour.
 - `AuthModule` réexporte `UsersModule` parce que Nest construit `SessionGuard` dans le module qui l'applique. Un module de jeu n'a donc qu'à importer `AuthModule`.
 - La route est gardée par `NEXT_PUBLIC_ALPHA_OPEN` : fermée, elle répond 404 au lieu d'annoncer une ouverture.
 

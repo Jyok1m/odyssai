@@ -244,10 +244,15 @@ model Character {
   gender String? @db.VarChar(40)
   age    Int?
 
-  /// Traits choisis et texte libre, puis attributs chiffres. Le modele propose,
+  /// Traits choisis et texte libre, puis le socle chiffre. Le modele propose,
   /// le schema tranche, le joueur corrige.
   personality Json?
   attributes  Json?
+
+  /// Ce que le personnage sait faire, nomme librement : « Kendo », « lire le
+  /// vent ». La couleur, la ou les attributs sont le calcul. Le moteur ne les
+  /// lit pas, le meneur si.
+  talents String[] @default([])
 
   /// La tombe. Non nul, le personnage a ete rencontre par d'autres avant que
   /// son joueur ne parte : on le garde pour que les recits qui l'ont croise
@@ -593,6 +598,12 @@ model Turn {
   /// la bande.
   die  Int
   band String @db.VarChar(20)
+
+  /// Ce que la fiche a ajoute ou retire au jet, et l'attribut sollicite.
+  /// Gardes pour la meme raison que le jet brut : le score evolue en cours de
+  /// partie, donc le modificateur ne se recalcule pas apres coup.
+  modifier  Int     @default(0)
+  attribute String? @db.VarChar(16)
 
   /// Vrai si le meneur a dit s'en etre servi : une question sur le monde ne se
   /// tranche pas au de, et le jet reste alors sans effet.

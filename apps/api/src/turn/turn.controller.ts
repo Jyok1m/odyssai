@@ -25,7 +25,9 @@ import type { LlmClient } from '@odyssai/llm';
 import { GUIDANCE, TURN_PROMPT_VERSION, playTurn } from '@odyssai/narrator';
 import {
   arbitrateCanon,
-  bandOf,
+  attributeFor,
+  bandFor,
+  modifierOf,
   publicOutcome,
   rollD20,
   settledByDie,
@@ -281,9 +283,6 @@ export class TurnController {
 
     // Le jet est tire ici, par le code, pour chaque tour. Le modele n'en verra
     // que la bande, et ne s'en servira que si l'issue etait incertaine.
-    const die = rollD20();
-    const band = bandOf(die);
-
     /*
       Le de a-t-il tranche ? C'est le code qui repond, pas le modele.
 
@@ -294,6 +293,22 @@ export class TurnController {
       Sa reponse ne sert donc plus que pour les tours qu'on lui laisse juger.
     */
     const settled = !opening && !asking && settledByDie(situation);
+
+    const die = rollD20();
+
+    /*
+      Ce que la fiche pese sur ce jet. L'attribut vient de la situation, donc
+      du code : demander au modele lequel s'applique reviendrait a le laisser
+      choisir le plus haut.
+
+      Hors d'un jet tranche, le modificateur reste nul : le meneur juge alors
+      lui-meme de l'incertitude, et melanger sa liberte avec le socle du
+      personnage rendrait le resultat illisible.
+    */
+    const attribute = settled ? attributeFor(situation) : null;
+    const modifier = attribute ? modifierOf(world.character.attributes[attribute]) : 0;
+    const band = bandFor(die, modifier);
+
 
     // Ecrit avant l'appel : une coupure en cours de reponse ne doit pas faire
     // perdre au joueur ce qu'il a tape. Rien a ecrire a l'ouverture, ou la
@@ -315,7 +330,13 @@ export class TurnController {
 
     // Le joueur a lance : il voit son chiffre, avant que le recit commence.
     if (request.kind === 'roll') {
-      this.write(res, { type: 'roll', die, outcome: publicOutcome(band) });
+      this.write(res, {
+        type: 'roll',
+        die,
+        modifier,
+        attribute,
+        outcome: publicOutcome(band),
+      });
     }
 
     const ping = setInterval(() => res.write(': ping\n\n'), PING_INTERVAL_MS);
@@ -419,6 +440,8 @@ export class TurnController {
             seq,
             die,
             band,
+            modifier,
+            attribute,
             usedDie: settled || delta.usedDie,
             kind: delta.kind,
             learned: arbitrated.accepted.length,

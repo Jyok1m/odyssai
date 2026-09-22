@@ -3,7 +3,10 @@ import {
   DIE_FACES,
   OUTCOME_BANDS,
   arbitrateCanon,
+  attributeFor,
+  bandFor,
   bandOf,
+  modifierOf,
   creditsFor,
   publicOutcome,
   rollD20,
@@ -172,5 +175,50 @@ describe('ce qu une question coute', () => {
 
   it('ne coute pas plus qu un tour', () => {
     expect(creditsFor('question')).toBeLessThanOrEqual(creditsFor('turn'));
+  });
+});
+
+/*
+  La fiche pese sur le jet, et c'est le code qui decide combien : demander au
+  modele quel attribut s'applique reviendrait a le laisser choisir le plus
+  haut de la fiche.
+*/
+describe('ce que la fiche pese', () => {
+  it('donne un modificateur de -2 a +2', () => {
+    expect(modifierOf(1)).toBe(-2);
+    expect(modifierOf(3)).toBe(0);
+    expect(modifierOf(5)).toBe(2);
+  });
+
+  it('teste un attribut pour chaque situation qui tranche', () => {
+    expect(attributeFor('violence')).toBe('corps');
+    expect(attributeFor('tromperie')).toBe('adresse');
+    expect(attributeFor('entreprise')).toBe('esprit');
+    expect(attributeFor('contrainte')).toBe('presence');
+  });
+
+  it("n'en teste aucun quand rien ne tranche", () => {
+    for (const situation of ['lore', 'meta', 'attente', null]) {
+      expect(attributeFor(situation), String(situation)).toBeNull();
+    }
+  });
+
+  /*
+    Le total est borne aux faces plutot que de deborder : `bandOf` refuse ce
+    qui n'est pas un jet valide, et c'est bien qu'elle le refuse.
+  */
+  it('borne le total aux faces du de', () => {
+    expect(() => bandFor(20, 2)).not.toThrow();
+    expect(() => bandFor(1, -2)).not.toThrow();
+    expect(bandFor(20, 2)).toBe('succes_critique');
+    expect(bandFor(1, -2)).toBe('echec_critique');
+  });
+
+  // Une force et une faiblesse doivent pouvoir decider d'un bord.
+  it('fait basculer un jet limite', () => {
+    expect(bandFor(14, 0)).toBe('partiel');
+    expect(bandFor(14, 2)).toBe('succes');
+    expect(bandFor(10, 0)).toBe('partiel');
+    expect(bandFor(10, -2)).toBe('echec');
   });
 });

@@ -36,9 +36,12 @@ export function GameChat() {
   const [awaiting, setAwaiting] = useState(false);
   // Incrémenté à chaque tour joué : c'est ce qui fait relire la réserve.
   const [played, setPlayed] = useState(0);
-  const [roll, setRoll] = useState<{ die: number; outcome: PublicOutcome } | null>(
-    null,
-  );
+  const [roll, setRoll] = useState<{
+    die: number;
+    modifier: number;
+    attribute: string | null;
+    outcome: PublicOutcome;
+  } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Distinct du message d'erreur : la réserve vide n'est pas une panne, et ce
@@ -145,7 +148,12 @@ export function GameChat() {
 
         if (event.type === "roll") {
           setAwaiting(false);
-          setRoll({ die: event.die, outcome: event.outcome });
+          setRoll({
+            die: event.die,
+            modifier: event.modifier,
+            attribute: event.attribute,
+            outcome: event.outcome,
+          });
         }
       });
     } catch (caught: unknown) {
@@ -239,9 +247,22 @@ export function GameChat() {
         s'affiche tel quel : le joueur a lancé, il voit ce qu'il a fait.
       */}
       {roll ? (
-        <p className="mt-5 flex items-center justify-center gap-3 rounded-card border border-line bg-ink py-3 text-ui-sm text-vellum-2">
+        <p className="mt-5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 rounded-card border border-line bg-ink py-3 text-ui-sm text-vellum-2">
           <span className="font-voice text-title text-accent">{roll.die}</span>
-          <span>{t("dieRolled")}</span>
+          {/* Le detail du jet, et non le seul total : le chiffre nu ne dirait
+              pas pourquoi il a reussi, et la fiche doit se voir peser. */}
+          {roll.modifier !== 0 && roll.attribute ? (
+            <span>
+              {t("dieModifier", {
+                sign: roll.modifier > 0 ? "+" : "−",
+                value: Math.abs(roll.modifier),
+                attribute: t(`attribute.${roll.attribute}` as never),
+                total: roll.die + roll.modifier,
+              })}
+            </span>
+          ) : (
+            <span>{t("dieRolled")}</span>
+          )}
           <Verdict outcome={roll.outcome} />
         </p>
       ) : null}

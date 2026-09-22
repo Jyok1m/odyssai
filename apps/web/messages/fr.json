@@ -952,6 +952,14 @@
     "errorRollExpired": "Ton action a expiré. Réécris ce que tu veux faire, rien n'a été décompté.",
     "credits": "{credits, plural, =0 {Aucun crédit} one {# crédit} other {# crédits}}",
     "askAction": "Demander au meneur",
-    "askHint": "Poser une question ne fait pas avancer la scène."
+    "askHint": "Poser une question ne fait pas avancer la scène.",
+    "dieModifier": "{sign} {value} ({attribute}) = {total}",
+    "attribute": {
+      "corps": "corps",
+      "adresse": "adresse",
+      "esprit": "esprit",
+      "presence": "présence",
+      "instinct": "instinct"
+    }
   }
 }

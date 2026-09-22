@@ -27,7 +27,7 @@ const SHEET = {
   gender: 'femme',
   age: 31,
   personality: { traits: ['tenace', 'curieuse'], summary: 'Cartographe en fuite.' },
-  attributes: { courage: 4, ruse: 3 },
+  attributes: { corps: 3, adresse: 4, esprit: 2, presence: 3, instinct: 4 },
 };
 
 interface Harness {

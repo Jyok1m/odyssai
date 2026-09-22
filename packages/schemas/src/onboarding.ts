@@ -86,7 +86,42 @@ export type Inspiration = z.infer<typeof InspirationSchema>;
 
 export const CHARACTER_NAME_MAX = 60;
 export const TRAITS_MAX = 5;
-export const ATTRIBUTES_MAX = 8;
+export const TALENTS_MAX = 6;
+
+/*
+  Le socle chiffre d'un personnage, connu du moteur.
+
+  Il etait un dictionnaire a cles libres, que le modele remplissait avec ce
+  qui passait dans la conversation : une fiche portait « Kendo » et « Tir a
+  l'arc », la suivante « vigueur ». Aucune regle ne pouvait s'ecrire la-dessus,
+  et le commentaire de ce fichier annoncait deja le deplacement.
+
+  Cinq, neutres, et sans accent parce que le modele les lit et les recopie :
+  entoures de francais accentue, il corrigerait `presence` et le schema
+  refuserait sa sortie.
+
+  `instinct` ne tranche encore aucun jet, faute de situation qui l'appelle. Il
+  se lit sur la fiche et nourrit le recit : un attribut n'a pas besoin d'etre
+  calcule pour exister.
+*/
+export const ATTRIBUTES = [
+  'corps',
+  'adresse',
+  'esprit',
+  'presence',
+  'instinct',
+] as const;
+
+export const AttributeSchema = z.enum(ATTRIBUTES);
+export type Attribute = z.infer<typeof AttributeSchema>;
+
+/*
+  Un a cinq, comme avant : passer en trois-dix-huit aurait casse les fiches
+  existantes et n'aurait rien apporte sur un de vingt. Trois est le milieu,
+  donc le modificateur nul.
+*/
+export const ATTRIBUTE_MIN = 1;
+export const ATTRIBUTE_MAX = 5;
 
 /*
   Bornes de l'age tres larges : un monde peut avoir des siecles de longevite,
@@ -94,16 +129,24 @@ export const ATTRIBUTES_MAX = 8;
 */
 const Age = z.number().int().min(1).max(1000);
 
+const Score = z.number().int().min(ATTRIBUTE_MIN).max(ATTRIBUTE_MAX);
+
+export const AttributesSchema = z.object(
+  Object.fromEntries(ATTRIBUTES.map((name) => [name, Score])) as Record<
+    Attribute,
+    typeof Score
+  >,
+);
+
+export type Attributes = z.infer<typeof AttributesSchema>;
+
 /*
-  Le vocabulaire des attributs appartiendra au moteur, qui n'existe pas encore.
-  D'ici la, un dictionnaire borne : assez pour stocker ce que la conversation
-  produit, pas assez pour qu'un texte de joueur y passe en entier.
+  Ce que le personnage sait faire, nomme librement : « Kendo », « lire le
+  vent ». C'est la couleur, la ou les attributs sont le calcul. Le moteur ne
+  les lit pas, le meneur si : sa fiche dit ce qu'il sait faire, et un talent
+  invente pour les besoins d'une scene se repete au tour suivant.
 */
-const Attributes = z
-  .record(z.string().trim().min(1).max(40), z.number().int().min(1).max(5))
-  .refine((value) => Object.keys(value).length <= ATTRIBUTES_MAX, {
-    message: `${ATTRIBUTES_MAX} attributs au plus`,
-  });
+const Talents = z.array(z.string().trim().min(2).max(40)).max(TALENTS_MAX);
 
 const Personality = z.object({
   traits: z.array(z.string().trim().min(2).max(40)).max(TRAITS_MAX),
@@ -116,7 +159,8 @@ export const CharacterDraftSchema = z.object({
   gender: z.string().trim().max(40).optional(),
   age: Age.optional(),
   personality: Personality.optional(),
-  attributes: Attributes.optional(),
+  attributes: AttributesSchema.partial().optional(),
+  talents: Talents.optional(),
 });
 
 export type CharacterDraft = z.infer<typeof CharacterDraftSchema>;
@@ -129,7 +173,9 @@ export const CharacterSheetSchema = z.object({
   personality: Personality.extend({
     traits: z.array(z.string().trim().min(2).max(40)).min(1).max(TRAITS_MAX),
   }),
-  attributes: Attributes,
+  attributes: AttributesSchema,
+  // Facultatifs : un personnage sans talent nomme reste jouable.
+  talents: Talents.default([]),
 });
 
 export type CharacterSheet = z.infer<typeof CharacterSheetSchema>;

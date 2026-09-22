@@ -14,9 +14,16 @@ const INSTRUCTIONS: Record<UiLocale, string> = {
 
 Règles :
 - Réponds uniquement par un objet JSON, sans texte autour, sans balise de code.
-- Clés : name, gender, age, personality, attributes.
+- Clés : name, gender, age, personality, attributes, talents.
 - personality est un objet : traits, une liste de un à cinq mots ou expressions courtes, et summary, deux phrases au plus.
-- attributes est un objet de trois à cinq entrées. Chaque clé est un mot simple tiré de la conversation, chaque valeur un entier de 1 à 5.
+- attributes porte exactement ces cinq clés, sans accent et sans en ajouter : corps, adresse, esprit, presence, instinct. Chaque valeur est un entier de 1 à 5. Elles se recopient telles quelles, elles sont lues par du code.
+- Trois est la moyenne. Un 5 est remarquable et un 1 est un vrai défaut : n'en donne que si la conversation le dit. Dans le doute, mets 3.
+  - corps : la force, le souffle, ce qu'on encaisse.
+  - adresse : la précision, la discrétion, le doigté.
+  - esprit : le savoir, la déduction, le métier.
+  - presence : l'autorité, le charme, l'art de convaincre.
+  - instinct : ce qu'on perçoit, ce qu'on sent venir.
+- talents est une liste de zéro à six compétences nommées librement, tirées de la conversation : « kendo », « lire le vent ». Ce que le personnage sait faire, à côté de ce qu'il est.
 - N'invente rien. Si la conversation ne dit pas un champ, omets-le entièrement plutôt que de le deviner.
 - Ne recopie pas les questions posées : seules comptent les réponses du joueur.
 - Écris dans un français juste et relu : accords, accents, conjugaisons. Ce que tu écris ici finit sur la fiche que le joueur va lire.
@@ -26,9 +33,16 @@ Règles :
 
 Rules:
 - Answer with a JSON object only, no surrounding text, no code fence.
-- Keys: name, gender, age, personality, attributes.
+- Keys: name, gender, age, personality, attributes, talents.
 - personality is an object: traits, a list of one to five words or short phrases, and summary, two sentences at most.
-- attributes is an object of three to five entries. Each key is a simple word taken from the conversation, each value an integer from 1 to 5.
+- attributes carries exactly these five keys, unaccented and with none added: corps, adresse, esprit, presence, instinct. Each value is an integer from 1 to 5. Copy them as they are, they are read by code.
+- Three is the average. A 5 is remarkable and a 1 is a real flaw: only give one if the conversation says so. When in doubt, put 3.
+  - corps: strength, wind, what one takes.
+  - adresse: precision, stealth, deftness.
+  - esprit: knowledge, deduction, craft.
+  - presence: authority, charm, the art of convincing.
+  - instinct: what one senses, what one sees coming.
+- talents is a list of zero to six freely named skills drawn from the conversation: "kendo", "reading the wind". What the character can do, beside what they are.
 - Invent nothing. If the conversation does not state a field, omit it entirely rather than guess it.
 - Do not copy the questions asked: only the player's answers count.
 - Write in correct English, read back for spelling and agreement. What you write here ends up on the sheet the player reads.

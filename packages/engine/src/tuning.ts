@@ -8,7 +8,9 @@
   lexicale de moderation, qui est une decision par mot, pas un curseur.
 */
 import {
-  ATTRIBUTES_MAX,
+  ATTRIBUTE_MAX,
+  ATTRIBUTE_MIN,
+  ATTRIBUTES,
   CANON_FACTS_PER_TURN_MAX,
   CHARACTER_MESSAGE_MAX_CHARS,
   CHARACTER_NAME_MAX,
@@ -20,6 +22,7 @@ import {
   GUIDE_QUESTION_MAX_CHARS,
   OWN_DESCRIPTION_MAX,
   OWN_DESCRIPTION_MIN,
+  TALENTS_MAX,
   TRAITS_MAX,
   TURN_MESSAGE_MAX_CHARS,
   WORKS_MAX,
@@ -90,7 +93,10 @@ export const TUNING = {
   character: {
     nameMax: CHARACTER_NAME_MAX,
     traitsMax: TRAITS_MAX,
-    attributesMax: ATTRIBUTES_MAX,
+    attributes: ATTRIBUTES,
+    attributeMin: ATTRIBUTE_MIN,
+    attributeMax: ATTRIBUTE_MAX,
+    talentsMax: TALENTS_MAX,
     messageMaxChars: CHARACTER_MESSAGE_MAX_CHARS,
     // En deca, la fiche n'est pas extractible : il n'y a rien a extraire.
     turnsMin: CHARACTER_TURNS_MIN,

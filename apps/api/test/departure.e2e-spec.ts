@@ -82,7 +82,7 @@ async function boot(
         gender: 'femme',
         age: 31,
         personality: { traits: ['tenace'], summary: 'x' },
-        attributes: { courage: 4 },
+        attributes: { corps: 3, adresse: 4, esprit: 2, presence: 3, instinct: 4 },
         diedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),

@@ -112,6 +112,7 @@ export class TurnMemoryService implements OnModuleInit {
       age: universe.character?.age ?? undefined,
       personality: universe.character?.personality ?? undefined,
       attributes: universe.character?.attributes ?? undefined,
+      talents: universe.character?.talents ?? [],
     });
 
     if (!charter.success || !bible.success || !character.success) {

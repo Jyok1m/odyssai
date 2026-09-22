@@ -22,7 +22,8 @@ const CHARACTER: CharacterSheet = {
   gender: 'femme',
   age: 31,
   personality: { traits: ['tenace'], summary: 'Cartographe en fuite.' },
-  attributes: { courage: 4, ruse: 3, savoir: 2 },
+  attributes: { corps: 3, adresse: 4, esprit: 3, presence: 2, instinct: 4 },
+  talents: ['tir a l arc'],
 };
 
 const CHARTER = {

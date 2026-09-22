@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { AttributeSchema } from './onboarding.js';
 
 export const TURN_MESSAGE_MAX_CHARS = 600;
 
@@ -102,6 +103,13 @@ export const TurnStreamEventSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('roll'),
     die: z.number().int().min(1),
+    /*
+      Ce que la fiche ajoute ou retire, et l'attribut qui l'a donne. Le joueur
+      lance, donc il voit son jet entier : le chiffre nu sans le bonus ne lui
+      dirait pas pourquoi il a reussi.
+    */
+    modifier: z.number().int(),
+    attribute: AttributeSchema.nullable(),
     outcome: PublicOutcomeSchema,
   }),
   z.object({

@@ -1,4 +1,5 @@
 import { randomInt } from 'node:crypto';
+import type { Attribute } from '@odyssai/schemas';
 
 /*
   Lance par le code, jamais par le modele, qui tirerait ce qui arrange son
@@ -74,4 +75,50 @@ const SETTLED_BY_DIE = new Set<string>([
 
 export function settledByDie(situation: string | null): boolean {
   return situation !== null && SETTLED_BY_DIE.has(situation);
+}
+
+/*
+  Ce qu'un jet sollicite, par situation.
+
+  Le code le decide, comme il decide du lancer et de l'usage : demander au
+  modele quel attribut s'applique reviendrait a le laisser choisir celui qui
+  arrange son recit, et il choisirait le plus haut.
+
+  `instinct` n'y figure pas encore : aucune des situations qui tranchent ne
+  l'appelle. Il se lit sur la fiche et nourrit le recit, sans etre calcule.
+*/
+const TESTED_BY: Record<string, Attribute> = {
+  violence: 'corps',
+  contrainte: 'presence',
+  tromperie: 'adresse',
+  entreprise: 'esprit',
+};
+
+export function attributeFor(situation: string | null): Attribute | null {
+  return situation === null ? null : (TESTED_BY[situation] ?? null);
+}
+
+/*
+  Le modificateur d'un score, de -2 a +2 sur une echelle de un a cinq.
+
+  Trois est le milieu, donc l'absence de bonus : un personnage moyen lance un
+  de nu. Deux points d'ecart sur un vingt valent dix pour cent de chances,
+  assez pour qu'une force se sente sans qu'elle decide a la place du de.
+*/
+export function modifierOf(score: number): number {
+  return score - 3;
+}
+
+/*
+  La bande d'un jet, modificateur compris.
+
+  Le total est borne aux faces du de plutot que de le laisser deborder :
+  `bandOf` refuse ce qui n'est pas un jet valide, et c'est bien qu'elle le
+  refuse. Consequence assumee, un bonus peut porter un dix-neuf au critique,
+  et un malus enfoncer un deux dans l'echec critique : une force et une
+  faiblesse doivent pouvoir decider d'un bord.
+*/
+export function bandFor(roll: number, modifier: number): OutcomeBand {
+  const total = Math.min(DIE_FACES, Math.max(1, roll + modifier));
+  return bandOf(total);
 }
