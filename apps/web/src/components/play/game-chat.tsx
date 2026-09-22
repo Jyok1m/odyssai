@@ -154,6 +154,11 @@ export function GameChat() {
         // Une montée se lit une fois, à part du verdict du tour.
         if (event.type === "carrying") setCarrying(event.items);
 
+        // Un lore nouveau ou révélé : une nouvelle en soi, qui se lit une fois.
+        if (event.type === "lore") {
+          toast(t("lore", { name: event.name }), { duration: 6000 });
+        }
+
         if (event.type === "grew") {
           toast.success(
             t("grew", {

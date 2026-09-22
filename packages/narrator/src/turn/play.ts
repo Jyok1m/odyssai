@@ -57,6 +57,8 @@ const DEFAULT_DELTA: TurnDelta = {
   usedDie: false,
   facts: [],
   actDone: false,
+  met: [],
+  revealed: [],
   gained: [],
   lost: [],
 };
@@ -124,6 +126,25 @@ export function readDelta(tail: string): TurnDelta {
     usedDie: source.usedDie === true,
     facts: facts.slice(0, CANON_FACTS_PER_TURN_MAX),
     actDone: source.actDone === true,
+    // Une entite mal formee ne doit pas emporter les autres.
+    met: Array.isArray(source.met)
+      ? source.met.flatMap((candidate) => {
+          const single = TurnDeltaSchema.safeParse({
+            kind: 'action',
+            usedDie: false,
+            met: [candidate],
+          });
+          return single.success ? single.data.met : [];
+        })
+      : [],
+    revealed: (() => {
+      const single = TurnDeltaSchema.safeParse({
+        kind: 'action',
+        usedDie: false,
+        revealed: Array.isArray(source.revealed) ? source.revealed : [],
+      });
+      return single.success ? single.data.revealed : [];
+    })(),
     gained: items(source.gained),
     lost: items(source.lost),
   };

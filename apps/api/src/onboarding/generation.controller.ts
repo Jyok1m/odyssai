@@ -119,7 +119,7 @@ export class GenerationController {
   async world(@CurrentUser() user: User): Promise<WorldView> {
     const universe = await this.prisma.universe.findUnique({
       where: { ownerId: user.id },
-      include: { character: true },
+      include: { character: true, entities: { orderBy: { createdAt: 'asc' } } },
     });
 
     if (!universe) throw new NotFoundException({ code: 'not_found' });
@@ -146,6 +146,12 @@ export class GenerationController {
       factions: bible.data.factions,
       npcs: bible.data.npcs,
       affinities: bible.data.affinities,
+      // Le su seulement : le schema de vue ne porte pas le cache.
+      entities: universe.entities.map((row) => ({
+        name: row.name,
+        kind: row.kind,
+        known: row.known,
+      })),
       character: {
         name: universe.character?.name,
         gender: universe.character?.gender,

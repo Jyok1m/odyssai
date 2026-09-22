@@ -8,6 +8,7 @@ import {
   WorldCharterSchema,
   type CanonFact,
   type CharacterSheet,
+  type Entity,
   type WorldBible,
   type WorldCharter,
 } from '@odyssai/schemas';
@@ -49,6 +50,8 @@ export interface TurnWorld {
     joue alors comme il jouait, sans but a atteindre.
   */
   act: number | null;
+  // Ce que le monde sait, cache compris : le meneur connait les secrets.
+  entities: Entity[];
 }
 
 export interface TurnMemory {
@@ -112,7 +115,7 @@ export class TurnMemoryService implements OnModuleInit {
   async world(userId: string): Promise<TurnWorld | null> {
     const universe = await this.prisma.universe.findUnique({
       where: { ownerId: userId },
-      include: { character: true },
+      include: { character: true, entities: { orderBy: { createdAt: 'asc' } } },
     });
 
     if (!universe || universe.step !== 'ready') return null;
@@ -142,6 +145,12 @@ export class TurnMemoryService implements OnModuleInit {
       progress: (universe.character?.progress ?? {}) as Progress,
       inventory: universe.character?.inventory ?? [],
       act: universe.bible && bible.data.arc ? (universe.arcAct ?? 1) : null,
+      entities: universe.entities.map((row) => ({
+        name: row.name,
+        kind: row.kind as Entity['kind'],
+        known: row.known,
+        hidden: row.hidden,
+      })),
     };
   }
 

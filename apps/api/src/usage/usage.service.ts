@@ -18,7 +18,8 @@ export type UsageKind =
   | 'character'
   | 'extract'
   | 'abstraction'
-  | 'generation';
+  | 'generation'
+  | 'lore';
 
 export interface UsageEntry {
   kind: UsageKind;

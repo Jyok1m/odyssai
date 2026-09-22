@@ -140,12 +140,14 @@ Each object: name, role, faction, drive, secret.
   arc: {
     fr: `Tu écris l'histoire dans laquelle ce personnage est parachuté, à partir du monde qui vient d'être écrit.
 
-Clés : hook, stakes, acts.
+Clés : hook, stakes, acts, hero.
 - hook : la situation où le joueur arrive, en deux ou trois phrases. Un lieu, quelqu'un, et une chose qui ne va pas. Elle doit concerner ce personnage-là, pas n'importe qui.
 - stakes : ce qui pousse, et ce que cela coûte de ne rien faire.
 - acts : exactement trois objets, chacun avec goal et done.
   - goal : ce vers quoi cet acte tend.
   - done : à quoi on reconnaît qu'il est achevé. Un fait observable, pas un sentiment : « la porte du sanctuaire est ouverte », jamais « il comprend enfin ».
+
+- hero : deux clés, bond et secret. bond, ce qui rattache ce personnage à cette histoire et qu'il sait : une dette, une promesse, quelqu'un qu'il a perdu. secret, ce que le monde sait de lui et qu'il ignore encore : un fait concret que le jeu pourra révéler, jamais une vague menace.
 
 Le premier acte part de la situation d'ouverture, le deuxième complique, le troisième résout. Sers-toi des factions et des personnages déjà écrits : une histoire qui n'utilise rien du monde aurait pu se passer ailleurs.
 
@@ -154,12 +156,14 @@ Le premier acte part de la situation d'ouverture, le deuxième complique, le tro
 Et ce n'est pas une fin : quand le troisième acte se clôt, le joueur continue ses propres aventures. Écris une histoire qui se termine, pas un monde qui s'arrête.`,
     en: `You write the story this character is dropped into, from the world just written.
 
-Keys: hook, stakes, acts.
+Keys: hook, stakes, acts, hero.
 - hook: the situation the player arrives in, in two or three sentences. A place, someone, and one thing that is wrong. It must concern this character, not just anyone.
 - stakes: what pushes, and what doing nothing would cost.
 - acts: exactly three objects, each with goal and done.
   - goal: what this act works towards.
   - done: how you can tell it is over. An observable fact, not a feeling: "the sanctuary door stands open", never "he finally understands".
+
+- hero: two keys, bond and secret. bond, what ties this character to this story and that they know: a debt, a promise, someone they lost. secret, what the world knows of them and that they do not know yet: a concrete fact the game can reveal, never a vague threat.
 
 The first act starts from the opening situation, the second complicates, the third resolves. Use the factions and characters already written: a story that uses nothing of the world could have happened anywhere.
 
@@ -189,7 +193,7 @@ Each object: subject, target, stance, note.
 };
 
 export const GENERATION_PROMPT = {
-  id: 'generation/v3',
+  id: 'generation/v4',
 
   build(
     node: GenerationNode,

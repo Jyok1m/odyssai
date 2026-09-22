@@ -324,7 +324,13 @@
       "independent": "unaffiliated",
       "you": "You",
       "traits": "Traits",
-      "attributes": "Attributes"
+      "attributes": "Attributes",
+      "kind": {
+        "npc": "character",
+        "item": "object",
+        "place": "place",
+        "faction": "faction"
+      }
     },
     "errorUnreachable": "The API is not answering. Check that it is running, and that you are on the usual address of the site.",
     "errorSignedOut": "Your session has expired. Sign in again, what you typed is kept.",
@@ -963,6 +969,7 @@
       "instinct": "instinct"
     },
     "grew": "Your {attribute} rises to {score}.",
-    "carrying": "You carry: {items}"
+    "carrying": "You carry: {items}",
+    "lore": "The world knows more about {name}."
   }
 }

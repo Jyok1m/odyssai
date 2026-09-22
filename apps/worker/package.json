@@ -17,6 +17,7 @@
     "@langchain/langgraph": "^1.4.15",
     "@langchain/langgraph-checkpoint-postgres": "^1.0.5",
     "@odyssai/db": "workspace:*",
+    "@odyssai/engine": "workspace:*",
     "@odyssai/llm": "workspace:*",
     "@odyssai/narrator": "workspace:*",
     "@odyssai/schemas": "workspace:*",

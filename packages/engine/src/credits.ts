@@ -19,6 +19,13 @@ export const CREDIT_COSTS = {
     toucher d'autre.
   */
   question: 1,
+  /*
+    Un fragment de lore, pour une entite que le meneur vient de poser. Un
+    appel de plus par entite, au plus deux par tour : c'est le prix de la
+    coherence, et il se voit sur la facture plutot que d'etre fondu dans le
+    tour. Sans reserve, le tour se joue et l'entite reste sans histoire.
+  */
+  lore: 1,
   // Meme ordre de cout qu'un tour.
   characterMessage: 1,
   // Sept appels au mieux, vingt-trois au pire. C'est le gros poste.

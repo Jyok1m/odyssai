@@ -221,6 +221,7 @@ model Universe {
   encounters Encounter[]
   turns      Turn[]
   canon      CanonFact[]
+  entities   Entity[]
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
@@ -676,6 +677,37 @@ model CanonFact {
 
   @@index([universeId, createdAt])
   @@map("canon_facts")
+}
+
+/// Ce que le monde sait d'une personne, d'un objet, d'un lieu ou d'une
+/// faction, en deux parts : `known`, ce que le joueur a appris, et `hidden`,
+/// ce que le meneur garde jusqu'a ce que le jeu le revele. Semees par la
+/// generation, puis nees de chaque nom que le meneur pose en jeu.
+model Entity {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  universeId String   @map("universe_id") @db.Uuid
+  universe   Universe @relation(fields: [universeId], references: [id], onDelete: Cascade)
+
+  /// npc, item, place, faction.
+  kind String @db.VarChar(8)
+  name String @db.VarChar(80)
+
+  /// Le nom replie, pour l'unicite : le meneur ecrit « l'Epee » la ou il
+  /// avait ecrit « epee corrompue ».
+  key String @db.VarChar(80)
+
+  known  String
+  hidden String?
+
+  revealedAt DateTime? @map("revealed_at") @db.Timestamptz(3)
+
+  /// Le tour qui l'a fait naitre ; nul pour ce que la generation a seme.
+  seq Int?
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([universeId, key])
+  @@map("entities")
 }
 
 enum GenerationStatus {

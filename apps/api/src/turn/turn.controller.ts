@@ -17,13 +17,21 @@ import type { Response } from 'express';
 import {
   CanonFactSchema,
   INVENTORY_MAX,
+  entityKey,
+  type Entity,
   TurnRequestSchema,
   type Situation,
   type TurnHistory,
   type TurnStreamEvent,
 } from '@odyssai/schemas';
 import type { LlmClient } from '@odyssai/llm';
-import { GUIDANCE, TURN_PROMPT_VERSION, playTurn } from '@odyssai/narrator';
+import {
+  GUIDANCE,
+  LORE_PROMPT_VERSION,
+  TURN_PROMPT_VERSION,
+  describeEntity,
+  playTurn,
+} from '@odyssai/narrator';
 import {
   arbitrateCanon,
   attributeFor,
@@ -35,6 +43,7 @@ import {
   settledByDie,
   usesAfter,
   carryAfter,
+  revealLore,
 } from '@odyssai/engine';
 import { PrismaClient, type User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
@@ -400,6 +409,7 @@ export class TurnController {
           inventory: world.inventory,
           arc: world.bible.arc,
           act: world.act ?? undefined,
+          entities: world.entities,
           // Une ouverture ne tranche rien : le joueur n'a encore rien tente.
           asking,
           mustUseDie: settled,
@@ -467,6 +477,87 @@ export class TurnController {
           ? world.act + 1
           : null;
 
+      /*
+        Le lore qui grandit. Chaque nom nouveau declare par le meneur recoit
+        son fragment, coherent avec le monde, et le paie : un credit par
+        entite. Sans reserve, l'entite reste sans histoire et le tour se joue
+        quand meme. Les revelations, elles, ne coutent rien : le cache rejoint
+        le su, c'est tout.
+      */
+      const born: Entity[] = [];
+      const known = new Set(world.entities.map((entity) => entityKey(entity.name)));
+      for (const candidate of delta.met) {
+        const key = entityKey(candidate.name);
+        if (known.has(key)) continue;
+
+        let loreDebit: string | null = null;
+        try {
+          loreDebit = await this.credits.spend('lore' as const, user.id, world.universeId);
+        } catch (error: unknown) {
+          if (error instanceof OutOfCreditsError) {
+            this.logger.log(`reserve vide : ${candidate.name} reste sans lore`);
+            continue;
+          }
+          throw error;
+        }
+
+        const described = await describeEntity({
+          llm: this.llm,
+          config: this.config.model,
+          locale,
+          works: world.works,
+          context: {
+            charter: world.charter,
+            lore: world.bible.lore,
+            factions: world.bible.factions.map((faction) => faction.name),
+            existing: world.entities.map((entity) => entity.name),
+            goal:
+              world.act && world.bible.arc && world.act <= world.bible.arc.acts.length
+                ? world.bible.arc.acts[world.act - 1]!.goal
+                : undefined,
+            entity: candidate,
+          },
+          trace: {
+            name: 'lore',
+            metadata: {
+              turn_id: turnId,
+              universe_id: world.universeId,
+              prompt_version: LORE_PROMPT_VERSION,
+              entity: candidate.name,
+            },
+          },
+        });
+
+        await this.usage.record({
+          kind: 'lore',
+          provider: this.config.provider,
+          userId: user.id,
+          universeId: world.universeId,
+          usage: described.usage,
+          prices: this.config.prices,
+        });
+
+        if (described.kind !== 'ok') {
+          this.logger.warn(`lore refuse (${described.reason}) : ${candidate.name}`);
+          if (loreDebit) await this.credits.refund(loreDebit);
+          continue;
+        }
+
+        known.add(key);
+        born.push({
+          name: candidate.name,
+          kind: candidate.kind,
+          known: described.fragment.known,
+          hidden: described.fragment.hidden,
+        });
+      }
+
+      // Le cache sort : une revelation ne se defait pas.
+      const revealedKeys = new Set(delta.revealed.map(entityKey));
+      const revealed = world.entities.filter(
+        (entity) => entity.hidden && revealedKeys.has(entityKey(entity.name)),
+      );
+
       const carried = carryAfter(
         world.inventory,
         delta.gained,
@@ -490,6 +581,27 @@ export class TurnController {
             content: answer,
           },
         }),
+        ...born.map((entity) =>
+          this.prisma.entity.create({
+            data: {
+              universeId: world.universeId,
+              kind: entity.kind,
+              name: entity.name,
+              key: entityKey(entity.name),
+              known: entity.known,
+              hidden: entity.hidden,
+              seq,
+            },
+          }),
+        ),
+        ...revealed.map((entity) =>
+          this.prisma.entity.update({
+            where: {
+              universeId_key: { universeId: world.universeId, key: entityKey(entity.name) },
+            },
+            data: { ...revealLore(entity), revealedAt: new Date() },
+          }),
+        ),
         ...(act
           ? [
               this.prisma.universe.update({
@@ -560,6 +672,17 @@ export class TurnController {
           }),
         ),
       ]);
+
+      if (streaming) {
+        for (const entity of [...born, ...revealed.map(revealLore)]) {
+          this.write(res, {
+            type: 'lore',
+            name: entity.name,
+            kind: entity.kind,
+            known: entity.known,
+          });
+        }
+      }
 
       if (streaming && moved) {
         this.write(res, { type: 'carrying', items: carried });

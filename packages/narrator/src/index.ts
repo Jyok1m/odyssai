@@ -18,4 +18,6 @@ export * from './turn/split-tail.js';
 export * from './world/abstraction.js';
 export * from './world/character.js';
 export * from './world/graph.js';
+export * from './prompts/lore/v1.js';
+export * from './world/lore.js';
 export * from './world/json.js';

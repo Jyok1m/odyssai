@@ -324,7 +324,13 @@
       "independent": "sans attache",
       "you": "Toi",
       "traits": "Traits",
-      "attributes": "Attributs"
+      "attributes": "Attributs",
+      "kind": {
+        "npc": "personnage",
+        "item": "objet",
+        "place": "lieu",
+        "faction": "faction"
+      }
     },
     "errorUnreachable": "L'API ne répond pas. Vérifie qu'elle tourne, et que tu es bien sur l'adresse habituelle du site.",
     "errorSignedOut": "Ta session a expiré. Reconnecte-toi, ta saisie est gardée.",
@@ -963,6 +969,7 @@
       "instinct": "instinct"
     },
     "grew": "Ton {attribute} passe à {score}.",
-    "carrying": "Tu portes : {items}"
+    "carrying": "Tu portes : {items}",
+    "lore": "Le monde en sait plus sur {name}."
   }
 }

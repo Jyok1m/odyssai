@@ -32,6 +32,7 @@ const CONTEXT = {
   mustUseDie: false,
   fate: false,
   opening: false,
+  entities: [],
 };
 
 const system = (extra: Record<string, unknown>) =>

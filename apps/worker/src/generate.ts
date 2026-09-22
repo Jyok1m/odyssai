@@ -1,9 +1,11 @@
 import type { LlmClient } from '@odyssai/llm';
+import { seedEntities } from '@odyssai/engine';
 import { Prisma, type PrismaClient } from '@odyssai/db';
 import {
   CharacterSheetSchema,
   InspirationSchema,
   WorldBibleSchema,
+  entityKey,
   WorldCharterSchema,
   WorldThemesSchema,
   type WorldThemes,
@@ -194,16 +196,34 @@ export async function generate(
 
     // Une seule transaction : un monde a moitie ecrit avec une etape `ready`
     // serait pire qu'un echec, le joueur y entrerait sans lore.
+    const bible = WorldBibleSchema.parse(outcome.bible);
+
     await prisma.$transaction([
       prisma.universe.update({
         where: { id: universeId },
         data: {
           step: 'ready',
           charter: WorldCharterSchema.parse(outcome.charter),
-          bible: WorldBibleSchema.parse(outcome.bible),
-          name: outcome.bible.lore.name,
-          accentHue: outcome.bible.lore.accentHue,
+          bible,
+          name: bible.lore.name,
+          accentHue: bible.lore.accentHue,
         },
+      }),
+      /*
+        Les entites que la bible seme : les personnages avec leur secret, les
+        factions. C'est la matiere qui grandira ensuite, et ceux du premier
+        jour doivent y etre des le premier tour.
+      */
+      prisma.entity.createMany({
+        data: seedEntities(bible).map((entity) => ({
+          universeId,
+          kind: entity.kind,
+          name: entity.name,
+          key: entityKey(entity.name),
+          known: entity.known,
+          hidden: entity.hidden,
+        })),
+        skipDuplicates: true,
       }),
       prisma.generationJob.update({
         where: { id: job.id },

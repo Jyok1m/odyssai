@@ -214,6 +214,18 @@ export type Affinity = z.infer<typeof AffinitySchema>;
   jeu, la bible seulement quand le narrateur a besoin du detail.
 */
 /*
+  Ce que le monde sait du heros lui-meme : un lien, qui le rattache a cette
+  histoire et qu'il connait ; un secret, qu'il ne connait pas encore et que le
+  meneur garde. Genere avec l'arc, parce que l'un et l'autre doivent tenir
+  avec la meme histoire.
+*/
+export const HeroLoreSchema = z.object({
+  bond: Text(300),
+  secret: Text(300),
+});
+export type HeroLore = z.infer<typeof HeroLoreSchema>;
+
+/*
   L'histoire dans laquelle le heros est parachute.
 
   Trois actes, un but par acte et le signe qui dit qu'il est acheve : le
@@ -239,9 +251,60 @@ export const WorldArcSchema = z.object({
   // Ce qui pousse, et ce que cela coute de ne rien faire.
   stakes: Text(400),
   acts: z.tuple([ArcActSchema, ArcActSchema, ArcActSchema]),
+  // Facultatif pour la meme raison que l'arc lui-meme : un arc d'avant.
+  hero: HeroLoreSchema.optional(),
 });
 
 export type WorldArc = z.infer<typeof WorldArcSchema>;
+
+/*
+  Ce que le monde sait d'une personne, d'un objet, d'un lieu ou d'une faction,
+  en deux parts : `known`, ce que le joueur a appris, et `hidden`, ce que le
+  meneur garde jusqu'a ce que le jeu le revele.
+
+  C'est la matiere qui grandit. La bible est ecrite une fois ; les entites
+  naissent d'elle a la generation, puis de chaque nom nouveau que le meneur
+  pose en jeu, et chacune recoit son fragment de lore, coherent avec le reste.
+  Un personnage rencontre au dixieme tour a une histoire comme ceux du
+  premier.
+
+  Les genres sont sans accent : le modele les recopie.
+*/
+export const ENTITY_KINDS = ['npc', 'item', 'place', 'faction'] as const;
+export const EntityKindSchema = z.enum(ENTITY_KINDS);
+export type EntityKind = z.infer<typeof EntityKindSchema>;
+
+export const ENTITY_TEXT_MAX = 400;
+
+// Ce que le modele produit pour une entite nouvelle.
+export const LoreFragmentSchema = z.object({
+  known: Text(ENTITY_TEXT_MAX),
+  hidden: Text(ENTITY_TEXT_MAX),
+});
+export type LoreFragment = z.infer<typeof LoreFragmentSchema>;
+
+export const EntitySchema = z.object({
+  name: Name,
+  kind: EntityKindSchema,
+  // Grandit a chaque revelation : le cache y est reverse quand il sort.
+  known: z.string().trim().min(1).max(ENTITY_TEXT_MAX * 4),
+  hidden: z.string().trim().min(1).max(ENTITY_TEXT_MAX).nullable(),
+});
+export type Entity = z.infer<typeof EntitySchema>;
+
+// Ce que le joueur voit : jamais le cache, et c'est le type qui le garantit.
+export const PublicEntitySchema = EntitySchema.omit({ hidden: true });
+export type PublicEntity = z.infer<typeof PublicEntitySchema>;
+
+/*
+  Le nom replie, pour l'unicite : le meneur ecrit « l'Epee » la ou il avait
+  ecrit « epee corrompue », et « Soeur Nym » la ou la bible dit « Sœur Nym ».
+  Meme repli que les titres d'oeuvres, pour la meme raison.
+*/
+export function entityKey(name: string): string {
+  return normalizeWorkTitle(name);
+}
+
 
 export const WorldBibleSchema = z.object({
   lore: WorldLoreSchema,
@@ -368,6 +431,8 @@ export const WorldViewSchema = z.object({
   factions: z.array(FactionSchema),
   npcs: z.array(PublicNpcSchema),
   affinities: z.array(AffinitySchema),
+  // Ce que le joueur a appris, entite par entite. Le cache n'est pas dans le type.
+  entities: z.array(PublicEntitySchema),
   character: z.object({
     name: z.string(),
     gender: z.string(),

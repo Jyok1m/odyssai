@@ -244,7 +244,7 @@ export function makeUser(overrides: Partial<UserRow> = {}): UserRow {
 export function makeOnboardingPrisma(store: OnboardingStore) {
   const hydrate = (
     universe: UniverseRow | undefined,
-    include?: { character?: boolean; jobs?: { take?: number } },
+    include?: { character?: boolean; jobs?: { take?: number }; entities?: unknown },
   ) => {
     if (!universe) return null;
     if (!include) return { ...universe };
@@ -259,10 +259,19 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         ? (store.characters.find((row) => row.universeId === universe.id) ?? null)
         : undefined,
       jobs: include.jobs ? jobs.slice(0, include.jobs.take ?? jobs.length) : undefined,
+      // Aucun test n'en seme : ce qui compte est que la vue en porte une liste.
+      entities: include.entities ? [] : undefined,
     };
   };
 
   const double = {
+    // Le lore qui grandit n'est pas joue de bout en bout : rien n'y ecrit.
+    entity: {
+      findMany: async () => [],
+      createMany: async () => ({ count: 0 }),
+      create: async ({ data }: any) => data,
+      update: async ({ data }: any) => data,
+    },
     user: {
       /*
         Deux filtres suffisent, ce sont les seuls que le code pose : le droit

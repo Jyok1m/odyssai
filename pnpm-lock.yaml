@@ -190,6 +190,9 @@ importers:
       '@odyssai/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@odyssai/engine':
+        specifier: workspace:*
+        version: link:../../packages/engine
       '@odyssai/llm':
         specifier: workspace:*
         version: link:../../packages/llm

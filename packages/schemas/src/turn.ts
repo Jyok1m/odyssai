@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { AttributeSchema } from './onboarding.js';
+import { EntityKindSchema } from './world.js';
 
 export const TURN_MESSAGE_MAX_CHARS = 600;
 
@@ -13,6 +14,13 @@ export const INVENTORY_MAX = 10;
 
 // Ce qui peut changer de main en un tour, dans chaque sens.
 export const ITEMS_PER_TURN_MAX = 3;
+
+/*
+  Combien d'entites nouvelles un tour peut faire naitre. Chacune coute un
+  appel de plus et un credit : deux suffisent a une scene, et un meneur qui en
+  poserait cinq d'un coup ferait ce qu'on lui reproche deja.
+*/
+export const ENTITIES_PER_TURN_MAX = 2;
 
 export const CANON_FACTS_PER_TURN_MAX = 3;
 
@@ -105,6 +113,23 @@ export const TurnDeltaSchema = z.object({
     doit pas pouvoir sauter la moitie d'une histoire, ni la rejouer.
   */
   actDone: z.boolean().default(false),
+  /*
+    Les noms nouveaux que le meneur vient de poser, avec ce que la scene en a
+    montre. Le code leur donne un lore, coherent avec le monde : un
+    personnage rencontre au dixieme tour a une histoire comme ceux du premier.
+  */
+  met: z
+    .array(
+      z.object({
+        name: z.string().trim().min(2).max(80),
+        kind: EntityKindSchema,
+        hint: z.string().trim().min(3).max(300),
+      }),
+    )
+    .max(ENTITIES_PER_TURN_MAX)
+    .default([]),
+  // Les entites dont le cache vient de sortir dans le recit, par leur nom.
+  revealed: z.array(z.string().trim().min(2).max(80)).max(3).default([]),
   gained: z.array(z.string().trim().min(2).max(60)).max(ITEMS_PER_TURN_MAX).default([]),
   lost: z.array(z.string().trim().min(2).max(60)).max(ITEMS_PER_TURN_MAX).default([]),
 });
@@ -131,6 +156,13 @@ export const TurnStreamEventSchema = z.discriminatedUnion('type', [
     en soi : elle se lit une fois, la ou le verdict d'un tour se lit avec le
     tour.
   */
+  // Un lore nouveau ou revele, pour que l'ecran le dise.
+  z.object({
+    type: z.literal('lore'),
+    name: z.string(),
+    kind: EntityKindSchema,
+    known: z.string(),
+  }),
   // L'inventaire apres le tour, envoye seulement quand il a change.
   z.object({
     type: z.literal('carrying'),

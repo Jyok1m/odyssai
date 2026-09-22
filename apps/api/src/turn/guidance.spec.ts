@@ -91,6 +91,7 @@ describe('rappels dans le prompt du meneur', () => {
     asking: false,
     inventory: [],
     act: undefined,
+    entities: [],
     mustUseDie: false,
     fate: false,
     opening: false,

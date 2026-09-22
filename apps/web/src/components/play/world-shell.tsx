@@ -126,6 +126,24 @@ export function WorldShell({ onRestart }: { onRestart: () => void }) {
         </h2>
         {/* Aucun secret ici : le schéma de vue ne les porte pas, ils se
             découvriront en jeu. */}
+        {/* Ce que le joueur a appris, entité par entité : le codex. Le caché
+            n'est pas dans le type de vue, il se découvrira en jeu. */}
+        {world.entities.length > 0 ? (
+          <ul className="mt-5 space-y-4">
+            {world.entities.map((entity) => (
+              <li key={`${entity.kind}-${entity.name}`} className="border-l-2 border-line pl-4">
+                <p className="text-ui-sm text-vellum">
+                  {entity.name}
+                  <span className="text-vellum-3">
+                    {" · "}
+                    {t(`world.kind.${entity.kind}` as never)}
+                  </span>
+                </p>
+                <p className="mt-1 text-ui-sm text-pretty text-vellum-2">{entity.known}</p>
+              </li>
+            ))}
+          </ul>
+        ) : null}
         <ul className="mt-5 space-y-4">
           {world.npcs.map((npc) => (
             <li key={npc.name} className="border-l-2 border-line pl-4">
