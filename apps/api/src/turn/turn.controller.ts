@@ -175,10 +175,20 @@ export class TurnController {
     // Avant la limite et avant tout appel : un message refuse ne doit ni
     // consommer un tour, ni atteindre le modele, ni entrer en base.
     if (request.kind === 'say' || request.kind === 'ask') {
+      /*
+        Le message precedent situe un message court : « Je retente ! » n'a
+        pas de situation a lui, et un 20 naturel s'est perdu la-dessus.
+      */
+      const previous = await this.prisma.conversationMessage.findFirst({
+        where: { universeId: world.universeId, channel: CHANNEL, role: 'user' },
+        orderBy: { seq: 'desc' },
+        select: { content: true },
+      });
       const seen = await this.moderation.check(
         request.content,
         user.locale,
         user.id,
+        previous?.content,
       );
       if (!seen.allow) {
         throw new HttpException(
@@ -284,7 +294,9 @@ export class TurnController {
       comme avant ce corpus. La locale est celle du tour et non celle du
       compte, comme le reste des consignes.
     */
-    const guidance = GUIDANCE.for(situation, locale);
+    // Une question n'est pas une scene : un rappel de maitrise y ferait
+    // avancer ce qui ne doit pas bouger, et c'est ce qui s'est vu.
+    const guidance = asking ? [] : GUIDANCE.for(situation, locale);
 
     // Le jet est tire ici, par le code, pour chaque tour. Le modele n'en verra
     // que la bande, et ne s'en servira que si l'issue etait incertaine.
@@ -490,6 +502,9 @@ export class TurnController {
           data: {
             universeId: world.universeId,
             seq,
+            // Ce que le joueur a envoye, pour diagnostiquer : le `kind` du
+            // delta est ce que le modele en a fait, pas ce qui est arrive.
+            request: request.kind,
             die,
             band,
             modifier,

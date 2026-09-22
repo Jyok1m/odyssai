@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { isClean, normalizeForModeration, screenText } from '@odyssai/engine';
 import { ModerationVerdictSchema } from '@odyssai/schemas';
+import { MODERATION_PROMPT } from '@odyssai/narrator';
 
 describe('moderation lexicale', () => {
   it('laisse passer un texte ordinaire', () => {
@@ -98,5 +99,23 @@ describe('etiquette de situation', () => {
       expect(verdict.reason, String(situation)).toBe('insulte');
       expect(verdict.situation, String(situation)).toBeNull();
     }
+  });
+});
+
+/*
+  « Je retente ! » n'a pas de situation a lui, et un 20 naturel s'est perdu
+  la-dessus : le classificateur ne voyait qu'un mot. Le message precedent le
+  situe, et lui seul est juge.
+*/
+describe('le precedent qui situe un message court', () => {
+  it('est donne au classificateur quand il existe', () => {
+    const user = MODERATION_PROMPT.build('fr', 'Je retente !', 'Je lui balance une boule de feu !')[1]!;
+    expect(user.content).toContain('<precedent>');
+    expect(user.content).toContain('boule de feu');
+    expect(user.content.indexOf('<precedent>')).toBeLessThan(user.content.indexOf('<message>'));
+  });
+
+  it("n'apparait pas sans precedent", () => {
+    expect(MODERATION_PROMPT.build('fr', 'Je retente !')[1]!.content).not.toContain('<precedent>');
   });
 });

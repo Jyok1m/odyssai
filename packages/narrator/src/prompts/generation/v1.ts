@@ -149,7 +149,7 @@ Clés : hook, stakes, acts.
 
 Le premier acte part de la situation d'ouverture, le deuxième complique, le troisième résout. Sers-toi des factions et des personnages déjà écrits : une histoire qui n'utilise rien du monde aurait pu se passer ailleurs.
 
-**Ce n'est pas forcément sombre ni tendu.** Une enquête tranquille, une dette à rembourser, une fête à sauver, un voyage : le ton de la charte commande, pas le réflexe dramatique.
+**Relis « tone » dans la charte avant d'écrire, et obéis-lui.** Si elle dit chaleureux ou plein d'espoir, hook et stakes le sont : une ruine fumante, une créature qui traque le héros et une communauté condamnée sont une faute dans ce monde-là. Une enquête tranquille, une dette à rembourser, une fête à sauver, un voyage valent une catastrophe. Le ton commande, pas le réflexe dramatique.
 
 Et ce n'est pas une fin : quand le troisième acte se clôt, le joueur continue ses propres aventures. Écris une histoire qui se termine, pas un monde qui s'arrête.`,
     en: `You write the story this character is dropped into, from the world just written.
@@ -163,7 +163,7 @@ Keys: hook, stakes, acts.
 
 The first act starts from the opening situation, the second complicates, the third resolves. Use the factions and characters already written: a story that uses nothing of the world could have happened anywhere.
 
-**It need not be dark or tense.** A quiet investigation, a debt to repay, a feast to save, a journey: the charter's tone commands, not the dramatic reflex.
+**Reread "tone" in the charter before writing, and obey it.** If it says warm or hopeful, hook and stakes are: a smoking ruin, a creature hunting the hero and a doomed community are a mistake in that world. A quiet investigation, a debt to repay, a feast to save, a journey are worth a catastrophe. The tone commands, not the dramatic reflex.
 
 And it is not an ending: when the third act closes, the player carries on with their own adventures. Write a story that ends, not a world that stops.`,
   },
@@ -189,7 +189,7 @@ Each object: subject, target, stance, note.
 };
 
 export const GENERATION_PROMPT = {
-  id: 'generation/v2',
+  id: 'generation/v3',
 
   build(
     node: GenerationNode,

@@ -374,12 +374,19 @@ export async function runGeneration(
 
   if (!state) throw new GenerationFailure('validation', ['aucun etat produit']);
 
+  /*
+    Troisieme liste de cles recopiee, apres celles du flux et de l'ecran, et
+    la seule qui ait fait des degats : le noeud d'arc tournait, `validate`
+    l'acceptait, et l'assemblage le jetait. Un monde a ete genere sans
+    histoire pour cette ligne.
+  */
   const bible = WorldBibleSchema.parse({
     lore: state.lore,
     factions: state.factions,
     politics: state.politics,
     npcs: state.npcs,
     affinities: state.affinities,
+    arc: state.arc,
   });
 
   return {

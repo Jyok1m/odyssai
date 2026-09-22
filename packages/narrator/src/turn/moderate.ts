@@ -21,6 +21,12 @@ export interface ModerateRequest {
   };
   locale: UiLocale;
   text: string;
+  /*
+    Le message precedent du joueur, pour situer un message court. « Je
+    retente ! » n'a pas de situation a lui : un 20 naturel s'est perdu la
+    dessus, le classificateur ne voyant qu'un mot.
+  */
+  previous?: string;
   signal?: AbortSignal;
 }
 
@@ -54,7 +60,7 @@ export async function moderate(
 
   for await (const event of request.llm.streamChat({
     model: request.config.model,
-    messages: MODERATION_PROMPT.build(request.locale, request.text),
+    messages: MODERATION_PROMPT.build(request.locale, request.text, request.previous),
     maxOutputTokens: request.config.maxOutputTokens,
     temperature: request.config.temperature,
     extraBody: request.config.extraBody,

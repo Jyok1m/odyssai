@@ -608,6 +608,11 @@ model Turn {
   /// Le rang du message du joueur qui a ouvert ce tour.
   seq Int
 
+  /// Ce que le joueur a envoye : say, ask, fate, roll, open. `kind`, lui, est
+  /// ce que le modele en a fait. Sans cette colonne, rien ne disait si une
+  /// question etait passee par le bon chemin.
+  request String? @db.VarChar(8)
+
   /// Le jet brut, de 1 a 20, et la bande qu'il donne. Le modele n'a recu que
   /// la bande.
   die  Int

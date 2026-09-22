@@ -42,6 +42,7 @@ export class ModerationService {
     text: string,
     locale: UiLocale,
     userId?: string,
+    previous?: string,
   ): Promise<ModerationVerdict> {
     const hits = screenText(text);
     if (hits.length > 0) {
@@ -59,6 +60,7 @@ export class ModerationService {
         config: this.config.moderation,
         locale,
         text,
+        previous,
       });
 
       await this.usage.record({
