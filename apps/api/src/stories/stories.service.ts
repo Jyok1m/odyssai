@@ -10,6 +10,7 @@ import {
 } from '@odyssai/schemas';
 import { PrismaClient, type User } from '@odyssai/db';
 import { PRISMA } from '../prisma/prisma.module.js';
+import { ChronicleService } from './chronicle.service.js';
 
 // Le joueur mene deja autant d'histoires que la borne l'autorise.
 export class StoriesFullError extends Error {
@@ -87,17 +88,25 @@ type Summary = {
 */
 @Injectable()
 export class StoriesService {
-  constructor(@Inject(PRISMA) private readonly prisma: PrismaClient) {}
+  constructor(
+    @Inject(PRISMA) private readonly prisma: PrismaClient,
+    private readonly chronicle: ChronicleService,
+  ) {}
 
   async list(user: Owner): Promise<Stories> {
-    const rows = await this.prisma.universe.findMany({
-      where: { ownerId: user.id },
-      orderBy: { createdAt: 'asc' },
-      select: SUMMARY,
-    });
+    const [rows, pending] = await Promise.all([
+      this.prisma.universe.findMany({
+        where: { ownerId: user.id },
+        orderBy: { createdAt: 'asc' },
+        select: SUMMARY,
+      }),
+      this.chronicle.pending(user),
+    ]);
 
     return {
-      stories: rows.map((row) => this.toStory(row, user.currentUniverseId)),
+      stories: rows.map((row) =>
+        this.toStory(row, user.currentUniverseId, pending.get(row.id) ?? 0),
+      ),
       max: STORIES_MAX,
     };
   }
@@ -348,7 +357,7 @@ export class StoriesService {
     });
   }
 
-  private toStory(row: Summary, currentId: string | null): Story {
+  private toStory(row: Summary, currentId: string | null, chronicle = 0): Story {
     return {
       id: row.id,
       name: row.name,
@@ -357,6 +366,7 @@ export class StoriesService {
       current: row.id === currentId,
       open: row.isOpen,
       visiting: row.visitingId !== null,
+      chronicle,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };

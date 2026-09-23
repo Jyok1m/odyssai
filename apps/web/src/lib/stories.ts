@@ -1,4 +1,5 @@
 import {
+  ChronicleSchema,
   DepartureOutcomeSchema,
   StoriesSchema,
   StorySchema,
@@ -6,6 +7,8 @@ import {
   type DepartureOutcome,
   type Stories,
   type StoriesErrorBody,
+  type Chronicle,
+  type ChronicleDecisions,
   type Story,
   type Travellers,
 } from "@odyssai/schemas";
@@ -131,4 +134,44 @@ async function toStoriesError(response: Response): Promise<StoriesError> {
       : "unknown";
 
   return new StoriesError(code);
+}
+
+/*
+  La chronique des voyageurs : ce que les visites ont laissé dans ce monde, et
+  que son créateur n'a pas encore tranché.
+*/
+export async function fetchChronicle(
+  id: string,
+  signal?: AbortSignal,
+): Promise<Chronicle> {
+  const response = await fetch(`${API_BASE_URL}/stories/${id}/chronicle`, {
+    credentials: "include",
+    headers: { Accept: "application/json" },
+    cache: "no-store",
+    signal,
+  });
+
+  if (!response.ok) throw await toStoriesError(response);
+  return ChronicleSchema.parse(await response.json());
+}
+
+/*
+  Ce que l'hôte accepte, et ce qu'il refuse. Accepter recopie dans son monde :
+  au moment où la matière passe, c'est lui qui écrit, chez lui.
+*/
+export async function decideChronicle(
+  id: string,
+  decisions: ChronicleDecisions["decisions"],
+  signal?: AbortSignal,
+): Promise<Chronicle> {
+  const response = await fetch(`${API_BASE_URL}/stories/${id}/chronicle`, {
+    method: "POST",
+    credentials: "include",
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify({ decisions }),
+    signal,
+  });
+
+  if (!response.ok) throw await toStoriesError(response);
+  return ChronicleSchema.parse(await response.json());
 }

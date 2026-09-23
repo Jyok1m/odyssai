@@ -384,7 +384,22 @@
       "closed": "Monde fermé",
       "closedHint": "Personne d'autre n'y entre. C'est le réglage par défaut : ce monde est à toi tant que tu n'en décides pas autrement."
     },
-    "visiting": "Visite"
+    "visiting": "Visite",
+    "chronicle": {
+      "title": "Chronique des voyageurs",
+      "count": "{count, plural, =0 {rien à relire} one {# à relire} other {# à relire}}",
+      "lead": "Ce qu'une visite a laissé n'est vrai ici que si tu le dis. Accepter le recopie dans ton monde ; refuser clôt la question. Dans les deux cas, le voyageur garde son récit.",
+      "empty": "Rien à relire pour le moment.",
+      "visit": "{visitor} y est venu avec {character}, {turns, plural, one {# tour} other {# tours}}",
+      "accept": "Accepter",
+      "decline": "Refuser",
+      "kind": {
+        "npc": "personnage",
+        "item": "objet",
+        "place": "lieu",
+        "faction": "faction"
+      }
+    }
   },
   "Concept": {
     "metaTitle": "Concept",

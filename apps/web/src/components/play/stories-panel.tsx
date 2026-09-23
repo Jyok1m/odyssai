@@ -1,6 +1,12 @@
 "use client";
 
-import type { DepartureOutcome, Stories, Story, Traveller } from "@odyssai/schemas";
+import type {
+  ChronicleVisit,
+  DepartureOutcome,
+  Stories,
+  Story,
+  Traveller,
+} from "@odyssai/schemas";
 import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
 
@@ -11,7 +17,9 @@ import { DangerAction } from "@/components/ui/danger-action";
 import { useRouter } from "@/i18n/navigation";
 import {
   StoriesError,
+  decideChronicle,
   deleteStory,
+  fetchChronicle,
   fetchStories,
   fetchTravellers,
   selectStory,
@@ -319,6 +327,10 @@ function StoryCard({ story, busy, onPlay, onDeleted }: CardProps) {
         </div>
       ) : null}
 
+      {/* Ce que les visites ont laissé, et que personne d'autre que l'hôte ne
+          peut trancher. */}
+      {story.chronicle > 0 ? <Chronicle story={story} /> : null}
+
       <div className="mt-auto flex flex-wrap items-center gap-3">
         <Button type="button" disabled={busy} onClick={onPlay}>
           {story.current ? t("continue") : t("play")}
@@ -354,5 +366,137 @@ function StoryCard({ story, busy, onPlay, onDeleted }: CardProps) {
         />
       </div>
     </li>
+  );
+}
+
+/*
+  La chronique des voyageurs, sur la carte du monde visité.
+
+  Une visite écrit toujours chez elle. Ce qu'elle laisse ne devient vrai ici
+  que lorsque celui à qui ce monde appartient le décide : accepter le recopie
+  dans son monde, refuser clôt la question. Dans les deux cas le récit du
+  visiteur lui reste, on ne lui retire pas ce qu'il a vécu.
+*/
+function Chronicle({ story }: { story: Story }) {
+  const t = useTranslations("Stories");
+  const format = useFormatter();
+
+  const [open, setOpen] = useState(false);
+  const [visits, setVisits] = useState<ChronicleVisit[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open || visits) return;
+
+    const controller = new AbortController();
+    fetchChronicle(story.id, controller.signal)
+      .then((read) => setVisits(read.visits))
+      .catch(() => {
+        if (controller.signal.aborted) return;
+        setError(t("error"));
+      });
+
+    return () => controller.abort();
+  }, [open, visits, story.id, t]);
+
+  const decide = async (id: string, kind: "fact" | "entity", accept: boolean) => {
+    setBusy(true);
+    setError(null);
+    try {
+      const read = await decideChronicle(story.id, [{ id, kind, accept }]);
+      setVisits(read.visits);
+    } catch {
+      setError(t("error"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const left = visits
+    ? visits.reduce((count, visit) => count + visit.entries.length, 0)
+    : story.chronicle;
+
+  return (
+    <div className="rounded-card border border-arcane/40 bg-arcane/8 p-3.5">
+      <button
+        type="button"
+        onClick={() => setOpen((shown) => !shown)}
+        className="flex w-full items-center justify-between gap-3 text-left"
+      >
+        <span className="text-ui-sm font-medium text-vellum">
+          {t("chronicle.title")}
+        </span>
+        <Tag tone="arcane">{t("chronicle.count", { count: left })}</Tag>
+      </button>
+
+      {open ? (
+        <div className="mt-3 space-y-4">
+          <p className="text-caption text-pretty text-vellum-3">
+            {t("chronicle.lead")}
+          </p>
+
+          {visits === null ? (
+            <p className="text-caption text-vellum-3">{t("loading")}</p>
+          ) : visits.length === 0 ? (
+            <p className="text-caption text-vellum-3">{t("chronicle.empty")}</p>
+          ) : (
+            visits.map((visit) => (
+              <section key={visit.visitId}>
+                <p className="text-caption text-vellum-2">
+                  {t("chronicle.visit", {
+                    visitor: visit.visitor ?? t("untitled"),
+                    character: visit.character ?? t("untitled"),
+                    turns: visit.turns,
+                  })}
+                  {" · "}
+                  {format.dateTime(new Date(visit.at), { dateStyle: "medium" })}
+                </p>
+
+                <ul className="mt-2 space-y-2">
+                  {visit.entries.map((entry) => (
+                    <li
+                      key={entry.id}
+                      className="rounded-control border border-line bg-ink p-3"
+                    >
+                      <p className="text-caption text-vellum-3">
+                        {entry.subject}
+                        {entry.entity ? ` · ${t(`chronicle.kind.${entry.entity}`)}` : ""}
+                      </p>
+                      <p className="mt-1 text-ui-sm text-pretty text-vellum">
+                        {entry.statement}
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={busy}
+                          onClick={() => void decide(entry.id, entry.kind, true)}
+                        >
+                          {t("chronicle.accept")}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          disabled={busy}
+                          onClick={() => void decide(entry.id, entry.kind, false)}
+                        >
+                          {t("chronicle.decline")}
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))
+          )}
+
+          <p aria-live="polite" className="min-h-4 text-caption text-ember">
+            {error}
+          </p>
+        </div>
+      ) : null}
+    </div>
   );
 }

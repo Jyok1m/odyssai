@@ -384,7 +384,22 @@
       "closed": "World closed",
       "closedHint": "No one else steps in. This is the default: this world is yours until you decide otherwise."
     },
-    "visiting": "Visit"
+    "visiting": "Visit",
+    "chronicle": {
+      "title": "Travellers' chronicle",
+      "count": "{count, plural, =0 {nothing to review} one {# to review} other {# to review}}",
+      "lead": "What a visit left is only true here if you say so. Accepting copies it into your world; declining closes the question. Either way, the traveller keeps their story.",
+      "empty": "Nothing to review right now.",
+      "visit": "{visitor} came with {character}, {turns, plural, one {# turn} other {# turns}}",
+      "accept": "Accept",
+      "decline": "Decline",
+      "kind": {
+        "npc": "character",
+        "item": "item",
+        "place": "place",
+        "faction": "faction"
+      }
+    }
   },
   "Concept": {
     "metaTitle": "Concept",

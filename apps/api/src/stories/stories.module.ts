@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ChronicleService } from './chronicle.service.js';
 import { StoriesService } from './stories.service.js';
 
 /*
@@ -7,7 +8,7 @@ import { StoriesService } from './stories.service.js';
   Auth vers Erasure vers Stories vers Auth.
 */
 @Module({
-  providers: [StoriesService],
-  exports: [StoriesService],
+  providers: [StoriesService, ChronicleService],
+  exports: [StoriesService, ChronicleService],
 })
 export class StoriesModule {}

@@ -32,6 +32,12 @@ export const StorySchema = z.object({
     tours, ses entites et son canon ; elle emprunte seulement son monde.
   */
   visiting: z.boolean(),
+  /*
+    Ce que les visites ont laisse a relire dans ce monde, et que son createur
+    n'a pas encore tranche. Zero pour une visite : on ne valide pas chez soi
+    ce qu'on a ecrit chez un autre.
+  */
+  chronicle: z.number().int().nonnegative(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 });

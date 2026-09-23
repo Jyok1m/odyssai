@@ -2,6 +2,7 @@ export * from './alpha.js';
 export * from './auth.js';
 export * from './admin.js';
 export * from './billing.js';
+export * from './chronicle.js';
 export * from './contact.js';
 export * from './essence.js';
 export * from './guide.js';

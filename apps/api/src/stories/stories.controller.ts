@@ -15,8 +15,10 @@ import {
 } from '@nestjs/common';
 import { z } from 'zod';
 import {
+  ChronicleDecisionsSchema,
   StoryOpennessSchema,
   StoryStartSchema,
+  type Chronicle,
   type DepartureOutcome,
   type Stories,
   type Story,
@@ -26,6 +28,7 @@ import type { User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
 import { ErasureService } from '../erasure/erasure.service.js';
+import { ChronicleService } from './chronicle.service.js';
 import {
   StoriesFullError,
   StoriesService,
@@ -43,6 +46,7 @@ import {
 export class StoriesController {
   constructor(
     private readonly stories: StoriesService,
+    private readonly chronicle: ChronicleService,
     private readonly erasure: ErasureService,
   ) {}
 
@@ -78,6 +82,52 @@ export class StoriesController {
       }
       if (error instanceof TravellerNotFoundError) {
         throw new NotFoundException({ code: 'traveller_not_found' });
+      }
+      throw error;
+    }
+  }
+
+  /*
+    La chronique des voyageurs : ce que les visites ont laisse dans ce monde,
+    et que son createur n'a pas encore tranche.
+  */
+  @Get(':id/chronicle')
+  async chronicleOf(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+  ): Promise<Chronicle> {
+    this.assertId(id);
+
+    try {
+      return await this.chronicle.read(user, id);
+    } catch (error: unknown) {
+      if (error instanceof StoryNotFoundError) {
+        throw new NotFoundException({ code: 'not_found' });
+      }
+      throw error;
+    }
+  }
+
+  /*
+    Ce que l'hote accepte, et ce qu'il refuse. Accepter recopie dans son
+    monde : au moment ou la matiere passe, c'est lui qui ecrit, chez lui.
+  */
+  @Post(':id/chronicle')
+  async decide(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+    @Body() rawBody: unknown,
+  ): Promise<Chronicle> {
+    this.assertId(id);
+
+    const parsed = ChronicleDecisionsSchema.safeParse(rawBody);
+    if (!parsed.success) throw new BadRequestException({ code: 'validation_error' });
+
+    try {
+      return await this.chronicle.decide(user, id, parsed.data);
+    } catch (error: unknown) {
+      if (error instanceof StoryNotFoundError) {
+        throw new NotFoundException({ code: 'not_found' });
       }
       throw error;
     }

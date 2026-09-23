@@ -792,6 +792,12 @@ model CanonFact {
   subject   String @db.VarChar(80)
   statement String @db.VarChar(400)
 
+  /// Ce que le createur du monde en a decide, quand ce fait est ne dans une
+  /// visite. NULL veut dire « pas encore relu » ; faux, refuse ; vrai, recopie
+  /// dans le monde de l'hote. Nul pour toujours dans une histoire ordinaire :
+  /// on ne valide pas chez soi ce qu'on y a ecrit soi-meme.
+  accepted Boolean?
+
   /// Le tour qui l'a fait naitre.
   seq Int
 
@@ -820,6 +826,10 @@ model Entity {
 
   known  String
   hidden String?
+
+  /// Comme pour un fait de canon : ce que le createur du monde en a decide,
+  /// quand cette entite est nee dans une visite.
+  accepted Boolean?
 
   revealedAt DateTime? @map("revealed_at") @db.Timestamptz(3)
 
