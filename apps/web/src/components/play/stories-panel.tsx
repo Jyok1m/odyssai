@@ -6,6 +6,7 @@ import type {
   Stories,
   Story,
   Traveller,
+  WorldView,
 } from "@odyssai/schemas";
 import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
@@ -28,6 +29,9 @@ import {
 } from "@/lib/stories";
 
 import { Tag } from "@/components/ui/panel";
+import { fetchWorld } from "@/lib/world";
+
+import { Constellation } from "./constellation";
 
 /*
   Les histoires du joueur : en commencer une, en ouvrir une, en supprimer une.
@@ -130,6 +134,12 @@ export function StoriesPanel() {
   };
 
   const full = data.stories.length >= data.max;
+  const free = Math.max(0, data.max - data.stories.length);
+
+  // L'ouverte d'abord, le reste dans l'ordre ou elles sont nees.
+  const sorted = [...data.stories].sort(
+    (left, right) => Number(right.current) - Number(left.current),
+  );
 
   return (
     <div className="space-y-8">
@@ -200,8 +210,13 @@ export function StoriesPanel() {
       {data.stories.length === 0 ? (
         <p className="text-ui-sm text-vellum-3">{t("empty")}</p>
       ) : (
-        <ul className="grid gap-4 sm:grid-cols-2">
-          {data.stories.map((story) => (
+        /*
+          L'histoire ouverte tient la colonne de gauche sur deux rangs : c'est
+          celle qu'on vient reprendre, les autres sont un choix qu'on fait de
+          temps en temps.
+        */
+        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {sorted.map((story) => (
             <StoryCard
               key={story.id}
               story={story}
@@ -213,12 +228,58 @@ export function StoriesPanel() {
               }}
             />
           ))}
+
+          {/* Ce qui reste, dit comme une place et non comme un manque : une
+              histoire vide ne coute rien. */}
+          {free > 0 ? (
+            <li className="flex flex-col justify-center rounded-card border border-dashed border-line p-5">
+              <span aria-hidden="true" className="flex gap-2">
+                {Array.from({ length: Math.min(free, 3) }, (_, index) => (
+                  <span
+                    key={index}
+                    style={{ borderRadius: "var(--radius-portal)" }}
+                    className="h-12 w-9 border border-dashed border-line"
+                  />
+                ))}
+              </span>
+              <p className="mt-4 font-voice text-subtitle text-pretty text-vellum">
+                {t("free", { count: free })}
+              </p>
+              <p className="mt-2 text-ui-sm text-pretty text-vellum-3">
+                {t("freeHint")}
+              </p>
+              <Button
+                type="button"
+                variant="secondary"
+                className="mt-4 self-start"
+                disabled={busy}
+                onClick={() => void create()}
+              >
+                {t("new")}
+              </Button>
+            </li>
+          ) : null}
         </ul>
       )}
 
-      <p aria-live="polite" className="min-h-5 text-ui-sm text-vellum-2">
-        {error ? <span className="text-ember">{error}</span> : outcomeText(outcome, t)}
-      </p>
+      <div aria-live="polite" className="min-h-5">
+        {error ? (
+          <p className="text-ui-sm text-ember">{error}</p>
+        ) : outcome ? (
+          <div className="flex items-start gap-3 rounded-card border border-arcane/40 bg-arcane/8 px-4 py-3.5">
+            <span
+              aria-hidden="true"
+              className="mt-2 h-2 w-2 flex-none rounded-full bg-arcane"
+            />
+            <p className="text-ui-sm text-pretty text-vellum-2">
+              <span className="mr-2 font-ui text-caption font-medium tracking-widest text-vellum uppercase">
+                {t("outcome.title")}
+              </span>
+              {outcomeText(outcome, t)}
+            </p>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -255,43 +316,88 @@ function StoryCard({ story, busy, onPlay, onDeleted }: CardProps) {
   // Un monde généré porte sa teinte, comme à la table : le kit dérive
   // l'accent de `--world-hue` sous `[data-world]`.
   const themed = story.accentHue !== null;
+  const named = story.name ?? t("untitled");
 
   return (
     <li
       data-world={themed ? (story.name ?? "") : undefined}
       style={themed ? ({ "--world-hue": story.accentHue } as CSSProperties) : undefined}
-      className="flex flex-col gap-5 rounded-card border border-line bg-abyss p-5"
+      className={[
+        "flex flex-col gap-5 rounded-card border bg-abyss p-5",
+        story.current
+          ? "border-accent/50 sm:col-span-2 lg:col-span-1 lg:row-span-2"
+          : "border-line",
+      ].join(" ")}
     >
       <div>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <h2 className="font-voice text-subtitle text-accent">
-            {story.name ?? t("untitled")}
-          </h2>
-          <span className="flex flex-wrap items-center gap-2">
-            {/* Une visite emprunte son monde : elle n'a ni inspiration, ni
-                personnage à écrire, et on ne l'ouvre ni ne la ferme. */}
-            {story.visiting ? <Tag tone="arcane">{t("visiting")}</Tag> : null}
-            {story.current ? (
-              <span className="rounded-full border border-accent px-2 py-0.5 text-caption text-accent">
-                {t("open")}
-              </span>
-            ) : null}
-          </span>
+        <div className="flex flex-wrap items-center gap-2">
+          {story.current ? <Tag tone="accent">{t("open")}</Tag> : null}
+          {story.visiting ? <Tag tone="arcane">{t("visiting")}</Tag> : null}
+          <Tag tone={story.step === "failed" ? "ember" : "muted"}>
+            {t(`step.${story.step}`)}
+          </Tag>
         </div>
-        <p className="mt-1 flex flex-wrap gap-x-3 text-caption text-vellum-3">
-          <span>{t(`step.${story.step}`)}</span>
-          <span>
-            {format.dateTime(new Date(story.createdAt), { dateStyle: "medium" })}
-          </span>
-        </p>
+
+        <div className="mt-4 flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+          <div className="min-w-0">
+            <h2
+              className={[
+                "font-voice text-balance",
+                story.current ? "text-title" : "text-subtitle",
+                themed ? "text-accent" : "text-vellum",
+              ].join(" ")}
+            >
+              {named}
+            </h2>
+            <p className="mt-1 text-caption text-vellum-3">
+              {t("startedOn", {
+                date: format.dateTime(new Date(story.createdAt), {
+                  dateStyle: "medium",
+                }),
+              })}
+            </p>
+          </div>
+
+          {/* Chaque monde a sa constellation, comme le Lore le promet. Un
+              monde sans nom n'en a pas : elle se dérive de lui. */}
+          {story.name ? (
+            <Constellation
+              name={story.name}
+              className={story.current ? "h-16 w-32" : "h-10 w-20"}
+            />
+          ) : null}
+        </div>
+
+        {/* Où en est le parcours, pour une histoire qui n'a pas encore son
+            monde. Trois crans, ceux que le joueur traverse. */}
+        {story.step === "ready" ? null : (
+          <>
+            <ul aria-hidden="true" className="mt-4 flex gap-1.5">
+              {(["inspiration", "character", "generating"] as const).map((stage, index) => (
+                <li
+                  key={stage}
+                  className={[
+                    "h-1 flex-1 rounded-xs",
+                    index <= (JOURNEY as readonly string[]).indexOf(story.step) ? "bg-brass" : "bg-mist",
+                  ].join(" ")}
+                />
+              ))}
+            </ul>
+            <p className="mt-3 text-ui-sm text-pretty text-vellum-3">
+              {t(`awaiting.${story.step}` as never)}
+            </p>
+          </>
+        )}
       </div>
 
-      {/*
-        Ouvert ou fermé aux visiteurs. Fermé par défaut : un monde appartient à
-        son créateur tant qu'il n'a pas dit le contraire. Personne ne peut
-        encore franchir une faille vers le monde d'un autre, et l'écran le dit
-        plutôt que de laisser croire à une porte déjà ouverte.
-      */}
+      {/* Qui on y joue, et où en est son histoire. Sur l'ouverte seulement :
+          c'est la seule que la table sert, et lire le monde des autres
+          demanderait un appel par carte. */}
+      {story.current && story.step === "ready" ? <PlayingAs /> : null}
+
+      {/* Ouvert ou fermé aux visiteurs. Fermé par défaut : un monde appartient
+          à son créateur tant qu'il n'a pas dit le contraire. Un monde emprunté
+          ne s'ouvre pas : ce n'est pas le sien. */}
       {story.step === "ready" && !story.visiting ? (
         <div className="rounded-card border border-line p-3.5">
           <label className="flex items-start gap-3">
@@ -366,6 +472,66 @@ function StoryCard({ story, busy, onPlay, onDeleted }: CardProps) {
         />
       </div>
     </li>
+  );
+}
+
+// Les trois crans du parcours, dans l'ordre ou on les traverse.
+const JOURNEY = ["inspiration", "character", "generating"] as const;
+
+/*
+  Qui le joueur incarne dans l'histoire ouverte, et où elle en est.
+
+  Lu sur `GET /world`, qui sert déjà l'histoire ouverte : c'est un appel de
+  plus sur cet écran, et un seul, la table n'en servant qu'une à la fois.
+  Silencieux, parce qu'une carte sans son personnage reste jouable.
+*/
+function PlayingAs() {
+  const t = useTranslations("Stories");
+  const tGame = useTranslations("Game");
+  const [world, setWorld] = useState<WorldView | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    fetchWorld(controller.signal)
+      .then(setWorld)
+      .catch(() => {});
+
+    return () => controller.abort();
+  }, []);
+
+  if (!world) return null;
+
+  return (
+    <div className="flex items-start gap-4 rounded-card border border-line p-4">
+      <span
+        aria-hidden="true"
+        style={{ borderRadius: "var(--radius-portal)" }}
+        className="grid h-14 w-11 flex-none place-items-center border border-accent/40 bg-mist pt-2 font-voice text-subtitle text-accent"
+      >
+        {world.character.name.slice(0, 1)}
+      </span>
+      <div className="min-w-0">
+        <p className="text-ui-sm text-vellum">
+          {world.character.name}
+          {world.story.act !== null && world.story.act <= world.story.acts ? (
+            <span className="text-vellum-3">
+              {" · "}
+              {tGame("act", { act: world.story.act, acts: world.story.acts })}
+            </span>
+          ) : null}
+        </p>
+        {world.story.title ? (
+          <p className="mt-1 font-voice text-ui-sm text-pretty text-vellum-2 italic">
+            {`\u00ab\u00a0${world.story.title}\u00a0\u00bb`}
+          </p>
+        ) : (
+          <p className="mt-1 text-caption text-pretty text-vellum-3">
+            {t("playingAs")}
+          </p>
+        )}
+      </div>
+    </div>
   );
 }
 

@@ -387,7 +387,8 @@
     "outcome": {
       "kept": "This world had already received visitors: it is kept, detached from you and emptied of your input.",
       "remembered": "Other players had met this character: it stays in their tales, now dead.",
-      "gone": "Story deleted."
+      "gone": "Story deleted.",
+      "title": "Story deleted"
     },
     "carry": "Bring a character",
     "carryTitle": "Who crosses the rift",
@@ -414,6 +415,17 @@
         "place": "place",
         "faction": "faction"
       }
+    },
+    "startedOn": "Started on {date}",
+    "playingAs": "The game is waiting for your next move.",
+    "free": "{count, plural, one {# free slot} other {# free slots}}",
+    "freeHint": "A new world, a new character, the same reserve.",
+    "awaiting": {
+      "inspiration": "Say where this world comes from, and it will be built.",
+      "character": "It remains to say who you play.",
+      "generating": "Under construction: wait for it to finish before deleting it.",
+      "ready": "",
+      "failed": "The build did not go through. Pick your inspiration back up and relaunch."
     }
   },
   "Concept": {

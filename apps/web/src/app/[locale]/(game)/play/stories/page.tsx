@@ -45,12 +45,14 @@ export default function StoriesPage() {
         <h1 className="font-voice text-display-compact text-balance text-vellum">
           {t("title")}
         </h1>
-        <p className="mt-6 max-w-measure text-ui text-pretty text-vellum-2">
+        <p className="mt-4 max-w-measure text-ui text-pretty text-vellum-2">
           {t("lead")}
         </p>
       </header>
 
-      <div className="mt-10">
+      {/* Le compte et les boutons vivent dans le panneau, avec les cartes :
+          ils dependent de ce qu'il a lu. */}
+      <div className="mt-8">
         <StoriesPanel />
       </div>
     </article>

@@ -387,7 +387,8 @@
     "outcome": {
       "kept": "Ce monde avait déjà reçu des visiteurs : il est conservé, détaché de toi et vidé de tes saisies.",
       "remembered": "D'autres joueurs avaient croisé ce personnage : il reste dans leurs récits, désormais mort.",
-      "gone": "Histoire supprimée."
+      "gone": "Histoire supprimée.",
+      "title": "Histoire supprimée"
     },
     "carry": "Amener un personnage",
     "carryTitle": "Qui franchit la faille",
@@ -414,6 +415,17 @@
         "place": "lieu",
         "faction": "faction"
       }
+    },
+    "startedOn": "Commencée le {date}",
+    "playingAs": "La partie attend ton prochain geste.",
+    "free": "{count, plural, one {# emplacement libre} other {# emplacements libres}}",
+    "freeHint": "Un nouveau monde, un nouveau personnage, la même réserve.",
+    "awaiting": {
+      "inspiration": "Dis d'où vient ce monde, et il se construira.",
+      "character": "Il te reste à dire qui tu incarnes.",
+      "generating": "En construction : attends la fin avant de la supprimer.",
+      "ready": "",
+      "failed": "La construction n'a pas abouti. Reprends ton inspiration et relance."
     }
   },
   "Concept": {
