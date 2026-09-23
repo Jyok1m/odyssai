@@ -74,6 +74,11 @@ async function boot(
         bible: null,
         name: 'Sarek',
         accentHue: 32,
+        // Les colonnes posees depuis : l'acte en cours, l'ouverture aux
+        // visiteurs, et le monde qu'on visite quand on en visite un.
+        arcAct: null,
+        isOpen: false,
+        visitingId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -87,6 +92,16 @@ async function boot(
         age: 31,
         personality: { traits: ['tenace'], summary: 'x' },
         attributes: { corps: 3, adresse: 4, esprit: 2, presence: 3, instinct: 4 },
+        // Les colonnes posees depuis : ce qu'il sait faire, ce qu'il porte,
+        // ou il en est, sa jauge de vie, et de quelle essence il est une
+        // incarnation.
+        talents: [],
+        inventory: [],
+        progress: null,
+        hp: null,
+        rest: 0,
+        essenceId: null,
+        arrival: 'natif',
         diedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),

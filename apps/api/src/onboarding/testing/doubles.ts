@@ -22,7 +22,7 @@ interface UserRow {
   updatedAt: Date;
 }
 
-interface UniverseRow {
+export interface UniverseRow {
   id: string;
   ownerId: string | null;
   step: string;
@@ -34,11 +34,19 @@ interface UniverseRow {
   bible: unknown;
   name: string | null;
   accentHue: number | null;
+  // Ou en est l'histoire. Nul pour un monde genere avant les arcs, et la base
+  // rend bien `null` : la colonne absente du double rendait `undefined`, que
+  // le schema de vue refuse.
+  arcAct: number | null;
+  // Ferme par defaut : un monde appartient a son createur.
+  isOpen: boolean;
+  // Le monde que cette histoire visite, quand elle en visite un.
+  visitingId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
-interface CharacterRow {
+export interface CharacterRow {
   id: string;
   universeId: string | null;
   name: string | null;
@@ -46,7 +54,33 @@ interface CharacterRow {
   age: number | null;
   personality: unknown;
   attributes: unknown;
+  talents: string[];
+  inventory: string[];
+  progress: unknown;
+  // La jauge de vie, tenue par le code. Nulle vaut la reserve pleine.
+  hp: number | null;
+  rest: number;
+  // L'essence dont ce personnage est une incarnation, et comment il est entre.
+  essenceId: string | null;
+  arrival: string;
   diedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/*
+  Ce qu'un personnage emporte en franchissant une faille. Le double n'en cree
+  que par le parcours : une fiche validee fait naitre la sienne.
+*/
+interface EssenceRow {
+  id: string;
+  ownerId: string;
+  name: string;
+  gender: string;
+  age: number;
+  personality: unknown;
+  attributes: unknown;
+  marks: unknown;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -176,6 +210,7 @@ export interface OnboardingStore {
   messages: MessageRow[];
   jobs: JobRow[];
   encounters?: EncounterRow[];
+  essences?: EssenceRow[];
   subscriptions?: SubscriptionRow[];
   creditEntries?: CreditEntryRow[];
   stripeEvents?: StripeEventRow[];
@@ -247,8 +282,14 @@ export function makeUser(overrides: Partial<UserRow> = {}): UserRow {
 export function makeOnboardingPrisma(store: OnboardingStore) {
   const hydrate = (
     universe: UniverseRow | undefined,
-    include?: { character?: boolean; jobs?: { take?: number }; entities?: unknown },
-  ) => {
+    include?: {
+      character?: unknown;
+      jobs?: { take?: number };
+      entities?: unknown;
+      canon?: unknown;
+      visiting?: unknown;
+    },
+  ): any => {
     if (!universe) return null;
     if (!include) return { ...universe };
 
@@ -264,6 +305,18 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
       jobs: include.jobs ? jobs.slice(0, include.jobs.take ?? jobs.length) : undefined,
       // Aucun test n'en seme : ce qui compte est que la vue en porte une liste.
       entities: include.entities ? [] : undefined,
+      canon: include.canon ? [] : undefined,
+      /*
+        Aucun test ne joue de visite : ce qui compte est que la lecture d'une
+        histoire ordinaire ne trouve pas un monde emprunte la ou il n'y en a
+        pas.
+      */
+      visiting: include.visiting
+        ? (hydrate(
+            store.universes.find((row) => row.id === universe.visitingId),
+            { entities: true, canon: true },
+          ) ?? null)
+        : undefined,
     };
   };
 
@@ -274,6 +327,77 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
       createMany: async () => ({ count: 0 }),
       create: async ({ data }: any) => data,
       update: async ({ data }: any) => data,
+      upsert: async ({ create }: any) => create,
+      // Rien n'en seme, donc rien n'attend d'etre relu.
+      groupBy: async () => [],
+    },
+
+    /*
+      Le canon n'est pas joue de bout en bout non plus : il naît au tour, et
+      le tour a son propre double. Seule la lecture compte ici.
+    */
+    canonFact: {
+      findMany: async () => [],
+      create: async ({ data }: any) => data,
+      update: async ({ data }: any) => data,
+      groupBy: async () => [],
+    },
+
+    /*
+      Ce qu'un personnage emporte en franchissant une faille. Le parcours en
+      cree une a la premiere fiche validee : c'est le seul ecrivain de bout en
+      bout, et les tests le traversent.
+    */
+    essence: {
+      findMany: async ({ where }: any = {}) =>
+        (store.essences ?? [])
+          .filter((row) => where?.ownerId === undefined || row.ownerId === where.ownerId)
+          .map((row) => ({ ...row, incarnations: [] })),
+      findUnique: async ({ where }: any) => {
+        const row = (store.essences ?? []).find(
+          (item) =>
+            item.id === where.id &&
+            (where.ownerId === undefined || item.ownerId === where.ownerId),
+        );
+        return row ? { ...row, incarnations: [] } : null;
+      },
+      findFirst: async ({ where }: any = {}) =>
+        (store.essences ?? []).find(
+          (row) => where?.ownerId === undefined || row.ownerId === where.ownerId,
+        ) ?? null,
+      create: async ({ data, select }: any) => {
+        const now = new Date();
+        const row: EssenceRow = {
+          id: randomUUID(),
+          ownerId: data.ownerId,
+          name: data.name,
+          gender: data.gender,
+          age: data.age,
+          personality: data.personality ?? null,
+          attributes: data.attributes ?? null,
+          marks: [],
+          createdAt: now,
+          updatedAt: now,
+        };
+        store.essences = [...(store.essences ?? []), row];
+
+        if (!select) return { ...row };
+        return Object.fromEntries(
+          Object.keys(select).map((key) => [key, (row as any)[key]]),
+        );
+      },
+      update: async ({ where, data }: any) => {
+        const row = (store.essences ?? []).find((item) => item.id === where.id)!;
+        return { ...assign(row, data) };
+      },
+      delete: async ({ where }: any) => {
+        store.essences = (store.essences ?? []).filter((row) => row.id !== where.id);
+        return {};
+      },
+      count: async ({ where }: any = {}) =>
+        (store.essences ?? []).filter(
+          (row) => where?.essenceId === undefined || row.id === where.essenceId,
+        ).length,
     },
     user: {
       /*
@@ -369,6 +493,8 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
       findMany: async ({ where, orderBy, select, include }: any = {}) => {
         const rows = store.universes
           .filter((row) => where?.ownerId === undefined || row.ownerId === where.ownerId)
+          // Les visites d'un monde : aucun test n'en joue, donc aucune ligne.
+          .filter(() => where?.visiting === undefined && where?.visitingId === undefined)
           .sort((a, b) =>
             (orderBy?.createdAt === 'desc' ? -1 : 1) *
             (a.createdAt.getTime() - b.createdAt.getTime()),
@@ -399,9 +525,13 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
           bible: null,
           name: null,
           accentHue: null,
+          arcAct: null,
+          isOpen: false,
+          visitingId: null,
           createdAt: now,
           updatedAt: now,
         };
+        assign(row, data);
         store.universes.push(row);
 
         if (!select) return { ...row };
@@ -435,8 +565,20 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
     },
 
     character: {
+      findUnique: async ({ where, select }: any) => {
+        const row = store.characters.find((item) =>
+          where.id ? item.id === where.id : item.universeId === where.universeId,
+        );
+        if (!row) return null;
+        if (!select) return { ...row };
+        return Object.fromEntries(
+          Object.keys(select).map((key) => [key, (row as any)[key]]),
+        );
+      },
       update: async ({ where, data }: any) => {
-        const row = store.characters.find((item) => item.id === where.id)!;
+        const row = store.characters.find((item) =>
+          where.id ? item.id === where.id : item.universeId === where.universeId,
+        )!;
         return { ...assign(row, data) };
       },
       delete: async ({ where }: any) => {
@@ -461,6 +603,13 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
           age: null,
           personality: null,
           attributes: null,
+          talents: [],
+          inventory: [],
+          progress: null,
+          hp: null,
+          rest: 0,
+          essenceId: null,
+          arrival: 'natif',
           diedAt: null,
           createdAt: now,
           updatedAt: now,

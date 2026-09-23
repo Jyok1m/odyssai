@@ -65,6 +65,11 @@ async function boot(options: {
         bible: null,
         name: null,
         accentHue: null,
+        // Les colonnes posees depuis : l'acte en cours, l'ouverture aux
+        // visiteurs, et le monde qu'on visite quand on en visite un.
+        arcAct: null,
+        isOpen: false,
+        visitingId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       },

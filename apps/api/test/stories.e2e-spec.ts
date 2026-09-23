@@ -159,6 +159,9 @@ describe('/stories (e2e)', () => {
       bible: null,
       name: 'Ailleurs',
       accentHue: 10,
+      arcAct: null,
+      isOpen: false,
+      visitingId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -240,6 +243,9 @@ describe('/stories (e2e)', () => {
       bible: null,
       name: 'Ailleurs',
       accentHue: 10,
+      arcAct: null,
+      isOpen: false,
+      visitingId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
