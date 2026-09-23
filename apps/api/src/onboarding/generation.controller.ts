@@ -10,12 +10,18 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import {
+  ATTRIBUTES,
+  AttributesSchema,
+  CanonFactSchema,
   WorldBibleSchema,
   WorldCharterSchema,
   WorldViewSchema,
+  type Attribute,
+  type AttributeStanding,
   type GenerationStreamEvent,
   type WorldView,
 } from '@odyssai/schemas';
+import { PROGRESS_STEPS, modifierOf } from '@odyssai/engine';
 import { PrismaClient, type User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
@@ -125,7 +131,11 @@ export class GenerationController {
     const universe = where
       ? await this.prisma.universe.findUnique({
           where,
-          include: { character: true, entities: { orderBy: { createdAt: 'asc' } } },
+          include: {
+            character: true,
+            entities: { orderBy: { createdAt: 'asc' } },
+            canon: { orderBy: { createdAt: 'asc' } },
+          },
         })
       : null;
 
@@ -143,6 +153,16 @@ export class GenerationController {
       throw new NotFoundException({ code: 'not_ready' });
     }
 
+    const attributes = AttributesSchema.safeParse(universe.character?.attributes);
+    if (!attributes.success) {
+      // Le meme constat que plus haut : la fiche est illisible, donc la
+      // partie l'est aussi, `TurnMemoryService` la relisant a chaque tour.
+      this.logger.error(`fiche de ${universe.id} illisible malgre l'etape ready`);
+      throw new NotFoundException({ code: 'not_ready' });
+    }
+
+    const progress = (universe.character?.progress ?? {}) as Record<string, unknown>;
+
     // Le schema de vue laisse tomber les secrets des personnages : ils se
     // decouvriront en jeu, et un champ qu'un type ne porte pas ne fuite pas.
     return WorldViewSchema.parse({
@@ -151,6 +171,7 @@ export class GenerationController {
       charter: charter.data,
       lore: bible.data.lore,
       factions: bible.data.factions,
+      politics: bible.data.politics,
       npcs: bible.data.npcs,
       affinities: bible.data.affinities,
       // Le su seulement : le schema de vue ne porte pas le cache.
@@ -159,12 +180,37 @@ export class GenerationController {
         kind: row.kind,
         known: row.known,
       })),
+      /*
+        Un fait illisible est saute plutot que de faire echouer la lecture du
+        monde : le canon grandit tour apres tour, et une ligne fautive ne doit
+        pas fermer la partie.
+      */
+      canon: universe.canon.flatMap((row) => {
+        const parsed = CanonFactSchema.safeParse({
+          subject: row.subject,
+          statement: row.statement,
+        });
+        return parsed.success ? [parsed.data] : [];
+      }),
+      /*
+        Le rang de l'acte et rien d'autre. Le but de l'acte en cours et son
+        signe de fin restent au meneur : le joueur qui les lirait n'aurait
+        plus qu'a y aller.
+      */
+      story: {
+        act: universe.arcAct,
+        acts: bible.data.arc?.acts.length ?? 0,
+        bond: bible.data.arc?.hero?.bond ?? null,
+      },
       character: {
         name: universe.character?.name,
         gender: universe.character?.gender,
         age: universe.character?.age,
         personality: universe.character?.personality,
-        attributes: universe.character?.attributes,
+        attributes: attributes.data,
+        standing: standingOf(attributes.data, progress),
+        talents: universe.character?.talents ?? [],
+        inventory: universe.character?.inventory ?? [],
       },
     });
   }
@@ -182,4 +228,33 @@ export class GenerationController {
   private write(res: Response, event: GenerationStreamEvent): void {
     res.write(`data: ${JSON.stringify(event)}\n\n`);
   }
+}
+
+/*
+  Ce que vaut chaque attribut, et ou il en est de sa montee.
+
+  Calcule ici parce que `modifierOf` et `PROGRESS_STEPS` vivent dans
+  `@odyssai/engine`, que le navigateur n'a pas : les recopier la-bas en ferait
+  deux verites. `needed` est nul au maximum, ou plus rien n'attend.
+*/
+function standingOf(
+  attributes: Record<Attribute, number>,
+  progress: Record<string, unknown>,
+): Record<Attribute, AttributeStanding> {
+  return Object.fromEntries(
+    ATTRIBUTES.map((name) => {
+      const score = attributes[name];
+      const uses = progress[name];
+
+      return [
+        name,
+        {
+          score,
+          modifier: modifierOf(score),
+          uses: typeof uses === 'number' && uses > 0 ? uses : 0,
+          needed: PROGRESS_STEPS[score] ?? null,
+        },
+      ];
+    }),
+  ) as Record<Attribute, AttributeStanding>;
 }

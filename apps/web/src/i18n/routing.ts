@@ -35,6 +35,8 @@ export const routing = defineRouting({
     "/account": "/account",
     "/play": "/play",
     "/play/stories": "/play/stories",
+    "/play/character": "/play/character",
+    "/play/world": "/play/world",
   },
 });
 

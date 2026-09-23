@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { GenerationStepSchema, normalizeWorkTitle } from './onboarding.js';
+import {
+  AttributeSchema,
+  AttributesSchema,
+  GenerationStepSchema,
+  normalizeWorkTitle,
+} from './onboarding.js';
 
 /*
   Une majuscule hors tete de phrase vaut nom propre. La regle est grossiere et
@@ -270,6 +275,21 @@ export type WorldArc = z.infer<typeof WorldArcSchema>;
 
   Les genres sont sans accent : le modele les recopie.
 */
+export const CANON_FACTS_PER_TURN_MAX = 3;
+
+/*
+  Un fait que le meneur a invente en repondant a une question que le lore ne
+  couvrait pas. Il entre au canon et nourrit tous les tours suivants : c'est
+  ce qui fait qu'une reponse donnee une fois reste vraie.
+*/
+export const CanonFactSchema = z.object({
+  // De quoi ca parle, en quelques mots. Sert a relire et a regrouper.
+  subject: z.string().trim().min(2).max(80),
+  statement: z.string().trim().min(10).max(400),
+});
+
+export type CanonFact = z.infer<typeof CanonFactSchema>;
+
 export const ENTITY_KINDS = ['npc', 'item', 'place', 'faction'] as const;
 export const EntityKindSchema = z.enum(ENTITY_KINDS);
 export type EntityKind = z.infer<typeof EntityKindSchema>;
@@ -423,16 +443,59 @@ export const PublicNpcSchema = NpcSchema.omit({ secret: true });
 
 export type PublicNpc = z.infer<typeof PublicNpcSchema>;
 
+/*
+  Ou en est un attribut, calcule par le serveur.
+
+  Le modificateur et les paliers vivent dans `@odyssai/engine`, que le
+  navigateur n'a pas : les recopier la-bas en ferait deux verites, et la
+  fausse serait celle qu'on lit a l'ecran. `needed` est nul au maximum, ou
+  rien n'attend plus.
+*/
+export const AttributeStandingSchema = z.object({
+  score: z.number().int(),
+  modifier: z.number().int(),
+  // Jets depuis la derniere montee, pas depuis toujours.
+  uses: z.number().int().nonnegative(),
+  needed: z.number().int().positive().nullable(),
+});
+
+export type AttributeStanding = z.infer<typeof AttributeStandingSchema>;
+
+/*
+  Ou en est l'histoire, vue du joueur : le rang de l'acte, jamais son but ni
+  son signe de fin. Le meneur lui-meme ne recoit que l'acte en cours, pour
+  qu'une histoire qui sait ou elle va ne se raconte pas toute seule.
+
+  `bond` est ce qui rattache le heros a cette histoire et qu'il sait. Le
+  secret, que le monde sait de lui et qu'il ignore, reste au meneur : il n'est
+  pas dans ce type, donc il ne peut pas fuiter.
+*/
+export const StoryStandingSchema = z.object({
+  act: z.number().int().min(1).nullable(),
+  acts: z.number().int().nonnegative(),
+  bond: z.string().nullable(),
+});
+
+export type StoryStanding = z.infer<typeof StoryStandingSchema>;
+
 export const WorldViewSchema = z.object({
   name: z.string(),
   accentHue: z.number().int().min(0).max(359),
   charter: WorldCharterSchema,
   lore: WorldLoreSchema,
   factions: z.array(FactionSchema),
+  politics: PoliticsSchema,
   npcs: z.array(PublicNpcSchema),
   affinities: z.array(AffinitySchema),
   // Ce que le joueur a appris, entite par entite. Le cache n'est pas dans le type.
   entities: z.array(PublicEntitySchema),
+  /*
+    Ce que le meneur a invente en repondant a une question que le lore ne
+    couvrait pas. Il se lit avec le monde et non avec l'historique d'un tour :
+    une reponse donnee une fois reste vraie.
+  */
+  canon: z.array(CanonFactSchema),
+  story: StoryStandingSchema,
   character: z.object({
     name: z.string(),
     gender: z.string(),
@@ -441,7 +504,10 @@ export const WorldViewSchema = z.object({
       traits: z.array(z.string()),
       summary: z.string(),
     }),
-    attributes: z.record(z.string(), z.number().int()),
+    attributes: AttributesSchema,
+    standing: z.record(AttributeSchema, AttributeStandingSchema),
+    talents: z.array(z.string()),
+    inventory: z.array(z.string()),
   }),
 });
 

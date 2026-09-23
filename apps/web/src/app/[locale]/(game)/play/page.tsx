@@ -3,7 +3,6 @@ import { hasLocale } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
-import { GameTabs } from "@/components/play/game-tabs";
 import { OnboardingWizard } from "@/components/play/onboarding-wizard";
 import { routing } from "@/i18n/routing";
 import { ALPHA_OPEN } from "@/lib/flags";
@@ -45,9 +44,6 @@ export default function PlayPage() {
   // genere, l'ecran n'est plus un parcours et n'en veut plus.
   return (
     <article className="mx-auto max-w-wrap px-6 pt-32 pb-24 sm:pt-40 lg:px-8">
-      <div className="mb-10">
-        <GameTabs />
-      </div>
       <OnboardingWizard />
     </article>
   );

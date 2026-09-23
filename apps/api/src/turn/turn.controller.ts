@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import {
-  CanonFactSchema,
+  AttributeSchema,
   INVENTORY_MAX,
   entityKey,
   type Entity,
@@ -34,6 +34,7 @@ import {
   DIALOGUE_PROMPT_VERSION,
 } from '@odyssai/narrator';
 import {
+  PROGRESS_STEPS,
   arbitrateCanon,
   attributeFor,
   bandFor,
@@ -93,15 +94,22 @@ export class TurnController {
     const world = await this.memory.world(user);
     if (!world) throw new NotFoundException({ code: 'not_ready' });
 
-    const [messages, turns, canon] = await Promise.all([
+    const [messages, turns, rolled] = await Promise.all([
       this.prisma.conversationMessage.findMany({
         where: { universeId: world.universeId, channel: CHANNEL },
         orderBy: { seq: 'asc' },
       }),
       this.prisma.turn.findMany({ where: { universeId: world.universeId } }),
-      this.prisma.canonFact.findMany({
-        where: { universeId: world.universeId },
-        orderBy: { createdAt: 'asc' },
+      /*
+        Le dernier jet que le joueur a lui-meme lance. `request` et non
+        `used_die` : le de tourne a chaque tour, mais le joueur n'en voit le
+        chiffre que quand c'est lui qui l'a demande, et la declaration du
+        modele ne dit pas ce qui s'est passe.
+      */
+      this.prisma.turn.findFirst({
+        where: { universeId: world.universeId, request: 'roll' },
+        orderBy: { seq: 'desc' },
+        select: { die: true, modifier: true, attribute: true, band: true },
       }),
     ]);
 
@@ -123,13 +131,14 @@ export class TurnController {
         outcome: outcomes.get(row.seq) ?? null,
         createdAt: row.createdAt.toISOString(),
       })),
-      canon: canon.flatMap((row) => {
-        const parsed = CanonFactSchema.safeParse({
-          subject: row.subject,
-          statement: row.statement,
-        });
-        return parsed.success ? [parsed.data] : [];
-      }),
+      lastRoll: rolled
+        ? {
+            die: rolled.die,
+            modifier: rolled.modifier,
+            attribute: AttributeSchema.nullable().catch(null).parse(rolled.attribute),
+            outcome: publicOutcome(rolled.band as never),
+          }
+        : null,
     };
   }
 
@@ -749,11 +758,25 @@ export class TurnController {
       }
 
       if (streaming && moved) {
-        this.write(res, { type: 'carrying', items: carried });
+        // Ce qui n'y etait pas avant ce tour. `carryAfter` a deja ecarte les
+        // doublons et les objets refuses : la comparaison porte sur ce qui
+        // est reellement entre, pas sur ce que le modele a declare.
+        const before = new Set(world.inventory.map(entityKey));
+        this.write(res, {
+          type: 'carrying',
+          items: carried,
+          gained: carried.filter((item) => !before.has(entityKey(item))),
+        });
       }
 
       if (streaming && grew && attribute) {
-        this.write(res, { type: 'grew', attribute, score: grew });
+        this.write(res, {
+          type: 'grew',
+          attribute,
+          score: grew,
+          modifier: modifierOf(grew),
+          needed: PROGRESS_STEPS[grew] ?? null,
+        });
       }
 
       if (streaming) {

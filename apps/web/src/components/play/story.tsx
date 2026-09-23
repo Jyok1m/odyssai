@@ -27,7 +27,16 @@ export function Story({ messages }: { messages: TurnMessage[] }) {
       {scenes.map((scene, index) => (
         <article key={scene.id}>
           {index > 0 ? <hr className="mb-6 border-line" /> : null}
-          <p className="font-voice text-ui-sm whitespace-pre-wrap text-vellum">
+          {/* La lettrine sur la première scène seule : celle-là commence
+              l'histoire, les autres la continuent. */}
+          <p
+            className={[
+              "font-voice text-narration whitespace-pre-wrap text-vellum",
+              index === 0 ? "dropcap" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          >
             {scene.content}
           </p>
         </article>

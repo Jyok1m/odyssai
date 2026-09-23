@@ -1,6 +1,15 @@
 import { z } from 'zod';
 import { AttributeSchema } from './onboarding.js';
-import { EntityKindSchema } from './world.js';
+/*
+  Le canon vit avec le monde, pas avec le tour : il dit ce qui est vrai ici, et
+  c'est le tour qui le fait grandir. Importe plutot que redefini, sans quoi la
+  borne du bloc de queue et celle du monde finiraient par diverger.
+*/
+import {
+  CANON_FACTS_PER_TURN_MAX,
+  CanonFactSchema,
+  EntityKindSchema,
+} from './world.js';
 
 export const TURN_MESSAGE_MAX_CHARS = 600;
 
@@ -21,21 +30,6 @@ export const ITEMS_PER_TURN_MAX = 3;
   poserait cinq d'un coup ferait ce qu'on lui reproche deja.
 */
 export const ENTITIES_PER_TURN_MAX = 2;
-
-export const CANON_FACTS_PER_TURN_MAX = 3;
-
-/*
-  Un fait que le meneur a invente en repondant a une question que le lore ne
-  couvrait pas. Il entre au canon et nourrit tous les tours suivants : c'est
-  ce qui fait qu'une reponse donnee une fois reste vraie.
-*/
-export const CanonFactSchema = z.object({
-  // De quoi ca parle, en quelques mots. Sert a relire et a regrouper.
-  subject: z.string().trim().min(2).max(80),
-  statement: z.string().trim().min(10).max(400),
-});
-
-export type CanonFact = z.infer<typeof CanonFactSchema>;
 
 /*
   Ce que le joueur envoie. Deux formes seulement : il dit ce qu'il fait ou
@@ -167,11 +161,31 @@ export const TurnStreamEventSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('carrying'),
     items: z.array(z.string()),
+    /*
+      Ce qui vient d'entrer dans le sac, pour que l'ecran le signale. Dit par
+      le serveur et non deduit d'une comparaison cote navigateur : c'est
+      `carryAfter` qui decide de ce qui est entre, et lui seul replie les noms
+      comme il faut.
+    */
+    gained: z.array(z.string()),
   }),
   z.object({
     type: z.literal('grew'),
     attribute: AttributeSchema,
     score: z.number().int(),
+    /*
+      Ce que le nouveau score pese sur un jet. Envoye plutot que recalcule par
+      le navigateur : `modifierOf` vit dans `@odyssai/engine`, qu'il n'a pas,
+      et la fiche affichee doit suivre la montee sans attendre un
+      rechargement.
+    */
+    modifier: z.number().int(),
+    /*
+      Ce qu'il faudra de jets pour le palier suivant, nul au maximum. Meme
+      raison : `PROGRESS_STEPS` vit dans le moteur, et laisser l'ancienne
+      valeur en place afficherait un compte a rebours faux.
+    */
+    needed: z.number().int().positive().nullable(),
   }),
   z.object({
     type: z.literal('roll'),
@@ -212,13 +226,37 @@ export const TurnMessageSchema = z.object({
 
 export type TurnMessage = z.infer<typeof TurnMessageSchema>;
 
+/*
+  Un jet lance par le joueur, tel qu'il l'a vu.
+
+  Seuls les tours ou il a lance en portent un : le de tourne a chaque tour,
+  mais il n'en voit le chiffre que quand c'est lui qui l'a demande. Le recours
+  au sort garde le sien cache, le joueur n'ayant rien tente.
+*/
+export const RollRecordSchema = z.object({
+  die: z.number().int().min(1),
+  modifier: z.number().int(),
+  attribute: AttributeSchema.nullable(),
+  outcome: PublicOutcomeSchema,
+});
+
+export type RollRecord = z.infer<typeof RollRecordSchema>;
+
 // Reponse de GET /turn : de quoi reprendre la partie ou on l'a laissee.
 export const TurnHistorySchema = z.object({
   messages: z.array(TurnMessageSchema),
   // Ce que le personnage porte, pour que l'ecran le retrouve en revenant.
   inventory: z.array(z.string()),
-  // Les faits que le meneur a inventes, pour que le joueur puisse les relire.
-  canon: z.array(CanonFactSchema),
+  /*
+    Les faits inventes par le meneur ne sont pas ici : le canon dit ce qui est
+    vrai dans ce monde, pas ce qui s'est dit a un tour. Il se lit avec le
+    monde, ou il vit a cote de la charte et du lore.
+  */
+  /*
+    Le dernier jet lance, pour que la table le montre encore en revenant.
+    Nul tant que le joueur n'a rien lance.
+  */
+  lastRoll: RollRecordSchema.nullable(),
 });
 
 export type TurnHistory = z.infer<typeof TurnHistorySchema>;

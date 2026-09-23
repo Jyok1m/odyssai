@@ -74,6 +74,20 @@
   --color-accent-hover: color-mix(in oklab, var(--accent) 82%, white);
 }
 
+/* La lettrine du kit, sur la première scène d'une partie. Utilitaire plutôt
+   que valeurs arbitraires répétées : 3.5em et 0.85 ne sont sur aucune échelle
+   du thème, et les recopier à chaque appel les ferait diverger. */
+@utility dropcap {
+  &::first-letter {
+    float: left;
+    padding: 8px 10px 0 0;
+    font-size: 3.5em;
+    font-weight: 600;
+    line-height: 0.85;
+    color: var(--color-brass);
+  }
+}
+
 :root {
   --accent: #5fb8a5;
   --on-accent: #0f1b1d;

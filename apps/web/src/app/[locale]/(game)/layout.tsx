@@ -1,16 +1,16 @@
 import type { ReactNode } from "react";
 
-import { SiteHeader } from "@/components/marketing/site-header";
+import { GameHeader } from "@/components/play/game-header";
 
 /*
-  Coque du jeu. Le bandeau reste, pour que le compte et la langue soient
-  joignables ; le pied de page du site vitrine part, il n'a rien à faire sous
-  un écran de saisie.
+  Coque du jeu. Le bandeau est celui du jeu et non celui du site vitrine : cinq
+  pages de vente au-dessus d'une table de jeu ne servent personne, et les
+  onglets y trouvent leur place. Le pied de page part pour la même raison.
 */
 export default function GameLayout({ children }: { children: ReactNode }) {
   return (
     <>
-      <SiteHeader />
+      <GameHeader />
       <main>{children}</main>
     </>
   );
