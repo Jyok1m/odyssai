@@ -54,7 +54,6 @@ export function buildTurnMessages(
 // Un bloc absent vaut une action sans de, sans fait invente et sans objet.
 const DEFAULT_DELTA: TurnDelta = {
   kind: 'action',
-  usedDie: false,
   facts: [],
   actDone: false,
   met: [],
@@ -100,7 +99,6 @@ export function readDelta(tail: string): TurnDelta {
     for (const candidate of source.facts) {
       const single = TurnDeltaSchema.safeParse({
         kind: 'question',
-        usedDie: false,
         facts: [candidate],
       });
       if (single.success && single.data.facts[0]) facts.push(single.data.facts[0]);
@@ -115,7 +113,6 @@ export function readDelta(tail: string): TurnDelta {
   const items = (raw: unknown): string[] => {
     const single = TurnDeltaSchema.safeParse({
       kind: 'action',
-      usedDie: false,
       gained: Array.isArray(raw) ? raw : [],
     });
     return single.success ? single.data.gained : [];
@@ -123,7 +120,6 @@ export function readDelta(tail: string): TurnDelta {
 
   return {
     kind: source.kind === 'question' ? 'question' : 'action',
-    usedDie: source.usedDie === true,
     facts: facts.slice(0, CANON_FACTS_PER_TURN_MAX),
     actDone: source.actDone === true,
     // Une entite mal formee ne doit pas emporter les autres.
@@ -131,7 +127,6 @@ export function readDelta(tail: string): TurnDelta {
       ? source.met.flatMap((candidate) => {
           const single = TurnDeltaSchema.safeParse({
             kind: 'action',
-            usedDie: false,
             met: [candidate],
           });
           return single.success ? single.data.met : [];
@@ -140,7 +135,6 @@ export function readDelta(tail: string): TurnDelta {
     revealed: (() => {
       const single = TurnDeltaSchema.safeParse({
         kind: 'action',
-        usedDie: false,
         revealed: Array.isArray(source.revealed) ? source.revealed : [],
       });
       return single.success ? single.data.revealed : [];

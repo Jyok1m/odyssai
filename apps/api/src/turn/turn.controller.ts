@@ -353,11 +353,12 @@ export class TurnController {
     /*
       Le de a-t-il tranche ? C'est le code qui repond, pas le modele.
 
-      Il declare bien `usedDie` dans son bloc de queue, mais il l'oublie ou le
-      nie : sur les premiers tours, `used_die` etait faux meme la ou le joueur
-      venait de lancer. Or ce qu'on montre au joueur et ce qu'on garde pour
-      verifier un de apres coup ne peuvent pas dependre d'une declaration.
-      Sa reponse ne sert donc plus que pour les tours qu'on lui laisse juger.
+      Il le declarait dans son bloc de queue et se trompait dans les deux
+      sens : faux la ou le joueur venait de lancer, vrai sur une simple
+      question, ce qui affichait un verdict sous une question. Ce qu'on
+      montre au joueur et ce qu'on garde pour verifier un de apres coup ne
+      dependent d'aucune declaration : sur un tour qu'on lui laisse juger, la
+      bande peut colorer son recit, mais rien ne s'affiche.
     */
     const settled = !opening && !asking && settledByDie(situation);
 
@@ -499,6 +500,7 @@ export class TurnController {
             charter: world.charter,
             npc: speaker,
             player: world.character.name,
+            locale,
             recent: memory.recent,
           },
           message: said,
@@ -527,6 +529,10 @@ export class TurnController {
         // replique refusee est une replique absente, jamais un tour perdu.
         if (spoken.kind === 'ok' && this.moderation.clean(spoken.line)) {
           line = { speaker: speaker.name, text: spoken.line };
+        } else {
+          this.logger.log(
+            `replique de ${speaker.name} ecartee (${spoken.kind === 'ok' ? 'moderation' : spoken.reason})`,
+          );
         }
       } catch (error: unknown) {
         this.logger.warn(`replique de ${speaker.name} en echec : ${String(error)}`);
@@ -880,7 +886,7 @@ export class TurnController {
             band,
             modifier,
             attribute,
-            usedDie: settled || delta.usedDie,
+            usedDie: settled,
             kind: delta.kind,
             learned: arbitrated.accepted.length,
             situation,
@@ -993,7 +999,7 @@ export class TurnController {
       if (streaming) {
         this.write(res, {
           type: 'done',
-          outcome: settled || delta.usedDie ? publicOutcome(band) : null,
+          outcome: settled ? publicOutcome(band) : null,
           learned: arbitrated.accepted.length,
         });
       }

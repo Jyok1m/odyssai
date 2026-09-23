@@ -1,5 +1,5 @@
 import type { LlmClient, LlmTrace } from '@odyssai/llm';
-import { findBorrowedNames } from '@odyssai/schemas';
+import { findBorrowedNames, normalizeWorkTitle } from '@odyssai/schemas';
 import { DIALOGUE_PROMPT, type DialogueContext } from '../prompts/dialogue/v1.js';
 import type { JsonModelConfig, JsonUsage } from '../world/json.js';
 
@@ -21,7 +21,7 @@ export interface SpeakLineRequest {
 
 export type SpeakLineResult =
   | { kind: 'ok'; line: string; usage: JsonUsage }
-  | { kind: 'rejected'; reason: 'empty' | 'borrowed'; usage: JsonUsage };
+  | { kind: 'rejected'; reason: 'empty' | 'borrowed' | 'echo'; usage: JsonUsage };
 
 /*
   Nettoie ce qu'un modele de jeu de role rend malgre la consigne : le nom en
@@ -60,8 +60,45 @@ export function cleanLine(raw: string, speaker: string): string {
   return text;
 }
 
+// En deca de trois lettres, un mot ne dit rien de qui l'a ecrit.
+const ECHO_WORD_MIN = 3;
+// Une ligne courte se compare mal : quatre mots pleins au moins, ou l'egalite.
+const ECHO_WORDS_MIN = 4;
+// Au dela, la ligne reprend le message plus qu'elle n'y repond.
+const ECHO_SHARE = 0.7;
+
+function contentWords(text: string): string[] {
+  return normalizeWorkTitle(text)
+    .split(' ')
+    .filter((word) => word.length >= ECHO_WORD_MIN);
+}
+
 /*
-  La replique d'un personnage, par le modele de jeu de role. Un seul appel :
+  Vrai quand la ligne repete le message du joueur au lieu d'y repondre.
+
+  Releve sur la premiere partie en production : sur trois repliques, deux
+  etaient la traduction du message. Le meneur les ignorait de lui-meme, mais
+  `turns.line` gardait une ligne que le recit n'avait jamais portee, et la
+  table ne disait plus si le modele de dialogue servait. Le repli est celui
+  des titres d'oeuvres, les mots courts sont ecartes, et une reponse qui
+  reprend des mots du joueur pour y ajouter les siens passe : c'est la part
+  de ses mots qui compte, pas leur presence.
+*/
+export function echoes(line: string, message: string): boolean {
+  const spoken = normalizeWorkTitle(line);
+  if (!spoken) return false;
+  if (spoken === normalizeWorkTitle(message)) return true;
+
+  const words = contentWords(line);
+  if (words.length < ECHO_WORDS_MIN) return false;
+
+  const heard = new Set(contentWords(message));
+  const shared = words.filter((word) => heard.has(word)).length;
+  return shared / words.length >= ECHO_SHARE;
+}
+
+/*
+  La replique d'un personnage, par un appel a part. Un seul appel :
   une replique absente ne coute rien au tour, le meneur fait parler le
   personnage lui-meme comme avant.
 */
@@ -92,6 +129,7 @@ export async function speakLine(request: SpeakLineRequest): Promise<SpeakLineRes
 
   const line = cleanLine(text, context.npc.name);
   if (line.length === 0) return { kind: 'rejected', reason: 'empty', usage };
+  if (echoes(line, message)) return { kind: 'rejected', reason: 'echo', usage };
   if (findBorrowedNames(line, request.works).length > 0) {
     return { kind: 'rejected', reason: 'borrowed', usage };
   }

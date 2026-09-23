@@ -39,11 +39,17 @@ export const LLM_MODELS: Record<LlmRole, LlmModelSpec> = {
   turn: { model: 'qwen/qwen3.8-27b', temperature: 0.85, maxOutputTokens: 900 },
 
   /*
-    La replique d'un personnage, quand le joueur s'adresse a lui. Un modele
-    de jeu de role, pas un assistant : il tient une voix, refuse, ment, et ne
-    lisse pas. Une a trois phrases, que le meneur reprend telles quelles.
+    La replique d'un personnage, quand le joueur s'adresse a lui, par un appel
+    a part avec sa seule carte : c'est l'appel separe qui tient la voix. Une a
+    trois phrases, que le meneur reprend telles quelles.
+
+    D'abord `gryphe/mythomax-l2-13b`, un finetune de jeu de role cense
+    refuser, mentir et ne pas lisser. Releve sur la premiere partie en
+    production : une replique sur trois, les deux autres etant la traduction
+    du message du joueur. Le modele du tour ecrit le francais et suit une
+    consigne systeme.
   */
-  dialogue: { model: 'gryphe/mythomax-l2-13b', temperature: 0.9, maxOutputTokens: 160 },
+  dialogue: { model: 'qwen/qwen3.8-27b', temperature: 0.9, maxOutputTokens: 160 },
 
   // Sept appels par monde, amortis sur vingt-cinq credits : la qualite y est
   // presque gratuite, et c'est elle qui decide de la coherence de tout ce qui

@@ -6,7 +6,7 @@ import { entityKey, type Entity } from '@odyssai/schemas';
   Derive du texte par le code, et non declare par le modele : c'est la meme
   technique que `findBorrowedNames`, des mots entiers compares sur des noms
   replies. Le lui demander aurait coute des jetons a chaque tour pour une
-  reponse qu'il oublie ou arrange, comme il oublie `usedDie`.
+  reponse qu'il oublie ou arrange, comme il se trompait sur l'usage du de.
 
   La contrepartie est assumee : quelqu'un qui est la sans etre nomme ne s'y
   voit pas. Une presence qu'on ne lit nulle part n'en etait pas une pour le

@@ -63,13 +63,12 @@ describe('la revelation', () => {
 
 describe('ce que le meneur declare', () => {
   it('borne les noms nouveaux et tolere les absents', () => {
-    const delta = TurnDeltaSchema.parse({ kind: 'action', usedDie: false });
+    const delta = TurnDeltaSchema.parse({ kind: 'action' });
     expect(delta.met).toEqual([]);
     expect(delta.revealed).toEqual([]);
 
     const three = TurnDeltaSchema.safeParse({
       kind: 'action',
-      usedDie: false,
       met: [1, 2, 3].map((n) => ({ name: `Nom ${n}`, kind: 'npc', hint: 'vu au marche' })),
     });
     expect(three.success).toBe(false);
@@ -79,7 +78,6 @@ describe('ce que le meneur declare', () => {
     expect(
       TurnDeltaSchema.safeParse({
         kind: 'action',
-        usedDie: false,
         met: [{ name: 'Orin', kind: 'personnage', hint: 'vu au marche' }],
       }).success,
     ).toBe(false);

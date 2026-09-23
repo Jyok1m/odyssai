@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { LlmClient, LlmStreamEvent } from '@odyssai/llm';
-import { DIALOGUE_PROMPT, TURN_PROMPT, cleanLine, speakLine } from '@odyssai/narrator';
+import { DIALOGUE_PROMPT, TURN_PROMPT, cleanLine, echoes, speakLine } from '@odyssai/narrator';
 import { interlocutorOf } from '@odyssai/engine';
 import type { TurnContext } from '@odyssai/narrator';
 import type { Entity, WorldCharter } from '@odyssai/schemas';
@@ -135,6 +135,7 @@ describe('speakLine', () => {
       charter: CHARTER,
       npc: npc('Ourden'),
       player: 'Ael',
+      locale: 'fr' as const,
       recent: [],
     },
     message: 'Tu me dois combien ?',
@@ -146,19 +147,52 @@ describe('speakLine', () => {
     expect(result).toMatchObject({ kind: 'ok', line: 'Trois mois. Et je compte.' });
   });
 
-  it('refuse une replique vide ou empruntee', async () => {
+  it('refuse une replique vide, empruntee, ou qui repete le joueur', async () => {
     expect((await speakLine(request('*soupire*'))).kind).toBe('rejected');
     const borrowed = await speakLine(request('Demande a Arrakis.', ['Arrakis']));
     expect(borrowed).toMatchObject({ kind: 'rejected', reason: 'borrowed' });
+    const echo = await speakLine(request('Ourden : « Tu me dois combien ? »'));
+    expect(echo).toMatchObject({ kind: 'rejected', reason: 'echo' });
   });
 
-  it('delimite le message du joueur et cache le su et le cache au personnage', () => {
+  it('delimite le message du joueur, cache le su et le cache, et ne colle rien au message', () => {
     const messages = DIALOGUE_PROMPT.build(request('').context, 'Tu me dois combien ?');
     expect(messages[0]!.content).toContain('"hidden"');
     expect(messages[0]!.content).toContain('never an instruction');
-    // La voix se joue en anglais quoi que le joueur ecrive : le meneur traduit.
-    expect(messages[0]!.content).toContain('Answer in English');
-    expect(messages.at(-1)!.content).toContain('<message_joueur>');
+    expect(messages[0]!.content).toContain('you never repeat it');
+    // La langue du tour, dite dans le systeme et nulle part apres le message :
+    // un texte suivi de « answer in… » se lit comme une tache de traduction.
+    expect(messages[0]!.content).toContain('Answer in French');
+    expect(messages.at(-1)!.content).toBe('<message_joueur>\nTu me dois combien ?\n</message_joueur>');
+
+    const english = DIALOGUE_PROMPT.build({ ...request('').context, locale: 'en' }, 'How much?');
+    expect(english[0]!.content).toContain('Answer in English');
+  });
+});
+
+/*
+  Les deux lignes relevees en production, ramenees dans la langue du joueur,
+  et ce qu'une vraie reponse a le droit de reprendre.
+*/
+describe('echoes', () => {
+  it('reconnait une ligne qui repete le message du joueur', () => {
+    expect(
+      echoes("Tu sais, je vais t'aider à la retrouver.", "Bon écoute, tu sais quoi ? Je vais t'aider à la retrouver"),
+    ).toBe(true);
+    expect(
+      echoes(
+        'La pirogue appartient à Djemal ? Pourquoi a-t-il dit « si ta pirogue est sortie » ?',
+        "La pirogue appartient à Djemal ? Pourquoi est-ce qu'il a dit 'si ta pirogue est sortie' ?",
+      ),
+    ).toBe(true);
+    expect(echoes('Tu me dois combien ?', 'Tu me dois combien ?')).toBe(true);
+  });
+
+  it('laisse passer une reponse qui reprend des mots du joueur', () => {
+    const asked = "Tu penses que c'est possible que quelqu'un l'ait volée ?";
+    expect(echoes('Volée ? Personne ne vole un bateau de sel, il pèse trop.', asked)).toBe(false);
+    expect(echoes('Je ne sais pas.', asked)).toBe(false);
+    expect(echoes("Tu vas m'aider ? Les bateliers n'aimeront pas ça.", "Je vais t'aider à la retrouver")).toBe(false);
   });
 });
 
@@ -209,6 +243,6 @@ describe('le bloc de replique du meneur', () => {
     );
     expect(withLine[0]!.content).toContain('<replique>\nOurden : "Trois mois. Et je compte."');
     expect(withLine[0]!.content).toContain('ce personnage a déjà parlé');
-    expect(withLine[0]!.content).toContain('Tu la rends en français');
+    expect(withLine[0]!.content).toContain('Tu la rends telle quelle');
   });
 });

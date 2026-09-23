@@ -97,8 +97,6 @@ export type PublicOutcome = z.infer<typeof PublicOutcomeSchema>;
 */
 export const TurnDeltaSchema = z.object({
   kind: z.enum(['action', 'question']),
-  // Vrai si l'issue etait incertaine et que la bande a colore le recit.
-  usedDie: z.boolean(),
   facts: z.array(CanonFactSchema).max(CANON_FACTS_PER_TURN_MAX).default([]),
   /*
     Ce que le personnage vient de prendre et de perdre.
