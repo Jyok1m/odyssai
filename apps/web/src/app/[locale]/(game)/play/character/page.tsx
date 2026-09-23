@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { hasLocale, useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
-import { notFound } from "next/navigation";
 
+import { GameGate } from "@/components/play/game-gate";
 import { CharacterSheet } from "@/components/play/character-sheet";
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
-import { ALPHA_OPEN } from "@/lib/flags";
 import { pageMetadata } from "@/lib/page-metadata";
 
 const HREF = "/play/character" as const;
@@ -36,21 +35,21 @@ export async function generateMetadata({
 export default function CharacterPage() {
   const t = useTranslations("Sheet");
 
-  // Le même drapeau que la table : pas de fiche tant qu'on ne peut pas jouer.
-  if (!ALPHA_OPEN) notFound();
-
+  // La même porte que la table : pas de fiche tant qu'on ne peut pas jouer.
   return (
-    <article className="mx-auto max-w-wrap px-6 pt-32 pb-24 sm:pt-40 lg:px-8">
-      <Link
-        href="/play"
-        className="font-ui text-control font-medium text-vellum-2 transition-colors hover:text-vellum"
-      >
-        <span aria-hidden="true">&larr;</span> {t("back")}
-      </Link>
+    <GameGate>
+      <article className="mx-auto max-w-wrap px-6 pt-32 pb-24 sm:pt-40 lg:px-8">
+        <Link
+          href="/play"
+          className="font-ui text-control font-medium text-vellum-2 transition-colors hover:text-vellum"
+        >
+          <span aria-hidden="true">&larr;</span> {t("back")}
+        </Link>
 
-      <div className="mt-8">
-        <CharacterSheet />
-      </div>
-    </article>
+        <div className="mt-8">
+          <CharacterSheet />
+        </div>
+      </article>
+    </GameGate>
   );
 }

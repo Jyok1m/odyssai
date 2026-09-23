@@ -1,4 +1,5 @@
 import { Module, forwardRef } from '@nestjs/common';
+import { AlphaModule } from '../alpha/alpha.module.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { ErasureModule } from '../erasure/erasure.module.js';
 import { ModerationModule } from '../moderation/moderation.module.js';
@@ -18,6 +19,7 @@ import { OnboardingService } from './onboarding.service.js';
 @Module({
   imports: [
     AuthModule,
+    AlphaModule,
     ErasureModule,
     StoriesModule,
     forwardRef(() => ModerationModule),

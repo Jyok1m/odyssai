@@ -62,6 +62,7 @@ import {
 import { PrismaClient, type User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
+import { AlphaOpenGuard } from '../alpha/alpha-open.guard.js';
 import { NarratorConfig } from '../config/narrator-config.js';
 import { NARRATOR_LLM } from '../onboarding/narrator-llm.provider.js';
 import { PRISMA } from '../prisma/prisma.module.js';
@@ -84,7 +85,8 @@ const CHANNEL = 'game_turn' as const;
   le modele qui deciderait, et la decision appartient au code.
 */
 @Controller('turn')
-@UseGuards(SessionGuard)
+// L'ordre compte : le second relit le joueur que le premier depose.
+@UseGuards(SessionGuard, AlphaOpenGuard)
 export class TurnController {
   private readonly logger = new Logger(TurnController.name);
 

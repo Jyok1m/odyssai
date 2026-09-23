@@ -19,6 +19,7 @@ import {
 import type { User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
+import { AlphaOpenGuard } from '../alpha/alpha-open.guard.js';
 import { OutOfCreditsError } from '../credits/credits.service.js';
 import { ErasureService } from '../erasure/erasure.service.js';
 import { StoriesFullError } from '../stories/stories.service.js';
@@ -37,7 +38,8 @@ import {
   Le pseudo n'est pas ici : il appartient au profil, et PATCH /me le pose.
 */
 @Controller('onboarding')
-@UseGuards(SessionGuard)
+// L'ordre compte : le second relit le joueur que le premier depose.
+@UseGuards(SessionGuard, AlphaOpenGuard)
 export class OnboardingController {
   constructor(
     private readonly onboarding: OnboardingService,

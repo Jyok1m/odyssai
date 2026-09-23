@@ -6,6 +6,7 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations } from "next-intl/server";
 
 import { AlphaNotice } from "@/components/auth/alpha-notice";
+import { AlphaProvider } from "@/components/auth/alpha-provider";
 import { AuthErrorToast } from "@/components/auth/auth-error-toast";
 import { CookieBanner } from "@/components/legal/cookie-banner";
 import { SessionProvider } from "@/components/auth/session-provider";
@@ -136,6 +137,7 @@ export default async function LocaleLayout({
     >
       <body className="min-h-full bg-ink text-vellum">
         <NextIntlClientProvider>
+          <AlphaProvider>
           {/* Sous Suspense : `useSearchParams` ferait basculer tout le layout
               du prerendu statique au rendu dynamique sans lui. */}
           <Suspense fallback={null}>
@@ -149,6 +151,7 @@ export default async function LocaleLayout({
           <div className="relative">
             <SessionProvider>{children}</SessionProvider>
           </div>
+          </AlphaProvider>
           <AuthErrorToast />
           <CookieBanner />
         </NextIntlClientProvider>

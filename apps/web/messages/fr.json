@@ -70,6 +70,10 @@
     "preRegister": "Le jeu n'est pas encore ouvert. Crée ton compte maintenant : tu fais partie des 100 premiers joueurs, tes 30 crédits t'attendent, et tu reçois l'invitation dès l'ouverture de l'alpha.",
     "reservedTitle": "Ta place est réservée.",
     "reservedBody": "Ton compte est créé et tes 30 crédits t'attendent. Le jeu n'est pas encore ouvert : tu reçois l'invitation dès l'ouverture de l'alpha.",
+    "closed": "Le jeu n'est pas encore ouvert. Ta place est réservée : tu reçois l'invitation à l'ouverture.",
+    "closedTitle": "Pas encore ouvert",
+    "closedBody": "Le jeu n'est pas encore ouvert. Ton compte et tes crédits t'attendent : tu reçois l'invitation à l'ouverture de l'alpha.",
+    "closedHome": "Retour à l'accueil",
     "terms": "En créant un compte, tu acceptes les <terms>conditions générales</terms> et la <privacy>politique de confidentialité</privacy>."
   },
   "Auth": {

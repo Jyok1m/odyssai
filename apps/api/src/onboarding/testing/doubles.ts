@@ -218,7 +218,23 @@ export interface OnboardingStore {
   stripeEvents?: StripeEventRow[];
   // Absent, les trois paliers amorces par la migration sont servis.
   plans?: PlanRow[];
+  // Absente, le jeu est ouvert : c'est l'etat que presque tous les tests veulent.
+  siteSettings?: SiteSettingsRow;
 }
+
+export interface SiteSettingsRow {
+  id: true;
+  alphaPhase: string;
+  alphaNotice: boolean;
+  updatedAt: Date;
+}
+
+const OPEN_SETTINGS: SiteSettingsRow = {
+  id: true,
+  alphaPhase: 'open',
+  alphaNotice: false,
+  updatedAt: new Date(0),
+};
 
 function matchMessages(store: OnboardingStore, where: any): MessageRow[] {
   return store.messages.filter(
@@ -832,6 +848,15 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
       La cle primaire porte l'idempotence des webhooks : un meme identifiant
       deux fois doit echouer, comme en base.
     */
+    siteSettings: {
+      findUnique: async () => ({ ...(store.siteSettings ?? OPEN_SETTINGS) }),
+      upsert: async () => ({ ...(store.siteSettings ?? OPEN_SETTINGS) }),
+      update: async ({ data }: any) => {
+        store.siteSettings = { ...(store.siteSettings ?? OPEN_SETTINGS), ...data };
+        return { ...store.siteSettings };
+      },
+    },
+
     plan: {
       findUnique: async ({ where }: any) => {
         const rows = store.plans ?? SEEDED_PLANS;

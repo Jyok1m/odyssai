@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import { hasLocale } from "next-intl";
 import { getTranslations } from "next-intl/server";
-import { notFound } from "next/navigation";
 
+import { GameGate } from "@/components/play/game-gate";
 import { OnboardingWizard } from "@/components/play/onboarding-wizard";
 import { routing } from "@/i18n/routing";
-import { ALPHA_OPEN } from "@/lib/flags";
 import { pageMetadata } from "@/lib/page-metadata";
 
 const HREF = "/play" as const;
@@ -34,17 +33,14 @@ export async function generateMetadata({
 }
 
 export default function PlayPage() {
-
-  // Le drapeau garde la route entiere : tant que l'alpha est fermee, entrer
-  // en partie n'existe pas, et une page qui dirait « bientot » serait une
-  // seconde facon de dire ce que la page d'accueil dit deja.
-  if (!ALPHA_OPEN) notFound();
-
   // Le titre est porte par l'assistant et non par la page : une fois le monde
-  // genere, l'ecran n'est plus un parcours et n'en veut plus.
+  // genere, l'ecran n'est plus un parcours et n'en veut plus. La phase de
+  // l'alpha garde la route entiere, par GameGate.
   return (
-    <article className="mx-auto max-w-wrap px-6 pt-32 pb-24 sm:pt-40 lg:px-8">
-      <OnboardingWizard />
-    </article>
+    <GameGate>
+      <article className="mx-auto max-w-wrap px-6 pt-32 pb-24 sm:pt-40 lg:px-8">
+        <OnboardingWizard />
+      </article>
+    </GameGate>
   );
 }

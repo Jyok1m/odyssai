@@ -2,11 +2,11 @@
 
 import { useTranslations } from "next-intl";
 
+import { useGameAccess } from "@/components/auth/alpha-provider";
 import { useAuthLinks } from "@/components/auth/auth-links";
 import { useSession } from "@/components/auth/session-provider";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
-import { ALPHA_OPEN } from "@/lib/flags";
 
 /*
   Appel à l'action principal. Trois réponses selon l'état : l'inscription pour
@@ -17,12 +17,13 @@ export function SignupCta({ children }: { children: string }) {
   const tPlay = useTranslations("Play");
   const session = useSession();
   const { signUp } = useAuthLinks();
+  const access = useGameAccess();
 
   if (session.status === "authenticated") {
     // Un seul libellé, qu'on commence ou qu'on reprenne : distinguer les deux
     // demanderait de lire le parcours à chaque visite de la page d'accueil,
     // et l'assistant reprend de toute façon là où le joueur s'est arrêté.
-    if (ALPHA_OPEN) {
+    if (access === "open") {
       return (
         <Button as={Link} href="/play">
           {tPlay("enter")}

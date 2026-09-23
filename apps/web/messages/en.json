@@ -70,6 +70,10 @@
     "preRegister": "The game isn't live yet. Create your account now: you're one of the first 100 players, your 30 credits are waiting, and you'll get the invite the moment the alpha opens.",
     "reservedTitle": "Your spot is reserved.",
     "reservedBody": "Your account is created and your 30 credits are waiting. The game isn't live yet: you'll get the invite the moment the alpha opens.",
+    "closed": "The game is not open yet. Your seat is reserved: you get the invitation when it opens.",
+    "closedTitle": "Not open yet",
+    "closedBody": "The game is not open yet. Your account and credits are waiting: you get the invitation when the alpha opens.",
+    "closedHome": "Back to home",
     "terms": "By creating an account, you accept the <terms>terms and conditions</terms> and the <privacy>privacy policy</privacy>."
   },
   "Auth": {

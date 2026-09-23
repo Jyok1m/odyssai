@@ -39,6 +39,16 @@ export class AlphaService {
     };
   }
 
+  /*
+    Ouvert ou non, lu a chaque requete de jeu par AlphaOpenGuard : une lecture
+    par cle primaire, sans upsert et sans cache, pour la meme raison que les
+    paliers. Une ligne absente ou illisible vaut ferme.
+  */
+  async isOpen(): Promise<boolean> {
+    const row = await this.prisma.siteSettings.findUnique({ where: { id: true } });
+    return row?.alphaPhase === 'open';
+  }
+
   async update(request: UpdateAlphaRequest): Promise<AlphaStatus> {
     await this.prisma.siteSettings.update({
       where: { id: true },

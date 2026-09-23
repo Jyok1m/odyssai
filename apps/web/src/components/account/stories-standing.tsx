@@ -4,9 +4,9 @@ import { STORIES_MAX, type Story } from "@odyssai/schemas";
 import { useTranslations } from "next-intl";
 import { useEffect, useState, type CSSProperties } from "react";
 
-import { Button } from "@/components/ui/button";
+import { useGameAccess } from "@/components/auth/alpha-provider";
+import { GameLink } from "@/components/play/game-link";
 import { Panel } from "@/components/ui/panel";
-import { Link } from "@/i18n/navigation";
 import { fetchStories } from "@/lib/stories";
 
 /*
@@ -18,9 +18,14 @@ import { fetchStories } from "@/lib/stories";
 */
 export function StoriesStanding() {
   const t = useTranslations("Account");
+  const tAlpha = useTranslations("Alpha");
+  const access = useGameAccess();
   const [stories, setStories] = useState<Story[] | null>(null);
 
   useEffect(() => {
+    // Porte fermée, l'API refuserait la liste : on ne la demande pas.
+    if (access !== "open") return;
+
     const controller = new AbortController();
 
     fetchStories(controller.signal)
@@ -29,7 +34,22 @@ export function StoriesStanding() {
       .catch(() => {});
 
     return () => controller.abort();
-  }, []);
+  }, [access]);
+
+  // Porte fermée, le compte le dit ici aussi, et le lien le redit en toast :
+  // la place du joueur est là, c'est le jeu qui ne l'est pas encore.
+  if (access === "closed") {
+    return (
+      <Panel title={t("storiesTitle")}>
+        <p className="max-w-measure text-ui-sm text-pretty text-vellum-3">
+          {tAlpha("closedBody")}
+        </p>
+        <GameLink href="/play/stories" variant="secondary" className="mt-5">
+          {t("storiesLink")}
+        </GameLink>
+      </Panel>
+    );
+  }
 
   if (stories === null) return null;
 
@@ -91,9 +111,9 @@ export function StoriesStanding() {
         </p>
       )}
 
-      <Button as={Link} href="/play/stories" variant="secondary" className="mt-5">
+      <GameLink href="/play/stories" variant="secondary" className="mt-5">
         {t("storiesLink")}
-      </Button>
+      </GameLink>
     </Panel>
   );
 }

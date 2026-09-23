@@ -4,9 +4,9 @@ import { XMarkIcon } from "@heroicons/react/20/solid";
 import type { AlphaStatus } from "@odyssai/schemas";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-import { fetchAlphaStatus } from "@/lib/alpha";
+import { useAlpha } from "@/components/auth/alpha-provider";
 
 export const ALPHA_FULL_PARAM = "auth_error";
 export const ALPHA_FULL_CODE = "alpha_full";
@@ -23,20 +23,10 @@ export const ALPHA_FULL_CODE = "alpha_full";
 export function AlphaNotice() {
   const t = useTranslations("Auth");
   const params = useSearchParams();
-  const [status, setStatus] = useState<AlphaStatus | null>(null);
+  // Un bandeau d'annonce ne vaut pas un message d'erreur : sans état, la
+  // page reste entière.
+  const { status } = useAlpha();
   const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    fetchAlphaStatus(controller.signal)
-      .then(setStatus)
-      // Un bandeau d'annonce ne vaut pas un message d'erreur : absent, la page
-      // reste entière.
-      .catch(() => undefined);
-
-    return () => controller.abort();
-  }, []);
 
   const refused = params.get(ALPHA_FULL_PARAM) === ALPHA_FULL_CODE;
 

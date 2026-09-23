@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AlphaModule } from '../alpha/alpha.module.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { ModerationModule } from '../moderation/moderation.module.js';
 import { OnboardingModule } from '../onboarding/onboarding.module.js';
@@ -9,7 +10,7 @@ import { TurnMemoryService } from './turn-memory.service.js';
 
 // OnboardingModule fournit NARRATOR_LLM, deja construit et trace.
 @Module({
-  imports: [AuthModule, OnboardingModule, ModerationModule],
+  imports: [AuthModule, AlphaModule, OnboardingModule, ModerationModule],
   controllers: [TurnController],
   providers: [TurnMemoryService, TurnLimitsService, PendingRollService],
 })

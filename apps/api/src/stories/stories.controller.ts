@@ -27,6 +27,7 @@ import {
 import type { User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
+import { AlphaOpenGuard } from '../alpha/alpha-open.guard.js';
 import { ErasureService } from '../erasure/erasure.service.js';
 import { ChronicleService } from './chronicle.service.js';
 import {
@@ -42,7 +43,8 @@ import {
   et du tour, qui la lisent par le pointeur.
 */
 @Controller('stories')
-@UseGuards(SessionGuard)
+// L'ordre compte : le second relit le joueur que le premier depose.
+@UseGuards(SessionGuard, AlphaOpenGuard)
 export class StoriesController {
   constructor(
     private readonly stories: StoriesService,

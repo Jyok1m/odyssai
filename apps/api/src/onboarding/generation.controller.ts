@@ -26,6 +26,7 @@ import { PROGRESS_STEPS, conditionOf, hpMaxOf, modifierOf } from '@odyssai/engin
 import { PrismaClient, type User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
+import { AlphaOpenGuard } from '../alpha/alpha-open.guard.js';
 import { PRISMA } from '../prisma/prisma.module.js';
 import { currentStory } from '../stories/stories.service.js';
 import { GenerationRefundService } from './generation-refund.service.js';
@@ -54,7 +55,8 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
   un redemarrage, et deux instances d'api y lisent la meme chose.
 */
 @Controller()
-@UseGuards(SessionGuard)
+// L'ordre compte : le second relit le joueur que le premier depose.
+@UseGuards(SessionGuard, AlphaOpenGuard)
 export class GenerationController {
   private readonly logger = new Logger(GenerationController.name);
 

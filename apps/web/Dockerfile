@@ -38,8 +38,6 @@ ENV SITE_URL=$SITE_URL
 # est donc liée à son environnement, comme pour SITE_URL.
 ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
-ARG NEXT_PUBLIC_ALPHA_OPEN=false
-ENV NEXT_PUBLIC_ALPHA_OPEN=$NEXT_PUBLIC_ALPHA_OPEN
 # Cle publique du widget Turnstile, visible dans le HTML : ce n'est pas un
 # secret, mais elle est liee au hostname declare chez Cloudflare, donc a
 # l'environnement. Le defaut est la cle de test, qui accepte tout.

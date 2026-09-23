@@ -16,7 +16,6 @@ pipeline {
 
         // Cle publique du widget Turnstile
         NEXT_PUBLIC_TURNSTILE_SITE_KEY = "${env.BRANCH_NAME == 'main' ? '0x4AAAAAAE58ZZITd0iT8j5F' : '0x4AAAAAAE59s7cZsoHX1-Ku'}"
-        NEXT_PUBLIC_ALPHA_OPEN = "${env.BRANCH_NAME == 'main' ? 'false' : 'true'}"
 
         // Meme image que les Dockerfiles : tester sur une autre version de node
         // que celle qui sert en production ne prouverait pas grand chose.
@@ -171,7 +170,6 @@ pipeline {
                                 --build-arg SITE_URL="$SITE_URL" \
                                 --build-arg NEXT_PUBLIC_API_BASE_URL="$NEXT_PUBLIC_API_BASE_URL" \
                                 --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY="$NEXT_PUBLIC_TURNSTILE_SITE_KEY" \
-                                --build-arg NEXT_PUBLIC_ALPHA_OPEN="$NEXT_PUBLIC_ALPHA_OPEN" \
                                 -f apps/web/Dockerfile \
                                 -t "$WEB_IMAGE:$DOCKER_TAG" \
                                 .

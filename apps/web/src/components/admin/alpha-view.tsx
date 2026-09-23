@@ -11,18 +11,20 @@ import { fetchAdminAlpha, updateAlpha } from "@/lib/alpha";
 const PHASES: { id: AlphaPhase; label: string; hint: string }[] = [
   {
     id: "preregistration",
-    label: "Pré-inscriptions",
-    hint: "Le site annonce que l'alpha démarrera avec ses joueurs, et compte les places restantes.",
+    label: "Fermé, en pré-inscriptions",
+    hint: "Les joueurs inscrits attendent : les liens vers le jeu répondent par un toast, l'api refuse les routes de jeu. Le site annonce que l'alpha démarrera avec ses joueurs et compte les places.",
   },
   {
     id: "open",
-    label: "Ouverte",
-    hint: "Le site annonce une alpha en cours, toujours avec le compte des places.",
+    label: "Ouvert",
+    hint: "Les joueurs entrent en partie. Le site annonce une alpha en cours, toujours avec le compte des places.",
   },
 ];
 
 /*
-  L'état de l'alpha, tel qu'on l'annonce.
+  L'état de l'alpha : ce qu'on annonce, et si le jeu est ouvert. La même
+  phase fait les deux, parce qu'annoncer une alpha en cours dont les portes
+  seraient fermées ferait mentir le site.
 
   Deux phases seulement. « Complète » n'est pas un choix : c'est le constat
   que les places sont prises, et il s'affiche ici sans pouvoir se régler. Un
@@ -53,7 +55,7 @@ export function AlphaView() {
     setBusy(true);
     try {
       setStatus(await updateAlpha(patch));
-      toast.success("Annonce mise à jour.");
+      toast.success("Ouverture mise à jour.");
     } catch (caught: unknown) {
       toast.error(reasonOf(caught));
     } finally {
@@ -82,7 +84,7 @@ export function AlphaView() {
         </p>
 
         <fieldset className="space-y-3">
-          <legend className="text-caption text-vellum-3">Ce que le site annonce</legend>
+          <legend className="text-caption text-vellum-3">Ouverture du jeu</legend>
 
           {PHASES.map((phase) => (
             <label key={phase.id} className="flex gap-3">
@@ -103,6 +105,11 @@ export function AlphaView() {
             </label>
           ))}
         </fieldset>
+
+        <p className="max-w-prose text-caption text-vellum-3">
+          Un administrateur entre en jeu quelle que soit la phase : c&apos;est ainsi
+          qu&apos;on vérifie la production avant d&apos;ouvrir.
+        </p>
 
         {status.full ? (
           <p className="max-w-prose text-caption text-brass">

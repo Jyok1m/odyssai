@@ -35,6 +35,7 @@ import {
 import type { User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
+import { AlphaOpenGuard } from '../alpha/alpha-open.guard.js';
 import { NarratorConfig } from '../config/narrator-config.js';
 import {
   CharacterService,
@@ -57,7 +58,8 @@ const PING_INTERVAL_MS = 15_000;
   PUT /onboarding qui ecrit ce que le joueur a valide.
 */
 @Controller('onboarding/character')
-@UseGuards(SessionGuard)
+// L'ordre compte : le second relit le joueur que le premier depose.
+@UseGuards(SessionGuard, AlphaOpenGuard)
 export class CharacterController {
   private readonly logger = new Logger(CharacterController.name);
 

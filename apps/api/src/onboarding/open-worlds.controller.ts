@@ -24,6 +24,7 @@ import {
 import { PrismaClient, type User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
+import { AlphaOpenGuard } from '../alpha/alpha-open.guard.js';
 import { PRISMA } from '../prisma/prisma.module.js';
 import {
   StoriesFullError,
@@ -55,7 +56,8 @@ const OPEN_WORLDS_MAX = 40;
   n'existe pas, ce qu'un visiteur ecrit reste de son cote.
 */
 @Controller('worlds')
-@UseGuards(SessionGuard)
+// L'ordre compte : le second relit le joueur que le premier depose.
+@UseGuards(SessionGuard, AlphaOpenGuard)
 export class OpenWorldsController {
   private readonly logger = new Logger(OpenWorldsController.name);
 

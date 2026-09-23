@@ -2,8 +2,8 @@
 
 import { useTranslations } from "next-intl";
 
+import { useGameAccess } from "@/components/auth/alpha-provider";
 import { useSession } from "@/components/auth/session-provider";
-import { ALPHA_OPEN } from "@/lib/flags";
 
 /*
   Ce que le hero dit sous son sous-titre, selon qui regarde. Un inscrit doit
@@ -15,8 +15,9 @@ import { ALPHA_OPEN } from "@/lib/flags";
 export function AlphaStanding() {
   const t = useTranslations("Alpha");
   const session = useSession();
+  const access = useGameAccess();
 
-  if (ALPHA_OPEN || session.status !== "authenticated") {
+  if (access === "open" || session.status !== "authenticated") {
     return (
       <p className="mt-4 max-w-measure text-ui-sm text-pretty text-vellum-3">
         {t("preRegister")}

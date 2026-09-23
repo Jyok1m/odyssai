@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import { hasLocale, useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
-import { notFound } from "next/navigation";
 
+import { GameGate } from "@/components/play/game-gate";
 import { StoriesPanel } from "@/components/play/stories-panel";
 import { routing } from "@/i18n/routing";
-import { ALPHA_OPEN } from "@/lib/flags";
 import { pageMetadata } from "@/lib/page-metadata";
 
 const HREF = "/play/stories" as const;
@@ -35,26 +34,26 @@ export async function generateMetadata({
 export default function StoriesPage() {
   const t = useTranslations("Stories");
 
-  // Le meme drapeau que la table : pas d'histoires a gerer tant qu'on ne
-  // peut pas jouer.
-  if (!ALPHA_OPEN) notFound();
-
+  // La meme porte que la table : pas d'histoires a gerer tant qu'on ne peut
+  // pas jouer.
   return (
-    <article className="mx-auto max-w-wrap px-6 pt-32 pb-24 sm:pt-40 lg:px-8">
-      <header className="max-w-headline">
-        <h1 className="font-voice text-display-compact text-balance text-vellum">
-          {t("title")}
-        </h1>
-        <p className="mt-4 max-w-measure text-ui text-pretty text-vellum-2">
-          {t("lead")}
-        </p>
-      </header>
+    <GameGate>
+      <article className="mx-auto max-w-wrap px-6 pt-32 pb-24 sm:pt-40 lg:px-8">
+        <header className="max-w-headline">
+          <h1 className="font-voice text-display-compact text-balance text-vellum">
+            {t("title")}
+          </h1>
+          <p className="mt-4 max-w-measure text-ui text-pretty text-vellum-2">
+            {t("lead")}
+          </p>
+        </header>
 
-      {/* Le compte et les boutons vivent dans le panneau, avec les cartes :
-          ils dependent de ce qu'il a lu. */}
-      <div className="mt-8">
-        <StoriesPanel />
-      </div>
-    </article>
+        {/* Le compte et les boutons vivent dans le panneau, avec les cartes :
+            ils dependent de ce qu'il a lu. */}
+        <div className="mt-8">
+          <StoriesPanel />
+        </div>
+      </article>
+    </GameGate>
   );
 }
