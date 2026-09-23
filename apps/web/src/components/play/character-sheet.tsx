@@ -152,20 +152,14 @@ function Sheet({ world }: { world: WorldView }) {
 
         {/* La seule jauge que le moteur tient : le code décide de ce qui
             l'entame et de ce qui la rend, jamais le récit. */}
-        <Panel title={t("state")} aside={t("stateAside")}>
+        <Panel title={t("state")}>
           <HealthBar health={character.health} />
-          <p className="mt-5 max-w-measure text-caption text-pretty text-vellum-3">
-            {t("stateHint")}
-          </p>
         </Panel>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-3">
-        <Panel title={t("attributes")} aside={t("attributesAside")} className="lg:col-span-2">
+        <Panel title={t("attributes")} className="lg:col-span-2">
           <AttributeBlocks standing={character.standing} />
-          <p className="mt-4 max-w-measure text-caption text-pretty text-vellum-3">
-            {t("progressHint")}
-          </p>
         </Panel>
 
         {/* Où en est l'histoire : le rang de l'acte, jamais son but. Un joueur
@@ -185,11 +179,9 @@ function Sheet({ world }: { world: WorldView }) {
               {world.story.title}
             </p>
           ) : null}
-          <p className="mt-3 text-ui-sm text-pretty text-vellum-2">
-            {world.story.act !== null && world.story.act > world.story.acts
-              ? t("freeHint")
-              : t("standingHint")}
-          </p>
+          {world.story.act !== null && world.story.act > world.story.acts ? (
+            <p className="mt-3 text-ui-sm text-pretty text-vellum-2">{t("freeHint")}</p>
+          ) : null}
           <p className="mt-5 text-caption text-vellum-3">{t("charterTone")}</p>
           <p className="mt-1 text-ui-sm text-pretty text-vellum-2">{world.charter.tone}</p>
         </Panel>
@@ -226,17 +218,13 @@ function Sheet({ world }: { world: WorldView }) {
         le socle ; le métier, les talents et les objets appartiennent au monde
         qu'on quitte, et ne se retrouvent donc pas ici.
       */}
-      <Panel title={t("elsewhere")} aside={t("elsewhereAside")}>
-        <p className="max-w-measure text-caption text-pretty text-vellum-3">
-          {t(`arrivalHint.${character.arrival}` as never)}
-        </p>
-
+      <Panel title={t("elsewhere")}>
         {character.elsewhere.length === 0 ? (
-          <p className="mt-4 max-w-measure text-ui-sm text-pretty text-vellum-3">
+          <p className="max-w-measure text-ui-sm text-pretty text-vellum-3">
             {t("elsewhereEmpty")}
           </p>
         ) : (
-          <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {character.elsewhere.map((incarnation) => (
               <li
                 key={incarnation.universeId}
@@ -271,7 +259,7 @@ function Sheet({ world }: { world: WorldView }) {
         change qui est le personnage, pas ce qu'il possède, et c'est ce qui
         garde chaque monde équilibré.
       */}
-      <Panel title={t("marks")} aside={t("marksAside")}>
+      <Panel title={t("marks")}>
         {character.marks.length === 0 ? (
           <p className="max-w-measure text-ui-sm text-pretty text-vellum-3">
             {t("marksEmpty")}
@@ -300,7 +288,7 @@ function Sheet({ world }: { world: WorldView }) {
       <div className="grid gap-5 lg:grid-cols-3">
         {/* La couleur, là où les attributs sont le calcul : le moteur ne les
             lit pas, le meneur si. */}
-        <Panel title={t("talents")} aside={t("talentsAside")}>
+        <Panel title={t("talents")}>
           {character.talents.length === 0 ? (
             <p className="text-ui-sm text-pretty text-vellum-3">{t("talentsEmpty")}</p>
           ) : (
@@ -338,9 +326,6 @@ function Sheet({ world }: { world: WorldView }) {
               ))}
             </ul>
           )}
-          <p className="mt-4 max-w-measure text-caption text-pretty text-vellum-3">
-            {t("inventoryHint")}
-          </p>
         </Panel>
       </div>
     </div>

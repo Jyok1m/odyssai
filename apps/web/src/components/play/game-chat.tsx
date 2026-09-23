@@ -136,6 +136,7 @@ export function GameChat({
               role: "user",
               content: request.kind === "fate" ? t("fateSaid") : request.content,
               outcome: null,
+              request: null,
               createdAt: now,
             },
           ];
@@ -149,6 +150,7 @@ export function GameChat({
         role: "assistant",
         content: "",
         outcome: null,
+        request: request.kind,
         createdAt: now,
       },
     ]);
@@ -282,7 +284,7 @@ export function GameChat({
 
   return (
     <div className="space-y-5">
-      <Panel>
+      <Panel className="print:border-0 print:p-0">
         {/* L'acte en italique et le nom du monde en titre, comme le kit : un
             chapitre s'annonce, il ne se crie pas en capitales. */}
         <header className="mb-6 flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
@@ -303,14 +305,21 @@ export function GameChat({
               {world.story.title ?? world.name}
             </h1>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            type="button"
-            onClick={() => setReading((open) => !open)}
-          >
-            {reading ? t("storyClose") : t("storyOpen")}
-          </Button>
+          <div className="flex flex-wrap gap-2 print:hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              onClick={() => setReading((open) => !open)}
+            >
+              {reading ? t("storyClose") : t("storyOpen")}
+            </Button>
+            {/* Le PDF passe par l'impression du navigateur : il sait déjà
+                produire ce document, et le récit seul est ce qui s'imprime. */}
+            <Button variant="ghost" size="sm" type="button" onClick={() => window.print()}>
+              {t("storyPdf")}
+            </Button>
+          </div>
         </header>
 
         {!loaded ? (
@@ -318,10 +327,15 @@ export function GameChat({
         ) : reading ? (
           <Story messages={messages} />
         ) : (
-          <ol
-            ref={thread}
-            className="flex max-h-136 flex-col gap-6 overflow-y-auto overscroll-contain px-1"
-          >
+          <>
+            {/* À l'impression, le récit, quel que soit le mode affiché. */}
+            <div className="hidden print:block">
+              <Story messages={messages} />
+            </div>
+            <ol
+              ref={thread}
+              className="flex max-h-136 flex-col gap-6 overflow-y-auto overscroll-contain px-1 print:hidden"
+            >
             {messages.length === 0 ? (
               <li className="text-ui-sm text-pretty text-vellum-3">{t("opening")}</li>
             ) : null}
@@ -349,7 +363,7 @@ export function GameChat({
                         là qu'on passe la partie. */}
                     <p
                       className={[
-                        "mt-1.5 font-voice text-narration whitespace-pre-wrap text-vellum",
+                        "mt-1.5 font-voice text-story whitespace-pre-wrap text-vellum",
                         message.id === first?.id ? "dropcap" : "",
                       ]
                         .filter(Boolean)
@@ -375,11 +389,12 @@ export function GameChat({
                 )}
               </li>
             ))}
-          </ol>
+            </ol>
+          </>
         )}
       </Panel>
 
-      <Panel title={t("composer")}>
+      <Panel title={t("composer")} className="print:hidden">
         {/*
           Premier temps : l'action attend son dé, et la saisie laisse la place
           au lancer. Rien n'a encore été débité.
@@ -456,8 +471,6 @@ export function GameChat({
           >
             {t("askAction")}
           </Button>
-
-          <p className="text-ui-sm text-vellum-3">{t("dieHint")}</p>
         </div>
 
         <p aria-live="polite" className="mt-3 min-h-5 text-ui-sm text-ember">

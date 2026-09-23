@@ -15,6 +15,7 @@ import {
 import type { Response } from 'express';
 import {
   AttributeSchema,
+  TurnRequestKindSchema,
   INVENTORY_MAX,
   entityKey,
   type Entity,
@@ -133,6 +134,8 @@ export class TurnController {
         .filter((turn) => turn.usedDie)
         .map((turn) => [turn.seq + 1, publicOutcome(turn.band as never)]),
     );
+    // Meme rang : ce que le joueur avait envoye, porte par la reponse.
+    const requests = new Map(turns.map((turn) => [turn.seq + 1, turn.request]));
 
     return {
       inventory: world.inventory,
@@ -142,6 +145,7 @@ export class TurnController {
         role: row.role,
         content: row.content,
         outcome: outcomes.get(row.seq) ?? null,
+        request: TurnRequestKindSchema.nullable().catch(null).parse(requests.get(row.seq) ?? null),
         createdAt: row.createdAt.toISOString(),
       })),
       /*

@@ -146,7 +146,7 @@ function Stories() {
   if (stories.length === 0) return null;
 
   return (
-    <Panel title={t("stories")} aside={t("storiesHint")}>
+    <Panel title={t("stories")}>
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stories.map((story) => (
           <li key={story.id}>
@@ -228,7 +228,7 @@ function OpenWorlds() {
   };
 
   return (
-    <Panel title={t("open")} aside={t("openAside")}>
+    <Panel title={t("open")}>
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {worlds.map((world) => (
           <li
@@ -287,8 +287,8 @@ function OpenWorlds() {
         ))}
       </ul>
 
-      <p aria-live="polite" className="mt-5 max-w-measure text-caption text-pretty text-vellum-3">
-        {error ? <span className="text-ember">{error}</span> : t("openHint")}
+      <p aria-live="polite" className="mt-5 min-h-5 text-caption text-ember">
+        {error}
       </p>
     </Panel>
   );
@@ -304,7 +304,7 @@ function World({ world }: { world: WorldView }) {
           circonstances : c'est elle qui empêche un monde sans magie d'en voir
           apparaître au troisième tour. */}
       <Panel title={t("charter")}>
-        <p className="max-w-measure font-voice text-narration text-pretty text-vellum">
+        <p className="max-w-measure font-voice text-story text-pretty text-vellum">
           {world.charter.premise}
         </p>
         <p className="mt-4 max-w-measure text-ui-sm text-pretty text-vellum-2">
@@ -370,7 +370,7 @@ function World({ world }: { world: WorldView }) {
       <Panel title={t("factions")}>
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {world.factions.map((faction) => (
-            <li key={faction.name} className="rounded-card border border-line p-4">
+            <li key={faction.name} className="@container rounded-card border border-line p-4">
               <p className="font-voice text-subtitle text-accent">{faction.name}</p>
               <p className="mt-2 text-ui-sm text-pretty text-vellum-2">{faction.creed}</p>
               <dl className="mt-3 divide-y divide-line text-caption">

@@ -34,8 +34,10 @@ function Pips({ score }: { score: number }) {
 }
 
 /*
-  La forme compacte, celle de la table : le nom, les cinq crans, le
-  modificateur. `tested` marque celui que le dernier jet a sollicité.
+  La forme compacte, celle de la table : une ligne par attribut, le nom, les
+  cinq crans, le modificateur. Des lignes et non des cartes : cinq cartes
+  dans une colonne de 24rem se chevauchaient, le nom et les crans débordant
+  chacun de leur côté. `tested` marque celui que le dernier jet a sollicité.
 */
 export function AttributeCells({
   standing,
@@ -47,27 +49,26 @@ export function AttributeCells({
   const t = useTranslations("Game");
 
   return (
-    <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+    <ul className="divide-y divide-line">
       {ATTRIBUTES.map((name) => {
         const cell = standing[name];
 
         return (
-          <li
-            key={name}
-            className={[
-              "rounded-card border px-3 py-2.5",
-              tested === name ? "border-accent bg-accent/8" : "border-line",
-            ].join(" ")}
-          >
-            <p className="text-caption text-vellum-3 capitalize">
+          <li key={name} className="flex items-center justify-between gap-4 py-2">
+            <span
+              className={[
+                "text-ui-sm capitalize",
+                tested === name ? "text-accent" : "text-vellum-2",
+              ].join(" ")}
+            >
               {t(`attribute.${name}` as never)}
-            </p>
-            <div className="mt-2 flex items-center justify-between gap-2">
+            </span>
+            <span className="flex items-center gap-3">
               <Pips score={cell.score} />
-              <span className="text-caption tabular-nums text-vellum-2">
+              <span className="w-6 text-right text-caption tabular-nums text-vellum-2">
                 {signed(cell.modifier)}
               </span>
-            </div>
+            </span>
             <span className="sr-only">
               {t("attributeScore", { score: cell.score, modifier: signed(cell.modifier) })}
             </span>

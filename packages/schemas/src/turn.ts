@@ -77,6 +77,11 @@ export const TurnRequestSchema = z.discriminatedUnion('kind', [
 
 export type TurnRequest = z.infer<typeof TurnRequestSchema>;
 
+// Ce que le joueur a envoye, tel que la reponse du meneur le porte ensuite.
+export const TURN_REQUEST_KINDS = ['say', 'ask', 'fate', 'roll', 'open'] as const;
+export const TurnRequestKindSchema = z.enum(TURN_REQUEST_KINDS);
+export type TurnRequestKind = z.infer<typeof TurnRequestKindSchema>;
+
 /*
   Ce que le joueur apprend du de : deux etats, et seulement quand l'issue
   etait incertaine. Le chiffre ne sort jamais du serveur, et une question sur
@@ -267,6 +272,12 @@ export const TurnMessageSchema = z.object({
   content: z.string(),
   // Porte par la reponse du meneur, jamais par le message du joueur.
   outcome: PublicOutcomeSchema.nullable(),
+  /*
+    Ce a quoi la reponse du meneur repond, portee par elle aussi. Le recit
+    relu a part s'en sert : une reponse a une question n'est pas une scene,
+    elle n'y figure pas.
+  */
+  request: TurnRequestKindSchema.nullable(),
   createdAt: z.iso.datetime(),
 });
 

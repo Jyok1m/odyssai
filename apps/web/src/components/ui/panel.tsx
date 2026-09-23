@@ -24,7 +24,7 @@ export function Panel({
   return (
     <section
       className={[
-        "rounded-card border border-line bg-abyss p-5 sm:p-6",
+        "@container rounded-card border border-line bg-abyss p-5 sm:p-6",
         className,
       ]
         .filter(Boolean)
@@ -75,12 +75,18 @@ export function Tag({
 }
 
 /*
-  Une paire terme / valeur, en deux colonnes. C'est la forme des blocs
-  « Essence » et « Incarnation » de la fiche, et celle du glossaire.
+  Une paire terme / valeur. C'est la forme des blocs « Essence » et
+  « Incarnation » de la fiche, et celle du glossaire.
+
+  Deux colonnes seulement quand le conteneur en a la place, d'où la requête
+  de conteneur et non le point de rupture de l'écran : dans une carte à
+  trois colonnes, un terme à largeur fixe laissait à la valeur quatre mots
+  par ligne. Le parent porte `@container` (Panel le fait, une carte le
+  redit).
 */
 export function Definition({ term, children }: { term: ReactNode; children: ReactNode }) {
   return (
-    <div className="grid gap-x-5 gap-y-1 py-2 sm:grid-cols-[9rem_minmax(0,1fr)]">
+    <div className="grid gap-x-5 gap-y-1 py-2 @md:grid-cols-[8rem_minmax(0,1fr)]">
       <dt className="text-ui-sm text-vellum-3">{term}</dt>
       <dd className="text-ui-sm text-pretty text-vellum">{children}</dd>
     </div>
