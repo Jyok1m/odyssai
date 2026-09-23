@@ -1228,5 +1228,23 @@
     "visit": "Entrer",
     "visitNeedsTraveller": "Il te faut d'abord un personnage : c'est son essence qui franchit la faille.",
     "visitError": "Impossible d'entrer dans ce monde pour le moment."
+  },
+  "Bug": {
+    "button": "Signaler un bug",
+    "title": "Signaler un bug",
+    "lead": "Depuis {page}. Dis ce qui s'est passé, et ce que tu attendais.",
+    "message": "Ce qui ne va pas",
+    "messagePlaceholder": "Ce que tu as fait, ce qui s'est affiché, ce que tu attendais.",
+    "screenshot": "Capture d'écran",
+    "screenshotPick": "Joindre une image",
+    "screenshotChange": "Changer d'image",
+    "screenshotRemove": "Retirer",
+    "screenshotHint": "PNG, JPEG ou WebP, {max} Mo au plus. Facultatif.",
+    "wrongType": "Seules les images PNG, JPEG et WebP sont acceptées.",
+    "tooLarge": "L'image dépasse {max} Mo.",
+    "send": "Envoyer le rapport",
+    "cancel": "Annuler",
+    "sent": "Rapport envoyé. Merci.",
+    "failed": "Le rapport n'est pas parti. Réessaie dans un instant."
   }
 }

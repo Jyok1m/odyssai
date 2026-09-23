@@ -11,7 +11,9 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   ServiceUnavailableException,
+  StreamableFile,
   UseGuards,
 } from '@nestjs/common';
 import type { User } from '@odyssai/db';
@@ -28,10 +30,14 @@ import {
   type AlphaStatus,
   type ContactMessage,
   type ContactPage,
+  type BugReport,
+  type BugReportPage,
 } from '@odyssai/schemas';
+import type { Response } from 'express';
 import { z } from 'zod';
 import { AlphaService } from '../alpha/alpha.service.js';
 import { ContactService } from '../contact/contact.service.js';
+import { BugsService } from '../bugs/bugs.service.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
 import { BillingService } from '../billing/billing.service.js';
@@ -63,6 +69,7 @@ export class AdminController {
     private readonly billing: BillingService,
     private readonly alpha: AlphaService,
     private readonly contact: ContactService,
+    private readonly bugs: BugsService,
   ) {}
 
   @Get('overview')
@@ -167,6 +174,34 @@ export class AdminController {
     if (!parsed.success) throw new BadRequestException({ code: 'invalid_request' });
 
     return this.contact.setHandled(id, parsed.data.handled);
+  }
+
+  // Les bugs signales depuis le jeu, et leur capture, servie a part.
+  @Get('bugs')
+  bugReports(
+    @Query('cursor') cursor?: string,
+    @Query('pending') pending?: string,
+  ): Promise<BugReportPage> {
+    return this.bugs.list(cursor, pending === 'true');
+  }
+
+  @Patch('bugs/:id')
+  setBugHandled(@Param('id') id: string, @Body() body: unknown): Promise<BugReport> {
+    const parsed = z.object({ handled: z.boolean() }).safeParse(body);
+    if (!parsed.success) throw new BadRequestException({ code: 'invalid_request' });
+
+    return this.bugs.setHandled(id, parsed.data.handled);
+  }
+
+  @Get('bugs/:id/screenshot')
+  async bugScreenshot(
+    @Param('id') id: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<StreamableFile> {
+    const image = await this.bugs.screenshot(id);
+    res.setHeader('Content-Type', image.type);
+    res.setHeader('Cache-Control', 'private, no-store');
+    return new StreamableFile(image.data);
   }
 
   @Get('plans')

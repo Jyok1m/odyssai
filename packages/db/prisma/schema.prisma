@@ -94,6 +94,7 @@ model User {
   encounters   Encounter[]
   llmUsage     LlmUsage[]
   subscription Subscription?
+  bugReports   BugReport[]
 
   @@index([email])
   @@map("users")
@@ -903,4 +904,29 @@ model GenerationJob {
 
   @@index([universeId, createdAt])
   @@map("generation_jobs")
+}
+
+/// Un bug signale depuis le jeu, avec sa capture s'il y en a une.
+model BugReport {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  /// Detache si le joueur part : le rapport reste lisible, sans personne.
+  userId String? @map("user_id") @db.Uuid
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  /// Le chemin de la page d'ou le rapport est parti.
+  page      String @db.VarChar(200)
+  message   String
+  userAgent String @map("user_agent") @db.VarChar(400)
+
+  /// La capture en base et non sur disque : un conteneur n'a pas de disque qui
+  /// survive, et cent joueurs d'alpha ne remplissent pas une table.
+  screenshot     Bytes?
+  screenshotType String? @map("screenshot_type") @db.VarChar(40)
+
+  handledAt DateTime? @map("handled_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([handledAt, createdAt(sort: Desc)])
+  @@map("bug_reports")
 }

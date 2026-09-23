@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { AdminLink } from "@/components/auth/admin-link";
 import { AuthMenu } from "@/components/auth/auth-menu";
 import { OdyssaiLogo } from "@/components/brand/odyssai-logo";
+import { BugReportButton } from "@/components/play/bug-report";
 import { LocaleSwitcher } from "@/components/marketing/locale-switcher";
 import { Link, usePathname } from "@/i18n/navigation";
 
@@ -67,6 +68,7 @@ export function GameHeader() {
         </div>
 
         <div className="flex items-center gap-x-3 sm:ml-auto">
+          <BugReportButton />
           <AdminLink />
           <LocaleSwitcher />
           <AuthMenu />

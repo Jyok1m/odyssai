@@ -8,6 +8,7 @@ import {
   EnvelopeIcon,
   UsersIcon,
   XMarkIcon,
+  BugAntIcon,
 } from "@heroicons/react/24/outline";
 import { Bars3Icon } from "@heroicons/react/20/solid";
 import type { PlayerProfile } from "@odyssai/schemas";
@@ -19,6 +20,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useSession } from "@/components/auth/session-provider";
 import { Button } from "@/components/ui/button";
 import { API_BASE_URL } from "@/lib/api";
+import { fetchBugReports } from "@/lib/bugs";
 import { fetchContactMessages } from "@/lib/contact";
 import { fetchProfile } from "@/lib/profile";
 
@@ -27,6 +29,7 @@ const NAVIGATION = [
   { name: "Joueurs", href: "/admin/joueurs", icon: UsersIcon },
   { name: "Abonnements", href: "/admin/abonnements", icon: CreditCardIcon },
   { name: "Messages", href: "/admin/messages", icon: EnvelopeIcon },
+  { name: "Bugs", href: "/admin/bugs", icon: BugAntIcon },
 ] as const;
 
 /*
@@ -42,6 +45,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const [denied, setDenied] = useState(false);
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(0);
+  const [bugs, setBugs] = useState(0);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -67,6 +71,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
     fetchContactMessages({ pending: true }, controller.signal)
       .then((page) => setPending(page.pending))
+      .catch(() => undefined);
+    fetchBugReports({ pending: true }, controller.signal)
+      .then((page) => setBugs(page.pending))
       .catch(() => undefined);
 
     return () => controller.abort();
@@ -144,7 +151,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <Sidebar
               profile={profile}
               pathname={pathname}
-              pending={pending}
+              pending={pending} bugs={bugs}
               onNavigate={() => setOpen(false)}
             />
           </DialogPanel>
@@ -152,7 +159,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
       </Dialog>
 
       <div className="hidden xl:fixed xl:inset-y-0 xl:z-50 xl:flex xl:w-72 xl:flex-col">
-        <Sidebar profile={profile} pathname={pathname} pending={pending} />
+        <Sidebar profile={profile} pathname={pathname} pending={pending} bugs={bugs} />
       </div>
 
       <div className="xl:pl-72">
@@ -186,12 +193,14 @@ function Sidebar({
   profile,
   pathname,
   pending,
+  bugs,
   onNavigate,
 }: {
   profile: PlayerProfile;
   pathname: string;
-  // Messages a traiter, pour la pastille. Zero n'en affiche aucune.
+  // Messages et bugs a traiter, pour les pastilles. Zero n'en affiche aucune.
   pending: number;
+  bugs: number;
   // Fourni par la version mobile seule : celle de bureau ne se ferme pas.
   onNavigate?: () => void;
 }) {
@@ -212,6 +221,8 @@ function Sidebar({
         <ul role="list" className="-mx-2 space-y-1">
           {NAVIGATION.map((item) => {
             const current = pathname === item.href;
+            const count =
+              item.href === "/admin/messages" ? pending : item.href === "/admin/bugs" ? bugs : 0;
 
             return (
               <li key={item.href}>
@@ -237,9 +248,9 @@ function Sidebar({
 
                   {/* Une pastille seulement quand il y a quelque chose : un
                       zero permanent cesse d'etre regarde au bout d'un jour. */}
-                  {item.href === "/admin/messages" && pending > 0 ? (
+                  {count > 0 ? (
                     <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-tag font-medium text-on-accent">
-                      {pending}
+                      {count}
                     </span>
                   ) : null}
                 </Link>

@@ -220,6 +220,19 @@ export interface OnboardingStore {
   plans?: PlanRow[];
   // Absente, le jeu est ouvert : c'est l'etat que presque tous les tests veulent.
   siteSettings?: SiteSettingsRow;
+  bugs?: BugRow[];
+}
+
+export interface BugRow {
+  id: string;
+  userId: string | null;
+  page: string;
+  message: string;
+  userAgent: string;
+  screenshot: Uint8Array | null;
+  screenshotType: string | null;
+  handledAt: Date | null;
+  createdAt: Date;
 }
 
 export interface SiteSettingsRow {
@@ -848,6 +861,24 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
       La cle primaire porte l'idempotence des webhooks : un meme identifiant
       deux fois doit echouer, comme en base.
     */
+    bugReport: {
+      create: async ({ data }: any) => {
+        const row: BugRow = {
+          id: randomUUID(),
+          userId: data.userId ?? null,
+          page: data.page,
+          message: data.message,
+          userAgent: data.userAgent,
+          screenshot: data.screenshot ?? null,
+          screenshotType: data.screenshotType ?? null,
+          handledAt: null,
+          createdAt: new Date(),
+        };
+        (store.bugs ??= []).push(row);
+        return { ...row };
+      },
+    },
+
     siteSettings: {
       findUnique: async () => ({ ...(store.siteSettings ?? OPEN_SETTINGS) }),
       upsert: async () => ({ ...(store.siteSettings ?? OPEN_SETTINGS) }),

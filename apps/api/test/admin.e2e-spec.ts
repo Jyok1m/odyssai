@@ -109,6 +109,9 @@ describe('Tableau de bord (e2e)', () => {
     ['get', '/admin/alpha'],
     ['patch', '/admin/alpha'],
     ['get', '/admin/contact'],
+    ['get', '/admin/bugs'],
+    ['patch', '/admin/bugs/00000000-0000-7000-8000-000000000000'],
+    ['get', '/admin/bugs/00000000-0000-7000-8000-000000000000/screenshot'],
     ['get', '/admin/marketing/emails'],
   ])('refuse %s %s a un joueur ordinaire', async (method, path) => {
     harness = await boot(false);

@@ -68,6 +68,19 @@ export interface AdminStore {
   plans: AdminPlanRow[];
   subscriptions: AdminSubscriptionRow[];
   entries: AdminEntryRow[];
+  bugs?: AdminBugRow[];
+}
+
+export interface AdminBugRow {
+  id: string;
+  userId: string | null;
+  page: string;
+  message: string;
+  userAgent: string;
+  screenshot: Uint8Array | null;
+  screenshotType: string | null;
+  handledAt: Date | null;
+  createdAt: Date;
 }
 
 // Les trois paliers que la migration amorce.
@@ -126,6 +139,42 @@ export function adminUser(overrides: Partial<AdminUserRow> = {}): AdminUserRow {
 }
 
 export function makeAdminPrisma(store: AdminStore) {
+  // Les rapports de bug, sans les octets de la capture dans la liste.
+  const bugOf = (row: AdminBugRow) => {
+    const user = store.users.find((candidate) => candidate.id === row.userId);
+    return {
+      id: row.id,
+      page: row.page,
+      message: row.message,
+      userAgent: row.userAgent,
+      screenshotType: row.screenshotType,
+      handledAt: row.handledAt,
+      createdAt: row.createdAt,
+      user: user ? { username: user.username, email: user.email } : null,
+    };
+  };
+  const bugReport = {
+    findMany: async ({ where, take }: any = {}) =>
+      (store.bugs ?? [])
+        .filter((row) => (where?.handledAt === null ? row.handledAt === null : true))
+        .sort((a, b) => (a.id < b.id ? 1 : -1))
+        .slice(0, take ?? 100)
+        .map(bugOf),
+    count: async ({ where }: any = {}) =>
+      (store.bugs ?? []).filter((row) => (where?.handledAt === null ? row.handledAt === null : true))
+        .length,
+    update: async ({ where, data }: any) => {
+      const row = (store.bugs ?? []).find((candidate) => candidate.id === where.id);
+      if (!row) throw new Error('bug inconnu');
+      row.handledAt = data.handledAt;
+      return bugOf(row);
+    },
+    findUnique: async ({ where }: any) => {
+      const row = (store.bugs ?? []).find((candidate) => candidate.id === where.id);
+      return row ? { screenshot: row.screenshot, screenshotType: row.screenshotType } : null;
+    },
+  };
+
   const matches = (row: AdminUserRow, where: any): boolean => {
     if (!where) return true;
 
@@ -156,6 +205,7 @@ export function makeAdminPrisma(store: AdminStore) {
   });
 
   const double: any = {
+    bugReport,
     user: {
       count: async ({ where }: any = {}) =>
         store.users.filter((row) => matches(row, where)).length,

@@ -7,6 +7,7 @@ import { BillingModule } from './billing/billing.module.js';
 import { ConfigModule } from './config/config.module.js';
 import { AlphaModule } from './alpha/alpha.module.js';
 import { ContactModule } from './contact/contact.module.js';
+import { BugsModule } from './bugs/bugs.module.js';
 import { MailModule } from './mail/mail.module.js';
 import { ErasureModule } from './erasure/erasure.module.js';
 import { ModerationModule } from './moderation/moderation.module.js';
@@ -34,6 +35,7 @@ import { UsageModule } from './usage/usage.module.js';
     AlphaModule,
     MailModule,
     ContactModule,
+    BugsModule,
     ErasureModule,
     AuthModule,
     GuideModule,

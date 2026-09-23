@@ -1228,5 +1228,23 @@
     "visit": "Step in",
     "visitNeedsTraveller": "You need a character first: it is their essence that crosses the rift.",
     "visitError": "That world can't be entered right now."
+  },
+  "Bug": {
+    "button": "Report a bug",
+    "title": "Report a bug",
+    "lead": "From {page}. Say what happened, and what you expected.",
+    "message": "What went wrong",
+    "messagePlaceholder": "What you did, what showed up, what you expected.",
+    "screenshot": "Screenshot",
+    "screenshotPick": "Attach an image",
+    "screenshotChange": "Change image",
+    "screenshotRemove": "Remove",
+    "screenshotHint": "PNG, JPEG or WebP, up to {max} MB. Optional.",
+    "wrongType": "Only PNG, JPEG and WebP images are accepted.",
+    "tooLarge": "The image is over {max} MB.",
+    "send": "Send the report",
+    "cancel": "Cancel",
+    "sent": "Report sent. Thank you.",
+    "failed": "The report did not go through. Try again in a moment."
   }
 }
