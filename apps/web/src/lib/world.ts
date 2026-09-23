@@ -1,7 +1,9 @@
 import {
   GenerationStreamEventSchema,
+  OpenWorldsSchema,
   WorldViewSchema,
   type GenerationStreamEvent,
+  type OpenWorlds,
   type WorldErrorBody,
   type WorldView,
 } from "@odyssai/schemas";
@@ -59,4 +61,20 @@ export async function fetchWorld(signal?: AbortSignal): Promise<WorldView> {
   }
 
   return WorldViewSchema.parse(await response.json());
+}
+
+/*
+  Les mondes que d'autres joueurs ont ouverts. Un monde est fermé par défaut :
+  ceux-là, leur créateur en a décidé autrement.
+*/
+export async function fetchOpenWorlds(signal?: AbortSignal): Promise<OpenWorlds> {
+  const response = await fetch(`${API_BASE_URL}/worlds/open`, {
+    credentials: "include",
+    headers: { Accept: "application/json" },
+    cache: "no-store",
+    signal,
+  });
+
+  if (!response.ok) throw new WorldError("unknown");
+  return OpenWorldsSchema.parse(await response.json());
 }

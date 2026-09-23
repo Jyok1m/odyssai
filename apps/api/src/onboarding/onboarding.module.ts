@@ -7,6 +7,7 @@ import { StoriesModule } from '../stories/stories.module.js';
 import { CharacterController } from './character.controller.js';
 import { CharacterService } from './character.service.js';
 import { GenerationController } from './generation.controller.js';
+import { OpenWorldsController } from './open-worlds.controller.js';
 import { GenerationQueueService } from './generation-queue.service.js';
 import { NARRATOR_LLM, narratorLlmProvider } from './narrator-llm.provider.js';
 import { OnboardingController } from './onboarding.controller.js';
@@ -24,6 +25,7 @@ import { OnboardingService } from './onboarding.service.js';
     OnboardingController,
     CharacterController,
     GenerationController,
+    OpenWorldsController,
     StoriesController,
   ],
   providers: [

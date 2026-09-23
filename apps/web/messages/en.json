@@ -1174,6 +1174,10 @@
     "codexEmpty": "Nothing yet. What you uncover will be written here.",
     "canon": "What is true here",
     "canonEmpty": "The narrator has had nothing to invent yet.",
-    "glossary": "Glossary"
+    "glossary": "Glossary",
+    "open": "Open worlds",
+    "openAside": "What other players have opened",
+    "host": "Held by {host}",
+    "openHint": "You can only look for now: crossing a rift into another's world does not exist yet. What is missing is not the door but what lies behind it: where a visitor's doings are written, and who validates what becomes true there."
   }
 }

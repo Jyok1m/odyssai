@@ -564,6 +564,34 @@ export const WorldViewSchema = z.object({
 
 export type WorldView = z.infer<typeof WorldViewSchema>;
 
+/*
+  Un monde qu'un autre joueur a ouvert, vu du dehors.
+
+  Ce qu'il en montre est ce qu'on met sur une porte : de quoi decider si on
+  entre. Ni factions, ni personnages, ni canon, ni arc : le visiteur les
+  decouvrira en jouant, ou pas du tout. C'est le type qui le garantit, comme
+  pour le secret des personnages.
+
+  Le pseudo de l'hote y figure : c'est exactement ce pour quoi il existe, etre
+  vu des autres joueurs quand les univers se croisent.
+*/
+export const OpenWorldSchema = z.object({
+  universeId: z.uuid(),
+  name: z.string(),
+  accentHue: z.number().int().min(0).max(359),
+  premise: z.string(),
+  tone: z.string(),
+  host: z.string().nullable(),
+});
+
+export type OpenWorld = z.infer<typeof OpenWorldSchema>;
+
+export const OpenWorldsSchema = z.object({
+  worlds: z.array(OpenWorldSchema),
+});
+
+export type OpenWorlds = z.infer<typeof OpenWorldsSchema>;
+
 export const WorldErrorBodySchema = z.object({
   // `not_ready` dit que le monde n'est pas encore genere, pas qu'il manque.
   code: z.enum(['not_ready', 'not_found']),

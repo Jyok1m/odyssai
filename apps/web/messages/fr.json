@@ -1174,6 +1174,10 @@
     "codexEmpty": "Rien encore. Ce que tu découvriras s'inscrira ici.",
     "canon": "Ce qui est vrai ici",
     "canonEmpty": "Le meneur n'a encore rien eu à inventer.",
-    "glossary": "Glossaire"
+    "glossary": "Glossaire",
+    "open": "Mondes ouverts",
+    "openAside": "Ce que d'autres joueurs ont ouvert",
+    "host": "Tenu par {host}",
+    "openHint": "On ne peut qu'y regarder pour l'instant : franchir une faille vers le monde d'un autre n'existe pas encore. Ce qui manque n'est pas la porte, c'est ce qui se passe derrière : où s'écrit ce qu'un visiteur y fait, et qui valide ce qui en devient vrai."
   }
 }

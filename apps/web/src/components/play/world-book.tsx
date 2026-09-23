@@ -1,6 +1,6 @@
 "use client";
 
-import type { Story, WorldView } from "@odyssai/schemas";
+import type { OpenWorld, Story, WorldView } from "@odyssai/schemas";
 import { useTranslations } from "next-intl";
 import { useEffect, useState, type CSSProperties } from "react";
 
@@ -10,6 +10,7 @@ import { Definition, Panel, Tag } from "@/components/play/panel";
 import { Absent, WorldSkin, useWorld } from "@/components/play/use-world";
 import { Link } from "@/i18n/navigation";
 import { fetchStories } from "@/lib/stories";
+import { fetchOpenWorlds } from "@/lib/world";
 
 /*
   Le livre du monde.
@@ -43,6 +44,7 @@ export function WorldBook() {
         <Header />
         <General />
         <Stories />
+        <OpenWorlds />
         <Absent message={t("notReady")} />
       </div>
     );
@@ -53,6 +55,7 @@ export function WorldBook() {
       <Header world={state.world} />
       <General />
       <Stories />
+      <OpenWorlds />
       <World world={state.world} />
       <Glossary />
     </WorldSkin>
@@ -172,6 +175,62 @@ function Stories() {
           </li>
         ))}
       </ul>
+    </Panel>
+  );
+}
+
+/*
+  Les mondes que d'autres joueurs ont ouverts.
+
+  On ne peut qu'y regarder : personne ne peut encore franchir une faille vers
+  le monde d'un autre. L'écran le dit, plutôt que d'afficher une porte qui ne
+  s'ouvre pas.
+*/
+function OpenWorlds() {
+  const t = useTranslations("WorldBook");
+  const [worlds, setWorlds] = useState<OpenWorld[]>([]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    fetchOpenWorlds(controller.signal)
+      .then((listed) => setWorlds(listed.worlds))
+      // Aucun monde ouvert fait disparaître le bloc, une panne aussi.
+      .catch(() => {});
+
+    return () => controller.abort();
+  }, []);
+
+  if (worlds.length === 0) return null;
+
+  return (
+    <Panel title={t("open")} aside={t("openAside")}>
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {worlds.map((world) => (
+          <li
+            key={world.universeId}
+            data-world={world.name}
+            style={{ "--world-hue": world.accentHue } as CSSProperties}
+            className="rounded-card border border-line p-4"
+          >
+            <span aria-hidden="true" className="block h-1.5 w-8 rounded-xs bg-accent" />
+            <p className="mt-2 font-voice text-subtitle text-pretty text-accent">
+              {world.name}
+            </p>
+            <p className="mt-2 text-ui-sm text-pretty text-vellum-2">{world.premise}</p>
+            <p className="mt-3 text-caption text-pretty text-vellum-3">{world.tone}</p>
+            {world.host ? (
+              <p className="mt-3 text-caption text-vellum-3">
+                {t("host", { host: world.host })}
+              </p>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+
+      <p className="mt-5 max-w-measure text-caption text-pretty text-vellum-3">
+        {t("openHint")}
+      </p>
     </Panel>
   );
 }
