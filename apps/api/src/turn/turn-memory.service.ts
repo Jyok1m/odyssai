@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import { TUNING, type Progress } from '@odyssai/engine';
+import { TUNING, hpMaxOf, type Progress } from '@odyssai/engine';
 import type { LlmClient } from '@odyssai/llm';
 import {
   CanonFactSchema,
@@ -44,6 +44,12 @@ export interface TurnWorld {
     derniere montee. Le meneur n'en voit rien.
   */
   progress: Progress;
+  /*
+    Dans quel etat il se tient, a cote de la fiche pour la meme raison : la
+    fiche dit ce qu'il est, celle-ci ce qu'il a pris. `hp` nul en base vaut la
+    reserve pleine, le maximum derivant de `corps`.
+  */
+  health: { hp: number; hpMax: number; rest: number };
   // Ce que le personnage porte, des noms et rien d'autre.
   inventory: string[];
   /*
@@ -140,6 +146,8 @@ export class TurnMemoryService implements OnModuleInit {
       return null;
     }
 
+    const hpMax = hpMaxOf(character.data.attributes.corps);
+
     return {
       universeId: universe.id,
       charter: charter.data,
@@ -147,6 +155,11 @@ export class TurnMemoryService implements OnModuleInit {
       character: character.data,
       works: universe.works,
       progress: (universe.character?.progress ?? {}) as Progress,
+      health: {
+        hp: universe.character?.hp ?? hpMax,
+        hpMax,
+        rest: universe.character?.rest ?? 0,
+      },
       inventory: universe.character?.inventory ?? [],
       act: universe.bible && bible.data.arc ? (universe.arcAct ?? 1) : null,
       entities: universe.entities.map((row) => ({

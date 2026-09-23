@@ -19,6 +19,7 @@ import {
   entityKey,
   type Entity,
   TurnRequestSchema,
+  type ScenePresence,
   type Situation,
   type TurnHistory,
   type TurnStreamEvent,
@@ -36,10 +37,15 @@ import {
 import {
   PROGRESS_STEPS,
   arbitrateCanon,
+  conditionOf,
+  harmFor,
+  hpMaxOf,
+  vitalsAfter,
   attributeFor,
   bandFor,
   grewTo,
   modifierOf,
+  presentIn,
   publicOutcome,
   rollD20,
   settledByDie,
@@ -131,6 +137,15 @@ export class TurnController {
         outcome: outcomes.get(row.seq) ?? null,
         createdAt: row.createdAt.toISOString(),
       })),
+      /*
+        Ce que le meneur a nomme a sa derniere reponse. Relu ici plutot que
+        garde en base : c'est une lecture du recit, elle se refait a
+        l'identique et ne peut pas deriver de lui.
+      */
+      scene: scenePresence(
+        [...messages].reverse().find((row) => row.role === 'assistant')?.content ?? '',
+        world.entities,
+      ),
       lastRoll: rolled
         ? {
             die: rolled.die,
@@ -352,6 +367,42 @@ export class TurnController {
     const uses = attribute ? usesAfter(world.progress, attribute) : 0;
     const grew = attribute ? grewTo(score, uses) : null;
 
+    /*
+      Ce que l'echange coute.
+
+      Le de decide, comme il decide du reste : le meneur ne declare aucun
+      degat, donc il ne peut ni epargner un joueur qui insiste, ni l'achever
+      pour la beaute de la scene. Seules les situations physiques blessent, et
+      seulement quand le de a tranche.
+    */
+    const harm = settled ? harmFor(situation, band) : 0;
+
+    /*
+      Un cran de `corps` gagne rend le personnage plus dur, et lui rend les
+      points correspondants : sans cela il se retrouverait « blesse » pour
+      avoir progresse, sa reserve ayant grandi sous lui.
+    */
+    const hpMax = grew && attribute === 'corps' ? hpMaxOf(grew) : world.health.hpMax;
+    const vitals = vitalsAfter(
+      {
+        hp: world.health.hp + (hpMax - world.health.hpMax),
+        rest: world.health.rest,
+      },
+      hpMax,
+      harm,
+    );
+
+    /*
+      L'etat que le meneur recoit est celui de la fin de sa scene : il a deja
+      la bande, donc lui cacher le coup qu'elle implique l'obligerait a le
+      narrer sans le savoir.
+    */
+    const condition = conditionOf(vitals.hp, hpMax);
+    const healthMoved =
+      vitals.hp !== world.health.hp ||
+      vitals.rest !== world.health.rest ||
+      hpMax !== world.health.hpMax;
+
 
     // Ecrit avant l'appel : une coupure en cours de reponse ne doit pas faire
     // perdre au joueur ce qu'il a tape. Rien a ecrire a l'ouverture, ou la
@@ -477,6 +528,7 @@ export class TurnController {
           opening,
           guidance: guidance.map((card) => card.text),
           inventory: world.inventory,
+          condition,
           arc: world.bible.arc,
           act: world.act ?? undefined,
           entities: world.entities,
@@ -638,6 +690,26 @@ export class TurnController {
       const moved =
         carried.length !== world.inventory.length ||
         carried.some((item, index) => item !== world.inventory[index]);
+
+      /*
+        Tout ce qui bouge sur la fiche, en une seule ecriture.
+
+        C'etaient deux branches conditionnelles, l'une pour l'inventaire et
+        l'autre pour la progression, et la sante en aurait fait une troisieme :
+        trois mises a jour de la meme ligne dans la meme transaction, chacune
+        devant se souvenir de ce que les autres ecrivent.
+      */
+      const sheet = {
+        ...(moved ? { inventory: carried } : {}),
+        ...(attribute
+          ? { progress: { ...world.progress, [attribute]: grew ? 0 : uses } }
+          : {}),
+        ...(grew && attribute
+          ? { attributes: { ...world.character.attributes, [attribute]: grew } }
+          : {}),
+        ...(healthMoved ? { hp: vitals.hp, rest: vitals.rest } : {}),
+      };
+
       for (const { fact, verdict: why } of arbitrated.rejected) {
         this.logger.warn(`fait refuse (${why.reason}) : ${fact.subject}`);
       }
@@ -707,30 +779,11 @@ export class TurnController {
             traceId: turnId,
           },
         }),
-        ...(!attribute && moved
+        ...(Object.keys(sheet).length > 0
           ? [
               this.prisma.character.update({
                 where: { universeId: world.universeId },
-                data: { inventory: carried },
-              }),
-            ]
-          : []),
-        ...(attribute
-          ? [
-              this.prisma.character.update({
-                where: { universeId: world.universeId },
-                data: {
-                  progress: { ...world.progress, [attribute]: grew ? 0 : uses },
-                  ...(moved ? { inventory: carried } : {}),
-                  ...(grew
-                    ? {
-                        attributes: {
-                          ...world.character.attributes,
-                          [attribute]: grew,
-                        },
-                      }
-                    : {}),
-                },
+                data: sheet,
               }),
             ]
           : []),
@@ -755,6 +808,32 @@ export class TurnController {
             known: entity.known,
           });
         }
+      }
+
+      /*
+        Qui se tient dans la scene, relu dans ce que le meneur vient d'ecrire.
+        Les entites nees a ce tour en font partie : elles viennent d'y etre
+        nommees, c'est meme ce qui les a fait naitre.
+      */
+      if (streaming) {
+        this.write(res, {
+          type: 'scene',
+          present: scenePresence(answer, [...world.entities, ...born]),
+        });
+      }
+
+      /*
+        La jauge, avant l'inventaire : un coup recu se lit avant ce qu'on a
+        ramasse. Le joueur voit le chiffre, le meneur n'a eu qu'un mot.
+      */
+      if (streaming && healthMoved) {
+        this.write(res, {
+          type: 'health',
+          hp: vitals.hp,
+          hpMax,
+          condition,
+          harm,
+        });
       }
 
       if (streaming && moved) {
@@ -812,4 +891,16 @@ export class TurnController {
   private write(res: Response, event: TurnStreamEvent): void {
     res.write(`data: ${JSON.stringify(event)}\n\n`);
   }
+}
+
+/*
+  Qui et quoi se tient dans une scene, pour l'ecran.
+
+  Les personnages et les lieux seulement : un objet nomme au passage n'est pas
+  une presence, il est dans l'inventaire ou il ne l'est pas.
+*/
+function scenePresence(narration: string, entities: Entity[]): ScenePresence[] {
+  return presentIn(narration, entities)
+    .filter((entity) => entity.kind === 'npc' || entity.kind === 'place')
+    .map((entity) => ({ name: entity.name, kind: entity.kind }));
 }

@@ -3,6 +3,7 @@ export * from './auth.js';
 export * from './admin.js';
 export * from './billing.js';
 export * from './contact.js';
+export * from './essence.js';
 export * from './guide.js';
 export * from './onboarding.js';
 export * from './profile.js';

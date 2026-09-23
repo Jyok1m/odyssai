@@ -89,6 +89,8 @@ model User {
 
   /// Plusieurs histoires par joueur, sur la meme reserve de credits.
   universes    Universe[] @relation("Owner")
+  /// Ses personnages, independamment des mondes ou ils s'incarnent.
+  essences     Essence[]
   encounters   Encounter[]
   llmUsage     LlmUsage[]
   subscription Subscription?
@@ -243,10 +245,67 @@ model Universe {
   @@map("universes")
 }
 
+/// Ce qu'un personnage emporte en franchissant une faille.
+///
+/// Le nom, le caractere et le socle chiffre traversent ; le metier, les
+/// talents, les objets et l'etat restent au monde qu'on quitte. C'est la
+/// distinction que le site appelle essence et incarnation, et elle vit ici
+/// parce qu'une essence survit a chacune de ses incarnations.
+///
+/// Le socle est celui de la derniere incarnation jouee, recopie au depart : un
+/// personnage qui s'est endurci arrive endurci. La copie se fait a ce
+/// moment-la et jamais en continu, pour qu'il n'y ait qu'un instant ou la
+/// verite passe de l'une a l'autre.
+model Essence {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  /// Cascade, contrairement aux univers : une essence sans joueur ne
+  /// s'incarne plus nulle part. Les personnages qui la portaient lui
+  /// survivent, detaches d'elle.
+  ownerId String @map("owner_id") @db.Uuid
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  name   String @db.VarChar(60)
+  gender String @db.VarChar(40)
+  age    Int
+
+  personality Json
+  attributes  Json
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  incarnations Character[]
+
+  @@index([ownerId, createdAt])
+  @@map("essences")
+}
+
+/// Comment un personnage est arrive dans ce monde. `natif` pour celui qui y a
+/// toujours vecu, `voyageur` pour celui qui a franchi une faille. `echo`
+/// existe dans le vocabulaire du site et n'est pas encore atteignable : il
+/// suppose de visiter le monde d'un autre joueur.
+enum Arrival {
+  natif
+  voyageur
+  echo
+
+  @@map("arrival")
+}
+
 /// Le personnage du joueur. Un seul par univers pour l'instant, d'ou l'unicite
 /// sur universe_id : c'est celui qu'il incarne.
 model Character {
   id String @id @default(uuid(7)) @db.Uuid
+
+  /// L'essence dont ce personnage est une incarnation. SetNull : une essence
+  /// effacee ne doit pas emporter les recits ou son incarnation apparait.
+  essenceId String?  @map("essence_id") @db.Uuid
+  essence   Essence? @relation(fields: [essenceId], references: [id], onDelete: SetNull)
+
+  /// Comment il est entre dans ce monde. Le premier d'un monde y est natif ;
+  /// celui qu'on y amene par une faille est voyageur.
+  arrival Arrival @default(natif)
 
   /// Nullable : un personnage que d'autres joueurs ont rencontre survit a la
   /// suppression de son monde. C'est le SetNull qui le protege de la cascade,
@@ -282,6 +341,16 @@ model Character {
   /// palier franchi : sans lui il faudrait rejouer toute l'histoire pour
   /// savoir ou en est un personnage.
   progress Json?
+
+  /// Points de vie restants. NULL vaut la reserve pleine : le maximum derive
+  /// de `corps`, donc le remplir a la migration aurait demande de lire un JSON
+  /// en SQL pour ecrire une valeur que le premier coup recu aurait de toute
+  /// facon posee. Seul le moteur decide de ce qui l'entame.
+  hp Int?
+
+  /// Tours calmes depuis le dernier point rendu, remis a zero a chaque coup
+  /// recu. Il n'y a pas d'horloge dans ce jeu : le repos se compte en tours.
+  rest Int @default(0)
 
   /// La tombe. Non nul, le personnage a ete rencontre par d'autres avant que
   /// son joueur ne parte : on le garde pour que les recits qui l'ont croise

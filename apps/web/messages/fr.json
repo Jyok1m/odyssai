@@ -336,7 +336,11 @@
     "errorSignedOut": "Ta session a expiré. Reconnecte-toi, ta saisie est gardée.",
     "errorRefused": "Cet enregistrement a été refusé. Recharge la page pour repartir de l'étape en cours.",
     "backToInspiration": "Revenir à mon inspiration",
-    "backToCharacter": "Revenir à mon personnage"
+    "backToCharacter": "Revenir à mon personnage",
+    "traveller": {
+      "title": "Tu l'amènes avec toi",
+      "lead": "Ce personnage vient d'un autre de tes mondes. Sa fiche arrive remplie : corrige-la si ce monde-ci demande autre chose, puis entre."
+    }
   },
   "Stories": {
     "title": "Tes histoires",
@@ -369,7 +373,11 @@
       "kept": "Ce monde avait déjà reçu des visiteurs : il est conservé, détaché de toi et vidé de tes saisies.",
       "remembered": "D'autres joueurs avaient croisé ce personnage : il reste dans leurs récits, désormais mort.",
       "gone": "Histoire supprimée."
-    }
+    },
+    "carry": "Amener un personnage",
+    "carryTitle": "Qui franchit la faille",
+    "carryHint": "Son nom, son caractère et ses attributs traversent. Son métier, ses talents et ses objets restent au monde qu'il quitte : il s'y incarnera autrement.",
+    "worlds": "{count, plural, one {# monde} other {# mondes}}"
   },
   "Concept": {
     "metaTitle": "Concept",
@@ -1046,7 +1054,17 @@
       "item": "objet",
       "place": "lieu",
       "faction": "faction"
-    }
+    },
+    "healthCount": "{hp} / {hpMax}",
+    "harm": "{harm, plural, one {# point perdu ce tour} other {# points perdus ce tour}}",
+    "condition": {
+      "indemne": "indemne",
+      "blesse": "blessé",
+      "mal_en_point": "mal en point",
+      "a_terre": "à terre"
+    },
+    "scene": "Dans la scène",
+    "youTag": "toi"
   },
   "Sheet": {
     "title": "Fiche de personnage",
@@ -1077,7 +1095,24 @@
     "talentsEmpty": "Aucun talent nommé.",
     "inventory": "Inventaire",
     "inventoryEmpty": "Tu ne portes rien.",
-    "inventoryHint": "Des noms, sans effet chiffré : le meneur les raconte, le moteur ne les calcule pas."
+    "inventoryHint": "Des noms, sans effet chiffré : le meneur les raconte, le moteur ne les calcule pas.",
+    "state": "État",
+    "stateAside": "Tenu par le code",
+    "stateHint": "Un échange physique raté coûte des points, et le dé seul en décide : le meneur ne peut ni t'épargner ni t'achever. Trois tours sans coup reçu en rendent un. À terre, tu es hors de combat, jamais mort.",
+    "arrival": "Arrivée",
+    "elsewhere": "Ailleurs dans le multivers",
+    "elsewhereAside": "La même essence, une autre incarnation",
+    "elsewhereEmpty": "Ce personnage n'a encore franchi aucune faille. Amène-le dans une nouvelle histoire, et il s'incarnera autrement.",
+    "arrivals": {
+      "natif": "Natif",
+      "voyageur": "Voyageur",
+      "echo": "Écho"
+    },
+    "arrivalHint": {
+      "natif": "Ce monde l'a absorbé : il y a toujours vécu.",
+      "voyageur": "Il est arrivé en étranger, et les habitants le sentent.",
+      "echo": "Une projection de passage, à l'influence légère."
+    }
   },
   "WorldBook": {
     "title": "Lore et monde",

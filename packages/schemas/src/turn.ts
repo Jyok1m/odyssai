@@ -8,6 +8,7 @@ import { AttributeSchema } from './onboarding.js';
 import {
   CANON_FACTS_PER_TURN_MAX,
   CanonFactSchema,
+  ConditionSchema,
   EntityKindSchema,
 } from './world.js';
 
@@ -130,6 +131,17 @@ export const TurnDeltaSchema = z.object({
 
 export type TurnDelta = z.infer<typeof TurnDeltaSchema>;
 
+/*
+  Qui et quoi se tient dans la scene, d'apres les noms que le meneur vient de
+  poser. Le su seulement, comme le codex : rien de cache ne passe par la.
+*/
+export const ScenePresenceSchema = z.object({
+  name: z.string(),
+  kind: EntityKindSchema,
+});
+
+export type ScenePresence = z.infer<typeof ScenePresenceSchema>;
+
 // Evenements du flux SSE, un objet JSON par ligne `data:`.
 export const TurnStreamEventSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('delta'), text: z.string() }),
@@ -156,6 +168,29 @@ export const TurnStreamEventSchema = z.discriminatedUnion('type', [
     name: z.string(),
     kind: EntityKindSchema,
     known: z.string(),
+  }),
+  /*
+    L'etat du personnage apres le tour, envoye seulement quand il a bouge.
+
+    Le joueur voit la jauge ; le meneur, lui, n'a recu qu'un mot. `harm` dit
+    ce que ce tour a coute, pour que l'ecran l'annonce plutot que de le
+    deduire d'une difference.
+  */
+  z.object({
+    type: z.literal('health'),
+    hp: z.number().int().nonnegative(),
+    hpMax: z.number().int().positive(),
+    condition: ConditionSchema,
+    harm: z.number().int().nonnegative(),
+  }),
+  /*
+    Qui se tient dans la scene apres ce tour. Derive du recit par le code, et
+    non declare par le modele : il oublie ce genre de declaration, et celle-ci
+    se verifie en relisant ce qu'il vient d'ecrire.
+  */
+  z.object({
+    type: z.literal('scene'),
+    present: z.array(ScenePresenceSchema),
   }),
   // L'inventaire apres le tour, envoye seulement quand il a change.
   z.object({
@@ -257,6 +292,8 @@ export const TurnHistorySchema = z.object({
     Nul tant que le joueur n'a rien lance.
   */
   lastRoll: RollRecordSchema.nullable(),
+  // Ce que le meneur a nomme a sa derniere reponse, dans l'ordre du recit.
+  scene: z.array(ScenePresenceSchema),
 });
 
 export type TurnHistory = z.infer<typeof TurnHistorySchema>;

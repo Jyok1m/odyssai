@@ -6,10 +6,11 @@ import {
   type WorldView,
 } from "@odyssai/schemas";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 
 import { AttributeBlocks } from "@/components/play/attributes";
 import { Die, Verdict } from "@/components/play/game-chat";
+import { HealthBar } from "@/components/play/health";
 import { Definition, Panel, Tag } from "@/components/play/panel";
 import { Absent, WorldSkin, useWorld } from "@/components/play/use-world";
 import { fetchProfile } from "@/lib/profile";
@@ -19,9 +20,13 @@ import { fetchHistory } from "@/lib/turn";
   La fiche de personnage.
 
   Elle ne montre que ce que le jeu tient vraiment : les cinq attributs, ce
-  qu'ils pèsent sur un jet, où en est leur montée, les talents que le meneur
-  lit, et ce que le personnage porte. Ni points de vie ni niveau : le moteur
-  n'en a pas, et une jauge inventée se lirait comme une règle.
+  qu'ils pèsent sur un jet, où en est leur montée, la jauge de vie, les talents
+  que le meneur lit, et ce que le personnage porte.
+
+  Ni mana ni niveau ni points d'expérience à côté : le mana n'a de sens que
+  dans un monde qui a de la magie, et c'est la charte qui le dit, pas le
+  moteur ; l'expérience existe déjà, par attribut et à l'usage. Une jauge que
+  rien ne calcule se lirait comme une règle.
 */
 export function CharacterSheet() {
   const t = useTranslations("Sheet");
@@ -47,6 +52,7 @@ export function CharacterSheet() {
 function Sheet({ world }: { world: WorldView }) {
   const t = useTranslations("Sheet");
   const tGame = useTranslations("Game");
+  const tStories = useTranslations("Stories");
 
   const [player, setPlayer] = useState<string | null>(null);
   const [roll, setRoll] = useState<RollRecord | null>(null);
@@ -82,7 +88,11 @@ function Sheet({ world }: { world: WorldView }) {
             {character.name}
           </h1>
         </div>
-        <p className="flex items-center gap-2 text-ui-sm text-vellum-2">
+        <p className="flex flex-wrap items-center gap-2 text-ui-sm text-vellum-2">
+          {/* Comment il est entré ici : né dans ce monde, ou venu d'un autre. */}
+          <Tag tone={character.arrival === "natif" ? "muted" : "arcane"}>
+            {t(`arrivals.${character.arrival}` as never)}
+          </Tag>
           {t("world")}
           <Tag tone="accent">{world.name}</Tag>
         </p>
@@ -140,23 +150,13 @@ function Sheet({ world }: { world: WorldView }) {
           </dl>
         </Panel>
 
-        {/* Où en est l'histoire : le rang de l'acte, jamais son but. Un joueur
-            qui lirait la fin n'aurait plus qu'à y aller. */}
-        <Panel title={t("standing")}>
-          <p className="font-voice text-title text-vellum">
-            {world.story.act === null || world.story.acts === 0
-              ? tGame("noAct")
-              : world.story.act > world.story.acts
-                ? tGame("free")
-                : tGame("act", { act: world.story.act, acts: world.story.acts })}
+        {/* La seule jauge que le moteur tient : le code décide de ce qui
+            l'entame et de ce qui la rend, jamais le récit. */}
+        <Panel title={t("state")} aside={t("stateAside")}>
+          <HealthBar health={character.health} />
+          <p className="mt-5 max-w-measure text-caption text-pretty text-vellum-3">
+            {t("stateHint")}
           </p>
-          <p className="mt-3 text-ui-sm text-pretty text-vellum-2">
-            {world.story.act !== null && world.story.act > world.story.acts
-              ? t("freeHint")
-              : t("standingHint")}
-          </p>
-          <p className="mt-5 text-caption text-vellum-3">{t("charterTone")}</p>
-          <p className="mt-1 text-ui-sm text-pretty text-vellum-2">{world.charter.tone}</p>
         </Panel>
       </div>
 
@@ -168,6 +168,34 @@ function Sheet({ world }: { world: WorldView }) {
           </p>
         </Panel>
 
+        {/* Où en est l'histoire : le rang de l'acte, jamais son but. Un joueur
+            qui lirait la fin n'aurait plus qu'à y aller. */}
+        <Panel title={t("standing")}>
+          <p className="font-voice text-title text-vellum">
+            {world.story.act === null || world.story.acts === 0
+              ? tGame("noAct")
+              : world.story.act > world.story.acts
+                ? tGame("free")
+                : tGame("act", { act: world.story.act, acts: world.story.acts })}
+          </p>
+          {/* Le nom de l'acte, jamais son but : le joueur sait ce qu'il
+              traverse, pas ce qu'il faut en faire. */}
+          {world.story.title ? (
+            <p className="mt-2 font-voice text-ui text-pretty text-accent italic">
+              {world.story.title}
+            </p>
+          ) : null}
+          <p className="mt-3 text-ui-sm text-pretty text-vellum-2">
+            {world.story.act !== null && world.story.act > world.story.acts
+              ? t("freeHint")
+              : t("standingHint")}
+          </p>
+          <p className="mt-5 text-caption text-vellum-3">{t("charterTone")}</p>
+          <p className="mt-1 text-ui-sm text-pretty text-vellum-2">{world.charter.tone}</p>
+        </Panel>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-3">
         <Panel title={t("lastRoll")}>
           {roll ? (
             <div className="flex flex-col items-center gap-2 text-center">
@@ -192,6 +220,51 @@ function Sheet({ world }: { world: WorldView }) {
           )}
         </Panel>
       </div>
+
+      {/*
+        La même essence, ailleurs. Ce qui traverse est le nom, le caractère et
+        le socle ; le métier, les talents et les objets appartiennent au monde
+        qu'on quitte, et ne se retrouvent donc pas ici.
+      */}
+      <Panel title={t("elsewhere")} aside={t("elsewhereAside")}>
+        <p className="max-w-measure text-caption text-pretty text-vellum-3">
+          {t(`arrivalHint.${character.arrival}` as never)}
+        </p>
+
+        {character.elsewhere.length === 0 ? (
+          <p className="mt-4 max-w-measure text-ui-sm text-pretty text-vellum-3">
+            {t("elsewhereEmpty")}
+          </p>
+        ) : (
+          <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {character.elsewhere.map((incarnation) => (
+              <li
+                key={incarnation.universeId}
+                data-world={incarnation.world ?? undefined}
+                style={
+                  incarnation.accentHue === null
+                    ? undefined
+                    : ({ "--world-hue": incarnation.accentHue } as CSSProperties)
+                }
+                className="rounded-card border border-line p-4"
+              >
+                <span aria-hidden="true" className="block h-1.5 w-8 rounded-xs bg-accent" />
+                <p className="mt-2 font-voice text-subtitle text-pretty text-vellum">
+                  {incarnation.world ?? tStories("untitled")}
+                </p>
+                <p className="mt-2 flex flex-wrap items-center gap-2 text-caption text-vellum-3">
+                  <Tag tone={incarnation.arrival === "natif" ? "muted" : "arcane"}>
+                    {t(`arrivals.${incarnation.arrival}` as never)}
+                  </Tag>
+                  {incarnation.current
+                    ? tStories("open")
+                    : tStories(`step.${incarnation.step}` as never)}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Panel>
 
       <div className="grid gap-5 lg:grid-cols-3">
         {/* La couleur, là où les attributs sont le calcul : le moteur ne les

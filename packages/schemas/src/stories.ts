@@ -31,9 +31,29 @@ export const StoriesSchema = z.object({
 
 export type Stories = z.infer<typeof StoriesSchema>;
 
+/*
+  Ce qu'on envoie pour commencer une histoire.
+
+  Sans essence, c'est un personnage neuf, et le parcours passe par la
+  conversation de creation. Avec, c'en est un qu'on amene : sa fiche arrive
+  deja remplie, et il entre en voyageur.
+*/
+export const StoryStartSchema = z.object({
+  essenceId: z.uuid().optional(),
+});
+
+export type StoryStart = z.infer<typeof StoryStartSchema>;
+
 export const StoriesErrorBodySchema = z.object({
   // `locked` : l'histoire est en construction, on ne l'efface pas sous le worker.
-  code: z.enum(['not_found', 'stories_full', 'locked', 'validation_error']),
+  code: z.enum([
+    'not_found',
+    'stories_full',
+    'locked',
+    'validation_error',
+    // L'essence demandee n'existe pas, ou n'est pas a ce joueur.
+    'traveller_not_found',
+  ]),
 });
 
 export type StoriesErrorBody = z.infer<typeof StoriesErrorBodySchema>;

@@ -1,5 +1,6 @@
 import type {
   CanonFact,
+  Condition,
   Entity,
   WorldArc,
   CharacterSheet,
@@ -34,6 +35,14 @@ export interface TurnContext {
   guidance: string[];
   // Ce que le personnage porte. Des noms, jamais un effet.
   inventory: string[];
+  /*
+    Dans quel etat il se tient, en un mot et jamais en chiffre. Meme regle que
+    le de : le modele recoit une bande, pas un score. Un meneur qui lirait
+    « 7 sur 16 » narrerait une comptabilite.
+
+    Il ne decide d'aucune blessure : le code les applique, d'apres la bande.
+  */
+  condition: Condition;
   /*
     L'histoire dans laquelle le joueur est parachute, et ou il en est. `act`
     vaut 1, 2 ou 3 pendant l'arc, 4 une fois le troisieme acte clos : la
@@ -119,6 +128,11 @@ Comment tu fais avancer :
 - N'interroge jamais le joueur sur ce qu'il ressent. Demande ce qu'il fait.
 - **Il ne porte que ce que <inventaire> contient**, et rien d'autre. S'il veut se servir d'une chose qu'il n'a pas, il ne l'a pas : il improvise, ou il y renonce.
 - Un objet est un nom, pas un pouvoir. Ne lui prête aucun effet chiffré, aucun bonus, aucune propriété qui déciderait d'une issue à la place du dé.
+- **Tu ne décides d'aucune blessure.** <etat> dit dans quel état le personnage se tient, et c'est le code qui l'a écrit : tu le racontes, tu ne le changes pas. Ne le fais ni guérir ni mourir, et ne chiffre rien.
+  - « indemne » : il est entier, n'invente pas une douleur.
+  - « blesse » : ça se voit et ça gêne, sans l'empêcher d'agir.
+  - « mal_en_point » : il tient à peine, chaque geste coûte, et les autres le remarquent.
+  - « a_terre » : il est hors de combat, pas mort. Il ne se relève pas de lui-même ce tour-ci ; le monde continue autour de lui, et quelqu'un peut le traîner, le soigner, le dépouiller ou l'ignorer.
 - **Le personnage ne sait faire que ce que sa fiche dit qu'il sait.** N'invente pas un talent pour les besoins de la scène, et ne répète pas un talent inventé au tour d'avant : si rien dans sa fiche ne parle de code, il ne code pas.
 - Les personnages ont leurs propres buts et agissent sans attendre. Fais-les agir.
 
@@ -210,6 +224,11 @@ How you move things on:
 - Never ask the player what they feel. Ask what they do.
 - **They carry only what <inventaire> holds**, nothing else. If they want to use something they do not have, they do not have it: they improvise, or they give it up.
 - An object is a name, not a power. Lend it no numeric effect, no bonus, no property that would settle an outcome in the die's place.
+- **You decide no wound.** <etat> says the state the character is in, and the code wrote it: you narrate it, you do not change it. Do not heal them, do not kill them, and put no number on it.
+  - "indemne": they are whole, invent no pain.
+  - "blesse": it shows and it hampers, without stopping them.
+  - "mal_en_point": they barely hold up, every move costs, and others notice.
+  - "a_terre": they are out of the fight, not dead. They do not get up on their own this turn; the world goes on around them, and someone may drag them, tend to them, rob them or ignore them.
 - **The character can only do what their sheet says they can.** Do not invent a talent for the sake of the scene, and do not repeat one invented last turn: if nothing in the sheet mentions code, they do not code.
 - Characters have their own aims and act without waiting. Make them act.
 
@@ -356,7 +375,7 @@ function arcBlock(context: TurnContext): string {
 }
 
 export const TURN_PROMPT = {
-  id: 'turn/v19',
+  id: 'turn/v20',
 
   build(
     locale: UiLocale,
@@ -373,6 +392,7 @@ export const TURN_PROMPT = {
       context.inventory.length > 0
         ? `<inventaire>\n${context.inventory.join('\n')}\n</inventaire>`
         : '',
+      `<etat>\n${context.condition}\n</etat>`,
       context.canon.length > 0
         ? `<canon>\n${context.canon.map((fact) => `${fact.subject} : ${fact.statement}`).join('\n')}\n</canon>`
         : '',

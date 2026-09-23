@@ -21,7 +21,7 @@ import {
   type GenerationStreamEvent,
   type WorldView,
 } from '@odyssai/schemas';
-import { PROGRESS_STEPS, modifierOf } from '@odyssai/engine';
+import { PROGRESS_STEPS, conditionOf, hpMaxOf, modifierOf } from '@odyssai/engine';
 import { PrismaClient, type User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
@@ -163,6 +163,35 @@ export class GenerationController {
 
     const progress = (universe.character?.progress ?? {}) as Record<string, unknown>;
 
+    /*
+      La reserve derive de `corps`, et `hp` nul en base vaut la reserve
+      pleine : rien n'a encore entame ce personnage.
+    */
+    const hpMax = hpMaxOf(attributes.data.corps);
+    const hp = universe.character?.hp ?? hpMax;
+
+    /*
+      Les autres mondes ou la meme essence s'est posee. Vide pour un
+      personnage qui n'a jamais franchi de faille, et c'est le cas ordinaire :
+      la requete ne part meme pas.
+    */
+    const essenceId = universe.character?.essenceId ?? null;
+    const elsewhere = essenceId
+      ? await this.prisma.character.findMany({
+          where: {
+            essenceId,
+            universeId: { not: universe.id },
+            universe: { ownerId: user.id },
+          },
+          select: {
+            arrival: true,
+            universe: {
+              select: { id: true, name: true, step: true, accentHue: true },
+            },
+          },
+        })
+      : [];
+
     // Le schema de vue laisse tomber les secrets des personnages : ils se
     // decouvriront en jeu, et un champ qu'un type ne porte pas ne fuite pas.
     return WorldViewSchema.parse({
@@ -200,6 +229,14 @@ export class GenerationController {
       story: {
         act: universe.arcAct,
         acts: bible.data.arc?.acts.length ?? 0,
+        /*
+          Le titre de l'acte en cours, et lui seul. Au dela du dernier, la
+          partie est en aventure libre : il n'y a plus d'acte a nommer.
+        */
+        title:
+          universe.arcAct && universe.arcAct <= (bible.data.arc?.acts.length ?? 0)
+            ? (bible.data.arc?.acts[universe.arcAct - 1]?.title ?? null)
+            : null,
         bond: bible.data.arc?.hero?.bond ?? null,
       },
       character: {
@@ -209,8 +246,24 @@ export class GenerationController {
         personality: universe.character?.personality,
         attributes: attributes.data,
         standing: standingOf(attributes.data, progress),
+        health: { hp, hpMax, condition: conditionOf(hp, hpMax) },
         talents: universe.character?.talents ?? [],
         inventory: universe.character?.inventory ?? [],
+        arrival: universe.character?.arrival ?? 'natif',
+        elsewhere: elsewhere.flatMap((row) =>
+          row.universe
+            ? [
+                {
+                  universeId: row.universe.id,
+                  world: row.universe.name,
+                  step: row.universe.step,
+                  arrival: row.arrival,
+                  accentHue: row.universe.accentHue,
+                  current: row.universe.id === user.currentUniverseId,
+                },
+              ]
+            : [],
+        ),
       },
     });
   }

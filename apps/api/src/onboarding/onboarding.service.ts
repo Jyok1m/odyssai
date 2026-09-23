@@ -183,7 +183,42 @@ export class OnboardingService {
       update: data,
     });
 
-    const complete = CharacterSheetSchema.safeParse(character).success;
+    const sheet = CharacterSheetSchema.safeParse(character);
+    const complete = sheet.success;
+
+    /*
+      La fiche validee fait naitre l'essence : c'est ce que ce personnage
+      emportera s'il franchit une faille un jour. Une seule fois, et jamais
+      pour un voyageur, qui arrive avec la sienne.
+
+      Ici et non a la generation : une essence est ce que le joueur a ecrit,
+      pas ce que le monde en a fait.
+    */
+    if (complete) {
+      const existing = await this.prisma.character.findUnique({
+        where: { universeId },
+        select: { id: true, essenceId: true },
+      });
+
+      if (existing && !existing.essenceId) {
+        const born = await this.prisma.essence.create({
+          data: {
+            ownerId: userId,
+            name: sheet.data.name,
+            gender: sheet.data.gender,
+            age: sheet.data.age,
+            personality: sheet.data.personality,
+            attributes: sheet.data.attributes,
+          },
+          select: { id: true },
+        });
+        await this.prisma.character.update({
+          where: { id: existing.id },
+          data: { essenceId: born.id },
+        });
+      }
+    }
+
     if (advance && complete) {
       // Debite ici et non dans le worker : un refus doit arriver avant que le
       // travail ne parte en file, sans quoi le joueur verrait une generation
@@ -220,6 +255,10 @@ export class OnboardingService {
       username: user.username,
       inspiration: this.toInspiration(universe),
       character: this.toCharacter(universe?.character ?? null),
+      // Nulle tant qu'il n'y a pas de fiche : l'ecran s'en sert pour savoir
+      // s'il ouvre une conversation de creation ou montre un personnage qu'on
+      // amene.
+      arrival: universe?.character?.arrival ?? null,
       generation: this.toGeneration(universe),
     };
   }

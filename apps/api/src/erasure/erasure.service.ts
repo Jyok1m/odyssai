@@ -46,7 +46,7 @@ export class ErasureService {
   async releaseStory(userId: string, universeId: string): Promise<DepartureOutcome> {
     const universe = await this.prisma.universe.findUnique({
       where: { id: universeId, ownerId: userId },
-      include: { character: { select: { id: true } } },
+      include: { character: { select: { id: true, essenceId: true } } },
     });
 
     if (!universe) return { world: 'none', character: 'none' };
@@ -55,9 +55,10 @@ export class ErasureService {
 
   private async release(
     userId: string,
-    universe: { id: string; character: { id: string } | null },
+    universe: { id: string; character: { id: string; essenceId: string | null } | null },
   ): Promise<DepartureOutcome> {
     const characterId = universe.character?.id;
+    const essenceId = universe.character?.essenceId ?? null;
 
     // Le visiteur n'est jamais le proprietaire : on ne se rencontre pas
     // soi-meme, et une visite de son propre monde ne le rend pas partage.
@@ -87,6 +88,19 @@ export class ErasureService {
         // Supprime avant l'univers : sans cela le SetNull le laisserait
         // orphelin au lieu de l'emporter.
         await tx.character.delete({ where: { id: characterId } });
+
+        /*
+          L'essence suit sa derniere incarnation. Recommencer doit rendre la
+          page blanche : la garder ferait reapparaitre un personnage dont le
+          monde n'existe plus dans la liste de ceux qu'on peut amener.
+
+          Un personnage garde parce que d'autres l'ont croise, lui, conserve
+          la sienne : c'est le cas au-dessus, et il n'est pas supprime.
+        */
+        if (essenceId) {
+          const left = await tx.character.count({ where: { essenceId } });
+          if (left === 0) await tx.essence.delete({ where: { id: essenceId } });
+        }
       }
 
       if (worldKept) {
@@ -140,7 +154,7 @@ export class ErasureService {
 
     const universes = await this.prisma.universe.findMany({
       where: { ownerId: userId },
-      include: { character: { select: { id: true } } },
+      include: { character: { select: { id: true, essenceId: true } } },
     });
 
     const outcomes: DepartureOutcome[] = [];

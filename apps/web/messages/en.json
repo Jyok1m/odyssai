@@ -336,7 +336,11 @@
     "errorSignedOut": "Your session has expired. Sign in again, what you typed is kept.",
     "errorRefused": "This save was refused. Reload the page to pick up the current step.",
     "backToInspiration": "Back to my inspiration",
-    "backToCharacter": "Back to my character"
+    "backToCharacter": "Back to my character",
+    "traveller": {
+      "title": "You bring them along",
+      "lead": "This character comes from another of your worlds. Their sheet arrives filled in: adjust it if this world asks for something else, then step in."
+    }
   },
   "Stories": {
     "title": "Your stories",
@@ -369,7 +373,11 @@
       "kept": "This world had already received visitors: it is kept, detached from you and emptied of your input.",
       "remembered": "Other players had met this character: it stays in their tales, now dead.",
       "gone": "Story deleted."
-    }
+    },
+    "carry": "Bring a character",
+    "carryTitle": "Who crosses the rift",
+    "carryHint": "Their name, their character and their attributes cross. Their trade, their talents and their belongings stay in the world they leave: they will take another shape there.",
+    "worlds": "{count, plural, one {# world} other {# worlds}}"
   },
   "Concept": {
     "metaTitle": "Concept",
@@ -1046,7 +1054,17 @@
       "item": "item",
       "place": "place",
       "faction": "faction"
-    }
+    },
+    "healthCount": "{hp} / {hpMax}",
+    "harm": "{harm, plural, one {# point lost this turn} other {# points lost this turn}}",
+    "condition": {
+      "indemne": "unharmed",
+      "blesse": "wounded",
+      "mal_en_point": "in a bad way",
+      "a_terre": "down"
+    },
+    "scene": "In the scene",
+    "youTag": "you"
   },
   "Sheet": {
     "title": "Character sheet",
@@ -1077,7 +1095,24 @@
     "talentsEmpty": "No talent named.",
     "inventory": "Inventory",
     "inventoryEmpty": "You carry nothing.",
-    "inventoryHint": "Names, with no numeric effect: the narrator tells them, the engine doesn't compute them."
+    "inventoryHint": "Names, with no numeric effect: the narrator tells them, the engine doesn't compute them.",
+    "state": "State",
+    "stateAside": "Held by the code",
+    "stateHint": "A failed physical exchange costs points, and the die alone decides: the narrator can neither spare you nor finish you. Three turns without a blow give one back. Down means out of the fight, never dead.",
+    "arrival": "Arrival",
+    "elsewhere": "Elsewhere in the multiverse",
+    "elsewhereAside": "The same essence, another incarnation",
+    "elsewhereEmpty": "This character has crossed no rift yet. Bring them into a new story, and they will take another shape.",
+    "arrivals": {
+      "natif": "Native",
+      "voyageur": "Traveller",
+      "echo": "Echo"
+    },
+    "arrivalHint": {
+      "natif": "This world absorbed them: they have always lived here.",
+      "voyageur": "They arrived a stranger, and the locals can tell.",
+      "echo": "A passing projection, light of influence."
+    }
   },
   "WorldBook": {
     "title": "Lore and world",

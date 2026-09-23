@@ -37,6 +37,7 @@ import {
   PLAN_LIMITS,
 } from './credits.js';
 import { DIE_FACES } from './die.js';
+import { HP_BASE, HP_PER_CORPS, REST_STEP } from './health.js';
 import { PROGRESS_STEPS } from './progress.js';
 
 /*
@@ -74,6 +75,13 @@ export const TUNING = {
 
   // Le de du meneur. Le joueur ne voit jamais le chiffre, seulement la bande.
   die: { faces: DIE_FACES },
+
+  /*
+    La sante, tenue par le code. La reserve derive de `corps`, les degats de
+    la bande du de, et le repos se compte en tours calmes : il n'y a pas
+    d'horloge dans ce jeu.
+  */
+  health: { base: HP_BASE, perCorps: HP_PER_CORPS, restStep: REST_STEP },
 
   // L'inspiration citee, puis la generation du monde.
   world: {

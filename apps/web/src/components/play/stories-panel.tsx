@@ -1,6 +1,6 @@
 "use client";
 
-import type { DepartureOutcome, Stories, Story } from "@odyssai/schemas";
+import type { DepartureOutcome, Stories, Story, Traveller } from "@odyssai/schemas";
 import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
 
@@ -13,9 +13,12 @@ import {
   StoriesError,
   deleteStory,
   fetchStories,
+  fetchTravellers,
   selectStory,
   startStory,
 } from "@/lib/stories";
+
+import { Tag } from "./panel";
 
 /*
   Les histoires du joueur : en commencer une, en ouvrir une, en supprimer une.
@@ -33,6 +36,13 @@ export function StoriesPanel() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [outcome, setOutcome] = useState<DepartureOutcome | null>(null);
+  /*
+    Les personnages déjà écrits. Une liste indisponible ne casse rien : le
+    bouton ordinaire reste, et c'est lui le chemin de tous les jours.
+  */
+  const [travellers, setTravellers] = useState<Traveller[]>([]);
+  // Ouvre le choix du personnage à amener, plutôt que d'empiler les boutons.
+  const [carrying, setCarrying] = useState(false);
 
   const load = useCallback(
     (signal?: AbortSignal) =>
@@ -50,6 +60,11 @@ export function StoriesPanel() {
 
     const controller = new AbortController();
     void load(controller.signal);
+    // Silencieux : sans personnage à amener, le bouton n'apparaît pas, et
+    // c'est exactement ce qu'une liste indisponible doit donner.
+    fetchTravellers(controller.signal)
+      .then((listed) => setTravellers(listed.travellers))
+      .catch(() => {});
 
     return () => controller.abort();
   }, [session.status, load]);
@@ -86,11 +101,11 @@ export function StoriesPanel() {
     }
   };
 
-  const create = async () => {
+  const create = async (essenceId?: string) => {
     setBusy(true);
     setError(null);
     try {
-      await startStory();
+      await startStory(essenceId);
       router.push("/play");
     } catch (caught: unknown) {
       setError(
@@ -113,10 +128,65 @@ export function StoriesPanel() {
         <Button type="button" disabled={busy || full} onClick={() => void create()}>
           {t("new")}
         </Button>
+
+        {/* Amener un personnage qu'on a déjà : son nom, son caractère et son
+            socle traversent ; ses talents et ses objets restent au monde
+            qu'il quitte. */}
+        {travellers.length > 0 ? (
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={busy || full}
+            onClick={() => setCarrying((open) => !open)}
+          >
+            {t("carry")}
+          </Button>
+        ) : null}
+
         <p className="text-ui-sm text-vellum-3">
           {full ? t("full", { max: data.max }) : t("count", { count: data.stories.length, max: data.max })}
         </p>
       </div>
+
+      {carrying ? (
+        <section className="rounded-card border border-line bg-abyss p-5 sm:p-6">
+          <h2 className="font-ui text-caption font-medium tracking-[0.12em] text-vellum-2 uppercase">
+            {t("carryTitle")}
+          </h2>
+          <p className="mt-2 max-w-measure text-ui-sm text-pretty text-vellum-3">
+            {t("carryHint")}
+          </p>
+
+          <ul className="mt-5 grid gap-3 sm:grid-cols-2">
+            {travellers.map((traveller) => (
+              <li key={traveller.id}>
+                <button
+                  type="button"
+                  disabled={busy || full}
+                  onClick={() => void create(traveller.id)}
+                  className="w-full rounded-card border border-line p-4 text-left transition-colors hover:border-accent hover:bg-mist disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                    <span className="font-voice text-subtitle text-vellum">
+                      {traveller.name}
+                    </span>
+                    <span className="text-caption text-vellum-3">
+                      {t("worlds", { count: traveller.incarnations.length })}
+                    </span>
+                  </span>
+                  {traveller.traits.length > 0 ? (
+                    <span className="mt-2 flex flex-wrap gap-2">
+                      {traveller.traits.map((trait) => (
+                        <Tag key={trait}>{trait}</Tag>
+                      ))}
+                    </span>
+                  ) : null}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {data.stories.length === 0 ? (
         <p className="text-ui-sm text-vellum-3">{t("empty")}</p>

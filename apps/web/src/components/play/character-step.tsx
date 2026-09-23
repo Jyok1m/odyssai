@@ -2,6 +2,7 @@
 
 import {
   CHARACTER_MESSAGE_MAX_CHARS,
+  type Arrival,
   type CharacterDraft,
   type ConversationMessage,
 } from "@odyssai/schemas";
@@ -26,6 +27,12 @@ import { CharacterSheetForm } from "./character-sheet-form";
 
 interface Props {
   initial: CharacterDraft | null;
+  /*
+    Comment ce personnage entre dans ce monde. Un voyageur arrive avec sa
+    fiche : il n'y a pas de conversation de création à lui ouvrir, et lui en
+    proposer une lui ferait payer des messages pour réécrire ce qu'il a déjà.
+  */
+  arrival: Arrival | null;
   saving: boolean;
   error: string | null;
   onAdvance: (character: CharacterDraft) => void;
@@ -34,7 +41,7 @@ interface Props {
 // Une fiche proposée ferme la conversation et ouvre le formulaire.
 type Proposal = { character: CharacterDraft; missing: string[] } | null;
 
-export function CharacterStep({ initial, saving, error, onAdvance }: Props) {
+export function CharacterStep({ initial, arrival, saving, error, onAdvance }: Props) {
   const t = useTranslations("Play");
 
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
@@ -156,9 +163,22 @@ export function CharacterStep({ initial, saving, error, onAdvance }: Props) {
     }
   };
 
+  const carried = arrival === "voyageur";
+
   if (proposal) {
     return (
       <div className="max-w-headline">
+        {carried ? (
+          <div className="mb-8 rounded-card border border-arcane/40 bg-arcane/8 px-4 py-3.5">
+            <p className="text-ui-sm font-medium text-vellum">
+              {t("traveller.title")}
+            </p>
+            <p className="mt-1 max-w-measure text-ui-sm text-pretty text-vellum-2">
+              {t("traveller.lead")}
+            </p>
+          </div>
+        ) : null}
+
         <CharacterSheetForm
           initial={proposal.character}
           missing={proposal.missing}
@@ -167,15 +187,17 @@ export function CharacterStep({ initial, saving, error, onAdvance }: Props) {
           onSubmit={onAdvance}
         />
 
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="mt-6"
-          onClick={() => setProposal(null)}
-        >
-          {t("sheet.backToChat")}
-        </Button>
+        {carried ? null : (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="mt-6"
+            onClick={() => setProposal(null)}
+          >
+            {t("sheet.backToChat")}
+          </Button>
+        )}
       </div>
     );
   }

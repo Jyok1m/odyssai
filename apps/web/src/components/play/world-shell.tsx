@@ -5,8 +5,10 @@ import {
   entityKey,
   type Attribute,
   type AttributeStanding,
+  type Health,
   type PublicEntity,
   type RollRecord,
+  type ScenePresence,
   type WorldView,
 } from "@odyssai/schemas";
 import { useTranslations } from "next-intl";
@@ -15,6 +17,7 @@ import { useMemo, useState } from "react";
 import { CreditsBadge } from "@/components/play/credits-badge";
 import { AttributeCells } from "@/components/play/attributes";
 import { Die, GameChat, Verdict, type TableEvents } from "@/components/play/game-chat";
+import { HealthBar } from "@/components/play/health";
 import { Panel, Tag } from "@/components/play/panel";
 import { Link } from "@/i18n/navigation";
 
@@ -73,7 +76,11 @@ function GameTable({
   const [standing, setStanding] = useState<Record<Attribute, AttributeStanding>>(
     world.character.standing,
   );
+  const [health, setHealth] = useState<Health>(world.character.health);
+  // Ce que le dernier tour a coûté, montré une fois puis oublié au suivant.
+  const [harm, setHarm] = useState(0);
   const [codex, setCodex] = useState<PublicEntity[]>(world.entities);
+  const [scene, setScene] = useState<ScenePresence[]>([]);
   // Nul tant qu'aucun tour n'a été joué dans cette séance.
   const [learned, setLearned] = useState<number | null>(null);
   // Incrémenté à chaque tour joué : c'est ce qui fait relire la réserve.
@@ -92,6 +99,11 @@ function GameTable({
       rolled: setRoll,
       grew(attribute, next) {
         setStanding((current) => ({ ...current, [attribute]: next }));
+      },
+      staged: setScene,
+      hurt(next, taken) {
+        setHealth(next);
+        setHarm(taken);
       },
       learned(entity) {
         setCodex((current) => [
@@ -161,6 +173,12 @@ function GameTable({
               </ul>
             ) : null}
 
+            {/* La jauge, sous la fiche : c'est le code qui l'entame et qui
+                la rend, le meneur n'en reçoit qu'un mot. */}
+            <div className="mt-5">
+              <HealthBar health={health} harm={harm} />
+            </div>
+
             <div className="mt-5">
               <AttributeCells standing={standing} tested={tested} />
             </div>
@@ -220,7 +238,34 @@ function GameTable({
           >
             <p className="font-voice text-subtitle text-accent">{world.name}</p>
 
-            <p className="mt-4 text-caption text-vellum-3">{t("codex")}</p>
+            {/* Qui le meneur vient de nommer. Celui qui est là sans être nommé
+                ne s'y voit pas, et il n'y était pas pour le joueur non plus. */}
+            <p className="mt-4 text-caption text-vellum-3">{t("scene")}</p>
+            <ul className="mt-2 space-y-1.5">
+              <li className="flex items-center justify-between gap-3 rounded-card border border-line px-3 py-2 text-ui-sm text-vellum">
+                <span className="flex items-center gap-2.5">
+                  <span aria-hidden="true" className="h-2 w-2 rounded-full bg-accent" />
+                  {world.character.name}
+                </span>
+                <span className="text-caption text-vellum-3">{t("youTag")}</span>
+              </li>
+              {scene.map((present) => (
+                <li
+                  key={`${present.kind}-${present.name}`}
+                  className="flex items-center justify-between gap-3 rounded-card border border-line px-3 py-2 text-ui-sm text-vellum"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <span aria-hidden="true" className="h-2 w-2 rounded-full bg-arcane" />
+                    {present.name}
+                  </span>
+                  <span className="text-caption text-vellum-3">
+                    {t(`kind.${present.kind}` as never)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            <p className="mt-5 text-caption text-vellum-3">{t("codex")}</p>
             {codex.length === 0 ? (
               <p className="mt-2 text-ui-sm text-pretty text-vellum-3">
                 {t("codexEmpty")}

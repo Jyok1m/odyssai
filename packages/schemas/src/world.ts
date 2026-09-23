@@ -1,5 +1,7 @@
 import { z } from 'zod';
+import { IncarnationSchema } from './essence.js';
 import {
+  ArrivalSchema,
   AttributeSchema,
   AttributesSchema,
   GenerationStepSchema,
@@ -242,6 +244,14 @@ export type HeroLore = z.infer<typeof HeroLoreSchema>;
   donne un depart, il ne donne pas une fin.
 */
 export const ArcActSchema = z.object({
+  /*
+    Le nom de l'acte, et la seule part de l'arc que le joueur voit.
+
+    Il nomme la situation qu'on traverse, jamais sa resolution : « Le phare
+    sans gardien », pas « Retrouver le gardien ». Facultatif pour la meme
+    raison que l'arc lui-meme, les mondes generes avant n'en ayant pas.
+  */
+  title: Text(60).optional(),
   // Ce vers quoi cet acte tend.
   goal: Text(300),
   // A quoi on reconnait qu'il est acheve.
@@ -462,6 +472,28 @@ export const AttributeStandingSchema = z.object({
 export type AttributeStanding = z.infer<typeof AttributeStandingSchema>;
 
 /*
+  Dans quel etat le personnage se tient.
+
+  Le joueur voit la jauge, le meneur ne voit que ce mot : c'est la meme regle
+  que le de, ou le modele recoit une bande et jamais un chiffre. Un meneur qui
+  lirait « 7 sur 16 » narrerait une comptabilite ; avec « mal en point », il
+  narre quelqu'un qui tient a peine debout.
+
+  Sans accent, comme les autres valeurs que le modele recopie.
+*/
+export const CONDITIONS = ['indemne', 'blesse', 'mal_en_point', 'a_terre'] as const;
+export const ConditionSchema = z.enum(CONDITIONS);
+export type Condition = z.infer<typeof ConditionSchema>;
+
+export const HealthSchema = z.object({
+  hp: z.number().int().nonnegative(),
+  hpMax: z.number().int().positive(),
+  condition: ConditionSchema,
+});
+
+export type Health = z.infer<typeof HealthSchema>;
+
+/*
   Ou en est l'histoire, vue du joueur : le rang de l'acte, jamais son but ni
   son signe de fin. Le meneur lui-meme ne recoit que l'acte en cours, pour
   qu'une histoire qui sait ou elle va ne se raconte pas toute seule.
@@ -473,6 +505,12 @@ export type AttributeStanding = z.infer<typeof AttributeStandingSchema>;
 export const StoryStandingSchema = z.object({
   act: z.number().int().min(1).nullable(),
   acts: z.number().int().nonnegative(),
+  /*
+    Le nom de l'acte en cours, et lui seul : les titres des actes a venir
+    diraient deja ou va l'histoire. Nul pour un monde genere avant les titres,
+    et une fois l'arc clos.
+  */
+  title: z.string().nullable(),
   bond: z.string().nullable(),
 });
 
@@ -506,8 +544,16 @@ export const WorldViewSchema = z.object({
     }),
     attributes: AttributesSchema,
     standing: z.record(AttributeSchema, AttributeStandingSchema),
+    health: HealthSchema,
     talents: z.array(z.string()),
     inventory: z.array(z.string()),
+    // Comment il est entre dans ce monde : il y est ne, ou il y est venu.
+    arrival: ArrivalSchema,
+    /*
+      Les autres mondes ou la meme essence s'est posee. Vide pour un
+      personnage qui n'a jamais franchi de faille, et c'est le cas ordinaire.
+    */
+    elsewhere: z.array(IncarnationSchema),
   }),
 });
 

@@ -1,4 +1,5 @@
 import { entityKey, type Entity, type Situation } from '@odyssai/schemas';
+import { namedIn } from './scene.js';
 
 /*
   Les situations ou le joueur s'adresse a quelqu'un. Ailleurs, un personnage
@@ -21,19 +22,6 @@ export interface InterlocutorInput {
   recent: { role: 'user' | 'assistant'; content: string }[];
 }
 
-// Un nom apparait dans un texte : mots entiers, diacritiques et casse repliees.
-function names(text: string, npc: Entity): boolean {
-  const haystack = ` ${entityKey(text)} `;
-  const key = entityKey(npc.name);
-  if (key.length === 0) return false;
-  if (haystack.includes(` ${key} `)) return true;
-
-  // « Mireille » suffit pour « Mireille la Cuillere » : le premier mot d'un
-  // nom compose, s'il est assez long pour ne pas etre un article.
-  const first = key.split(' ')[0]!;
-  return first.length >= 3 && key.includes(' ') && haystack.includes(` ${first} `);
-}
-
 /*
   A qui le joueur parle, ou null.
 
@@ -47,7 +35,7 @@ export function interlocutorOf(input: InterlocutorInput): Entity | null {
   const npcs = input.entities.filter((entity) => entity.kind === 'npc');
   if (npcs.length === 0) return null;
 
-  const addressed = npcs.find((npc) => names(input.message, npc));
+  const addressed = npcs.find((npc) => namedIn(input.message, npc.name));
   if (addressed) return addressed;
 
   const last = [...input.recent].reverse().find((turn) => turn.role === 'assistant');

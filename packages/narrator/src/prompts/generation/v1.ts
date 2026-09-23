@@ -12,6 +12,11 @@ import type { PromptMessage } from '../guide/v1.js';
   arrivaient en metaphores et chaque noeud les prenait au pied de la lettre :
   des factions « tissaient la lumiere », une cuisiniere « transformait sa
   chaleur interne en plats ». Un monde se decrit comme un endroit ou l'on vit.
+
+  v6 : chaque acte porte un titre. Le joueur voyait « Acte 2 » et rien d'autre,
+  parce que le but de l'acte lui est cache : une histoire qui dit ou elle va ne
+  se joue plus. Un titre nomme la situation sans la resoudre, donc il peut se
+  lire, et c'est la seule part de l'arc qui le fait.
 */
 export interface GenerationContext {
   themes: WorldThemes;
@@ -174,7 +179,8 @@ Each object: name, role, faction, drive, secret.
 Clés : hook, stakes, acts, hero.
 - hook : la situation où le joueur arrive, en deux ou trois phrases. Un lieu, quelqu'un, et une chose qui ne va pas. Un problème qu'une personne pourrait vraiment avoir : une disparition, une dette, une récolte perdue, un procès, un chantier arrêté, une route coupée. Elle doit concerner ce personnage-là, pas n'importe qui.
 - stakes : ce qui pousse, et ce que cela coûte de ne rien faire, en termes concrets : qui perd quoi.
-- acts : exactement trois objets, chacun avec goal et done.
+- acts : exactement trois objets, chacun avec title, goal et done.
+  - title : le nom de l'acte, en trois à six mots. C'est la seule part de l'arc que le joueur lira, en tête de sa partie : il nomme la situation qu'on traverse, jamais sa résolution ni ce qu'il faut faire. « Le phare sans gardien », « La dette de la maison Varek », « Ce qu'on a laissé sous la glace ». Pas « Retrouver le gardien », pas « La victoire finale ».
   - goal : ce vers quoi cet acte tend.
   - done : à quoi on reconnaît qu'il est achevé. Un fait observable, pas un sentiment : « la porte du sanctuaire est ouverte », jamais « il comprend enfin ».
 
@@ -190,7 +196,8 @@ Et ce n'est pas une fin : quand le troisième acte se clôt, le joueur continue 
 Keys: hook, stakes, acts, hero.
 - hook: the situation the player arrives in, in two or three sentences. A place, someone, and one thing that is wrong. A problem a person could actually have: a disappearance, a debt, a lost harvest, a trial, a halted worksite, a cut road. It must concern this character, not just anyone.
 - stakes: what pushes, and what doing nothing would cost, in concrete terms: who loses what.
-- acts: exactly three objects, each with goal and done.
+- acts: exactly three objects, each with title, goal and done.
+  - title: the name of the act, in three to six words. It is the only part of the arc the player will read, at the top of their game: it names the situation being lived through, never its resolution nor what must be done. "The lighthouse without a keeper", "The debt of house Varek", "What we left under the ice". Not "Find the keeper", not "The final victory".
   - goal: what this act works towards.
   - done: how you can tell it is over. An observable fact, not a feeling: "the sanctuary door stands open", never "he finally understands".
 
@@ -224,7 +231,7 @@ Each object: subject, target, stance, note.
 };
 
 export const GENERATION_PROMPT = {
-  id: 'generation/v5',
+  id: 'generation/v6',
 
   build(
     node: GenerationNode,

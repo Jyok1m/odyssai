@@ -181,6 +181,7 @@ describe('le bloc de replique du meneur', () => {
     guidance: [],
     inventory: [],
     entities: [],
+    condition: 'indemne',
     mustUseDie: false,
     asking: false,
     fate: false,

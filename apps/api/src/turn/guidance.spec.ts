@@ -92,6 +92,7 @@ describe('rappels dans le prompt du meneur', () => {
     inventory: [],
     act: undefined,
     entities: [],
+    condition: 'indemne' as const,
     mustUseDie: false,
     fate: false,
     opening: false,

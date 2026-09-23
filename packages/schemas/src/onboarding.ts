@@ -34,8 +34,22 @@ const WorkTitle = z.string().trim().min(2).max(WORK_TITLE_MAX);
   connaitre les franchises. C'est la passe d'abstraction qui la porte, en
   fondant les themes plutot qu'en les additionnant.
 */
+/*
+  Les ligatures n'ont aucune decomposition Unicode : NFKD laisse « œ » tel
+  quel, donc « Sœur Nym » et « Soeur Nym » ne se repliaient pas pareil alors
+  que c'est l'exemple meme que l'unicite des entites doit couvrir. Elles se
+  defont a la main, avant tout le reste.
+*/
+const LIGATURES: Record<string, string> = {
+  œ: 'oe',
+  Œ: 'oe',
+  æ: 'ae',
+  Æ: 'ae',
+};
+
 export function normalizeWorkTitle(title: string): string {
   return title
+    .replace(/[œŒæÆ]/g, (ligature) => LIGATURES[ligature]!)
     .normalize('NFKD')
     .replace(/\p{Diacritic}/gu, '')
     .toLowerCase()
@@ -180,6 +194,19 @@ export const CharacterSheetSchema = z.object({
 
 export type CharacterSheet = z.infer<typeof CharacterSheetSchema>;
 
+/*
+  Comment on entre dans un monde.
+
+  Sans accent : la valeur voyage jusqu'a la base et jusqu'aux prompts. `echo`
+  existe dans le vocabulaire du site et n'est pas encore atteignable : une
+  projection de passage suppose de visiter le monde d'un autre joueur, ce que
+  personne ne peut encore faire.
+*/
+export const ARRIVALS = ['natif', 'voyageur', 'echo'] as const;
+export const ArrivalSchema = z.enum(ARRIVALS);
+export type Arrival = z.infer<typeof ArrivalSchema>;
+
+
 export const GenerationStatusSchema = z.enum([
   'queued',
   'running',
@@ -224,6 +251,12 @@ export const OnboardingStateSchema = z.object({
   username: z.string().nullable(),
   inspiration: InspirationDraftSchema.nullable(),
   character: CharacterDraftSchema.nullable(),
+  /*
+    Comment ce personnage entre dans ce monde. Nul tant qu'il n'y a pas de
+    fiche : l'ecran s'en sert pour savoir s'il doit ouvrir une conversation de
+    creation ou montrer un personnage qu'on amene.
+  */
+  arrival: ArrivalSchema.nullable(),
   generation: GenerationProgressSchema.nullable(),
 });
 

@@ -252,6 +252,7 @@ export function OnboardingWizard() {
       ) : showing === "character" ? (
         <CharacterStep
           initial={state.character}
+          arrival={state.arrival}
           saving={status === "saving"}
           error={error}
           onAdvance={onCharacter}

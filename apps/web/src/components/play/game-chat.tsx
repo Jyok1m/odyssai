@@ -4,9 +4,11 @@ import {
   TURN_MESSAGE_MAX_CHARS,
   type Attribute,
   type AttributeStanding,
+  type Health,
   type PublicEntity,
   type PublicOutcome,
   type RollRecord,
+  type ScenePresence,
   type TurnMessage,
   type WorldView,
 } from "@odyssai/schemas";
@@ -33,6 +35,10 @@ export type TableEvents = {
   carrying(items: string[], gained: string[]): void;
   rolled(roll: RollRecord | null): void;
   grew(attribute: Attribute, standing: AttributeStanding): void;
+  // L'état après le tour, et ce qu'il a coûté.
+  hurt(health: Health, harm: number): void;
+  // Qui se tient dans la scène, relu par le code dans le récit.
+  staged(present: ScenePresence[]): void;
   learned(entity: PublicEntity): void;
   // Le tour est fini : combien de faits sont entrés au canon, et un de plus.
   played(canon: number): void;
@@ -80,6 +86,7 @@ export function GameChat({
         setMessages(history.messages);
         report.carrying(history.inventory, []);
         report.rolled(history.lastRoll);
+        report.staged(history.scene);
         setLoaded(true);
       })
       .catch((caught: unknown) => {
@@ -175,6 +182,15 @@ export function GameChat({
 
         if (event.type === "carrying") report.carrying(event.items, event.gained);
 
+        if (event.type === "scene") report.staged(event.present);
+
+        if (event.type === "health") {
+          report.hurt(
+            { hp: event.hp, hpMax: event.hpMax, condition: event.condition },
+            event.harm,
+          );
+        }
+
         /*
           Un lore nouveau ou révélé. Il se pose sous le récit qui l'a fait
           naître, et rejoint le codex du panneau : une découverte se lit une
@@ -262,9 +278,18 @@ export function GameChat({
           <div>
             <p className="font-voice text-control text-vellum-3 italic">
               {act(world, t)}
+              {/* Le nom du monde passe en surtitre dès que l'acte en a un :
+                  c'est le titre qui dit où l'on en est, le monde ne change
+                  pas d'un tour à l'autre. */}
+              {world.story.title ? (
+                <span className="not-italic">
+                  {" · "}
+                  {world.name}
+                </span>
+              ) : null}
             </p>
             <h1 className="mt-1.5 font-voice text-title text-balance text-vellum">
-              {world.name}
+              {world.story.title ?? world.name}
             </h1>
           </div>
           <Button

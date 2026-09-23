@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   ConflictException,
   Controller,
   Delete,
@@ -13,7 +14,13 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { z } from 'zod';
-import type { DepartureOutcome, Stories, Story } from '@odyssai/schemas';
+import {
+  StoryStartSchema,
+  type DepartureOutcome,
+  type Stories,
+  type Story,
+  type Travellers,
+} from '@odyssai/schemas';
 import type { User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
@@ -22,6 +29,7 @@ import {
   StoriesFullError,
   StoriesService,
   StoryNotFoundError,
+  TravellerNotFoundError,
 } from './stories.service.js';
 
 /*
@@ -42,14 +50,33 @@ export class StoriesController {
     return this.stories.list(user);
   }
 
+  /*
+    Les personnages du joueur, pour choisir lequel reprendre. Ici plutot que
+    dans un module a part : c'est au moment de commencer une histoire qu'on
+    s'en sert, et un module de plus aurait importe `AuthModule` pour son seul
+    garde de session.
+  */
+  @Get('travellers')
+  travellers(@CurrentUser() user: User): Promise<Travellers> {
+    return this.stories.travellers(user);
+  }
+
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async start(@CurrentUser() user: User): Promise<Story> {
+  async start(@CurrentUser() user: User, @Body() rawBody: unknown): Promise<Story> {
+    // Un corps absent vaut un personnage neuf : le bouton ordinaire n'envoie
+    // rien, et il n'a pas a envoyer un objet vide pour cela.
+    const parsed = StoryStartSchema.safeParse(rawBody ?? {});
+    if (!parsed.success) throw new BadRequestException({ code: 'validation_error' });
+
     try {
-      return await this.stories.start(user);
+      return await this.stories.start(user, parsed.data.essenceId);
     } catch (error: unknown) {
       if (error instanceof StoriesFullError) {
         throw new ConflictException({ code: 'stories_full' });
+      }
+      if (error instanceof TravellerNotFoundError) {
+        throw new NotFoundException({ code: 'traveller_not_found' });
       }
       throw error;
     }
