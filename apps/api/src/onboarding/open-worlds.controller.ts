@@ -1,13 +1,36 @@
-import { Controller, Get, Inject, Logger, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  ConflictException,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Inject,
+  Logger,
+  NotFoundException,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { z } from 'zod';
 import {
   OpenWorldsSchema,
+  VisitStartSchema,
   WorldCharterSchema,
   type OpenWorlds,
+  type Story,
 } from '@odyssai/schemas';
 import { PrismaClient, type User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
 import { PRISMA } from '../prisma/prisma.module.js';
+import {
+  StoriesFullError,
+  StoriesService,
+  TravellerNotFoundError,
+  WorldNotOpenError,
+} from '../stories/stories.service.js';
 
 /*
   Au dela, la liste cesse d'etre un choix et devient un catalogue. L'alpha
@@ -23,18 +46,23 @@ const OPEN_WORLDS_MAX = 40;
   le createur a decide le contraire. Les siens n'y sont pas, il les a deja
   sous la main.
 
-  Elle ne sert encore a rien d'autre qu'a regarder : personne ne peut franchir
-  une faille vers le monde d'un autre. Ce qui manque n'est pas la porte mais
-  ce qui se passe derriere : ou s'ecrit ce que le visiteur y fait, puisqu'un
-  univers n'ecrit jamais dans l'etat d'un autre, et qui valide ce qui en
-  devient vrai.
+  On y entre par `POST /worlds/:id/visit`, avec un personnage a soi. La visite
+  est une histoire du visiteur qui emprunte le monde de l'hote : elle a ses
+  tours, ses entites et son canon, et n'ecrit jamais chez lui.
+
+  Ce qui manque encore : la chronique, le recit de la visite envoye au
+  createur pour qu'il valide ce qui en devient vrai chez lui. Tant qu'elle
+  n'existe pas, ce qu'un visiteur ecrit reste de son cote.
 */
 @Controller('worlds')
 @UseGuards(SessionGuard)
 export class OpenWorldsController {
   private readonly logger = new Logger(OpenWorldsController.name);
 
-  constructor(@Inject(PRISMA) private readonly prisma: PrismaClient) {}
+  constructor(
+    @Inject(PRISMA) private readonly prisma: PrismaClient,
+    private readonly stories: StoriesService,
+  ) {}
 
   @Get('open')
   async open(@CurrentUser() user: User): Promise<OpenWorlds> {
@@ -83,5 +111,39 @@ export class OpenWorldsController {
         ];
       }),
     });
+  }
+
+  /*
+    Franchir une faille. Rien n'est genere ni debite : le monde existe deja,
+    et ce sont les tours qui coutent, comme partout.
+  */
+  @Post(':id/visit')
+  @HttpCode(HttpStatus.CREATED)
+  async visit(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+    @Body() rawBody: unknown,
+  ): Promise<Story> {
+    if (!z.uuid().safeParse(id).success) {
+      throw new NotFoundException({ code: 'not_found' });
+    }
+
+    const parsed = VisitStartSchema.safeParse(rawBody);
+    if (!parsed.success) throw new BadRequestException({ code: 'validation_error' });
+
+    try {
+      return await this.stories.visit(user, id, parsed.data.essenceId);
+    } catch (error: unknown) {
+      if (error instanceof WorldNotOpenError) {
+        throw new NotFoundException({ code: 'world_not_open' });
+      }
+      if (error instanceof TravellerNotFoundError) {
+        throw new NotFoundException({ code: 'traveller_not_found' });
+      }
+      if (error instanceof StoriesFullError) {
+        throw new ConflictException({ code: 'stories_full' });
+      }
+      throw error;
+    }
   }
 }

@@ -383,7 +383,8 @@
       "openHint": "D'autres joueurs pourront y entrer quand la traversée entre joueurs existera. Tu décides de ce que leur venue change.",
       "closed": "Monde fermé",
       "closedHint": "Personne d'autre n'y entre. C'est le réglage par défaut : ce monde est à toi tant que tu n'en décides pas autrement."
-    }
+    },
+    "visiting": "Visite"
   },
   "Concept": {
     "metaTitle": "Concept",
@@ -1178,6 +1179,9 @@
     "open": "Mondes ouverts",
     "openAside": "Ce que d'autres joueurs ont ouvert",
     "host": "Tenu par {host}",
-    "openHint": "On ne peut qu'y regarder pour l'instant : franchir une faille vers le monde d'un autre n'existe pas encore. Ce qui manque n'est pas la porte, c'est ce qui se passe derrière : où s'écrit ce qu'un visiteur y fait, et qui valide ce qui en devient vrai."
+    "openHint": "On y entre avec un personnage à soi. Ce que tu y feras s'écrit de ton côté : l'hôte ne le verra pas tant que la chronique des voyageurs n'existe pas.",
+    "visit": "Entrer",
+    "visitNeedsTraveller": "Il te faut d'abord un personnage : c'est son essence qui franchit la faille.",
+    "visitError": "Impossible d'entrer dans ce monde pour le moment."
   }
 }

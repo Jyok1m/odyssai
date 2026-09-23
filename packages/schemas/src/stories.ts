@@ -27,6 +27,11 @@ export const StorySchema = z.object({
     permettre, et il ne permet rien tant qu'il est faux.
   */
   open: z.boolean(),
+  /*
+    Vrai quand cette histoire se joue dans le monde d'un autre. Elle a ses
+    tours, ses entites et son canon ; elle emprunte seulement son monde.
+  */
+  visiting: z.boolean(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 });
@@ -58,6 +63,18 @@ export const StoryOpennessSchema = z.object({ open: z.boolean() });
 
 export type StoryOpenness = z.infer<typeof StoryOpennessSchema>;
 
+/*
+  Franchir une faille vers le monde d'un autre.
+
+  On y arrive avec un personnage a soi : c'est son essence qui traverse, et
+  elle s'incarnera la-bas comme ailleurs.
+*/
+export const VisitStartSchema = z.object({
+  essenceId: z.uuid(),
+});
+
+export type VisitStart = z.infer<typeof VisitStartSchema>;
+
 export const StoriesErrorBodySchema = z.object({
   // `locked` : l'histoire est en construction, on ne l'efface pas sous le worker.
   code: z.enum([
@@ -67,6 +84,8 @@ export const StoriesErrorBodySchema = z.object({
     'validation_error',
     // L'essence demandee n'existe pas, ou n'est pas a ce joueur.
     'traveller_not_found',
+    // Le monde n'existe pas, n'est pas ouvert, ou est deja le sien.
+    'world_not_open',
   ]),
 });
 

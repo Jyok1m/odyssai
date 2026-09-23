@@ -1,6 +1,6 @@
 "use client";
 
-import type { OpenWorld, Story, WorldView } from "@odyssai/schemas";
+import type { OpenWorld, Story, Traveller, WorldView } from "@odyssai/schemas";
 import { useTranslations } from "next-intl";
 import { useEffect, useState, type CSSProperties } from "react";
 
@@ -8,9 +8,10 @@ import type { GlossaryEntry } from "@/components/marketing/glossary-list";
 import type { ProseSection } from "@/components/marketing/prose-page";
 import { Definition, Panel, Tag } from "@/components/play/panel";
 import { Absent, WorldSkin, useWorld } from "@/components/play/use-world";
-import { Link } from "@/i18n/navigation";
-import { fetchStories } from "@/lib/stories";
-import { fetchOpenWorlds } from "@/lib/world";
+import { Button } from "@/components/ui/button";
+import { Link, useRouter } from "@/i18n/navigation";
+import { fetchStories, fetchTravellers } from "@/lib/stories";
+import { fetchOpenWorlds, visitWorld } from "@/lib/world";
 
 /*
   Le livre du monde.
@@ -188,7 +189,14 @@ function Stories() {
 */
 function OpenWorlds() {
   const t = useTranslations("WorldBook");
+  const router = useRouter();
+
   const [worlds, setWorlds] = useState<OpenWorld[]>([]);
+  const [travellers, setTravellers] = useState<Traveller[]>([]);
+  // Le monde dont on est en train de choisir qui va y entrer.
+  const [entering, setEntering] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -197,11 +205,27 @@ function OpenWorlds() {
       .then((listed) => setWorlds(listed.worlds))
       // Aucun monde ouvert fait disparaître le bloc, une panne aussi.
       .catch(() => {});
+    fetchTravellers(controller.signal)
+      .then((listed) => setTravellers(listed.travellers))
+      .catch(() => {});
 
     return () => controller.abort();
   }, []);
 
   if (worlds.length === 0) return null;
+
+  const enter = async (universeId: string, essenceId: string) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await visitWorld(universeId, essenceId);
+      // La visite est ouverte : le parcours suit l'histoire ouverte.
+      router.push("/play");
+    } catch {
+      setError(t("visitError"));
+      setBusy(false);
+    }
+  };
 
   return (
     <Panel title={t("open")} aside={t("openAside")}>
@@ -211,7 +235,7 @@ function OpenWorlds() {
             key={world.universeId}
             data-world={world.name}
             style={{ "--world-hue": world.accentHue } as CSSProperties}
-            className="rounded-card border border-line p-4"
+            className="flex flex-col rounded-card border border-line p-4"
           >
             <span aria-hidden="true" className="block h-1.5 w-8 rounded-xs bg-accent" />
             <p className="mt-2 font-voice text-subtitle text-pretty text-accent">
@@ -224,12 +248,47 @@ function OpenWorlds() {
                 {t("host", { host: world.host })}
               </p>
             ) : null}
+
+            {/* On y entre avec un personnage à soi : c'est son essence qui
+                traverse, et elle s'incarnera là-bas comme ailleurs. */}
+            <div className="mt-4">
+              {travellers.length === 0 ? (
+                <p className="text-caption text-pretty text-vellum-3">
+                  {t("visitNeedsTraveller")}
+                </p>
+              ) : entering === world.universeId ? (
+                <ul className="space-y-2">
+                  {travellers.map((traveller) => (
+                    <li key={traveller.id}>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void enter(world.universeId, traveller.id)}
+                        className="w-full rounded-control border border-line px-3 py-2 text-left text-ui-sm text-vellum transition-colors hover:border-accent hover:bg-mist disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {traveller.name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={busy}
+                  onClick={() => setEntering(world.universeId)}
+                >
+                  {t("visit")}
+                </Button>
+              )}
+            </div>
           </li>
         ))}
       </ul>
 
-      <p className="mt-5 max-w-measure text-caption text-pretty text-vellum-3">
-        {t("openHint")}
+      <p aria-live="polite" className="mt-5 max-w-measure text-caption text-pretty text-vellum-3">
+        {error ? <span className="text-ember">{error}</span> : t("openHint")}
       </p>
     </Panel>
   );

@@ -195,6 +195,22 @@ model Universe {
   /// personne.
   openedBy User[] @relation("CurrentUniverse")
 
+  /// Le monde que cette histoire visite, quand elle en visite un.
+  ///
+  /// Une visite est une histoire comme une autre : elle a ses tours, ses
+  /// entites, son canon et son personnage. Elle n'a simplement pas de monde a
+  /// elle : sa charte, sa bible et les habitants qu'elle lit sont ceux de
+  /// l'hote. C'est ce qui permet de jouer chez un autre sans jamais ecrire
+  /// dans son etat, et ce qui evite d'avoir deux boucles de tour a tenir.
+  ///
+  /// Cascade, et la cascade est hors d'atteinte : une rencontre est ecrite des
+  /// la premiere visite, et c'est elle qui garde le monde de l'hote au moment
+  /// ou il part. Si elle se declenchait quand meme, une visite dont le monde
+  /// n'existe plus n'aurait de toute facon plus rien a lire.
+  visitingId String?    @map("visiting_id") @db.Uuid
+  visiting   Universe?  @relation("Visiting", fields: [visitingId], references: [id], onDelete: Cascade)
+  visitors   Universe[] @relation("Visiting")
+
   step OnboardingStep @default(inspiration)
 
   mode InspirationMode?

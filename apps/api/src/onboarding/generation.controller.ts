@@ -136,6 +136,16 @@ export class GenerationController {
             character: { include: { essence: { select: { marks: true } } } },
             entities: { orderBy: { createdAt: 'asc' } },
             canon: { orderBy: { createdAt: 'asc' } },
+            /*
+              Le monde visite, quand il y en a un : c'est le sien qu'on rend,
+              avec ce que cette histoire y a decouvert par-dessus.
+            */
+            visiting: {
+              include: {
+                entities: { orderBy: { createdAt: 'asc' } },
+                canon: { orderBy: { createdAt: 'asc' } },
+              },
+            },
           },
         })
       : null;
@@ -145,8 +155,11 @@ export class GenerationController {
       throw new NotFoundException({ code: 'not_ready' });
     }
 
-    const charter = WorldCharterSchema.safeParse(universe.charter);
-    const bible = WorldBibleSchema.safeParse(universe.bible);
+    // La source : le monde visite s'il y en a un, le sien sinon.
+    const source = universe.visiting ?? universe;
+
+    const charter = WorldCharterSchema.safeParse(source.charter);
+    const bible = WorldBibleSchema.safeParse(source.bible);
     if (!charter.success || !bible.success) {
       // L'etape dit `ready` mais le contenu ne tient pas : c'est un defaut de
       // notre cote, pas une demande invalide.
@@ -205,17 +218,19 @@ export class GenerationController {
       npcs: bible.data.npcs,
       affinities: bible.data.affinities,
       // Le su seulement : le schema de vue ne porte pas le cache.
-      entities: universe.entities.map((row) => ({
-        name: row.name,
-        kind: row.kind,
-        known: row.known,
-      })),
+      entities: [...(universe.visiting?.entities ?? []), ...universe.entities].map(
+        (row) => ({
+          name: row.name,
+          kind: row.kind,
+          known: row.known,
+        }),
+      ),
       /*
         Un fait illisible est saute plutot que de faire echouer la lecture du
         monde : le canon grandit tour apres tour, et une ligne fautive ne doit
         pas fermer la partie.
       */
-      canon: universe.canon.flatMap((row) => {
+      canon: [...(universe.visiting?.canon ?? []), ...universe.canon].flatMap((row) => {
         const parsed = CanonFactSchema.safeParse({
           subject: row.subject,
           statement: row.statement,
@@ -227,18 +242,24 @@ export class GenerationController {
         signe de fin restent au meneur : le joueur qui les lirait n'aurait
         plus qu'a y aller.
       */
+      /*
+        L'arc appartient a l'histoire, pas au monde : un visiteur n'herite pas
+        de celle de son hote, et n'en voit donc aucun acte.
+      */
       story: {
-        act: universe.arcAct,
-        acts: bible.data.arc?.acts.length ?? 0,
+        act: universe.visiting ? null : universe.arcAct,
+        acts: universe.visiting ? 0 : (bible.data.arc?.acts.length ?? 0),
         /*
           Le titre de l'acte en cours, et lui seul. Au dela du dernier, la
           partie est en aventure libre : il n'y a plus d'acte a nommer.
         */
         title:
-          universe.arcAct && universe.arcAct <= (bible.data.arc?.acts.length ?? 0)
+          !universe.visiting &&
+          universe.arcAct &&
+          universe.arcAct <= (bible.data.arc?.acts.length ?? 0)
             ? (bible.data.arc?.acts[universe.arcAct - 1]?.title ?? null)
             : null,
-        bond: bible.data.arc?.hero?.bond ?? null,
+        bond: universe.visiting ? null : (bible.data.arc?.hero?.bond ?? null),
       },
       character: {
         name: universe.character?.name,

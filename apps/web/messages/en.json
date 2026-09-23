@@ -383,7 +383,8 @@
       "openHint": "Other players will be able to step in once travel between players exists. You decide what their coming changes.",
       "closed": "World closed",
       "closedHint": "No one else steps in. This is the default: this world is yours until you decide otherwise."
-    }
+    },
+    "visiting": "Visit"
   },
   "Concept": {
     "metaTitle": "Concept",
@@ -1178,6 +1179,9 @@
     "open": "Open worlds",
     "openAside": "What other players have opened",
     "host": "Held by {host}",
-    "openHint": "You can only look for now: crossing a rift into another's world does not exist yet. What is missing is not the door but what lies behind it: where a visitor's doings are written, and who validates what becomes true there."
+    "openHint": "You step in with a character of your own. What you do there is written on your side: the host will not see it until the travellers' chronicle exists.",
+    "visit": "Step in",
+    "visitNeedsTraveller": "You need a character first: it is their essence that crosses the rift.",
+    "visitError": "That world can't be entered right now."
   }
 }

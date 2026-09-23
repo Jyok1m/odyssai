@@ -27,6 +27,14 @@ export class StoryNotFoundError extends Error {
   }
 }
 
+// Le monde n'existe pas, n'est pas ouvert, ou est deja le sien.
+export class WorldNotOpenError extends Error {
+  constructor() {
+    super('monde non ouvert');
+    this.name = 'WorldNotOpenError';
+  }
+}
+
 // Le personnage qu'on voulait reprendre n'existe pas, ou n'est pas a lui.
 export class TravellerNotFoundError extends Error {
   constructor() {
@@ -56,6 +64,7 @@ const SUMMARY = {
   step: true,
   accentHue: true,
   isOpen: true,
+  visitingId: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -66,6 +75,7 @@ type Summary = {
   step: Story['step'];
   accentHue: number | null;
   isOpen: boolean;
+  visitingId: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -238,6 +248,83 @@ export class StoriesService {
     return this.toStory(row, user.currentUniverseId);
   }
 
+  /*
+    Franchir une faille vers le monde d'un autre.
+
+    La visite est une histoire comme les autres : elle compte dans la borne,
+    elle s'ouvre, elle se joue et elle se supprime. Elle n'a simplement pas de
+    monde a elle, et rien a generer : le monde existe deja, donc rien n'est
+    debite ici. Ce sont ses tours qui coutent, comme partout.
+
+    Revenir dans un monde deja visite rouvre la visite au lieu d'en creer une
+    seconde : deux fils paralleles dans le meme monde n'auraient pas de sens,
+    et la rencontre n'a pas a s'ecrire deux fois.
+  */
+  async visit(user: Owner, hostId: string, essenceId: string): Promise<Story> {
+    const host = await this.prisma.universe.findFirst({
+      where: {
+        id: hostId,
+        isOpen: true,
+        step: 'ready',
+        ownerId: { not: user.id },
+        NOT: { ownerId: null },
+      },
+      select: { id: true, name: true, accentHue: true },
+    });
+    if (!host) throw new WorldNotOpenError();
+
+    const already = await this.prisma.universe.findFirst({
+      where: { ownerId: user.id, visitingId: host.id },
+      select: SUMMARY,
+    });
+    if (already) {
+      await this.open(user.id, already.id);
+      return this.toStory(already, already.id);
+    }
+
+    const count = await this.prisma.universe.count({ where: { ownerId: user.id } });
+    if (count >= STORIES_MAX) throw new StoriesFullError();
+
+    const essence = await this.carry(user.id, essenceId);
+
+    /*
+      La rencontre et la visite dans la meme transaction : c'est elle qui
+      gardera le monde de l'hote le jour ou il partira, et une visite sans
+      elle laisserait ce monde effacable avec le recit de quelqu'un dedans.
+    */
+    const [row] = await this.prisma.$transaction([
+      this.prisma.universe.create({
+        data: {
+          ownerId: user.id,
+          visitingId: host.id,
+          // Rien a generer : le monde est deja la, on entre.
+          step: 'ready',
+          // Recopies pour que la liste des histoires les lise sans jointure.
+          name: host.name,
+          accentHue: host.accentHue,
+          character: {
+            create: {
+              essenceId: essence.id,
+              arrival: 'voyageur',
+              name: essence.name,
+              gender: essence.gender,
+              age: essence.age,
+              personality: essence.personality ?? {},
+              attributes: essence.attributes ?? {},
+            },
+          },
+        },
+        select: SUMMARY,
+      }),
+      this.prisma.encounter.create({
+        data: { visitorId: user.id, universeId: host.id },
+      }),
+    ]);
+
+    await this.open(user.id, row.id);
+    return this.toStory(row, row.id);
+  }
+
   async select(user: Owner, universeId: string): Promise<Story> {
     const row = await this.find(user, universeId);
     await this.open(user.id, row.id);
@@ -269,6 +356,7 @@ export class StoriesService {
       accentHue: row.accentHue,
       current: row.id === currentId,
       open: row.isOpen,
+      visiting: row.visitingId !== null,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };

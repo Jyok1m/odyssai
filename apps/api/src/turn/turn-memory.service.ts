@@ -28,7 +28,18 @@ const { recentTurns: RECENT_TURNS, recalledMax: RECALLED_MAX } = TUNING.turn;
 const CHANNEL = 'game_turn' as const;
 
 export interface TurnWorld {
+  /*
+    Ou ce tour s'ecrit : ses messages, ses tours, ses entites, son canon.
+    C'est toujours une histoire du joueur, meme en visite.
+  */
   universeId: string;
+  /*
+    Le monde qu'il lit. Le meme, sauf en visite : une histoire qui en visite
+    une autre emprunte sa charte, sa bible et ses habitants, et n'ecrit
+    jamais chez elle. C'est ce qui tient la regle « un univers n'ecrit jamais
+    dans l'etat d'un autre » sans demander une seconde boucle de tour.
+  */
+  sourceId: string;
   charter: WorldCharter;
   bible: WorldBible;
   character: CharacterSheet;
@@ -135,14 +146,25 @@ export class TurnMemoryService implements OnModuleInit {
           include: {
             character: { include: { essence: { select: { id: true, marks: true } } } },
             entities: { orderBy: { createdAt: 'asc' } },
+            /*
+              Le monde visite, quand il y en a un : c'est lui qu'on lit. Ses
+              entites viennent avec, cachees comprises : le meneur joue ce
+              monde-la, il en connait les secrets.
+            */
+            visiting: {
+              include: { entities: { orderBy: { createdAt: 'asc' } } },
+            },
           },
         })
       : null;
 
     if (!universe || universe.step !== 'ready') return null;
 
-    const charter = WorldCharterSchema.safeParse(universe.charter);
-    const bible = WorldBibleSchema.safeParse(universe.bible);
+    // La source : le monde visite s'il y en a un, le sien sinon.
+    const source = universe.visiting ?? universe;
+
+    const charter = WorldCharterSchema.safeParse(source.charter);
+    const bible = WorldBibleSchema.safeParse(source.bible);
     const character = CharacterSheetSchema.safeParse({
       name: universe.character?.name ?? undefined,
       gender: universe.character?.gender ?? undefined,
@@ -153,7 +175,7 @@ export class TurnMemoryService implements OnModuleInit {
     });
 
     if (!charter.success || !bible.success || !character.success) {
-      this.logger.error(`monde ${universe.id} illisible malgre l'etape ready`);
+      this.logger.error(`monde ${source.id} illisible malgre l'etape ready`);
       return null;
     }
 
@@ -167,10 +189,16 @@ export class TurnMemoryService implements OnModuleInit {
 
     return {
       universeId: universe.id,
+      sourceId: source.id,
       charter: charter.data,
       bible: bible.data,
       character: character.data,
-      works: universe.works,
+      /*
+        Les oeuvres citees sont celles du monde qu'on lit : c'est contre elles
+        que la garde sur les emprunts relit ce que le meneur ecrit, et c'est ce
+        monde-la qu'il ecrit.
+      */
+      works: source.works,
       progress: (universe.character?.progress ?? {}) as Progress,
       essence: universe.character?.essence
         ? {
@@ -184,20 +212,49 @@ export class TurnMemoryService implements OnModuleInit {
         rest: universe.character?.rest ?? 0,
       },
       inventory: universe.character?.inventory ?? [],
-      act: universe.bible && bible.data.arc ? (universe.arcAct ?? 1) : null,
-      entities: universe.entities.map((row) => ({
-        name: row.name,
-        kind: row.kind as Entity['kind'],
-        known: row.known,
-        hidden: row.hidden,
-      })),
+      /*
+        L'arc appartient a l'histoire qu'on joue, pas au monde qu'on lit : un
+        visiteur n'herite pas de celle de son hote, il vient y vivre la
+        sienne. Le meneur joue alors sans but a atteindre, comme dans un monde
+        genere avant les arcs.
+      */
+      act: universe.visiting
+        ? null
+        : universe.bible && bible.data.arc
+          ? (universe.arcAct ?? 1)
+          : null,
+      /*
+        Les habitants du monde lu d'abord, ce que cette histoire y a decouvert
+        ensuite. Le meneur les connait tous, caches compris ; ce qu'il posera
+        de neuf s'ecrira du cote de l'histoire, jamais chez l'hote.
+      */
+      entities: [...(universe.visiting?.entities ?? []), ...universe.entities].map(
+        (row) => ({
+          name: row.name,
+          kind: row.kind as Entity['kind'],
+          known: row.known,
+          hidden: row.hidden,
+        }),
+      ),
     };
   }
 
-  async recall(universeId: string, message: string): Promise<TurnMemory> {
+  /*
+    Ce que le meneur se rappelle.
+
+    Le canon vient des deux cotes : ce qui est vrai dans le monde qu'on lit, et
+    ce que cette histoire y a ajoute. Les tours, eux, sont ceux de l'histoire
+    seule : ceux de l'hote sont sa partie a lui, et un visiteur n'y etait pas.
+  */
+  async recall(
+    where: Pick<TurnWorld, 'universeId' | 'sourceId'>,
+    message: string,
+  ): Promise<TurnMemory> {
+    const { universeId, sourceId } = where;
+
     const [canonRows, recentRows, last] = await Promise.all([
       this.prisma.canonFact.findMany({
-        where: { universeId },
+        where: { universeId: { in: [...new Set([universeId, sourceId])] } },
         orderBy: { createdAt: 'asc' },
       }),
       this.prisma.conversationMessage.findMany({

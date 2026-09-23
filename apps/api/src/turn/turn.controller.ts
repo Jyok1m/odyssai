@@ -322,7 +322,7 @@ export class TurnController {
       throw error;
     }
 
-    const memory = await this.memory.recall(world.universeId, said);
+    const memory = await this.memory.recall(world, said);
     const seq = memory.nextSeq;
 
     /*
@@ -819,14 +819,35 @@ export class TurnController {
             },
           }),
         ),
-        ...revealed.map((entity) =>
-          this.prisma.entity.update({
-            where: {
-              universeId_key: { universeId: world.universeId, key: entityKey(entity.name) },
+        /*
+          Une revelation s'ecrit toujours du cote de l'histoire, jamais du
+          monde qu'elle lit : en visite, ce que le joueur apprend d'un habitant
+          de l'hote entre dans son propre codex, et l'hote n'en sait rien.
+          C'est une projection, et c'est la seule facon de garder la regle
+          « un univers n'ecrit jamais dans l'etat d'un autre ».
+
+          Un upsert, donc, et non une mise a jour : chez soi la ligne existe
+          deja, en visite elle est a creer.
+        */
+        ...revealed.map((entity) => {
+          const shown = revealLore(entity);
+          const key = entityKey(entity.name);
+
+          return this.prisma.entity.upsert({
+            where: { universeId_key: { universeId: world.universeId, key } },
+            update: { ...shown, revealedAt: new Date() },
+            create: {
+              universeId: world.universeId,
+              kind: shown.kind,
+              name: shown.name,
+              key,
+              known: shown.known,
+              hidden: shown.hidden,
+              revealedAt: new Date(),
+              seq,
             },
-            data: { ...revealLore(entity), revealedAt: new Date() },
-          }),
-        ),
+          });
+        }),
         ...(act
           ? [
               this.prisma.universe.update({

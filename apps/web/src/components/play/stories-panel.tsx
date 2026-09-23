@@ -259,11 +259,16 @@ function StoryCard({ story, busy, onPlay, onDeleted }: CardProps) {
           <h2 className="font-voice text-subtitle text-accent">
             {story.name ?? t("untitled")}
           </h2>
-          {story.current ? (
-            <span className="rounded-full border border-accent px-2 py-0.5 text-caption text-accent">
-              {t("open")}
-            </span>
-          ) : null}
+          <span className="flex flex-wrap items-center gap-2">
+            {/* Une visite emprunte son monde : elle n'a ni inspiration, ni
+                personnage à écrire, et on ne l'ouvre ni ne la ferme. */}
+            {story.visiting ? <Tag tone="arcane">{t("visiting")}</Tag> : null}
+            {story.current ? (
+              <span className="rounded-full border border-accent px-2 py-0.5 text-caption text-accent">
+                {t("open")}
+              </span>
+            ) : null}
+          </span>
         </div>
         <p className="mt-1 flex flex-wrap gap-x-3 text-caption text-vellum-3">
           <span>{t(`step.${story.step}`)}</span>
@@ -279,7 +284,7 @@ function StoryCard({ story, busy, onPlay, onDeleted }: CardProps) {
         encore franchir une faille vers le monde d'un autre, et l'écran le dit
         plutôt que de laisser croire à une porte déjà ouverte.
       */}
-      {story.step === "ready" ? (
+      {story.step === "ready" && !story.visiting ? (
         <div className="rounded-card border border-line p-3.5">
           <label className="flex items-start gap-3">
             <input
