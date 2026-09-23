@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { DangerAction } from "@/components/ui/danger-action";
+import { Panel } from "@/components/ui/panel";
 import { ProfileError, eraseAccount } from "@/lib/profile";
 
 /*
@@ -25,7 +26,7 @@ export function EraseAccount() {
 
   if (done) {
     return (
-      <div className="rounded-card border border-line p-5">
+      <Panel title={tAccount("eraseTitle")}>
         <h3 className="font-voice text-subtitle text-vellum">
           {t("erase.doneTitle")}
         </h3>
@@ -51,26 +52,40 @@ export function EraseAccount() {
         <Button as="a" href={done.accountUrl} variant="danger" className="mt-5">
           {t("erase.finish")} <span aria-hidden="true">&rarr;</span>
         </Button>
-      </div>
+      </Panel>
     );
   }
 
   return (
-    <DangerAction
+    /* La bordure dit ce que la carte fait avant qu'on la lise. */
+    <Panel title={tAccount("eraseTitle")} className="border-ember/40">
+      <p className="max-w-measure text-ui-sm text-pretty text-vellum-2">
+        {t("erase.lead")}
+      </p>
+
+      {/* Ce qui part, dit avant le bouton et non derriere lui : on ne
+          decouvre pas les consequences apres avoir clique. */}
+      <ul className="mt-4 space-y-2">
+        {["account", "world", "character"].map((what) => (
+          <li key={what} className="flex gap-2.5 text-ui-sm text-pretty text-vellum">
+            <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-ember" />
+            {t(`what.${what}` as never)}
+          </li>
+        ))}
+        <li className="flex gap-2.5 text-ui-sm text-pretty text-vellum-3">
+          <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-vellum-3" />
+          {t("what.visited")}
+        </li>
+      </ul>
+
+      <div className="mt-5">
+        <DangerAction
       label={t("erase.label")}
       title={t("erase.title")}
       lead={t("erase.lead")}
       confirmLabel={t("erase.confirm")}
       busyLabel={t("erase.busy")}
       error={error}
-      consequences={
-        <ul className="space-y-1.5">
-          <li>{t("what.account")}</li>
-          <li>{t("what.world")}</li>
-          <li>{t("what.character")}</li>
-          <li className="text-vellum-3">{t("what.visited")}</li>
-        </ul>
-      }
       onConfirm={async () => {
         setError(null);
         try {
@@ -88,6 +103,8 @@ export function EraseAccount() {
           );
         }
       }}
-    />
+        />
+      </div>
+    </Panel>
   );
 }

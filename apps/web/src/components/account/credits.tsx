@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 import { Button } from "@/components/ui/button";
+import { Definition, Panel } from "@/components/ui/panel";
 import { Link } from "@/i18n/navigation";
 import {
   BillingError,
@@ -51,19 +52,17 @@ export function Credits() {
 
   if (error && !summary) {
     return (
-      <section>
-        <Heading />
-        <p className="mt-3 text-ui-sm text-ember">{error}</p>
-      </section>
+      <Panel title={t("title")}>
+        <p className="text-ui-sm text-ember">{error}</p>
+      </Panel>
     );
   }
 
   if (!summary || !catalog) {
     return (
-      <section>
-        <Heading />
-        <p className="mt-3 text-ui-sm text-vellum-3">{t("loading")}</p>
-      </section>
+      <Panel title={t("title")}>
+        <p className="text-ui-sm text-vellum-3">{t("loading")}</p>
+      </Panel>
     );
   }
 
@@ -114,61 +113,57 @@ export function Credits() {
       : t("balanceStandalone", { credits: summary.credits });
 
   return (
-    <section>
-      <Heading />
-
-      <p className="mt-3 text-ui-sm text-vellum">{balance}</p>
+    /* Le nom du palier vient de la base : les paliers se créent au tableau de
+       bord, leurs noms ne peuvent donc pas être des clés de traduction. */
+    <Panel title={t("title")} aside={t("planNamed", { plan: summary.planName })}>
+      {/* Le chiffre d'abord : c'est lui qu'on vient voir, et le reste le
+          situe. */}
+      <p className="flex flex-wrap items-baseline gap-x-2">
+        <span className="font-voice text-display-compact tabular-nums text-vellum">
+          {summary.unlimited ? "\u221e" : summary.credits}
+        </span>
+        <span className="text-ui-sm text-pretty text-vellum-2">{balance}</span>
+      </p>
 
       {renews ? (
         <div
           role="img"
           aria-label={balance}
-          className="mt-3 h-1.5 w-full max-w-sm overflow-hidden rounded-full bg-mist"
+          className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-mist"
         >
           <div
-            className="h-full rounded-full bg-accent transition-[width] duration-500"
+            className="h-full rounded-full bg-accent transition-all duration-500"
             style={{ width: `${filled}%` }}
           />
         </div>
       ) : (
-        <p className="mt-2 text-caption text-vellum-3">
+        <p className="mt-3 text-caption text-vellum-3">
           {summary.unlimited ? t("unlimitedNote") : t("noRenewal")}
         </p>
       )}
 
-      <dl className="mt-4 space-y-2">
-        <div className="flex gap-2">
-          <dt className="text-caption text-vellum-3">{t("planLabel")}</dt>
-          {/* Le nom vient de la base : les paliers se creent au tableau de
-              bord, leurs noms ne peuvent donc pas etre des cles de
-              traduction. */}
-          <dd className="text-ui-sm text-vellum">{summary.planName}</dd>
-        </div>
-        {/* Une date n'a de sens que si quelque chose arrive a echeance. Sur un
-            palier sans dotation, plus rien ne change ce jour la : la reserve
+      <dl className="mt-5 divide-y divide-line">
+        {/* Une date n'a de sens que si quelque chose arrive à échéance. Sur un
+            palier sans dotation, plus rien ne change ce jour-là : la réserve
             reste, et annoncer une date ferait craindre de la perdre. */}
         {renews || summary.cancelAtPeriodEnd ? (
-          <div className="flex gap-2">
-            <dt className="text-caption text-vellum-3">
-              {summary.cancelAtPeriodEnd ? t("endsLabel") : t("renewsLabel")}
-            </dt>
-            <dd className="text-ui-sm text-vellum">
-              {format.dateTime(new Date(summary.renewsAt), {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
-            </dd>
-          </div>
+          <Definition
+            term={summary.cancelAtPeriodEnd ? t("endsLabel") : t("renewsLabel")}
+          >
+            {format.dateTime(new Date(summary.renewsAt), {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
+          </Definition>
         ) : null}
+        <Definition term={t("costsLabel")}>
+          {t("costs", {
+            turn: catalog.costs.turn,
+            world: catalog.costs.worldGeneration,
+          })}
+        </Definition>
       </dl>
-
-      <p className="mt-4 text-ui-sm text-vellum-3">
-        {t("costs", {
-          turn: catalog.costs.turn,
-          world: catalog.costs.worldGeneration,
-        })}
-      </p>
 
       {offers.length > 0 || summary.manageable ? (
         <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -196,15 +191,7 @@ export function Credits() {
           ) : null}
         </div>
       ) : null}
-    </section>
-  );
-}
-
-function Heading() {
-  const t = useTranslations("Billing");
-
-  return (
-    <h2 className="font-voice text-subtitle text-vellum">{t("title")}</h2>
+    </Panel>
   );
 }
 

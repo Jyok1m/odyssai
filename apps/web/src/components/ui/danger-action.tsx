@@ -12,7 +12,12 @@ interface Props {
   title: string;
   lead: string;
   // Ce qui sera supprimé, et ce qui sera gardé. Dit avant de demander.
-  consequences: ReactNode;
+  /*
+    Ce qui part, deplie avec la confirmation. Facultatif : quand l'ecran le
+    dit deja avant le bouton, le repeter ici ferait lire deux fois la meme
+    liste.
+  */
+  consequences?: ReactNode;
   confirmLabel: string;
   busyLabel: string;
   onConfirm: () => Promise<void>;
@@ -68,7 +73,9 @@ export function DangerAction({
       <h3 className="font-voice text-subtitle text-vellum">{title}</h3>
       <p className="mt-3 max-w-measure text-ui-sm text-pretty text-vellum-2">{lead}</p>
 
-      <div className="mt-4 text-ui-sm text-vellum-2">{consequences}</div>
+      {consequences ? (
+        <div className="mt-4 text-ui-sm text-vellum-2">{consequences}</div>
+      ) : null}
 
       <label htmlFor="danger-confirm" className="mt-6 block text-caption text-vellum-3">
         {t("prompt", { word })}

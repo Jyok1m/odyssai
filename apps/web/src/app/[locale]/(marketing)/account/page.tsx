@@ -45,7 +45,9 @@ export default function AccountPage() {
         </p>
       </header>
 
-      <div className="mt-14">
+      {/* Moins d'air qu'une page de contenu : ce sont des cartes, et elles
+          commencent la ou le titre s'arrete. */}
+      <div className="mt-10">
         <AccountPanel />
       </div>
     </article>

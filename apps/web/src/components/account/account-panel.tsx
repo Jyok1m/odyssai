@@ -1,13 +1,14 @@
 "use client";
 
 import { Username, type PlayerProfile } from "@odyssai/schemas";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 import { useAuthLinks } from "@/components/auth/auth-links";
 import { useSession } from "@/components/auth/session-provider";
 import { Button } from "@/components/ui/button";
+import { Definition, Panel, Tag } from "@/components/ui/panel";
 import { FIELD } from "@/components/ui/field";
 import { requestSignOut } from "@/lib/api";
 import { MarketingOptIn } from "@/components/account/marketing-opt-in";
@@ -15,6 +16,7 @@ import { ProfileError, fetchProfile, updateUsername } from "@/lib/profile";
 
 import { Credits } from "./credits";
 import { EraseAccount } from "./erase-account";
+import { StoriesStanding } from "./stories-standing";
 
 // `confirming` est la seconde frappe : le pseudo ne se choisit qu'une fois.
 type Step = "idle" | "editing" | "confirming" | "saving";
@@ -24,6 +26,7 @@ export function AccountPanel() {
   const tAuth = useTranslations("Auth");
   const tNav = useTranslations("Nav");
   const session = useSession();
+  const format = useFormatter();
   const { signIn } = useAuthLinks();
 
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
@@ -104,40 +107,72 @@ export function AccountPanel() {
   const chosen = profile?.username ?? null;
 
   return (
-    <div className="max-w-headline space-y-12">
-      <section>
-        <h2 className="font-voice text-subtitle text-vellum">
-          {t("usernameLabel")}
-        </h2>
+    <div className="space-y-5">
+      <div className="grid gap-5 lg:grid-cols-3">
+        {/* Le pseudo : la seule pièce de l'identité que l'application décide,
+            et elle ne se choisit qu'une fois. */}
+        <Panel title={t("usernameLabel")}>
+          {chosen ? (
+            <>
+              <div className="flex items-center gap-5">
+                <span
+                  aria-hidden="true"
+                  style={{ borderRadius: "var(--radius-portal)" }}
+                  className="grid h-36 w-28 flex-none place-items-center border border-accent/40 bg-mist pt-6 font-voice text-display-compact text-accent"
+                >
+                  {chosen.slice(0, 1)}
+                </span>
+                <div className="min-w-0">
+                  <p className="font-voice text-title text-pretty text-vellum">
+                    {chosen}
+                  </p>
+                  <p className="mt-2 text-ui-sm text-pretty text-vellum-2">
+                    {t("usernameSeen")}
+                  </p>
+                </div>
+              </div>
 
-        {chosen ? (
-          <p className="mt-3 text-ui-sm text-vellum">{chosen}</p>
-        ) : step === "idle" ? (
-          <div className="mt-3">
-            <p className="text-ui-sm text-vellum-3">{t("usernameNone")}</p>
-            <Button
-              variant="secondary"
-              className="mt-4"
-              disabled={profile === null}
-              onClick={() => setStep("editing")}
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <Tag tone="brass">{t("usernameSettled")}</Tag>
+                {profile ? (
+                  <span className="text-caption text-vellum-3">
+                    {t("memberSince", {
+                      date: format.dateTime(new Date(profile.createdAt), {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      }),
+                    })}
+                  </span>
+                ) : null}
+              </div>
+            </>
+          ) : step === "idle" ? (
+            <div>
+              <p className="max-w-measure text-ui-sm text-pretty text-vellum-3">
+                {t("usernameNone")}
+              </p>
+              <Button
+                variant="secondary"
+                className="mt-4"
+                disabled={profile === null}
+                onClick={() => setStep("editing")}
+              >
+                {t("choose")}
+              </Button>
+            </div>
+          ) : (
+            <form
+              data-focus-ring="container"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void submit();
+              }}
             >
-              {t("choose")}
-            </Button>
-          </div>
-        ) : (
-          <form
-            data-focus-ring="container"
-            className="mt-3"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void submit();
-            }}
-          >
-            {/* Dit avant la saisie, pas apres : c'est la seule chose que le
-                joueur doit savoir avant de taper. */}
-            <p className="text-ui-sm text-brass">{t("usernameOnce")}</p>
+              {/* Dit avant la saisie, pas après : c'est la seule chose que le
+                  joueur doit savoir avant de taper. */}
+              <p className="text-ui-sm text-brass">{t("usernameOnce")}</p>
 
-            <div className="mt-4 flex flex-wrap items-center gap-3">
               <label htmlFor="username" className="sr-only">
                 {t("usernameLabel")}
               </label>
@@ -152,72 +187,76 @@ export function AccountPanel() {
                   if (step === "confirming") setStep("editing");
                   setError(null);
                 }}
-                className={`min-w-0 flex-1 ${FIELD}`}
+                className={`mt-4 ${FIELD}`}
               />
-              <Button
-                type="submit"
-                disabled={username.trim().length === 0 || step === "saving"}
-              >
-                {step === "confirming"
-                  ? t("confirm", { name: username.trim() })
-                  : t("save")}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  setStep("idle");
-                  setUsername("");
-                  setError(null);
-                }}
-              >
-                {t("cancel")}
-              </Button>
-            </div>
-          </form>
-        )}
 
-        <p aria-live="polite" className="mt-3 min-h-5 text-ui-sm text-ember">
-          {error}
-        </p>
-      </section>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <Button
+                  type="submit"
+                  disabled={username.trim().length === 0 || step === "saving"}
+                >
+                  {step === "confirming"
+                    ? t("confirm", { name: username.trim() })
+                    : t("save")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setStep("idle");
+                    setUsername("");
+                    setError(null);
+                  }}
+                >
+                  {t("cancel")}
+                </Button>
+              </div>
+            </form>
+          )}
 
-      <Credits />
+          <p aria-live="polite" className="mt-3 min-h-5 text-ui-sm text-ember">
+            {error}
+          </p>
+        </Panel>
 
-      <section>
-        <h2 className="font-voice text-subtitle text-vellum">
-          {t("identityTitle")}
-        </h2>
+        <Credits />
+        <StoriesStanding />
+      </div>
 
-        <dl className="mt-4 space-y-3">
-          <div>
-            <dt className="text-caption text-vellum-3">{t("emailLabel")}</dt>
-            <dd className="mt-1 text-ui-sm text-vellum">
-              {profile?.email ?? "…"}
+      <div className="grid gap-5 lg:grid-cols-3">
+        {/* L'identité appartient au service qui l'authentifie. Le profil de
+            jeu reste ici, et ne remonte jamais là-bas. */}
+        <Panel title={t("identityTitle")} aside={t("identityHeld")}>
+          <dl className="divide-y divide-line">
+            <Definition term={t("emailLabel")}>
+              {profile?.email ?? "\u2026"}
               {profile && !profile.emailVerified ? (
                 <span className="text-brass"> ({t("emailUnverified")})</span>
               ) : null}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-caption text-vellum-3">{t("passwordLabel")}</dt>
-            <dd className="mt-1 text-ui-sm text-vellum-3">••••••••</dd>
-          </div>
-        </dl>
+            </Definition>
+            <Definition term={t("passwordLabel")}>
+              <span className="text-vellum-3">{"\u2022".repeat(8)}</span>
+            </Definition>
+          </dl>
 
-        {profile ? (
-          <Button as="a" href={profile.accountUrl} variant="secondary" className="mt-5">
-            {t("manage")} <span aria-hidden="true">&rarr;</span>
-          </Button>
-        ) : null}
-      </section>
+          <p className="mt-5 max-w-measure text-ui-sm text-pretty text-vellum-2">
+            {t("identityLead")}
+          </p>
 
-      {/* Avant la deconnexion : c'est un reglage du compte, pas une sortie. */}
-      <MarketingOptIn profile={profile} onChange={setProfile} />
+          {profile ? (
+            <Button as="a" href={profile.accountUrl} variant="secondary" className="mt-5">
+              {t("manage")} <span aria-hidden="true">&#8599;</span>
+            </Button>
+          ) : null}
+        </Panel>
 
-      {/* La deconnexion vit ici et plus dans le bandeau : elle n'a pas a
-          occuper une place permanente a cote de la navigation. */}
-      <section className="border-t border-line pt-8">
+        <MarketingOptIn profile={profile} onChange={setProfile} />
+        <EraseAccount />
+      </div>
+
+      {/* La déconnexion vit ici et plus dans le bandeau : elle n'a pas à
+          occuper une place permanente à côté de la navigation. */}
+      <Panel>
         <Button
           variant="danger"
           onClick={() => void signOut()}
@@ -226,13 +265,7 @@ export function AccountPanel() {
         >
           {tAuth("signOut")}
         </Button>
-      </section>
-
-      {/* Tout en bas, apres la deconnexion : on ne tombe pas dessus en
-          cherchant a partir pour la journee. */}
-      <section className="border-t border-line pt-8">
-        <EraseAccount />
-      </section>
+      </Panel>
     </div>
   );
 }

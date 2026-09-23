@@ -121,7 +121,20 @@
     "optInTitle": "Hear about what is next",
     "optInLabel": "I want to be told when OdyssAI moves forward.",
     "optInHint": "A few messages a year at most: an opening, a milestone. You can untick this at any time, and your address is used for nothing else. See the <privacy>privacy policy</privacy>.",
-    "optInFailed": "Your choice could not be saved. Try again in a moment."
+    "optInFailed": "Your choice could not be saved. Try again in a moment.",
+    "usernameSeen": "Seen by other players when your universes cross.",
+    "usernameSettled": "Set, never changes",
+    "memberSince": "Member since {date}",
+    "identityHeld": "Held by the identity service",
+    "identityLead": "Your address, password and two-factor authentication are changed at the identity service. Your game profile stays here.",
+    "optInNever": "Never ticked for you.",
+    "eraseTitle": "Delete my account",
+    "storiesTitle": "In play",
+    "storiesCount": "stories out of {max}",
+    "storiesOpen": "Open story",
+    "storiesUntitled": "Untitled story",
+    "storiesNone": "No story open right now.",
+    "storiesLink": "My stories"
   },
   "Billing": {
     "title": "Your reserve",
@@ -145,7 +158,9 @@
     "noRenewal": "These credits do not renew, but they stay as long as your account does.",
     "balanceUnlimited": "Unlimited reserve.",
     "unlimitedNote": "This account administers OdyssAI: its games spend no credits. The out-of-credits screen will therefore never show here.",
-    "changePlan": "Change tier"
+    "changePlan": "Change tier",
+    "planNamed": "{plan} plan",
+    "costsLabel": "Rates"
   },
   "Pricing": {
     "metaTitle": "Pricing",

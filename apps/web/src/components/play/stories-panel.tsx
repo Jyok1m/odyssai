@@ -27,7 +27,7 @@ import {
   startStory,
 } from "@/lib/stories";
 
-import { Tag } from "./panel";
+import { Tag } from "@/components/ui/panel";
 
 /*
   Les histoires du joueur : en commencer une, en ouvrir une, en supprimer une.

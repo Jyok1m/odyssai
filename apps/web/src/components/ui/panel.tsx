@@ -1,12 +1,13 @@
 import type { ReactNode } from "react";
 
 /*
-  Les primitives des écrans de jeu : une carte à en-tête en capitales, et la
-  pastille du kit.
+  La carte à en-tête en capitales, et la pastille du kit.
 
-  Elles vivent ici et non dans `components/ui` pour la même raison que celles
-  du tableau de bord : le kit habille tout le site, celles-ci n'habillent que
-  la table, la fiche et le monde, qui partagent la même grammaire de blocs.
+  Elles vivent dans le kit et non plus sous `play` : la table, la fiche, le
+  monde, les histoires et le compte partagent la même grammaire de blocs, et
+  une primitive rangée sous un seul de ses appelants finit recopiée chez les
+  autres. Celles du tableau de bord restent à part, elles : `/admin` n'a pas
+  next-intl, et ce n'est pas le même habillage.
 */
 export function Panel({
   title,

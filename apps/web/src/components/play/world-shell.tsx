@@ -18,7 +18,7 @@ import { CreditsBadge } from "@/components/play/credits-badge";
 import { AttributeCells } from "@/components/play/attributes";
 import { Die, GameChat, Verdict, type TableEvents } from "@/components/play/game-chat";
 import { HealthBar } from "@/components/play/health";
-import { Panel, Tag } from "@/components/play/panel";
+import { Panel, Tag } from "@/components/ui/panel";
 import { Link } from "@/i18n/navigation";
 
 import { RestartAction } from "./restart-action";

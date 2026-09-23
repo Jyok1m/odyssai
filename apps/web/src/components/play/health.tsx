@@ -3,7 +3,7 @@
 import type { Condition, Health } from "@odyssai/schemas";
 import { useTranslations } from "next-intl";
 
-import { Tag } from "@/components/play/panel";
+import { Tag } from "@/components/ui/panel";
 
 /*
   La jauge de vie.

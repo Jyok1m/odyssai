@@ -121,7 +121,20 @@
     "optInTitle": "Recevoir des nouvelles",
     "optInLabel": "Je veux être prévenu des avancées d'OdyssAI.",
     "optInHint": "Quelques messages par an, au plus : une ouverture, une grande étape. Tu peux décocher à tout moment, et ton adresse ne sert à rien d'autre. Voir la <privacy>politique de confidentialité</privacy>.",
-    "optInFailed": "Ton choix n'a pas pu être enregistré. Réessaie dans un instant."
+    "optInFailed": "Ton choix n'a pas pu être enregistré. Réessaie dans un instant.",
+    "usernameSeen": "Vu par les autres joueurs quand vos univers se croisent.",
+    "usernameSettled": "Posé, ne se change plus",
+    "memberSince": "Membre depuis le {date}",
+    "identityHeld": "Tenus par le service d'identité",
+    "identityLead": "L'adresse, le mot de passe et la double authentification se changent chez le service d'identité. Ton profil de jeu reste ici.",
+    "optInNever": "Jamais coché à ta place.",
+    "eraseTitle": "Supprimer mon compte",
+    "storiesTitle": "En jeu",
+    "storiesCount": "histoires sur {max}",
+    "storiesOpen": "Histoire ouverte",
+    "storiesUntitled": "Histoire sans nom",
+    "storiesNone": "Aucune histoire ouverte pour l'instant.",
+    "storiesLink": "Mes histoires"
   },
   "Billing": {
     "title": "Ta réserve",
@@ -145,7 +158,9 @@
     "noRenewal": "Ces crédits ne se renouvellent pas, mais ils restent tant que ton compte existe.",
     "balanceUnlimited": "Réserve illimitée.",
     "unlimitedNote": "Ce compte administre OdyssAI : ses parties ne débitent aucun crédit. L'écran de réserve épuisée ne s'affichera donc jamais ici.",
-    "changePlan": "Changer de palier"
+    "changePlan": "Changer de palier",
+    "planNamed": "Plan {plan}",
+    "costsLabel": "Barème"
   },
   "Pricing": {
     "metaTitle": "Tarifs",

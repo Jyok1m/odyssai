@@ -6,7 +6,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 
 import type { GlossaryEntry } from "@/components/marketing/glossary-list";
 import type { ProseSection } from "@/components/marketing/prose-page";
-import { Definition, Panel, Tag } from "@/components/play/panel";
+import { Definition, Panel, Tag } from "@/components/ui/panel";
 import { Absent, WorldSkin, useWorld } from "@/components/play/use-world";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";

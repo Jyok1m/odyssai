@@ -11,7 +11,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { AttributeBlocks } from "@/components/play/attributes";
 import { Die, Verdict } from "@/components/play/game-chat";
 import { HealthBar } from "@/components/play/health";
-import { Definition, Panel, Tag } from "@/components/play/panel";
+import { Definition, Panel, Tag } from "@/components/ui/panel";
 import { Absent, WorldSkin, useWorld } from "@/components/play/use-world";
 import { fetchProfile } from "@/lib/profile";
 import { fetchHistory } from "@/lib/turn";

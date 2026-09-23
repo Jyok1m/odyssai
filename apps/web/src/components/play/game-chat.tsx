@@ -17,7 +17,7 @@ import toast from "react-hot-toast";
 import { useEffect, useRef, useState } from "react";
 
 import { OutOfCredits } from "@/components/billing/out-of-credits";
-import { Panel, Tag } from "@/components/play/panel";
+import { Panel, Tag } from "@/components/ui/panel";
 import { Story } from "@/components/play/story";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { Button } from "@/components/ui/button";

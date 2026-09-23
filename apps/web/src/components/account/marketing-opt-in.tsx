@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
+import { Panel } from "@/components/ui/panel";
 import { Link } from "@/i18n/navigation";
 import { updateMarketingOptIn } from "@/lib/profile";
 
@@ -38,12 +39,8 @@ export function MarketingOptIn({
   };
 
   return (
-    <section className="border-t border-line pt-8">
-      <h2 className="font-voice text-subtitle text-vellum">
-        {t("optInTitle")}
-      </h2>
-
-      <div className="mt-4 flex gap-3">
+    <Panel title={t("optInTitle")}>
+      <div className="flex gap-3">
         <input
           id="marketing-opt-in"
           type="checkbox"
@@ -68,6 +65,10 @@ export function MarketingOptIn({
           </span>
         </label>
       </div>
-    </section>
+
+      {/* Dit une fois, en bas : une case decochee par defaut n'est pas un
+          detail de formulaire, c'est la regle. */}
+      <p className="mt-5 text-caption text-vellum-3">{t("optInNever")}</p>
+    </Panel>
   );
 }
