@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IncarnationSchema } from './essence.js';
+import { IncarnationSchema, MarksSchema } from './essence.js';
 import {
   ArrivalSchema,
   AttributeSchema,
@@ -549,6 +549,11 @@ export const WorldViewSchema = z.object({
     inventory: z.array(z.string()),
     // Comment il est entre dans ce monde : il y est ne, ou il y est venu.
     arrival: ArrivalSchema,
+    /*
+      Ce qu'il a rapporte de ses mondes. Sur l'essence et non sur
+      l'incarnation : c'est ce qui traverse.
+    */
+    marks: MarksSchema,
     /*
       Les autres mondes ou la meme essence s'est posee. Vide pour un
       personnage qui n'a jamais franchi de faille, et c'est le cas ordinaire.

@@ -377,7 +377,13 @@
     "carry": "Bring a character",
     "carryTitle": "Who crosses the rift",
     "carryHint": "Their name, their character and their attributes cross. Their trade, their talents and their belongings stay in the world they leave: they will take another shape there.",
-    "worlds": "{count, plural, one {# world} other {# worlds}}"
+    "worlds": "{count, plural, one {# world} other {# worlds}}",
+    "openness": {
+      "open": "World open",
+      "openHint": "Other players will be able to step in once travel between players exists. You decide what their coming changes.",
+      "closed": "World closed",
+      "closedHint": "No one else steps in. This is the default: this world is yours until you decide otherwise."
+    }
   },
   "Concept": {
     "metaTitle": "Concept",
@@ -1064,7 +1070,13 @@
       "a_terre": "down"
     },
     "scene": "In the scene",
-    "youTag": "you"
+    "youTag": "you",
+    "mark": "You keep something of it: a {kind}.",
+    "markKinds": {
+      "cicatrice": "scar",
+      "peur": "fear",
+      "conviction": "conviction"
+    }
   },
   "Sheet": {
     "title": "Character sheet",
@@ -1112,6 +1124,14 @@
       "natif": "This world absorbed them: they have always lived here.",
       "voyageur": "They arrived a stranger, and the locals can tell.",
       "echo": "A passing projection, light of influence."
+    },
+    "marks": "Marks brought back",
+    "marksAside": "You do not come back from a world with a sword. You come back changed.",
+    "marksEmpty": "Nothing yet. A mark is taken by falling, or by closing an act: it follows this character into every one of their worlds.",
+    "markKinds": {
+      "cicatrice": "Scar",
+      "peur": "Fear",
+      "conviction": "Conviction"
     }
   },
   "WorldBook": {

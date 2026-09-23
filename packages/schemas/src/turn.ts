@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MarkKindSchema } from './essence.js';
 import { AttributeSchema } from './onboarding.js';
 /*
   Le canon vit avec le monde, pas avec le tour : il dit ce qui est vrai ici, et
@@ -203,6 +204,16 @@ export const TurnStreamEventSchema = z.discriminatedUnion('type', [
       comme il faut.
     */
     gained: z.array(z.string()),
+  }),
+  /*
+    Une marque rapportee. A part de `done` comme la montee d'attribut : c'est
+    une nouvelle en soi, qui se lit une fois. Le monde et la date ne sont pas
+    dans l'evenement, la fiche les porte deja.
+  */
+  z.object({
+    type: z.literal('mark'),
+    kind: MarkKindSchema,
+    text: z.string(),
   }),
   z.object({
     type: z.literal('grew'),

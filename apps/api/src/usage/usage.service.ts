@@ -22,7 +22,8 @@ export type UsageKind =
   | 'extract'
   | 'abstraction'
   | 'generation'
-  | 'lore';
+  | 'lore'
+  | 'mark';
 
 export interface UsageEntry {
   kind: UsageKind;

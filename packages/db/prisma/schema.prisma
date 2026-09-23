@@ -225,6 +225,14 @@ model Universe {
   /// Teinte de l'accent, que l'interface applique en entrant dans ce monde.
   accentHue Int? @map("accent_hue")
 
+  /// Le monde accepte-t-il des visiteurs.
+  ///
+  /// Faux par defaut, et c'est la decision : un monde appartient a son
+  /// createur tant qu'il n'a pas dit le contraire. Personne ne peut encore
+  /// franchir une faille vers le monde d'un autre ; cette colonne est ce qui
+  /// devra le permettre, et elle ne permet rien tant qu'elle est fausse.
+  isOpen Boolean @default(false) @map("is_open")
+
   /// Ou en est l'histoire : 1, 2 ou 3 pendant l'arc, 4 une fois le troisieme
   /// acte clos. Le joueur continue alors ses propres aventures, et le monde
   /// s'ecrit au fil de l'eau. Nul pour un monde genere avant l'arc.
@@ -271,6 +279,11 @@ model Essence {
 
   personality Json
   attributes  Json
+
+  /// Ce qu'on rapporte d'un monde : une cicatrice, une peur, une conviction.
+  /// Pas une epee. Ce qu'on vit ailleurs change qui est le personnage, pas ce
+  /// qu'il possede, et c'est ce qui garde chaque monde equilibre.
+  marks Json @default("[]")
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)

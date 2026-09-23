@@ -22,6 +22,7 @@ import {
   GUIDE_QUESTION_MAX_CHARS,
   OWN_DESCRIPTION_MAX,
   OWN_DESCRIPTION_MIN,
+  MARKS_MAX,
   TALENTS_MAX,
   TRAITS_MAX,
   TURN_MESSAGE_MAX_CHARS,
@@ -108,6 +109,8 @@ export const TUNING = {
     talentsMax: TALENTS_MAX,
     // Ce qu'il faut de jets pour passer d'un score au suivant.
     progressSteps: PROGRESS_STEPS,
+    // Ce qu'un personnage rapporte de ses mondes, au plus.
+    marksMax: MARKS_MAX,
     messageMaxChars: CHARACTER_MESSAGE_MAX_CHARS,
     // En deca, la fiche n'est pas extractible : il n'y a rien a extraire.
     turnsMin: CHARACTER_TURNS_MIN,

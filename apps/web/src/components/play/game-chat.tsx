@@ -13,6 +13,7 @@ import {
   type WorldView,
 } from "@odyssai/schemas";
 import { useTranslations } from "next-intl";
+import toast from "react-hot-toast";
 import { useEffect, useRef, useState } from "react";
 
 import { OutOfCredits } from "@/components/billing/out-of-credits";
@@ -203,6 +204,16 @@ export function GameChat({
             [replyId]: [...(current[replyId] ?? []), entry],
           }));
           report.learned(entry);
+        }
+
+        /*
+          Une marque se lit une fois, comme une montée : elle rejoint ensuite
+          la fiche, où elle reste.
+        */
+        if (event.type === "mark") {
+          toast(t("mark", { kind: t(`markKinds.${event.kind}` as never) }), {
+            duration: 6000,
+          });
         }
 
         if (event.type === "grew") {

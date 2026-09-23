@@ -21,6 +21,7 @@ export type LlmRole =
   | 'dialogue'
   | 'generation'
   | 'lore'
+  | 'mark'
   | 'character'
   | 'extract'
   | 'abstraction';
@@ -51,6 +52,13 @@ export const LLM_MODELS: Record<LlmRole, LlmModelSpec> = {
 
   // Rare, court, et tout tient a la coherence avec ce qui est deja pose.
   lore: { model: 'qwen/qwen3.7-plus', temperature: 0.7, maxOutputTokens: 400 },
+
+  /*
+    Une marque rapportee : une ligne de quinze mots, quelques fois par
+    partie. Elle suivra le personnage dans tous ses mondes, donc elle merite
+    le bon modele, et elle est trop courte pour que ca coute quoi que ce soit.
+  */
+  mark: { model: 'qwen/qwen3.7-plus', temperature: 0.8, maxOutputTokens: 120 },
 
   // Un dialogue de trois phrases, dix fois par partie : discipline, pas prose.
   character: { model: 'qwen/qwen3.5-9b', temperature: 0.6, maxOutputTokens: 300 },

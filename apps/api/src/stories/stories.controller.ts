@@ -15,6 +15,7 @@ import {
 } from '@nestjs/common';
 import { z } from 'zod';
 import {
+  StoryOpennessSchema,
   StoryStartSchema,
   type DepartureOutcome,
   type Stories,
@@ -77,6 +78,31 @@ export class StoriesController {
       }
       if (error instanceof TravellerNotFoundError) {
         throw new NotFoundException({ code: 'traveller_not_found' });
+      }
+      throw error;
+    }
+  }
+
+  /*
+    Ouvrir un monde aux visiteurs, ou le refermer. Ferme par defaut : un monde
+    appartient a son createur tant qu'il n'a pas dit le contraire.
+  */
+  @Put(':id/open')
+  async openness(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+    @Body() rawBody: unknown,
+  ): Promise<Story> {
+    this.assertId(id);
+
+    const parsed = StoryOpennessSchema.safeParse(rawBody);
+    if (!parsed.success) throw new BadRequestException({ code: 'validation_error' });
+
+    try {
+      return await this.stories.setOpenness(user, id, parsed.data.open);
+    } catch (error: unknown) {
+      if (error instanceof StoryNotFoundError) {
+        throw new NotFoundException({ code: 'not_found' });
       }
       throw error;
     }

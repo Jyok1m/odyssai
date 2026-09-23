@@ -33,6 +33,12 @@ export const CREDIT_COSTS = {
     tour. Sans reserve, le tour se joue et l'entite reste sans histoire.
   */
   lore: 1,
+  /*
+    Une marque rapportee : une ligne ecrite par le modele quand le personnage
+    tombe ou qu'un acte s'acheve. Rare par construction, et bornee a six par
+    essence : elle ne peut pas devenir un poste de depense.
+  */
+  mark: 1,
   // Meme ordre de cout qu'un tour.
   characterMessage: 1,
   // Sept appels au mieux, vingt-trois au pire. C'est le gros poste.

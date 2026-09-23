@@ -15,6 +15,7 @@ import {
   fetchStories,
   fetchTravellers,
   selectStory,
+  setStoryOpenness,
   startStory,
 } from "@/lib/stories";
 
@@ -236,6 +237,12 @@ function StoryCard({ story, busy, onPlay, onDeleted }: CardProps) {
   const tDanger = useTranslations("Danger");
   const format = useFormatter();
   const [error, setError] = useState<string | null>(null);
+  /*
+    L'ouverture se tient ici et non au serveur seul : la carte doit répondre
+    au clic sans attendre une relecture de toute la liste.
+  */
+  const [open, setOpen] = useState(story.open);
+  const [opening, setOpening] = useState(false);
 
   // Un monde généré porte sa teinte, comme à la table : le kit dérive
   // l'accent de `--world-hue` sous `[data-world]`.
@@ -265,6 +272,47 @@ function StoryCard({ story, busy, onPlay, onDeleted }: CardProps) {
           </span>
         </p>
       </div>
+
+      {/*
+        Ouvert ou fermé aux visiteurs. Fermé par défaut : un monde appartient à
+        son créateur tant qu'il n'a pas dit le contraire. Personne ne peut
+        encore franchir une faille vers le monde d'un autre, et l'écran le dit
+        plutôt que de laisser croire à une porte déjà ouverte.
+      */}
+      {story.step === "ready" ? (
+        <div className="rounded-card border border-line p-3.5">
+          <label className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              checked={open}
+              disabled={busy || opening}
+              onChange={async (event) => {
+                const next = event.target.checked;
+                setOpen(next);
+                setOpening(true);
+                try {
+                  await setStoryOpenness(story.id, next);
+                } catch {
+                  // Le serveur a refusé : la case reprend ce qu'il dit.
+                  setOpen(!next);
+                  setError(t("error"));
+                } finally {
+                  setOpening(false);
+                }
+              }}
+              className="mt-0.5 size-4 flex-none accent-[var(--accent)]"
+            />
+            <span>
+              <span className="block text-ui-sm text-vellum">
+                {open ? t("openness.open") : t("openness.closed")}
+              </span>
+              <span className="mt-0.5 block text-caption text-pretty text-vellum-3">
+                {open ? t("openness.openHint") : t("openness.closedHint")}
+              </span>
+            </span>
+          </label>
+        </div>
+      ) : null}
 
       <div className="mt-auto flex flex-wrap items-center gap-3">
         <Button type="button" disabled={busy} onClick={onPlay}>

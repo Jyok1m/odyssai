@@ -4,11 +4,13 @@ import type { LlmClient } from '@odyssai/llm';
 import {
   CanonFactSchema,
   CharacterSheetSchema,
+  MarksSchema,
   WorldBibleSchema,
   WorldCharterSchema,
   type CanonFact,
   type CharacterSheet,
   type Entity,
+  type Mark,
   type WorldBible,
   type WorldCharter,
 } from '@odyssai/schemas';
@@ -52,6 +54,12 @@ export interface TurnWorld {
   health: { hp: number; hpMax: number; rest: number };
   // Ce que le personnage porte, des noms et rien d'autre.
   inventory: string[];
+  /*
+    L'essence dont ce personnage est une incarnation, et ce qu'elle a deja
+    rapporte. Nulle pour une fiche d'avant les essences : le tour se joue, il
+    ne laisse simplement pas de marque.
+  */
+  essence: { id: string; marks: Mark[] } | null;
   /*
     Ou en est l'histoire. Absent pour un monde genere avant l'arc : le meneur
     joue alors comme il jouait, sans but a atteindre.
@@ -124,7 +132,10 @@ export class TurnMemoryService implements OnModuleInit {
     const universe = where
       ? await this.prisma.universe.findUnique({
           where,
-          include: { character: true, entities: { orderBy: { createdAt: 'asc' } } },
+          include: {
+            character: { include: { essence: { select: { id: true, marks: true } } } },
+            entities: { orderBy: { createdAt: 'asc' } },
+          },
         })
       : null;
 
@@ -148,6 +159,12 @@ export class TurnMemoryService implements OnModuleInit {
 
     const hpMax = hpMaxOf(character.data.attributes.corps);
 
+    /*
+      Des marques illisibles valent une liste vide : on n'en ecrase aucune,
+      la borne s'applique quand meme, et le tour ne tombe pas pour autant.
+    */
+    const marks = MarksSchema.safeParse(universe.character?.essence?.marks);
+
     return {
       universeId: universe.id,
       charter: charter.data,
@@ -155,6 +172,12 @@ export class TurnMemoryService implements OnModuleInit {
       character: character.data,
       works: universe.works,
       progress: (universe.character?.progress ?? {}) as Progress,
+      essence: universe.character?.essence
+        ? {
+            id: universe.character.essence.id,
+            marks: marks.success ? marks.data : [],
+          }
+        : null,
       health: {
         hp: universe.character?.hp ?? hpMax,
         hpMax,

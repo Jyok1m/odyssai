@@ -69,6 +69,27 @@ export async function startStory(
   return StorySchema.parse(await response.json());
 }
 
+/*
+  Ouvrir un monde aux visiteurs, ou le refermer. Fermé par défaut : un monde
+  appartient à son créateur tant qu'il n'a pas dit le contraire.
+*/
+export async function setStoryOpenness(
+  id: string,
+  open: boolean,
+  signal?: AbortSignal,
+): Promise<Story> {
+  const response = await fetch(`${API_BASE_URL}/stories/${id}/open`, {
+    method: "PUT",
+    credentials: "include",
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify({ open }),
+    signal,
+  });
+
+  if (!response.ok) throw await toStoriesError(response);
+  return StorySchema.parse(await response.json());
+}
+
 export async function selectStory(id: string, signal?: AbortSignal): Promise<Story> {
   const response = await fetch(`${API_BASE_URL}/stories/${id}/current`, {
     method: "PUT",

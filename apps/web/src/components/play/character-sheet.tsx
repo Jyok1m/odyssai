@@ -266,6 +266,37 @@ function Sheet({ world }: { world: WorldView }) {
         )}
       </Panel>
 
+      {/*
+        Ce qu'on rapporte d'un monde. Pas une épée : ce qu'on vit ailleurs
+        change qui est le personnage, pas ce qu'il possède, et c'est ce qui
+        garde chaque monde équilibré.
+      */}
+      <Panel title={t("marks")} aside={t("marksAside")}>
+        {character.marks.length === 0 ? (
+          <p className="max-w-measure text-ui-sm text-pretty text-vellum-3">
+            {t("marksEmpty")}
+          </p>
+        ) : (
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {character.marks.map((mark) => (
+              <li
+                key={`${mark.kind}-${mark.text}`}
+                className="rounded-card border border-line p-4"
+              >
+                <p className="text-caption text-vellum-3">
+                  {t(`markKinds.${mark.kind}` as never)}
+                  {" · "}
+                  {mark.world}
+                </p>
+                <p className="mt-2 font-voice text-ui text-pretty text-vellum">
+                  {mark.text}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Panel>
+
       <div className="grid gap-5 lg:grid-cols-3">
         {/* La couleur, là où les attributs sont le calcul : le moteur ne les
             lit pas, le meneur si. */}

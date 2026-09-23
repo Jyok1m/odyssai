@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
   AttributesSchema,
+  MarksSchema,
   STORIES_MAX,
   TravellerSchema,
   type Stories,
@@ -54,6 +55,7 @@ const SUMMARY = {
   name: true,
   step: true,
   accentHue: true,
+  isOpen: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -63,6 +65,7 @@ type Summary = {
   name: string | null;
   step: Story['step'];
   accentHue: number | null;
+  isOpen: boolean;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -127,6 +130,7 @@ export class StoriesService {
           traits: personality.traits ?? [],
           summary: personality.summary ?? '',
           attributes: attributes.data,
+          marks: MarksSchema.catch([]).parse(row.marks ?? []),
           incarnations: row.incarnations.flatMap((incarnation) =>
             incarnation.universe
               ? [
@@ -215,6 +219,25 @@ export class StoriesService {
     });
   }
 
+  /*
+    Ouvrir un monde aux visiteurs, ou le refermer.
+
+    Ferme par defaut, et c'est la decision : un monde appartient a son
+    createur tant qu'il n'a pas dit le contraire. Personne ne peut encore
+    franchir une faille vers le monde d'un autre, donc ce drapeau ne permet
+    rien aujourd'hui ; c'est lui qui le permettra.
+  */
+  async setOpenness(user: Owner, universeId: string, open: boolean): Promise<Story> {
+    await this.find(user, universeId);
+
+    const row = await this.prisma.universe.update({
+      where: { id: universeId, ownerId: user.id },
+      data: { isOpen: open },
+      select: SUMMARY,
+    });
+    return this.toStory(row, user.currentUniverseId);
+  }
+
   async select(user: Owner, universeId: string): Promise<Story> {
     const row = await this.find(user, universeId);
     await this.open(user.id, row.id);
@@ -245,6 +268,7 @@ export class StoriesService {
       step: row.step,
       accentHue: row.accentHue,
       current: row.id === currentId,
+      open: row.isOpen,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };

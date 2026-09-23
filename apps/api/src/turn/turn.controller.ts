@@ -19,6 +19,7 @@ import {
   entityKey,
   type Entity,
   TurnRequestSchema,
+  type Mark,
   type ScenePresence,
   type Situation,
   type TurnHistory,
@@ -29,7 +30,9 @@ import {
   GUIDANCE,
   LORE_PROMPT_VERSION,
   TURN_PROMPT_VERSION,
+  MARK_PROMPT_VERSION,
   describeEntity,
+  describeMark,
   playTurn,
   speakLine,
   DIALOGUE_PROMPT_VERSION,
@@ -40,6 +43,8 @@ import {
   conditionOf,
   harmFor,
   hpMaxOf,
+  markFor,
+  marksAfter,
   vitalsAfter,
   attributeFor,
   bandFor,
@@ -681,6 +686,83 @@ export class TurnController {
         (entity) => entity.hidden && revealedKeys.has(entityKey(entity.name)),
       );
 
+      /*
+        Ce que ce tour laisse au personnage.
+
+        Le declencheur est du code : il vient de tomber, ou un acte vient de
+        s'achever. Le modele n'ecrit que la ligne, et jamais le genre : une
+        marque qu'il accorderait finirait par s'accorder a celui qui la
+        demande, comme la montee d'attribut.
+      */
+      let mark: Mark | null = null;
+      const kind = world.essence
+        ? markFor({
+            fell: vitals.hp === 0 && world.health.hp > 0,
+            actClosed: act !== null,
+            marks: world.essence.marks.length,
+          })
+        : null;
+
+      if (kind && world.essence) {
+        let markDebit: string | null = null;
+        try {
+          markDebit = await this.credits.spend('mark', user.id, world.universeId);
+
+          const written = await describeMark({
+            llm: this.llm,
+            config: this.config.modelFor('mark'),
+            locale,
+            works: world.works,
+            context: {
+              charter: world.charter,
+              world: world.bible.lore.name,
+              kind,
+              scene: answer,
+              existing: world.essence.marks.map((worn) => worn.text),
+            },
+            trace: {
+              name: 'mark',
+              metadata: {
+                turn_id: turnId,
+                universe_id: world.universeId,
+                prompt_version: MARK_PROMPT_VERSION,
+                mark_kind: kind,
+              },
+            },
+          });
+
+          await this.usage.record({
+            kind: 'mark',
+            provider: this.config.provider,
+            userId: user.id,
+            universeId: world.universeId,
+            usage: written.usage,
+            prices: this.config.prices,
+          });
+
+          // Relue par la couche lexicale comme le reste : une marque refusee
+          // est une marque absente, jamais un tour perdu.
+          if (written.kind === 'ok' && this.moderation.clean(written.text)) {
+            mark = {
+              kind,
+              world: world.bible.lore.name,
+              text: written.text,
+              at: new Date().toISOString(),
+            };
+          } else {
+            this.logger.warn(`marque refusee au tour ${seq}`);
+            if (markDebit) await this.credits.refund(markDebit);
+          }
+        } catch (error: unknown) {
+          if (error instanceof OutOfCreditsError) {
+            this.logger.log('reserve vide : le tour ne laisse pas de marque');
+          } else {
+            this.logger.warn(`marque en echec : ${String(error)}`);
+            if (markDebit) await this.credits.refund(markDebit);
+          }
+        }
+      }
+
       const carried = carryAfter(
         world.inventory,
         delta.gained,
@@ -787,6 +869,18 @@ export class TurnController {
               }),
             ]
           : []),
+        /*
+          La marque va sur l'essence et non sur l'incarnation : c'est ce qui
+          traverse, et c'est tout l'interet d'en garder une.
+        */
+        ...(mark && world.essence
+          ? [
+              this.prisma.essence.update({
+                where: { id: world.essence.id },
+                data: { marks: marksAfter(world.essence.marks, mark) },
+              }),
+            ]
+          : []),
         ...arbitrated.accepted.map((fact) =>
           this.prisma.canonFact.create({
             data: {
@@ -846,6 +940,10 @@ export class TurnController {
           items: carried,
           gained: carried.filter((item) => !before.has(entityKey(item))),
         });
+      }
+
+      if (streaming && mark) {
+        this.write(res, { type: 'mark', kind: mark.kind, text: mark.text });
       }
 
       if (streaming && grew && attribute) {

@@ -377,7 +377,13 @@
     "carry": "Amener un personnage",
     "carryTitle": "Qui franchit la faille",
     "carryHint": "Son nom, son caractère et ses attributs traversent. Son métier, ses talents et ses objets restent au monde qu'il quitte : il s'y incarnera autrement.",
-    "worlds": "{count, plural, one {# monde} other {# mondes}}"
+    "worlds": "{count, plural, one {# monde} other {# mondes}}",
+    "openness": {
+      "open": "Monde ouvert",
+      "openHint": "D'autres joueurs pourront y entrer quand la traversée entre joueurs existera. Tu décides de ce que leur venue change.",
+      "closed": "Monde fermé",
+      "closedHint": "Personne d'autre n'y entre. C'est le réglage par défaut : ce monde est à toi tant que tu n'en décides pas autrement."
+    }
   },
   "Concept": {
     "metaTitle": "Concept",
@@ -1064,7 +1070,13 @@
       "a_terre": "à terre"
     },
     "scene": "Dans la scène",
-    "youTag": "toi"
+    "youTag": "toi",
+    "mark": "Tu en gardes quelque chose : une {kind}.",
+    "markKinds": {
+      "cicatrice": "cicatrice",
+      "peur": "peur",
+      "conviction": "conviction"
+    }
   },
   "Sheet": {
     "title": "Fiche de personnage",
@@ -1112,6 +1124,14 @@
       "natif": "Ce monde l'a absorbé : il y a toujours vécu.",
       "voyageur": "Il est arrivé en étranger, et les habitants le sentent.",
       "echo": "Une projection de passage, à l'influence légère."
+    },
+    "marks": "Marques rapportées",
+    "marksAside": "On ne revient pas d'un monde avec une épée. On en revient changé.",
+    "marksEmpty": "Rien encore. Une marque se prend en tombant, ou en achevant un acte : elle suivra ce personnage dans tous ses mondes.",
+    "markKinds": {
+      "cicatrice": "Cicatrice",
+      "peur": "Peur",
+      "conviction": "Conviction"
     }
   },
   "WorldBook": {

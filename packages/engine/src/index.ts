@@ -4,6 +4,7 @@ export * from './dialogue.js';
 export * from './die.js';
 export * from './health.js';
 export * from './lore.js';
+export * from './marks.js';
 export * from './moderation.js';
 export * from './progress.js';
 export * from './scene.js';

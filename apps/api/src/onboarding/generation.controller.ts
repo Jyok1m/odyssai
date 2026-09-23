@@ -13,6 +13,7 @@ import {
   ATTRIBUTES,
   AttributesSchema,
   CanonFactSchema,
+  MarksSchema,
   WorldBibleSchema,
   WorldCharterSchema,
   WorldViewSchema,
@@ -132,7 +133,7 @@ export class GenerationController {
       ? await this.prisma.universe.findUnique({
           where,
           include: {
-            character: true,
+            character: { include: { essence: { select: { marks: true } } } },
             entities: { orderBy: { createdAt: 'asc' } },
             canon: { orderBy: { createdAt: 'asc' } },
           },
@@ -250,6 +251,11 @@ export class GenerationController {
         talents: universe.character?.talents ?? [],
         inventory: universe.character?.inventory ?? [],
         arrival: universe.character?.arrival ?? 'natif',
+        /*
+          Des marques illisibles valent une liste vide : elles decorent une
+          fiche, elles ne doivent pas l'empecher de s'ouvrir.
+        */
+        marks: MarksSchema.catch([]).parse(universe.character?.essence?.marks ?? []),
         elsewhere: elsewhere.flatMap((row) =>
           row.universe
             ? [

@@ -18,6 +18,15 @@ export const StorySchema = z.object({
   step: OnboardingStepSchema.exclude(['username']),
   accentHue: z.number().int().nullable(),
   current: z.boolean(),
+  /*
+    Le monde accepte-t-il des visiteurs.
+
+    Faux par defaut, et c'est la decision : un monde est a son createur tant
+    qu'il n'a pas dit le contraire. Personne ne peut encore franchir une
+    faille vers le monde d'un autre ; ce drapeau est ce qui devra le
+    permettre, et il ne permet rien tant qu'il est faux.
+  */
+  open: z.boolean(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 });
@@ -43,6 +52,11 @@ export const StoryStartSchema = z.object({
 });
 
 export type StoryStart = z.infer<typeof StoryStartSchema>;
+
+// Ouvrir un monde aux visiteurs, ou le refermer.
+export const StoryOpennessSchema = z.object({ open: z.boolean() });
+
+export type StoryOpenness = z.infer<typeof StoryOpennessSchema>;
 
 export const StoriesErrorBodySchema = z.object({
   // `locked` : l'histoire est en construction, on ne l'efface pas sous le worker.

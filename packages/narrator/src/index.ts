@@ -22,4 +22,5 @@ export * from './world/character.js';
 export * from './world/graph.js';
 export * from './prompts/lore/v1.js';
 export * from './world/lore.js';
+export * from './world/mark.js';
 export * from './world/json.js';
