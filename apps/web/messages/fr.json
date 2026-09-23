@@ -260,7 +260,8 @@
       "duplicate": "Cette œuvre est déjà citée plus haut.",
       "ownPlaceholder": "Le climat, ce qui y est possible, qui détient le pouvoir, ce qui inquiète ses habitants.",
       "ownTooShort": "Encore {missing} caractères avant de pouvoir continuer.",
-      "ownCount": "{count} caractères sur {max}."
+      "ownCount": "{count} caractères sur {max}.",
+      "count": "{count} sur {max}"
     },
     "soon": {
       "title": "La suite arrive",
@@ -282,7 +283,8 @@
       "turnsLeft": "{count} messages restants.",
       "turnsOver": "La conversation est close. Tu peux dresser la fiche.",
       "unavailable": "La création de personnage n'est pas disponible pour le moment.",
-      "refused": "Ce message a été refusé. Reformule-le sans insulte ni contenu explicite."
+      "refused": "Ce message a été refusé. Reformule-le sans insulte ni contenu explicite.",
+      "redraft": "Redresser la fiche"
     },
     "sheet": {
       "title": "Sa fiche",
@@ -304,7 +306,13 @@
         "age": "Âge",
         "personality": "Traits de caractère",
         "attributes": "Attributs"
-      }
+      },
+      "attributesLegend": "Attributs, de {min} à {max}",
+      "talentsLegend": "Talents, {max} au plus",
+      "talentPlaceholder": "Lire les courants",
+      "addTalent": "Ajouter",
+      "removeTalent": "Retirer le talent {talent}",
+      "drawnFrom": "Tirée de votre conversation"
     },
     "generation": {
       "title": "Ton monde se construit",
@@ -325,7 +333,9 @@
         "affinities": "Nouer les liens",
         "arc": "L'histoire",
         "validation": "Relire l'ensemble"
-      }
+      },
+      "label": "Ensuite",
+      "failedLabel": "Si ça échoue"
     },
     "world": {
       "openingTitle": "Te voilà",

@@ -24,6 +24,7 @@ import {
 } from "@/lib/character";
 
 import { CharacterSheetForm } from "./character-sheet-form";
+import { StepCard } from "./step-card";
 
 interface Props {
   initial: CharacterDraft | null;
@@ -165,128 +166,146 @@ export function CharacterStep({ initial, arrival, saving, error, onAdvance }: Pr
 
   const carried = arrival === "voyageur";
 
-  if (proposal) {
-    return (
-      <div className="max-w-headline">
-        {carried ? (
-          <div className="mb-8 rounded-card border border-arcane/40 bg-arcane/8 px-4 py-3.5">
-            <p className="text-ui-sm font-medium text-vellum">
-              {t("traveller.title")}
-            </p>
-            <p className="mt-1 max-w-measure text-ui-sm text-pretty text-vellum-2">
-              {t("traveller.lead")}
-            </p>
-          </div>
-        ) : null}
+  /*
+    La conversation et la fiche côte à côte, et non l'une à la place de
+    l'autre : on corrige une fiche en relisant ce qui l'a produite, et la
+    faire disparaître pour la corriger obligeait à se souvenir.
 
-        <CharacterSheetForm
-          initial={proposal.character}
-          missing={proposal.missing}
-          saving={saving}
-          error={error}
-          onSubmit={onAdvance}
-        />
+    Un voyageur n'a pas de conversation : il arrive avec sa fiche, et lui en
+    ouvrir une lui ferait repayer ce qu'il a déjà écrit.
+  */
+  const sheet = proposal ? (
+    <StepCard
+      rank={3}
+      label={t("sheet.title")}
+      title={carried ? t("traveller.title") : t("sheet.lead")}
+      aside={
+        <span className="text-caption text-vellum-3">
+          {carried ? t("traveller.lead") : t("sheet.drawnFrom")}
+        </span>
+      }
+    >
+      <CharacterSheetForm
+        initial={proposal.character}
+        missing={proposal.missing}
+        saving={saving}
+        error={error}
+        onSubmit={onAdvance}
+        onBack={carried ? undefined : () => setProposal(null)}
+      />
+    </StepCard>
+  ) : null;
 
-        {carried ? null : (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="mt-6"
-            onClick={() => setProposal(null)}
-          >
-            {t("sheet.backToChat")}
-          </Button>
-        )}
-      </div>
-    );
-  }
+  if (carried && sheet) return sheet;
 
-  return (
-    <div className="max-w-headline">
-      <h2 className="font-voice text-subtitle text-vellum">
-        {t("character.title")}
-      </h2>
-      <p className="mt-3 text-ui-sm text-pretty text-vellum-2">
+  const conversation = (
+    <StepCard
+      rank={3}
+      label={t("steps.character")}
+      title={t("character.title")}
+      aside={
+        <span className="text-caption text-vellum-3">
+          {!canExtract
+            ? t("character.keepTalking")
+            : turnsLeft === 0
+              ? t("character.turnsOver")
+              : t("character.turnsLeft", { count: turnsLeft ?? 0 })}
+        </span>
+      }
+    >
+      <p className="max-w-measure text-ui-sm text-pretty text-vellum-2">
         {t("character.lead")}
       </p>
 
-      <section className="mt-8 rounded-card border border-line bg-abyss p-4 shadow-2xl shadow-ink/50 sm:p-6">
-        <ol
-          ref={thread}
-          className="flex max-h-96 flex-col gap-5 overflow-y-auto overscroll-contain px-1"
-        >
-          {messages.map((message) => (
-            <li key={message.id}>
-              {message.role === "user" ? (
-                <p className="ml-auto max-w-17/20 rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum">
-                  <span className="sr-only">{t("character.you")} : </span>
-                  {message.content}
+      <ol
+        ref={thread}
+        className="mt-5 flex max-h-96 flex-col gap-5 overflow-y-auto overscroll-contain px-1"
+      >
+        {messages.map((message) => (
+          <li key={message.id}>
+            {message.role === "user" ? (
+              <p className="ml-auto max-w-17/20 rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum">
+                <span className="sr-only">{t("character.you")} : </span>
+                {message.content}
+              </p>
+            ) : (
+              <div className="max-w-23/25">
+                <p className="text-caption text-vellum-3">
+                  {t("character.guide")}
                 </p>
-              ) : (
-                <div className="max-w-23/25">
-                  <p className="text-caption text-vellum-3">
-                    {t("character.guide")}
-                  </p>
-                  <p className="mt-1 text-ui-sm whitespace-pre-wrap text-vellum">
-                    {message.content || t("character.thinking")}
-                  </p>
-                </div>
-              )}
-            </li>
-          ))}
-        </ol>
+                <p className="mt-1 text-ui-sm whitespace-pre-wrap text-vellum">
+                  {message.content || t("character.thinking")}
+                </p>
+              </div>
+            )}
+          </li>
+        ))}
+      </ol>
 
-        <form
-          className="mt-5"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void send();
-          }}
+      <form
+        className="mt-5"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void send();
+        }}
+      >
+        {/* La bordure porte l'indication de focus, d'où le liseré global
+            neutralisé ici : les deux ensemble font un double cadre. */}
+        <div
+          data-focus-ring="container"
+          className="flex items-end gap-2 rounded-card border border-line bg-ink py-2 pr-2 pl-3.5 transition-colors focus-within:border-accent"
         >
-          {/* La bordure porte l'indication de focus, d'où le liseré global
-              neutralisé ici : les deux ensemble font un double cadre. */}
-          <div
-            data-focus-ring="container"
-            className="flex items-end gap-2 rounded-card border border-line bg-ink py-2 pr-2 pl-3.5 transition-colors focus-within:border-accent"
+          <label htmlFor="character-message" className="sr-only">
+            {t("character.inputLabel")}
+          </label>
+          <AutoGrowTextarea
+            id="character-message"
+            value={input}
+            maxLength={CHARACTER_MESSAGE_MAX_CHARS}
+            placeholder={t("character.placeholder")}
+            onChange={(event) => setInput(event.target.value)}
+            onKeyDown={(event) => {
+              // Pendant une composition IME, Entrée valide un caractère et
+              // ne doit surtout pas envoyer le message.
+              if (
+                event.key !== "Enter" ||
+                event.shiftKey ||
+                event.nativeEvent.isComposing
+              )
+                return;
+              event.preventDefault();
+              void send();
+            }}
+          />
+          <Button
+            type="submit"
+            size="sm"
+            disabled={input.trim().length === 0 || streaming}
           >
-            <label htmlFor="character-message" className="sr-only">
-              {t("character.inputLabel")}
-            </label>
-            <AutoGrowTextarea
-              id="character-message"
-              value={input}
-              maxLength={CHARACTER_MESSAGE_MAX_CHARS}
-              placeholder={t("character.placeholder")}
-              onChange={(event) => setInput(event.target.value)}
-              onKeyDown={(event) => {
-                // Pendant une composition IME, Entrée valide un caractère et
-                // ne doit surtout pas envoyer le message.
-                if (
-                  event.key !== "Enter" ||
-                  event.shiftKey ||
-                  event.nativeEvent.isComposing
-                )
-                  return;
-                event.preventDefault();
-                void send();
-              }}
-            />
-            <Button
-              type="submit"
-              size="sm"
-              disabled={input.trim().length === 0 || streaming}
-            >
-              {t("character.send")}
-            </Button>
-          </div>
-        </form>
-      </section>
+            {t("character.send")}
+          </Button>
+        </div>
+      </form>
 
-      {/* Repartir de zéro sur le personnage seul : la conversation et le
-          brouillon partent, l'inspiration reste. Derrière un mot à taper,
-          comme tout ce qui ne se défait pas. */}
-      <div className="mt-6">
+      <div className="mt-5 flex flex-wrap items-center gap-4">
+        {/* L'extraction ne diffuse rien : sans ce cercle, rien ne bougeait à
+            l'écran pendant l'appel, et le bouton grisé se lisait comme cassé. */}
+        {drafting ? (
+          <Spinner label={t("character.drafting")} />
+        ) : (
+          <Button
+            type="button"
+            variant={proposal ? "secondary" : "primary"}
+            disabled={!canExtract || streaming}
+            onClick={() => void draft()}
+          >
+            {proposal ? t("character.redraft") : t("character.draft")}
+          </Button>
+        )}
+
+        {/* Repartir de zéro sur le personnage seul : la conversation et le
+            brouillon partent, l'inspiration reste. Derrière un mot à taper,
+            comme tout ce qui ne se défait pas. */}
         <DangerAction
           label={tDanger("character.label")}
           title={tDanger("character.title")}
@@ -315,33 +334,18 @@ export function CharacterStep({ initial, arrival, saving, error, onAdvance }: Pr
         />
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-4">
-        {/* L'extraction ne diffuse rien : sans ce cercle, rien ne bougeait à
-            l'écran pendant l'appel, et le bouton grisé se lisait comme cassé. */}
-        {drafting ? (
-          <Spinner label={t("character.drafting")} />
-        ) : (
-          <Button
-            type="button"
-            disabled={!canExtract || streaming}
-            onClick={() => void draft()}
-          >
-            {t("character.draft")}
-          </Button>
-        )}
-
-        <p className="text-ui-sm text-vellum-3">
-          {!canExtract
-            ? t("character.keepTalking")
-            : turnsLeft === 0
-              ? t("character.turnsOver")
-              : t("character.turnsLeft", { count: turnsLeft ?? 0 })}
-        </p>
-      </div>
-
       <p aria-live="polite" className="mt-3 min-h-5 text-ui-sm text-ember">
         {empty ? <OutOfCredits /> : chatError}
       </p>
+    </StepCard>
+  );
+
+  if (!sheet) return conversation;
+
+  return (
+    <div className="grid gap-5 xl:grid-cols-2">
+      {conversation}
+      {sheet}
     </div>
   );
 }

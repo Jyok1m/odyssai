@@ -260,7 +260,8 @@
       "duplicate": "This work is already named above.",
       "ownPlaceholder": "The climate, what is possible there, who holds power, what worries its people.",
       "ownTooShort": "{missing} more characters before you can continue.",
-      "ownCount": "{count} characters of {max}."
+      "ownCount": "{count} characters of {max}.",
+      "count": "{count} of {max}"
     },
     "soon": {
       "title": "More is coming",
@@ -282,7 +283,8 @@
       "turnsLeft": "{count} messages left.",
       "turnsOver": "The conversation is closed. You can draw up the sheet.",
       "unavailable": "Character creation is not available right now.",
-      "refused": "This message was refused. Rephrase it without insults or explicit content."
+      "refused": "This message was refused. Rephrase it without insults or explicit content.",
+      "redraft": "Redraw the sheet"
     },
     "sheet": {
       "title": "Their sheet",
@@ -304,7 +306,13 @@
         "age": "Age",
         "personality": "Character traits",
         "attributes": "Attributes"
-      }
+      },
+      "attributesLegend": "Attributes, {min} to {max}",
+      "talentsLegend": "Talents, {max} at most",
+      "talentPlaceholder": "Read the currents",
+      "addTalent": "Add",
+      "removeTalent": "Remove the talent {talent}",
+      "drawnFrom": "Drawn from your conversation"
     },
     "generation": {
       "title": "Your world is being built",
@@ -325,7 +333,9 @@
         "affinities": "Tying the bonds",
         "arc": "The story",
         "validation": "Reading it all back"
-      }
+      },
+      "label": "Next",
+      "failedLabel": "If it fails"
     },
     "world": {
       "openingTitle": "Here you are",

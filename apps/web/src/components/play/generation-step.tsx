@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Panel } from "@/components/ui/panel";
 import { watchGeneration } from "@/lib/world";
 
 /*
@@ -65,36 +66,44 @@ export function GenerationStep({ onReady }: Props) {
 
   if (failed) {
     return (
-      <div className="max-w-headline">
-        <h2 className="font-voice text-subtitle text-vellum">
+      /* La bordure dit ce qui s'est passé avant qu'on lise le titre. */
+      <Panel
+        title={t("generation.failedLabel")}
+        className="border-ember/40 lg:max-w-headline"
+      >
+        <h2 className="font-voice text-title text-balance text-vellum">
           {t("generation.failedTitle")}
         </h2>
-        <p className="mt-3 text-ui-sm text-pretty text-vellum-2">
+        <p className="mt-4 max-w-measure text-ui-sm text-pretty text-vellum-2">
           {t("generation.failedLead")}
         </p>
         {/* Le détail vient du serveur et reste court : il aide à comprendre
             sans exposer de prompt. */}
         <p className="mt-3 text-ui-sm text-vellum-3">{failed}</p>
 
-        <Button className="mt-6" onClick={onReady}>
+        <Button className="mt-5" onClick={onReady}>
           {t("generation.back")}
         </Button>
-      </div>
+      </Panel>
     );
   }
 
   const current = step ? STEPS.indexOf(step) : -1;
 
   return (
-    <div className="max-w-headline">
-      <h2 className="font-voice text-subtitle text-vellum">
+    <Panel
+      title={t("generation.label")}
+      aside={lost ? t("generation.lost") : t("generation.leave")}
+    >
+      <h2 className="font-voice text-title text-balance text-vellum">
         {t("generation.title")}
       </h2>
-      <p className="mt-3 text-ui-sm text-pretty text-vellum-2">
-        {t("generation.lead")}
-      </p>
 
-      <ol className="mt-8 space-y-3" aria-live="polite">
+      {/*
+        Le fil des noeuds, a l'horizontale : neuf etapes en colonne tenaient
+        tout l'ecran pour dire qu'on attend, et on les relit a chaque fois.
+      */}
+      <ol className="mt-6 flex items-start gap-1 overflow-x-auto" aria-live="polite">
         {STEPS.map((name, index) => {
           const state =
             current === -1
@@ -106,39 +115,55 @@ export function GenerationStep({ onReady }: Props) {
                   : "todo";
 
           return (
-            <li key={name} className="flex items-center gap-3">
-              <span
-                aria-hidden="true"
-                className={[
-                  "flex size-5 shrink-0 items-center justify-center rounded-full border text-tag",
-                  state === "done"
-                    ? "border-accent bg-accent text-on-accent"
-                    : state === "current"
-                      ? "border-accent text-accent"
-                      : "border-line text-vellum-3",
-                ].join(" ")}
-              >
-                {state === "done" ? "✓" : index + 1}
+            <li key={name} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+              <span aria-hidden="true" className="flex w-full items-center">
+                <span
+                  className={[
+                    "h-px flex-1",
+                    index === 0 ? "bg-transparent" : state === "todo" ? "bg-line" : "bg-accent",
+                  ].join(" ")}
+                />
+                <span
+                  className={[
+                    "flex size-6 shrink-0 items-center justify-center rounded-full border text-tag",
+                    state === "done"
+                      ? "border-accent bg-accent text-on-accent"
+                      : state === "current"
+                        ? "border-accent text-accent"
+                        : "border-line text-vellum-3",
+                  ].join(" ")}
+                >
+                  {state === "done" ? "\u2713" : state === "current" ? "\u25cf" : ""}
+                </span>
+                <span
+                  className={[
+                    "h-px flex-1",
+                    index === STEPS.length - 1
+                      ? "bg-transparent"
+                      : state === "done"
+                        ? "bg-accent"
+                        : "bg-line",
+                  ].join(" ")}
+                />
               </span>
+
               <span
                 className={[
-                  "text-ui-sm",
+                  "text-center text-caption text-balance",
                   state === "current" ? "text-vellum" : "text-vellum-3",
                 ].join(" ")}
+                aria-current={state === "current" ? "step" : undefined}
               >
                 {t(`generation.steps.${name}`)}
-                {state === "current" ? (
-                  <span className="text-vellum-3"> …</span>
-                ) : null}
               </span>
             </li>
           );
         })}
       </ol>
 
-      <p className="mt-8 text-ui-sm text-vellum-3">
-        {lost ? t("generation.lost") : t("generation.leave")}
+      <p className="mt-6 max-w-measure text-ui-sm text-pretty text-vellum-2">
+        {t("generation.lead")}
       </p>
-    </div>
+    </Panel>
   );
 }

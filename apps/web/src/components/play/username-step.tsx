@@ -6,6 +6,8 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { FIELD } from "@/components/ui/field";
+
+import { StepCard } from "./step-card";
 import { ProfileError, updateUsername } from "@/lib/profile";
 
 // `confirming` est la seconde frappe : le pseudo ne se choisit qu'une fois.
@@ -45,27 +47,19 @@ export function UsernameStep({ onDone }: { onDone: () => void }) {
   };
 
   return (
-    <form
-      data-focus-ring="container"
-      className="max-w-headline"
-      onSubmit={(event) => {
-        event.preventDefault();
-        void submit();
-      }}
-    >
-      <h2 className="font-voice text-subtitle text-vellum">
-        {t("username.title")}
-      </h2>
-      <p className="mt-3 text-ui-sm text-pretty text-vellum-2">
-        {t("username.lead")}
-      </p>
+    <StepCard rank={1} label={t("steps.username")} title={t("username.title")}>
+      <form
+        data-focus-ring="container"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void submit();
+        }}
+      >
+        <p className="max-w-measure text-ui-sm text-pretty text-vellum-2">
+          {t("username.lead")}
+        </p>
 
-      {/* Dit avant la saisie, pas apres : c'est la seule chose que le joueur
-          doit savoir avant de taper. */}
-      <p className="mt-4 text-ui-sm text-brass">{tAccount("usernameOnce")}</p>
-
-      <div className="mt-5 flex flex-wrap items-center gap-3">
-        <label htmlFor="play-username" className="sr-only">
+        <label htmlFor="play-username" className="mt-5 block text-caption text-vellum-3">
           {tAccount("usernameLabel")}
         </label>
         <input
@@ -79,22 +73,28 @@ export function UsernameStep({ onDone }: { onDone: () => void }) {
             if (phase === "confirming") setPhase("editing");
             setError(null);
           }}
-          className={`min-w-0 flex-1 ${FIELD}`}
+          className={`mt-1.5 ${FIELD}`}
         />
+
+        {/* Dit avant le bouton, pas apres : c'est la seule chose que le joueur
+            doit savoir avant de valider. */}
+        <p className="mt-3 text-ui-sm text-brass">{tAccount("usernameOnce")}</p>
+
         <Button
           type="submit"
+          className="mt-4"
           disabled={username.trim().length === 0 || phase === "saving"}
         >
           {phase === "confirming"
             ? tAccount("confirm", { name: username.trim() })
             : t("continue")}
         </Button>
-      </div>
 
-      <p aria-live="polite" className="mt-3 min-h-5 text-ui-sm text-ember">
-        {error}
-      </p>
-    </form>
+        <p aria-live="polite" className="mt-3 min-h-5 text-ui-sm text-ember">
+          {error}
+        </p>
+      </form>
+    </StepCard>
   );
 }
 

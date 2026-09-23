@@ -1,5 +1,5 @@
 import { randomInt } from 'node:crypto';
-import type { Attribute } from '@odyssai/schemas';
+import { modifierOf, type Attribute } from '@odyssai/schemas';
 
 /*
   Lance par le code, jamais par le modele, qui tirerait ce qui arrange son
@@ -99,15 +99,12 @@ export function attributeFor(situation: string | null): Attribute | null {
 }
 
 /*
-  Le modificateur d'un score, de -2 a +2 sur une echelle de un a cinq.
-
-  Trois est le milieu, donc l'absence de bonus : un personnage moyen lance un
-  de nu. Deux points d'ecart sur un vingt valent dix pour cent de chances,
-  assez pour qu'une force se sente sans qu'elle decide a la place du de.
+  Le modificateur d'un score vit dans `@odyssai/schemas`, ou le schema qui
+  borne l'echelle le lit deja, et d'ou le navigateur peut le lire : il dit ce
+  qu'un chiffre fera avant meme qu'il soit enregistre. Reexporte ici parce que
+  c'est une regle du de, et que c'est ici qu'on la cherche.
 */
-export function modifierOf(score: number): number {
-  return score - 3;
-}
+export { modifierOf } from '@odyssai/schemas';
 
 /*
   La bande d'un jet, modificateur compris.

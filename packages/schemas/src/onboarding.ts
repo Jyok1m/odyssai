@@ -138,6 +138,26 @@ export const ATTRIBUTE_MIN = 1;
 export const ATTRIBUTE_MAX = 5;
 
 /*
+  Le milieu de l'echelle, donc le score qui ne pese rien sur un jet.
+
+  Ici et non dans `@odyssai/engine` pour la meme raison que les essais du
+  graphe de generation : c'est la ou le schema qui la fait respecter la lit
+  deja, et le navigateur en a besoin pour dire ce qu'un chiffre fera avant
+  qu'il soit enregistre. Le moteur la reexporte, il ne la redefinit pas.
+*/
+export const ATTRIBUTE_PIVOT = 3;
+
+/*
+  Le modificateur d'un score, de -2 a +2 sur une echelle de un a cinq.
+
+  Deux points d'ecart sur un vingt valent dix pour cent de chances, assez pour
+  qu'une force se sente sans qu'elle decide a la place du de.
+*/
+export function modifierOf(score: number): number {
+  return score - ATTRIBUTE_PIVOT;
+}
+
+/*
   Bornes de l'age tres larges : un monde peut avoir des siecles de longevite,
   et c'est sa charte qui tranche, pas ce schema.
 */

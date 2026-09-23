@@ -4,6 +4,7 @@ import type {
   CharacterDraft,
   InspirationDraft,
   OnboardingState,
+  OnboardingStep,
   OnboardingUpdate,
 } from "@odyssai/schemas";
 import { useTranslations } from "next-intl";
@@ -212,8 +213,8 @@ export function OnboardingWizard() {
 
   if (state.step === "generating") {
     return (
-      <div className="space-y-10">
-        {header(t("title"), t("lead"))}
+      <div className="space-y-6">
+        <Header step="generating" />
         <GenerationStep onReady={reload} />
       </div>
     );
@@ -231,9 +232,8 @@ export function OnboardingWizard() {
   const showing = back && state.step === "character" ? "inspiration" : state.step;
 
   return (
-    <div className="space-y-10">
-      {header(t("title"), t("lead"))}
-      <StepRail current={failedRun ? "inspiration" : showing} />
+    <div className="space-y-6">
+      <Header step={failedRun ? "inspiration" : showing} status={status} />
 
       {empty ? (
         <p className="rounded-card border border-brass/40 bg-brass/8 px-4 py-3 text-ui-sm">
@@ -280,16 +280,40 @@ export function OnboardingWizard() {
   );
 }
 
-// Le titre vit ici et non dans la page : le monde prêt n'en veut pas.
-function header(title: string, lead: string) {
+/*
+  Le titre vit ici et non dans la page : le monde prêt n'en veut pas.
+
+  Le fil d'étapes passe à droite du titre plutôt qu'en dessous : il dit où
+  l'on en est, ce qui se lit d'un coup d'œil et n'a pas à occuper une ligne
+  entière au-dessus de la saisie. L'état d'enregistrement l'accompagne, parce
+  que c'est la même question : est-ce que ce que j'ai tapé est gardé.
+*/
+function Header({ step, status }: { step: OnboardingStep; status?: SaveStatus }) {
+  const t = useTranslations("Play");
+
   return (
-    <header className="max-w-headline">
-      <h1 className="font-voice text-display-compact text-balance text-vellum">
-        {title}
-      </h1>
-      <p className="mt-6 max-w-measure text-ui text-pretty text-vellum-2">
-        {lead}
-      </p>
+    <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
+      <div className="max-w-headline">
+        <h1 className="font-voice text-display-compact text-balance text-vellum">
+          {t("title")}
+        </h1>
+        <p className="mt-4 max-w-measure text-ui text-pretty text-vellum-2">
+          {t("lead")}
+        </p>
+      </div>
+
+      <div className="flex flex-col items-start gap-3 sm:items-end">
+        <StepRail current={step} />
+        {status ? (
+          <p aria-live="polite" className="text-caption text-vellum-3">
+            {status === "saving"
+              ? t("saving")
+              : status === "saved"
+                ? t("saved")
+                : t("autosave")}
+          </p>
+        ) : null}
+      </div>
     </header>
   );
 }

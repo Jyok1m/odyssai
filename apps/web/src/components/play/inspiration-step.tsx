@@ -15,6 +15,8 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FIELD_AREA } from "@/components/ui/field";
 
+import { StepCard } from "./step-card";
+
 export type SaveStatus = "idle" | "saving" | "saved";
 
 interface Props {
@@ -92,46 +94,55 @@ export function InspirationStep({
   };
 
   return (
-    <div data-focus-ring="container" className="max-w-headline">
-      <h2 className="font-voice text-subtitle text-vellum">
-        {t("inspiration.title")}
-      </h2>
-      <p className="mt-3 text-ui-sm text-pretty text-vellum-2">
-        {t("inspiration.lead")}
-      </p>
+    <StepCard
+      rank={2}
+      label={t("steps.inspiration")}
+      title={t("inspiration.title")}
+      aside={
+        <div className="flex flex-wrap items-center gap-4">
+          {mode === "works" ? (
+            <span className="text-caption tabular-nums text-vellum-3">
+              {t("inspiration.count", {
+                count: filled(works).length,
+                max: WORKS_MAX,
+              })}
+            </span>
+          ) : null}
 
-      {/* Les titres ne servent qu'à dégager des thèmes : le monde généré n'en
-          reprendra ni les noms ni les personnages. */}
-      <p className="mt-3 text-ui-sm text-pretty text-vellum-3">
-        {t("inspiration.privacy")}
-      </p>
-
-      <div
-        role="tablist"
-        aria-label={t("inspiration.title")}
-        className="mt-8 inline-flex rounded-control border border-line p-1"
-      >
-        {(["works", "own"] as const).map((value) => (
-          <button
-            key={value}
-            role="tab"
-            type="button"
-            aria-selected={mode === value}
-            onClick={() => change(() => setMode(value))}
-            className={[
-              "rounded-control px-3.5 py-1.5 font-ui text-ui-sm font-medium transition-colors",
-              mode === value
-                ? "bg-accent text-on-accent"
-                : "text-vellum-2 hover:text-vellum",
-            ].join(" ")}
+          <div
+            role="tablist"
+            aria-label={t("inspiration.title")}
+            className="inline-flex rounded-control border border-line p-1"
           >
-            {t(`inspiration.mode.${value}`)}
-          </button>
-        ))}
-      </div>
+            {(["works", "own"] as const).map((value) => (
+              <button
+                key={value}
+                role="tab"
+                type="button"
+                aria-selected={mode === value}
+                onClick={() => change(() => setMode(value))}
+                className={[
+                  "rounded-control px-3.5 py-1.5 font-ui text-ui-sm font-medium transition-colors",
+                  mode === value
+                    ? "bg-accent text-on-accent"
+                    : "text-vellum-2 hover:text-vellum",
+                ].join(" ")}
+              >
+                {t(`inspiration.mode.${value}`)}
+              </button>
+            ))}
+          </div>
+        </div>
+      }
+    >
+      <div data-focus-ring="container">
+        <p className="max-w-measure text-ui-sm text-pretty text-vellum-2">
+          {t("inspiration.lead")}
+        </p>
 
       {mode === "works" ? (
-        <div className="mt-6">
+        <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
+          <div>
           <p className="text-ui-sm text-vellum-2">{t("inspiration.worksHint")}</p>
 
           <ul className="mt-4 space-y-3">
@@ -203,6 +214,14 @@ export function InspirationStep({
               {t("inspiration.duplicate")}
             </p>
           ) : null}
+          </div>
+
+          {/* Les titres ne servent qu'à dégager des thèmes : le monde généré
+              n'en reprendra ni les noms ni les personnages. À côté de la
+              saisie et non sous elle, pour se lire pendant qu'on la fait. */}
+          <p className="h-fit rounded-card border border-line p-4 text-ui-sm text-pretty text-vellum-3">
+            {t("inspiration.privacy")}
+          </p>
         </div>
       ) : (
         <div className="mt-6">
@@ -242,19 +261,14 @@ export function InspirationStep({
           {t("continue")}
         </Button>
 
-        {/* Dire que rien ne se perd, plutôt que de le laisser deviner. */}
-        <p aria-live="polite" className="text-ui-sm text-vellum-3">
-          {status === "saving"
-            ? t("saving")
-            : status === "saved"
-              ? t("saved")
-              : t("autosave")}
-        </p>
+        {/* Que rien ne se perde se dit une fois, dans l'en-tête : c'est vrai
+            de tout le parcours, pas de cette étape seule. */}
       </div>
 
       <p aria-live="polite" className="mt-3 min-h-5 text-ui-sm text-ember">
         {error}
       </p>
-    </div>
+      </div>
+    </StepCard>
   );
 }
