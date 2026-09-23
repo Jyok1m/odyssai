@@ -66,6 +66,11 @@ export const LLM_MODELS: Record<LlmRole, LlmModelSpec> = {
   // Un JSON strict, une fois par partie. La temperature basse est le point.
   extract: { model: 'qwen/qwen3.5-9b', temperature: 0.2, maxOutputTokens: 500 },
 
-  // Des themes sans nom propre, une fois par partie, relus par le schema.
-  abstraction: { model: 'qwen/qwen3.5-9b', temperature: 0.3, maxOutputTokens: 700 },
+  /*
+    Des themes sans nom propre et bornes en caracteres, une fois par partie.
+    Pas le 9b des deux roles precedents : mesure sur abstraction/v4, il
+    depasse les bornes qu'on lui dit (17 % fr, 33 % en), le 27b les tient
+    (92 % / 92 %). Un petit modele ne compte pas les caracteres.
+  */
+  abstraction: { model: 'qwen/qwen3.5-27b', temperature: 0.3, maxOutputTokens: 700 },
 };

@@ -1,4 +1,11 @@
-import { THEME_LIMITS, type Inspiration, type UiLocale } from '@odyssai/schemas';
+import {
+  THEME_LIMITS,
+  wordsWithin,
+  type Inspiration,
+  type UiLocale,
+} from '@odyssai/schemas';
+
+const W = wordsWithin;
 import type { PromptMessage } from '../guide/v1.js';
 
 /*
@@ -19,6 +26,10 @@ import type { PromptMessage } from '../guide/v1.js';
   quatre cents caracteres, ce qui n'a rien d'etonnant pour une cle a qui on
   demande le climat, le relief, l'eau, les maisons, la nourriture et les
   deplacements. Un modele ne respecte pas une borne qu'il ignore.
+
+  v5 : les longueurs en mots, sur chaque cle. Dites en caracteres, elles
+  servaient de cible : le modele visait le maximum et le depassait d'un
+  dixieme. Il compte les mots, et `wordsWithin` garde la marge.
 */
 const INSTRUCTIONS: Record<UiLocale, string> = {
   fr: `Tu prépares la création d'un monde de jeu de rôle. On te donne ce qui inspire un joueur, et tu en tires les thèmes d'un monde : pas le résumé d'une œuvre, un endroit où des gens vivent.
@@ -27,18 +38,18 @@ Règles :
 - Réponds uniquement par un objet JSON, sans texte autour, sans balise de code.
 - Clés exactes : tone, setting, power, mystery, tensions, motifs, forbidden.
 - tone, setting, power et mystery sont du texte. tensions, motifs et forbidden sont des listes de phrases courtes : 2 à 5 tensions, 3 à 8 motifs, 1 à 5 interdits.
-- **Les longueurs sont des maximums stricts, comptés en caractères, et une sortie qui les dépasse est rejetée** : tone ${THEME_LIMITS.tone}, setting ${THEME_LIMITS.setting}, power ${THEME_LIMITS.power}, mystery ${THEME_LIMITS.mystery}, chaque tension ${THEME_LIMITS.tension}, chaque motif ${THEME_LIMITS.motif}, chaque interdit ${THEME_LIMITS.forbidden}. Compte : ${THEME_LIMITS.setting} caractères font deux ou trois phrases, pas un paragraphe. Choisis ce qui compte et laisse le reste.
+- **Les longueurs sont données en mots : ce sont des maximums stricts, et une sortie qui les dépasse est rejetée.** Choisis ce qui compte et laisse le reste.
 - Aucun nom propre, nulle part. Pas de nom de personne, de lieu, de peuple, d'organisation, d'objet nommé, de planète, de dieu. Tout se dit par description.
 - Fonds les inspirations en un seul monde cohérent. N'énumère pas ce que chacune apporte, ne cite aucun titre, ne décris aucune intrigue existante.
 
 Ce que chaque clé contient :
-- tone : ce que ce monde fait ressentir, en une phrase. Tous les mondes ne sont pas sombres.
-- setting : un lieu physique. Le climat, le relief, l'eau, de quoi sont faites les maisons, ce qu'on y mange, comment on s'y déplace. Tu n'es pas tenu de tout dire : garde ce qui distingue ce monde, la borne passe avant la liste.
-- power : qui commande, et sur quoi ça repose : la terre, l'eau, les armes, la loi, l'argent, un savoir, une route. Un pouvoir se tient dans des mains, pas dans une idée.
-- mystery : un phénomène précis que les habitants constatent sans l'expliquer. Ce qu'on en voit et ce que ça change pour eux, pas ce qu'on en ressent.
-- tensions : des désaccords entre des gens qui veulent des choses différentes : une terre, un droit, une dette, un héritage, une route.
-- motifs : des objets, des gestes, des lieux. Rien qu'on ne puisse montrer du doigt.
-- forbidden : ce que ce monde ne contient pas. C'est aussi structurant que le reste.
+- tone (${W(THEME_LIMITS.tone)} mots au plus) : ce que ce monde fait ressentir, en une phrase. Tous les mondes ne sont pas sombres.
+- setting (${W(THEME_LIMITS.setting)} mots au plus) : un lieu physique. Le climat, le relief, l'eau, de quoi sont faites les maisons, ce qu'on y mange, comment on s'y déplace. Tu n'es pas tenu de tout dire : garde ce qui distingue ce monde, la borne passe avant la liste.
+- power (${W(THEME_LIMITS.power)} mots au plus) : qui commande, et sur quoi ça repose : la terre, l'eau, les armes, la loi, l'argent, un savoir, une route. Un pouvoir se tient dans des mains, pas dans une idée.
+- mystery (${W(THEME_LIMITS.mystery)} mots au plus) : un phénomène précis que les habitants constatent sans l'expliquer. Ce qu'on en voit et ce que ça change pour eux, pas ce qu'on en ressent.
+- tensions (chacune ${W(THEME_LIMITS.tension)} mots au plus) : des désaccords entre des gens qui veulent des choses différentes : une terre, un droit, une dette, un héritage, une route.
+- motifs (chacun ${W(THEME_LIMITS.motif)} mots au plus) : des objets, des gestes, des lieux. Rien qu'on ne puisse montrer du doigt.
+- forbidden (chacun ${W(THEME_LIMITS.forbidden)} mots au plus) : ce que ce monde ne contient pas. C'est aussi structurant que le reste.
 
 Réalisme :
 - Aucune abstraction posée comme une chose du monde. « Une force intérieure », « la chaleur de l'action », « la volonté collective », « l'éclat des transformations » sont des mots, pas des éléments d'un monde. Écrits ici, les étapes suivantes en feront des mécanismes absurdes.
@@ -54,18 +65,18 @@ Rules:
 - Answer with a JSON object only, no surrounding text, no code fence.
 - Exact keys: tone, setting, power, mystery, tensions, motifs, forbidden.
 - tone, setting, power and mystery are text. tensions, motifs and forbidden are lists of short sentences: 2 to 5 tensions, 3 to 8 motifs, 1 to 5 forbidden.
-- **The lengths are strict maximums, counted in characters, and an output that exceeds them is rejected**: tone ${THEME_LIMITS.tone}, setting ${THEME_LIMITS.setting}, power ${THEME_LIMITS.power}, mystery ${THEME_LIMITS.mystery}, each tension ${THEME_LIMITS.tension}, each motif ${THEME_LIMITS.motif}, each forbidden ${THEME_LIMITS.forbidden}. Count: ${THEME_LIMITS.setting} characters is two or three sentences, not a paragraph. Pick what matters and leave the rest out.
+- **Lengths are given in words: they are strict maximums, and an output that exceeds them is rejected.** Pick what matters and leave the rest out.
 - No proper nouns, anywhere. No name of a person, place, people, organisation, named object, planet or god. Everything is said by description.
 - Melt the inspirations into a single coherent world. Do not enumerate what each one brings, do not name any title, do not describe any existing plot.
 
 What each key holds:
-- tone: what this world makes you feel, in one sentence. Not every world is dark.
-- setting: a physical place. The climate, the relief, the water, what houses are made of, what people eat, how they get around. You need not say all of it: keep what sets this world apart, the limit comes before the list.
-- power: who is in charge, and what that rests on: land, water, weapons, law, money, a skill, a road. Power sits in someone's hands, not in an idea.
-- mystery: one precise phenomenon the inhabitants observe without explaining it. What is seen of it and what it changes for them, not what it makes you feel.
-- tensions: disagreements between people who want different things: a piece of land, a right, a debt, an inheritance, a road.
-- motifs: objects, gestures, places. Nothing you could not point at.
-- forbidden: what this world does not contain. It shapes it as much as the rest.
+- tone (up to ${W(THEME_LIMITS.tone)} words): what this world makes you feel, in one sentence. Not every world is dark.
+- setting (up to ${W(THEME_LIMITS.setting)} words): a physical place. The climate, the relief, the water, what houses are made of, what people eat, how they get around. You need not say all of it: keep what sets this world apart, the limit comes before the list.
+- power (up to ${W(THEME_LIMITS.power)} words): who is in charge, and what that rests on: land, water, weapons, law, money, a skill, a road. Power sits in someone's hands, not in an idea.
+- mystery (up to ${W(THEME_LIMITS.mystery)} words): one precise phenomenon the inhabitants observe without explaining it. What is seen of it and what it changes for them, not what it makes you feel.
+- tensions (each up to ${W(THEME_LIMITS.tension)} words): disagreements between people who want different things: a piece of land, a right, a debt, an inheritance, a road.
+- motifs (each up to ${W(THEME_LIMITS.motif)} words): objects, gestures, places. Nothing you could not point at.
+- forbidden (each up to ${W(THEME_LIMITS.forbidden)} words): what this world does not contain. It shapes it as much as the rest.
 
 Realism:
 - No abstraction set down as a thing of the world. "An inner strength", "the warmth of action", "the collective will", "the radiance of transformations" are words, not elements of a world. Written here, the next steps will turn them into absurd mechanisms.
@@ -88,7 +99,7 @@ function body(inspiration: Inspiration, locale: UiLocale): string {
 }
 
 export const ABSTRACTION_PROMPT = {
-  id: 'abstraction/v4',
+  id: 'abstraction/v5',
 
   build(inspiration: Inspiration, locale: UiLocale): PromptMessage[] {
     return [

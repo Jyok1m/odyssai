@@ -122,6 +122,21 @@ export const THEME_LIMITS = {
 } as const;
 
 /*
+  Une borne en caracteres, dite au modele en mots.
+
+  Mesure sur `qwen3.7-plus` : une borne donnee en caracteres lui sert de
+  cible et il la depasse d'un dixieme (geography 1335 pour 1200, era 379 pour
+  300). Il compte les mots bien mieux que les caracteres, et huit caracteres
+  par mot laissent la marge qui absorbe ce depassement : cent cinquante mots
+  de francais font mille a mille cent caracteres, jamais mille deux cents.
+*/
+export const CHARS_PER_WORD = 8;
+
+export function wordsWithin(chars: number): number {
+  return Math.floor(chars / CHARS_PER_WORD);
+}
+
+/*
   Sortie de la passe d'abstraction, et seule chose que les etapes suivantes de
   la generation recoivent. Les titres saisis s'arretent avant.
 */
@@ -163,29 +178,46 @@ const Text = (max: number) => z.string().trim().min(3).max(max);
 const Name = z.string().trim().min(2).max(80);
 
 /*
+  Ce que chaque champ genere peut faire de long, en caracteres, noeud par
+  noeud. Meme raison que THEME_LIMITS : le prompt de chaque noeud les dit au
+  modele. La charte a echoue deux fois de suite sur un `allowed` de plus de
+  deux cents caracteres, la doctrine lui demandant d'ecrire chaque chose
+  « avec sa regle » sans jamais dire la place qu'elle avait pour cela.
+*/
+export const GENERATION_LIMITS = {
+  charter: { premise: 600, tone: 300, allowed: 200, forbidden: 200, narratorRule: 200 },
+  lore: { era: 300, geography: 1200, history: 1200, dailyLife: 1200 },
+  faction: { creed: 400, strength: 300, territory: 300, symbol: 200 },
+  politics: { balance: 800, conflict: 400, stakes: 600 },
+  npc: { role: 200, drive: 300, secret: 400 },
+  affinity: { note: 300 },
+  arc: { hook: 400, stakes: 400, title: 60, goal: 300, done: 200, bond: 300, secret: 300 },
+} as const;
+
+/*
   Ce qui existe ou non dans ce monde, et comment il se raconte. Le narrateur la
   respecte en toutes circonstances : c'est elle qui empeche un monde sans magie
   d'en voir apparaitre au troisieme tour.
 */
 export const WorldCharterSchema = z.object({
-  premise: Text(600),
-  tone: Text(300),
+  premise: Text(GENERATION_LIMITS.charter.premise),
+  tone: Text(GENERATION_LIMITS.charter.tone),
   // Ce que ce monde rend possible.
-  allowed: z.array(Text(200)).min(2).max(8),
+  allowed: z.array(Text(GENERATION_LIMITS.charter.allowed)).min(2).max(8),
   // Ce qu'il ne contient pas. Aussi structurant que le reste.
-  forbidden: z.array(Text(200)).min(2).max(8),
+  forbidden: z.array(Text(GENERATION_LIMITS.charter.forbidden)).min(2).max(8),
   // Consignes de narration propres a ce monde.
-  narratorRules: z.array(Text(200)).min(2).max(6),
+  narratorRules: z.array(Text(GENERATION_LIMITS.charter.narratorRule)).min(2).max(6),
 });
 
 export type WorldCharter = z.infer<typeof WorldCharterSchema>;
 
 export const WorldLoreSchema = z.object({
   name: Name,
-  era: Text(300),
-  geography: Text(1200),
-  history: Text(1200),
-  dailyLife: Text(1200),
+  era: Text(GENERATION_LIMITS.lore.era),
+  geography: Text(GENERATION_LIMITS.lore.geography),
+  history: Text(GENERATION_LIMITS.lore.history),
+  dailyLife: Text(GENERATION_LIMITS.lore.dailyLife),
   // Teinte de l'accent, que l'interface applique en entrant dans ce monde.
   accentHue: z.number().int().min(0).max(359),
 });
@@ -194,30 +226,30 @@ export type WorldLore = z.infer<typeof WorldLoreSchema>;
 
 export const FactionSchema = z.object({
   name: Name,
-  creed: Text(400),
-  strength: Text(300),
-  territory: Text(300),
-  symbol: Text(200),
+  creed: Text(GENERATION_LIMITS.faction.creed),
+  strength: Text(GENERATION_LIMITS.faction.strength),
+  territory: Text(GENERATION_LIMITS.faction.territory),
+  symbol: Text(GENERATION_LIMITS.faction.symbol),
 });
 
 export type Faction = z.infer<typeof FactionSchema>;
 
 export const PoliticsSchema = z.object({
-  balance: Text(800),
-  conflicts: z.array(Text(400)).min(1).max(4),
-  stakes: Text(600),
+  balance: Text(GENERATION_LIMITS.politics.balance),
+  conflicts: z.array(Text(GENERATION_LIMITS.politics.conflict)).min(1).max(4),
+  stakes: Text(GENERATION_LIMITS.politics.stakes),
 });
 
 export type Politics = z.infer<typeof PoliticsSchema>;
 
 export const NpcSchema = z.object({
   name: Name,
-  role: Text(200),
+  role: Text(GENERATION_LIMITS.npc.role),
   // Nom d'une faction existante, ou null pour un independant.
   faction: Name.nullable(),
-  drive: Text(300),
+  drive: Text(GENERATION_LIMITS.npc.drive),
   // Ce que le joueur ignore encore. Jamais rendu a l'ecran tel quel.
-  secret: Text(400),
+  secret: Text(GENERATION_LIMITS.npc.secret),
 });
 
 export type Npc = z.infer<typeof NpcSchema>;
@@ -226,7 +258,7 @@ export const AffinitySchema = z.object({
   subject: Name,
   target: Name,
   stance: z.enum(['allie', 'rival', 'neutre', 'dette', 'haine']),
-  note: Text(300),
+  note: Text(GENERATION_LIMITS.affinity.note),
 });
 
 export type Affinity = z.infer<typeof AffinitySchema>;
@@ -246,8 +278,8 @@ export type Affinity = z.infer<typeof AffinitySchema>;
   avec la meme histoire.
 */
 export const HeroLoreSchema = z.object({
-  bond: Text(300),
-  secret: Text(300),
+  bond: Text(GENERATION_LIMITS.arc.bond),
+  secret: Text(GENERATION_LIMITS.arc.secret),
 });
 export type HeroLore = z.infer<typeof HeroLoreSchema>;
 
@@ -270,20 +302,20 @@ export const ArcActSchema = z.object({
     sans gardien », pas « Retrouver le gardien ». Facultatif pour la meme
     raison que l'arc lui-meme, les mondes generes avant n'en ayant pas.
   */
-  title: Text(60).optional(),
+  title: Text(GENERATION_LIMITS.arc.title).optional(),
   // Ce vers quoi cet acte tend.
-  goal: Text(300),
+  goal: Text(GENERATION_LIMITS.arc.goal),
   // A quoi on reconnait qu'il est acheve.
-  done: Text(200),
+  done: Text(GENERATION_LIMITS.arc.done),
 });
 
 export type ArcAct = z.infer<typeof ArcActSchema>;
 
 export const WorldArcSchema = z.object({
   // La situation d'ouverture, celle ou le joueur arrive.
-  hook: Text(400),
+  hook: Text(GENERATION_LIMITS.arc.hook),
   // Ce qui pousse, et ce que cela coute de ne rien faire.
-  stakes: Text(400),
+  stakes: Text(GENERATION_LIMITS.arc.stakes),
   acts: z.tuple([ArcActSchema, ArcActSchema, ArcActSchema]),
   // Facultatif pour la meme raison que l'arc lui-meme : un arc d'avant.
   hero: HeroLoreSchema.optional(),

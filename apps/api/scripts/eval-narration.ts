@@ -392,5 +392,5 @@ console.log(
   `\n${casesByLocale.get('fr')!.length} cas par modele et par langue, ${LOCALES.length} langues. Cout total rapporte : ${spent > 0 ? `${spent.toFixed(4)} USD` : 'non rapporte par le fournisseur'}.`,
 );
 console.log(
-  'Reporte le gagnant dans LLM_NARRATOR_MODEL, et garde LLM_NARRATOR_CANDIDATES pour la prochaine comparaison.',
+  'Reporte le gagnant dans packages/llm/src/models.ts, role abstraction, et garde LLM_NARRATOR_CANDIDATES pour la prochaine comparaison.',
 );
