@@ -460,6 +460,21 @@ export const GENERATION_REWRITES_MAX = 1;
 export const GENERATION_QUEUE = 'odyssai-generation';
 
 /*
+  Prefixe des cles BullMQ, un par environnement. Le poste de developpement
+  partage le Redis du serveur par le tunnel, et le worker-dev qui y tourne
+  prenait les travaux publies par une api locale : on testait le code du
+  serveur en croyant tester le sien. `bull` est le defaut de BullMQ, donc rien
+  ne change pour les environnements deployes ; le poste local en prend un
+  autre, et ses travaux n'existent pas pour le serveur.
+*/
+export const QUEUE_PREFIX_DEFAULT = 'bull';
+
+export const QueuePrefixSchema = z
+  .string()
+  .regex(/^[a-z0-9][a-z0-9-]*$/, 'lettres minuscules, chiffres et tirets')
+  .default(QUEUE_PREFIX_DEFAULT);
+
+/*
   Le travail ne porte que l'identifiant de l'univers. Tout le reste se relit en
   base : une charge utile qui embarquerait la fiche vieillirait dans la file,
   et un joueur qui corrige sa saisie verrait generer l'ancienne.

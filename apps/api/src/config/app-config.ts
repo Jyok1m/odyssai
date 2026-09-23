@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { QueuePrefixSchema } from '@odyssai/schemas';
 import { z } from 'zod';
 
 const EnvSchema = z.object({
@@ -13,6 +14,7 @@ const EnvSchema = z.object({
   KEYCLOAK_CLIENT_SECRET: z.string().min(1),
 
   REDIS_URL: z.url(),
+  BULLMQ_PREFIX: QueuePrefixSchema,
   POSTGRES_URL: z.url(),
 });
 
@@ -60,6 +62,11 @@ export class AppConfig {
 
   get postgresUrl(): string {
     return this.env.POSTGRES_URL;
+  }
+
+  // Un prefixe par environnement : voir QueuePrefixSchema.
+  get queuePrefix(): string {
+    return this.env.BULLMQ_PREFIX;
   }
 
   get keycloak() {

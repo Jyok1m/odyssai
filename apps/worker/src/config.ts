@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { LLM_MODELS, OPENROUTER_ONLY_BODY_KEYS } from '@odyssai/llm';
+import { QueuePrefixSchema } from '@odyssai/schemas';
 
 /*
   Configuration du worker, validee au demarrage. Contrairement a l'api, le
@@ -10,6 +11,7 @@ const EnvSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     REDIS_URL: z.url(),
+    BULLMQ_PREFIX: QueuePrefixSchema,
     POSTGRES_URL: z.string().min(1),
 
     LLM_NARRATOR_PROVIDER: z.enum(['openrouter', 'openai']).default('openrouter'),
@@ -107,6 +109,8 @@ export function loadConfig() {
   return {
     nodeEnv: env.NODE_ENV,
     redisUrl: env.REDIS_URL,
+    // Le meme prefixe que l'api qui publie, sans quoi personne ne consomme.
+    queuePrefix: env.BULLMQ_PREFIX,
     postgresUrl: env.POSTGRES_URL,
     concurrency: env.WORKER_CONCURRENCY,
     provider: env.LLM_NARRATOR_PROVIDER,

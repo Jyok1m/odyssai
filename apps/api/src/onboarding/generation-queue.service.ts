@@ -7,6 +7,7 @@ import {
 import { Queue } from 'bullmq';
 import type { Redis } from 'ioredis';
 import { GENERATION_QUEUE, type GenerationJobData } from '@odyssai/schemas';
+import { AppConfig } from '../config/app-config.js';
 import { REDIS } from '../redis/redis.module.js';
 
 /*
@@ -19,11 +20,12 @@ export class GenerationQueueService implements OnApplicationShutdown {
   private readonly logger = new Logger(GenerationQueueService.name);
   private readonly queue: Queue<GenerationJobData>;
 
-  constructor(@Inject(REDIS) redis: Redis) {
+  constructor(@Inject(REDIS) redis: Redis, config: AppConfig) {
     // Une connexion dupliquee, et non celle des sessions : BullMQ met ses
     // consommateurs en mode bloquant, ce qui rendrait la connexion partagee
     // inutilisable pour tout le reste.
     this.queue = new Queue<GenerationJobData>(GENERATION_QUEUE, {
+      prefix: config.queuePrefix,
       connection: redis.duplicate({ maxRetriesPerRequest: null }),
       defaultJobOptions: {
         attempts: 3,

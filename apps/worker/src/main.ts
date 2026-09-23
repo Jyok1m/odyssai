@@ -59,6 +59,7 @@ const worker = new Worker(
     log(`generation ${universeId} : finie en ${Math.round((Date.now() - started) / 1000)} s`);
   },
   {
+    prefix: config.queuePrefix,
     connection,
     concurrency: config.concurrency,
     // Sept appels de modele : un monde peut prendre plusieurs minutes, et un
@@ -76,7 +77,7 @@ worker.on('failed', (job, error) => {
 worker.on('error', (error) => log(`worker : ${error.message}`));
 
 log(
-  `worker pret sur ${GENERATION_QUEUE}, ${config.concurrency} monde(s) a la fois, modele ${config.models.generation.model} pour la generation, ${config.models.abstraction.model} pour l'abstraction`,
+  `worker pret sur ${config.queuePrefix}:${GENERATION_QUEUE}, ${config.concurrency} monde(s) a la fois, modele ${config.models.generation.model} pour la generation, ${config.models.abstraction.model} pour l'abstraction`,
 );
 
 // Le travail en cours va au bout : le couper laisserait un monde a moitie ecrit.
