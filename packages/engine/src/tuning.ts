@@ -31,7 +31,6 @@ import {
 } from '@odyssai/schemas';
 
 import {
-  ALPHA_SEATS,
   CREDIT_COSTS,
   FOUNDER_BONUS,
   FREE_PLAN_SLUG,
@@ -70,9 +69,6 @@ export const TUNING = {
 
   // Ce que recoivent les premiers arrives, en plus de leur palier.
   founder: FOUNDER_BONUS,
-
-  // Places de l'alpha fermee. Au dela, aucun joueur n'est provisionne.
-  alpha: { seats: ALPHA_SEATS },
 
   // Le de du meneur. Le joueur ne voit jamais le chiffre, seulement la bande.
   die: { faces: DIE_FACES },

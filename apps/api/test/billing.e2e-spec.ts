@@ -72,6 +72,14 @@ describe('Facturation (e2e)', () => {
         },
       ],
       creditEntries: [],
+      // La vente est ouverte ici : ce sont les paliers qu'on teste, pas l'alpha.
+      siteSettings: {
+        id: true,
+        alphaPhase: 'open',
+        alphaNotice: false,
+        salesOpen: true,
+        updatedAt: new Date(0),
+      },
     };
 
     const moduleFixture = await Test.createTestingModule({

@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PrismaClient } from '@odyssai/db';
-import { ALPHA_SEATS } from '@odyssai/engine';
+import { FOUNDER_BONUS } from '@odyssai/engine';
 import {
   AlphaPhaseSchema,
   type AlphaStatus,
@@ -9,11 +9,12 @@ import {
 import { PRISMA } from '../prisma/prisma.module.js';
 
 /*
-  L'etat de l'alpha, annonce et places restantes.
+  L'etat de l'alpha : ouverte ou fermee, ce qu'on annonce, si les paliers se
+  vendent, et ou en sont les premiers inscrits.
 
-  La phase se choisit au tableau de bord ; « complete » se constate. Un
-  administrateur ne doit pas pouvoir annoncer des places qui n'existent plus,
-  donc `full` et `remaining` se calculent et ne s'ecrivent nulle part.
+  Les premiers inscrits ne sont plus une porte : le bonus est un cadeau aux
+  cent premiers, et le cent unieme entre quand meme. Le compte se lit, il ne
+  s'ecrit nulle part.
 */
 @Injectable()
 export class AlphaService {
@@ -22,20 +23,20 @@ export class AlphaService {
   async status(): Promise<AlphaStatus> {
     const [settings, taken] = await Promise.all([
       this.settings(),
-      // Les administrateurs ne prennent pas de place, comme pour la garde
-      // d'inscription et le bonus des premiers arrives.
+      // Les administrateurs ne comptent pas, comme pour le bonus lui-meme.
       this.prisma.user.count({ where: { isAdmin: false } }),
     ]);
-
-    const remaining = Math.max(0, ALPHA_SEATS - taken);
 
     return {
       phase: settings.phase,
       notice: settings.notice,
-      seats: ALPHA_SEATS,
-      taken,
-      remaining,
-      full: remaining === 0,
+      salesOpen: settings.salesOpen,
+      founders: {
+        seats: FOUNDER_BONUS.rank,
+        credits: FOUNDER_BONUS.credits,
+        taken: Math.min(taken, FOUNDER_BONUS.rank),
+        remaining: Math.max(0, FOUNDER_BONUS.rank - taken),
+      },
     };
   }
 
@@ -49,12 +50,19 @@ export class AlphaService {
     return row?.alphaPhase === 'open';
   }
 
+  // La vente, lue au catalogue et a l'achat. Absente, fermee.
+  async salesOpen(): Promise<boolean> {
+    const row = await this.prisma.siteSettings.findUnique({ where: { id: true } });
+    return row?.salesOpen === true;
+  }
+
   async update(request: UpdateAlphaRequest): Promise<AlphaStatus> {
     await this.prisma.siteSettings.update({
       where: { id: true },
       data: {
         ...(request.phase !== undefined ? { alphaPhase: request.phase } : {}),
         ...(request.notice !== undefined ? { alphaNotice: request.notice } : {}),
+        ...(request.salesOpen !== undefined ? { salesOpen: request.salesOpen } : {}),
       },
     });
 
@@ -71,6 +79,7 @@ export class AlphaService {
   private async settings(): Promise<{
     phase: AlphaStatus['phase'];
     notice: boolean;
+    salesOpen: boolean;
   }> {
     const row = await this.prisma.siteSettings.upsert({
       where: { id: true },
@@ -81,10 +90,11 @@ export class AlphaService {
     const phase = AlphaPhaseSchema.safeParse(row.alphaPhase);
 
     return {
-      // Une valeur illisible retombe sur la pre-inscription : annoncer une
-      // ouverture qu'on n'a pas decidee serait pire que l'inverse.
+      // Une valeur illisible vaut ferme : ouvrir sans l'avoir decide serait
+      // pire que l'inverse.
       phase: phase.success ? phase.data : 'preregistration',
       notice: row.alphaNotice,
+      salesOpen: row.salesOpen,
     };
   }
 }

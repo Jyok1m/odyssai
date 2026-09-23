@@ -27,11 +27,11 @@
     "about": "About"
   },
   "Hero": {
-    "badge": "Private alpha · 100 spots",
+    "badge": "Open alpha · playable now",
     "badgeCta": "Learn more",
     "title": "Build any world you want. Then go and visit everyone else's.",
     "description": "Every player shapes their own world, guided by an AI narrator. Universes cross paths, trade characters and events, and share one common General Lore. The AI tells the story, the engine decides what is true.",
-    "primaryCta": "Claim my spot",
+    "primaryCta": "Create my account",
     "secondaryCta": "Discover the concept"
   },
   "Guide": {
@@ -67,14 +67,17 @@
     "home": "Home"
   },
   "Alpha": {
-    "preRegister": "The game isn't live yet. Create your account now: you're one of the first 100 players, your 30 credits are waiting, and you'll get the invite the moment the alpha opens.",
-    "reservedTitle": "Your spot is reserved.",
-    "reservedBody": "Your account is created and your 30 credits are waiting. The game isn't live yet: you'll get the invite the moment the alpha opens.",
-    "closed": "The game is not open yet. Your seat is reserved: you get the invitation when it opens.",
-    "closedTitle": "Not open yet",
-    "closedBody": "The game is not open yet. Your account and credits are waiting: you get the invitation when the alpha opens.",
+    "reservedTitle": "The game is closed for now.",
+    "reservedBody": "Maintenance or a reset in progress. Your account and credits stay, and the game reopens soon.",
+    "closed": "The game is closed for now: maintenance or a reset. Your account and credits stay.",
+    "closedTitle": "Closed for now",
+    "closedBody": "Maintenance or a reset in progress. Your account and credits stay, and the game reopens soon.",
     "closedHome": "Back to home",
-    "terms": "By creating an account, you accept the <terms>terms and conditions</terms> and the <privacy>privacy policy</privacy>."
+    "terms": "By creating an account, you accept the <terms>terms and conditions</terms> and the <privacy>privacy policy</privacy>.",
+    "openInvite": "The game is playable right now, in alpha: it may have bugs, and that is exactly what we are after. Create your account: the first 100 sign-ups get 30 extra credits.",
+    "closedInvite": "The game is closed for now, for maintenance or a reset. Create your account, it will be waiting when it reopens.",
+    "playingTitle": "You are playing an alpha.",
+    "playingBody": "There may be bugs: report them from the “Report a bug” button in the game, that is what moves it forward. Subscriptions are not for sale during the alpha, everyone plays on the free tier. And if a fix requires it, your progress may be reset: your credits stay."
   },
   "Auth": {
     "signOut": "Log out",
@@ -85,18 +88,13 @@
       "invalid_request": "The login could not complete. Try again from the home page.",
       "provider_error": "The identity service refused the login. Try again in a moment.",
       "session_failed": "The session could not be opened. Try again in a moment.",
-      "alpha_full": "Alpha sign-ups are closed: all hundred spots are taken.",
       "unknown": "The login failed. Try again."
     },
-    "alphaFullTitle": "Sign-ups are closed.",
-    "alphaFullBody": "All hundred alpha seats are taken. No game account was created, and there is nothing to retry: a wider opening will come, and it will be announced here.",
-    "alphaFullClose": "Dismiss this message",
-    "noticePreTitle": "Sign-ups are open.",
-    "noticePreBody": "{seats} Alpha spots, 30 free credits.",
     "noticeOpenTitle": "The alpha is open.",
-    "noticeOpenBody": "{remaining, plural, =0 {no seats remain} one {one seat remains} other {# seats remaining}}.",
-    "noticeFullTitle": "The alpha is full.",
-    "noticeFullBody": "All {seats} seats are taken. A wider opening will come, and it will be announced here."
+    "noticeOpenBody": "The game is playable, bugs included, which you report from the dedicated button. The first {seats} sign-ups get {credits} extra credits: {remaining, plural, =0 {all {seats} are taken} one {one left} other {# left}}. No subscriptions during the alpha, and progress may be reset.",
+    "noticeClosedTitle": "The game is closed for now.",
+    "noticeClosedBody": "Maintenance or a reset in progress: accounts and credits stay, the game reopens soon.",
+    "noticeClose": "Close this message"
   },
   "Account": {
     "title": "My account",
@@ -225,7 +223,9 @@
     "currentNote": "This is your current tier.",
     "leaving": "Opening checkout.",
     "checkoutError": "Checkout could not be opened. Try again in a moment.",
-    "checkoutDisabled": "Sales are not open yet."
+    "checkoutDisabled": "Sales are not open yet.",
+    "alphaNote": "During the alpha, subscriptions are not for sale: everyone plays on the free tier, and the first 100 sign-ups have 30 extra credits. The tiers below are where this is going.",
+    "closedDuringAlpha": "Not for sale during the alpha."
   },
   "Play": {
     "title": "Enter the game",
@@ -670,7 +670,7 @@
   },
   "About": {
     "metaTitle": "About",
-    "metaDescription": "Who makes OdyssAI, why, and where the project stands: a closed alpha for a hundred players, built by an independent engineer.",
+    "metaDescription": "Who makes OdyssAI, why, and where the project stands: an open alpha, built by an independent engineer.",
     "lead": "A game made by one person, not a studio. Here is who, why, and where things stand.",
     "intro": [
       "OdyssAI is designed and built by Joachim Alexandre Jasmin, an independent software engineer, alone. No team, no funding round, no roadmap imposed from outside."
@@ -774,9 +774,9 @@
       {
         "title": "Access during the alpha",
         "body": [
-          "The service is in closed alpha, limited to one hundred players. Beyond that, registration is refused until a wider opening.",
-          "An alpha is unstable by nature: features may change, be removed, or stop working without notice. Universes and sessions may be lost during a technical change. Do not entrust anything to it you could not bear to lose.",
-          "Access may be suspended for maintenance, without compensation."
+          "OdyssAI is in open alpha: the service is playable, and it is provided as is, with the flaws of software still being built. Bugs may occur, and a button in the game lets you report them.",
+          "During the alpha, the progress of a game (worlds, characters, history) may be reset if a fix requires it. The credits of an account are not affected by such a reset.",
+          "Subscriptions are not for sale during the alpha: every player has the free tier and its credits. The first hundred accounts created also receive thirty credits, once."
         ]
       },
       {

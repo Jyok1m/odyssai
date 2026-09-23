@@ -6,6 +6,7 @@ import type { BillingCatalog, BillingSummary } from '@odyssai/schemas';
 import { AppConfig } from '../config/app-config.js';
 import { BillingConfig } from '../config/billing-config.js';
 import { CreditsService } from '../credits/credits.service.js';
+import { AlphaService } from '../alpha/alpha.service.js';
 import { PlansService } from '../plans/plans.service.js';
 import { PRISMA } from '../prisma/prisma.module.js';
 import { STRIPE } from '../stripe/stripe.module.js';
@@ -29,6 +30,7 @@ export class BillingService {
     private readonly app: AppConfig,
     private readonly credits: CreditsService,
     private readonly plans: PlansService,
+    private readonly alpha: AlphaService,
   ) {}
 
   /*
@@ -39,9 +41,10 @@ export class BillingService {
     repondrait 503.
   */
   async catalog(): Promise<BillingCatalog> {
-    const plans = await this.plans.all();
+    const [plans, salesOpen] = await Promise.all([this.plans.all(), this.alpha.salesOpen()]);
 
     return {
+      salesOpen,
       costs: {
         turn: CREDIT_COSTS.turn,
         characterMessage: CREDIT_COSTS.characterMessage,
@@ -55,7 +58,7 @@ export class BillingService {
         amountCents: plan.amountCents,
         currency: plan.currency,
         purchasable:
-          this.config.enabled && plan.stripePriceId !== null && !plan.comingSoon,
+          salesOpen && this.config.enabled && plan.stripePriceId !== null && !plan.comingSoon,
         recommended: plan.recommended,
         comingSoon: plan.comingSoon,
       })),
@@ -71,7 +74,10 @@ export class BillingService {
   */
   async summary(user: User): Promise<BillingSummary> {
     const subscription = await this.credits.ensure(user.id);
-    const plan = await this.plans.bySlug(subscription.plan);
+    const [plan, salesOpen] = await Promise.all([
+      this.plans.bySlug(subscription.plan),
+      this.alpha.salesOpen(),
+    ]);
 
     return {
       plan: plan.slug,
@@ -81,7 +87,7 @@ export class BillingService {
       monthly: plan.monthlyCredits,
       renewsAt: subscription.periodEnd.toISOString(),
       cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-      purchasable: this.config.enabled,
+      purchasable: salesOpen && this.config.enabled,
       manageable: this.config.enabled && subscription.stripeCustomerId !== null,
       unlimited: user.isAdmin,
     };

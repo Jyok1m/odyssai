@@ -27,7 +27,13 @@ async function boot(options: { isAdmin: boolean; phase: 'preregistration' | 'ope
     characters: [],
     messages: [],
     jobs: [],
-    siteSettings: { id: true, alphaPhase: options.phase, alphaNotice: false, updatedAt: new Date(0) },
+    siteSettings: {
+      id: true,
+      alphaPhase: options.phase,
+      alphaNotice: false,
+      salesOpen: false,
+      updatedAt: new Date(0),
+    },
   };
 
   const redis = new FakeRedis();

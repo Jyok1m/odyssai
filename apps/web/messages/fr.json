@@ -27,11 +27,11 @@
     "about": "À propos"
   },
   "Hero": {
-    "badge": "Alpha privée · 100 places",
+    "badge": "Alpha ouverte · jouable dès maintenant",
     "badgeCta": "En savoir plus",
     "title": "Crée n'importe quel monde. Puis pars visiter ceux des autres.",
     "description": "Chaque joueur façonne son propre monde, guidé par un narrateur IA. Les univers se croisent, échangent personnages et événements, et partagent un même Lore Général. L’IA raconte, le moteur décide.",
-    "primaryCta": "Réserver ma place",
+    "primaryCta": "Créer mon compte",
     "secondaryCta": "Découvrir le concept"
   },
   "Guide": {
@@ -67,14 +67,17 @@
     "home": "Accueil"
   },
   "Alpha": {
-    "preRegister": "Le jeu n'est pas encore ouvert. Crée ton compte maintenant : tu fais partie des 100 premiers joueurs, tes 30 crédits t'attendent, et tu reçois l'invitation dès l'ouverture de l'alpha.",
-    "reservedTitle": "Ta place est réservée.",
-    "reservedBody": "Ton compte est créé et tes 30 crédits t'attendent. Le jeu n'est pas encore ouvert : tu reçois l'invitation dès l'ouverture de l'alpha.",
-    "closed": "Le jeu n'est pas encore ouvert. Ta place est réservée : tu reçois l'invitation à l'ouverture.",
-    "closedTitle": "Pas encore ouvert",
-    "closedBody": "Le jeu n'est pas encore ouvert. Ton compte et tes crédits t'attendent : tu reçois l'invitation à l'ouverture de l'alpha.",
+    "reservedTitle": "Le jeu est fermé pour le moment.",
+    "reservedBody": "Maintenance ou remise à zéro en cours. Ton compte et tes crédits restent, et le jeu rouvre bientôt.",
+    "closed": "Le jeu est fermé pour le moment : maintenance ou remise à zéro. Ton compte et tes crédits restent.",
+    "closedTitle": "Fermé pour le moment",
+    "closedBody": "Maintenance ou remise à zéro en cours. Ton compte et tes crédits restent, et le jeu rouvre bientôt.",
     "closedHome": "Retour à l'accueil",
-    "terms": "En créant un compte, tu acceptes les <terms>conditions générales</terms> et la <privacy>politique de confidentialité</privacy>."
+    "terms": "En créant un compte, tu acceptes les <terms>conditions générales</terms> et la <privacy>politique de confidentialité</privacy>.",
+    "openInvite": "Le jeu se joue dès maintenant, en alpha : il peut avoir des bugs, et c'est justement ce qu'on cherche. Crée ton compte : les 100 premiers inscrits reçoivent 30 crédits de plus.",
+    "closedInvite": "Le jeu est fermé pour le moment, le temps d'une maintenance ou d'une remise à zéro. Crée ton compte, il t'attendra à la réouverture.",
+    "playingTitle": "Tu joues en alpha.",
+    "playingBody": "Il peut y avoir des bugs : signale-les depuis le bouton « Signaler un bug » dans le jeu, c'est ce qui le fait avancer. Les abonnements ne sont pas en vente le temps de l'alpha, tout le monde joue sur le palier libre. Et si une correction l'exige, ta progression peut être remise à zéro : tes crédits, eux, restent."
   },
   "Auth": {
     "signOut": "Se déconnecter",
@@ -85,18 +88,13 @@
       "invalid_request": "La connexion n'a pas pu aboutir. Réessaie depuis l'accueil.",
       "provider_error": "Le service d'identité a refusé la connexion. Réessaie dans un instant.",
       "session_failed": "La session n'a pas pu être ouverte. Réessaie dans un instant.",
-      "alpha_full": "Les inscriptions à l'alpha sont closes : les cent places sont prises.",
       "unknown": "La connexion a échoué. Réessaie."
     },
-    "alphaFullTitle": "Les inscriptions sont closes.",
-    "alphaFullBody": "Les cent places de l'alpha sont prises. Ton compte n'a pas été créé côté jeu, et il n'y a rien à réessayer : une ouverture plus large viendra, et elle sera annoncée ici.",
-    "alphaFullClose": "Fermer ce message",
-    "noticePreTitle": "Inscriptions ouvertes.",
-    "noticePreBody": "{seats} places pour l'Alpha, 30 crédits offerts.",
     "noticeOpenTitle": "L'alpha est ouverte.",
-    "noticeOpenBody": "Il reste {remaining, plural, =0 {aucune place} one {une place} other {# places}} pour l'Alpha.",
-    "noticeFullTitle": "L'alpha est complète.",
-    "noticeFullBody": "Les {seats} places sont prises. Une ouverture plus large viendra, et elle sera annoncée ici."
+    "noticeOpenBody": "Le jeu se joue, avec ses bugs, que tu signales depuis le bouton dédié. Les {seats} premiers inscrits reçoivent {credits} crédits de plus : {remaining, plural, =0 {les {seats} places sont prises} one {il en reste une} other {il en reste #}}. Pas d'abonnement le temps de l'alpha, et une progression peut être remise à zéro.",
+    "noticeClosedTitle": "Le jeu est fermé pour le moment.",
+    "noticeClosedBody": "Maintenance ou remise à zéro en cours : les comptes et les crédits restent, le jeu rouvre bientôt.",
+    "noticeClose": "Fermer ce message"
   },
   "Account": {
     "title": "Mon compte",
@@ -225,7 +223,9 @@
     "currentNote": "C'est ton palier actuel.",
     "leaving": "Ouverture du paiement.",
     "checkoutError": "Le paiement n'a pas pu s'ouvrir. Réessaie dans un instant.",
-    "checkoutDisabled": "La vente n'est pas encore ouverte."
+    "checkoutDisabled": "La vente n'est pas encore ouverte.",
+    "alphaNote": "Le temps de l'alpha, les abonnements ne sont pas en vente : tout le monde joue sur le palier libre, et les 100 premiers inscrits ont 30 crédits de plus. Les paliers ci-dessous sont ce vers quoi on va.",
+    "closedDuringAlpha": "Pas en vente pendant l'alpha."
   },
   "Play": {
     "title": "Entrer en jeu",
@@ -670,7 +670,7 @@
   },
   "About": {
     "metaTitle": "À propos",
-    "metaDescription": "Qui fait OdyssAI, pourquoi, et où en est le projet : une alpha fermée à cent joueurs, développée par un ingénieur indépendant.",
+    "metaDescription": "Qui fait OdyssAI, pourquoi, et où en est le projet : une alpha ouverte, développée par un ingénieur indépendant.",
     "lead": "Un jeu fait par une personne, pas par un studio. Voici qui, pourquoi, et où on en est.",
     "intro": [
       "OdyssAI est conçu et développé par Joachim Alexandre Jasmin, ingénieur logiciel indépendant, seul. Pas d'équipe, pas de levée de fonds, pas de feuille de route imposée."
@@ -756,7 +756,7 @@
   },
   "Terms": {
     "metaTitle": "Conditions générales",
-    "metaDescription": "Conditions d'utilisation et de vente d'OdyssAI : accès à l'alpha, compte, contenus générés par IA, crédits, abonnements et résiliation.",
+    "metaDescription": "Conditions d'utilisation et de vente d'OdyssAI : alpha ouverte, compte, contenus générés par IA, crédits, abonnements et résiliation.",
     "lead": "Ce à quoi tu t'engages en jouant, et ce à quoi nous nous engageons en retour.",
     "intro": [
       "Ces conditions régissent l'utilisation d'OdyssAI et la vente des abonnements qui s'y rattachent. Elles s'appliquent dès la création d'un compte.",
@@ -774,9 +774,9 @@
       {
         "title": "Accès pendant l'alpha",
         "body": [
-          "Le service est en alpha fermée, limitée à cent joueurs. Au delà, l'inscription est refusée jusqu'à une ouverture plus large.",
-          "Une alpha est par nature instable : des fonctions peuvent changer, être retirées, ou cesser de marcher sans préavis. Les univers et les parties peuvent être perdus lors d'une évolution technique. N'y confie rien que tu ne supporterais pas de perdre.",
-          "L'accès peut être suspendu pour maintenance, sans indemnité."
+          "OdyssAI est en alpha ouverte : le service est jouable, et il est fourni en l'état, avec les défauts d'un logiciel en cours de construction. Des bugs peuvent survenir, et un bouton dans le jeu permet de les signaler.",
+          "Pendant l'alpha, la progression d'une partie (mondes, personnages, historique) peut être remise à zéro si une correction l'exige. Les crédits d'un compte ne sont pas concernés par une telle remise à zéro.",
+          "Les abonnements ne sont pas en vente pendant l'alpha : chaque joueur dispose du palier libre et de ses crédits. Les cent premiers comptes créés reçoivent en outre trente crédits, une seule fois."
         ]
       },
       {

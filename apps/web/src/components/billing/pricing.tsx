@@ -82,6 +82,17 @@ export function Pricing() {
 
   return (
     <>
+      {/* Le temps de l'alpha, rien ne se vend : la page le dit plutôt que de
+          cacher les paliers, qui restent ce vers quoi on va. */}
+      {!catalog.salesOpen ? (
+        <p
+          role="status"
+          className="mx-auto mt-10 max-w-2xl rounded-card border border-brass/40 bg-brass/12 px-5 py-4 text-center text-ui-sm text-pretty text-vellum-2"
+        >
+          {t("alphaNote")}
+        </p>
+      ) : null}
+
       {/* Une colonne par palier des que la place existe. `max-w-md` centre la
           pile sur telephone : etiree sur toute la largeur, une carte seule
           par ligne devient un bandeau. */}
@@ -95,6 +106,7 @@ export function Pricing() {
             current={plan.id === mine}
             signIn={signIn}
             authenticated={session.status === "authenticated"}
+            salesOpen={catalog.salesOpen}
           />
         ))}
       </div>
@@ -142,6 +154,7 @@ function PlanCard({
   current,
   signIn,
   authenticated,
+  salesOpen,
 }: {
   plan: PlanOffer;
   costs: BillingCatalog["costs"];
@@ -149,6 +162,7 @@ function PlanCard({
   current: boolean;
   signIn: string;
   authenticated: boolean;
+  salesOpen: boolean;
 }) {
   const t = useTranslations("Pricing");
   const format = useFormatter();
@@ -269,9 +283,12 @@ function PlanCard({
             {t("start")}
           </Button>
         ) : (
-          // Sans prix configuré ou mis en attente au tableau de bord : on
-          // l'annonce plutôt que d'offrir un bouton qui répondrait 503.
-          <p className="text-caption text-vellum-3">{t("soon")}</p>
+          // Sans prix configuré ou mis en attente au tableau de bord, ou le
+          // temps de l'alpha : on l'annonce plutôt que d'offrir un bouton qui
+          // répondrait 503.
+          <p className="text-caption text-vellum-3">
+            {salesOpen ? t("soon") : t("closedDuringAlpha")}
+          </p>
         )}
       </div>
     </div>

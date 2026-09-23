@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   Get,
   HttpCode,
   Logger,
@@ -19,6 +20,7 @@ import {
   type BillingCatalog,
   type BillingSummary,
 } from '@odyssai/schemas';
+import { AlphaService } from '../alpha/alpha.service.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
 import { BillingDisabledError, BillingService } from './billing.service.js';
@@ -33,7 +35,10 @@ import { BillingDisabledError, BillingService } from './billing.service.js';
 export class BillingController {
   private readonly logger = new Logger(BillingController.name);
 
-  constructor(private readonly billing: BillingService) {}
+  constructor(
+    private readonly billing: BillingService,
+    private readonly alpha: AlphaService,
+  ) {}
 
   @Get()
   @UseGuards(SessionGuard)
@@ -58,6 +63,9 @@ export class BillingController {
   ): Promise<BillingRedirect> {
     const parsed = CheckoutRequestSchema.safeParse(rawBody);
     if (!parsed.success) throw new BadRequestException({ code: 'validation_error' });
+
+    // Fermee le temps de l'alpha : l'ecran le dit, l'api le tient.
+    if (!(await this.alpha.salesOpen())) throw new ForbiddenException({ code: 'sales_closed' });
 
     return { url: await this.guarded(() => this.billing.checkout(user, parsed.data.plan)) };
   }

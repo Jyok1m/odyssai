@@ -114,6 +114,8 @@ export type PlanOffer = z.infer<typeof PlanOfferSchema>;
 export const BillingCatalogSchema = z.object({
   costs: CreditCostsSchema,
   plans: z.array(PlanOfferSchema),
+  // Faux le temps de l'alpha : la page l'explique au lieu de cacher les paliers.
+  salesOpen: z.boolean(),
 });
 
 export type BillingCatalog = z.infer<typeof BillingCatalogSchema>;

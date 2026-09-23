@@ -45,7 +45,6 @@ describe('AuthController', () => {
   let users: {
     signIn: ReturnType<typeof vi.fn>;
     resolve: ReturnType<typeof vi.fn>;
-    alphaFull: ReturnType<typeof vi.fn>;
   };
   let controller: AuthController;
 
@@ -75,7 +74,6 @@ describe('AuthController', () => {
     users = {
       signIn: vi.fn().mockResolvedValue({ id: USER_ID }),
       resolve: vi.fn().mockResolvedValue({ id: USER_ID, isAdmin: false }),
-      alphaFull: vi.fn().mockResolvedValue(false),
     };
 
     controller = new AuthController(
@@ -87,18 +85,6 @@ describe('AuthController', () => {
   });
 
   describe('signin et signup', () => {
-    // Laisser creer une identite qui n'aura jamais de joueur derriere elle est
-    // un cadeau empoisonne : l'api n'a aucun droit sur le realm.
-    it('refuse l inscription avant le realm quand l alpha est complete', async () => {
-      users.alphaFull.mockResolvedValue(true);
-      const res = makeResponse();
-
-      const redirection = await controller.signUp(undefined, undefined, res.response);
-
-      expect(redirection.url).toContain('auth_error=alpha_full');
-      expect(oidc.registrationUrl).not.toHaveBeenCalled();
-    });
-
     it('redirige vers la page de connexion et lie la transaction au navigateur', async () => {
       const res = makeResponse();
 

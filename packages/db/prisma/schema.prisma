@@ -446,12 +446,14 @@ model ContactMessage {
 model SiteSettings {
   id Boolean @id @default(true)
 
-  /// `preregistration` ou `open`. « Complete » n'est pas une phase : c'est le
-  /// constat que les places sont prises, et il se lit dans `users`.
-  alphaPhase String @default("preregistration") @map("alpha_phase") @db.VarChar(16)
+  /// `open`, ou `preregistration` pour ferme : maintenance ou remise a zero.
+  alphaPhase String @default("open") @map("alpha_phase") @db.VarChar(16)
 
   /// Faux pour taire l'annonce sans changer la phase.
   alphaNotice Boolean @default(true) @map("alpha_notice")
+
+  /// La vente des paliers. Fermee le temps de l'alpha.
+  salesOpen Boolean @default(false) @map("sales_open")
 
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 

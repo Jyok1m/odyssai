@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module.js';
+import { AlphaModule } from '../alpha/alpha.module.js';
 import { BillingController } from './billing.controller.js';
 import { BillingService } from './billing.service.js';
 
@@ -8,7 +9,7 @@ import { BillingService } from './billing.service.js';
   qui l'applique, et qu'il lui faut UsersService.
 */
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, AlphaModule],
   controllers: [BillingController],
   providers: [BillingService],
   exports: [BillingService],

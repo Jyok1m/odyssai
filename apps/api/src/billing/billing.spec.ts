@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import Stripe from 'stripe';
 import type { Plan, PrismaClient } from '@odyssai/db';
+import type { AlphaService } from '../alpha/alpha.service.js';
 import { AppConfig } from '../config/app-config.js';
 import { BillingConfig } from '../config/billing-config.js';
 import type { CreditsService } from '../credits/credits.service.js';
@@ -148,6 +149,8 @@ function billing(prisma: PrismaClient) {
     {} as AppConfig,
     credits,
     new PlansService(prisma),
+    // La vente est ouverte ici : ce sont les paliers qu'on teste, pas l'alpha.
+    { salesOpen: async () => true } as unknown as AlphaService,
   );
 }
 

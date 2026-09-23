@@ -61,7 +61,7 @@
       "Quand est-ce que le jeu sort ?",
       "Comment je m'inscris pour jouer ?"
     ],
-    "answer": "OdyssAI est en alpha fermée, limitée à cent places. Le jeu n'est pas encore ouvert : créer un compte réserve ta place et les trente crédits qui vont avec, et tu reçois l'invitation dès l'ouverture. Aucune date n'est annoncée, elle serait inventée.",
+    "answer": "OdyssAI est en alpha ouverte : tu peux jouer dès maintenant. Crée un compte, et tu entres en jeu. Les cent premiers inscrits reçoivent trente crédits de plus. C'est une alpha : il peut y avoir des bugs, tu les signales depuis le bouton dédié dans le jeu, et une progression peut être remise à zéro si une correction l'exige. Les abonnements ne sont pas en vente pendant l'alpha, tout le monde joue sur le palier libre.",
     "suggested": true,
     "validated": false
   },

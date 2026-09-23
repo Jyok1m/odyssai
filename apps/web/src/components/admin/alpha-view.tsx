@@ -10,26 +10,21 @@ import { fetchAdminAlpha, updateAlpha } from "@/lib/alpha";
 
 const PHASES: { id: AlphaPhase; label: string; hint: string }[] = [
   {
-    id: "preregistration",
-    label: "Fermé, en pré-inscriptions",
-    hint: "Les joueurs inscrits attendent : les liens vers le jeu répondent par un toast, l'api refuse les routes de jeu. Le site annonce que l'alpha démarrera avec ses joueurs et compte les places.",
-  },
-  {
     id: "open",
     label: "Ouvert",
-    hint: "Les joueurs entrent en partie. Le site annonce une alpha en cours, toujours avec le compte des places.",
+    hint: "Tout le monde entre en partie. Le bandeau annonce l'alpha, ses bugs possibles et le bonus des premiers inscrits.",
+  },
+  {
+    id: "preregistration",
+    label: "Fermé : maintenance ou remise à zéro",
+    hint: "Les joueurs ordinaires voient un toast et une page qui le disent, l'api refuse les routes de jeu. Les comptes restent. Un administrateur entre quand même.",
   },
 ];
 
 /*
-  L'état de l'alpha : ce qu'on annonce, et si le jeu est ouvert. La même
-  phase fait les deux, parce qu'annoncer une alpha en cours dont les portes
-  seraient fermées ferait mentir le site.
-
-  Deux phases seulement. « Complète » n'est pas un choix : c'est le constat
-  que les places sont prises, et il s'affiche ici sans pouvoir se régler. Un
-  tableau de bord qui pourrait annoncer des places déjà occupées ferait mentir
-  le site, et c'est la porte d'entrée qui trancherait, pas l'annonce.
+  L'état de l'alpha : ouverte ou fermée, la vente des paliers, et où en sont
+  les premiers inscrits. Il n'y a plus de porte : le cent unième entre, il n'a
+  simplement pas le bonus.
 */
 export function AlphaView() {
   const [status, setStatus] = useState<AlphaStatus | null>(null);
@@ -51,11 +46,11 @@ export function AlphaView() {
   if (error) return <Feedback error={error} />;
   if (!status) return null;
 
-  const save = async (patch: { phase?: AlphaPhase; notice?: boolean }) => {
+  const save = async (patch: { phase?: AlphaPhase; notice?: boolean; salesOpen?: boolean }) => {
     setBusy(true);
     try {
       setStatus(await updateAlpha(patch));
-      toast.success("Ouverture mise à jour.");
+      toast.success("Réglage enregistré.");
     } catch (caught: unknown) {
       toast.error(reasonOf(caught));
     } finally {
@@ -67,20 +62,16 @@ export function AlphaView() {
     <Panel
       title="Alpha"
       actions={
-        status.full ? (
-          <Badge tone="warn">complète</Badge>
-        ) : (
-          <Badge tone="accent">
-            {status.remaining} / {status.seats} places
-          </Badge>
-        )
+        <Badge tone={status.phase === "open" ? "accent" : "warn"}>
+          {status.phase === "open" ? "ouvert" : "fermé"}
+        </Badge>
       }
     >
       <div className="space-y-5 px-4 py-5 sm:px-6">
         <p className="max-w-prose text-ui-sm text-vellum-2">
-          {status.taken} joueurs inscrits sur {status.seats}. Au delà, l&apos;api
-          refuse de provisionner : ce compte n&apos;est pas un affichage, c&apos;est la
-          porte d&apos;entrée.
+          {status.founders.taken} des {status.founders.seats} premières places sont prises :
+          chacune reçoit {status.founders.credits} crédits de plus. Ce n&apos;est pas une
+          porte : au-delà, on entre quand même, sans le bonus.
         </p>
 
         <fieldset className="space-y-3">
@@ -98,25 +89,26 @@ export function AlphaView() {
               />
               <span className="text-ui-sm text-vellum">
                 {phase.label}
-                <span className="mt-0.5 block text-caption text-vellum-3">
-                  {phase.hint}
-                </span>
+                <span className="mt-0.5 block text-caption text-vellum-3">{phase.hint}</span>
               </span>
             </label>
           ))}
         </fieldset>
 
-        <p className="max-w-prose text-caption text-vellum-3">
-          Un administrateur entre en jeu quelle que soit la phase : c&apos;est ainsi
-          qu&apos;on vérifie la production avant d&apos;ouvrir.
-        </p>
-
-        {status.full ? (
-          <p className="max-w-prose text-caption text-brass">
-            Les places étant prises, le bandeau annonce une alpha complète quelle
-            que soit la phase choisie.
-          </p>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-3 border-t border-line pt-5">
+          <Button
+            variant="secondary"
+            disabled={busy}
+            onClick={() => void save({ salesOpen: !status.salesOpen })}
+          >
+            {status.salesOpen ? "Fermer la vente des paliers" : "Ouvrir la vente des paliers"}
+          </Button>
+          <span className="text-caption text-vellum-3">
+            {status.salesOpen
+              ? "Les paliers configurés chez Stripe sont en vente."
+              : "Fermée le temps de l'alpha : la page des tarifs le dit, l'api refuse l'achat, tout le monde joue sur le palier libre."}
+          </span>
+        </div>
 
         <div className="flex flex-wrap items-center gap-3 border-t border-line pt-5">
           <Button
@@ -127,9 +119,7 @@ export function AlphaView() {
             {status.notice ? "Masquer le bandeau" : "Afficher le bandeau"}
           </Button>
           <span className="text-caption text-vellum-3">
-            {status.notice
-              ? "Le bandeau est visible sur tout le site."
-              : "Le bandeau est masqué. Un refus d'inscription s'affiche quand même."}
+            {status.notice ? "Le bandeau est visible sur tout le site." : "Le bandeau est masqué."}
           </span>
         </div>
       </div>
