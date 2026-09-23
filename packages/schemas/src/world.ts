@@ -185,13 +185,13 @@ const Name = z.string().trim().min(2).max(80);
   « avec sa regle » sans jamais dire la place qu'elle avait pour cela.
 */
 export const GENERATION_LIMITS = {
-  charter: { premise: 600, tone: 300, allowed: 200, forbidden: 200, narratorRule: 200 },
-  lore: { era: 300, geography: 1200, history: 1200, dailyLife: 1200 },
-  faction: { creed: 400, strength: 300, territory: 300, symbol: 200 },
-  politics: { balance: 800, conflict: 400, stakes: 600 },
-  npc: { role: 200, drive: 300, secret: 400 },
-  affinity: { note: 300 },
-  arc: { hook: 400, stakes: 400, title: 60, goal: 300, done: 200, bond: 300, secret: 300 },
+  charter: { premise: 1200, tone: 600, allowed: 400, forbidden: 400, narratorRule: 400 },
+  lore: { era: 600, geography: 2400, history: 2400, dailyLife: 2400 },
+  faction: { creed: 800, strength: 600, territory: 600, symbol: 400 },
+  politics: { balance: 1600, conflict: 800, stakes: 1200 },
+  npc: { role: 400, drive: 600, secret: 800 },
+  affinity: { note: 600 },
+  arc: { hook: 800, stakes: 800, title: 120, goal: 600, done: 400, bond: 600, secret: 600 },
 } as const;
 
 /*
