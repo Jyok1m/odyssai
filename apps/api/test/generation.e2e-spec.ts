@@ -171,6 +171,7 @@ async function boot(options: Options): Promise<INestApplication<App>> {
             traceId: null,
             startedAt: new Date(),
             finishedAt: null,
+            refundedAt: null,
             createdAt: new Date(),
           },
         ]

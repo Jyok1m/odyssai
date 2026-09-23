@@ -104,7 +104,7 @@ function Sheet({ world }: { world: WorldView }) {
             <span
               aria-hidden="true"
               style={{ borderRadius: "var(--radius-portal)" }}
-              className="grid h-36 w-28 flex-none place-items-center border border-accent/40 bg-mist pt-6 font-voice text-display-compact text-accent"
+              className="grid h-28 w-20 flex-none place-items-center border border-accent/40 bg-mist pt-4 font-voice text-title text-accent sm:h-36 sm:w-28 sm:pt-6 sm:text-display-compact"
             >
               {character.name.slice(0, 1)}
             </span>

@@ -1,0 +1,12 @@
+-- Une generation qui echoue ne doit rien couter : le joueur n'a pas eu son
+-- monde. Tous les autres appels de modele remboursent deja ; celui-la, le plus
+-- cher des cinq, ne le faisait pas.
+--
+-- La colonne est le verrou autant que la trace : le remboursement se declenche
+-- a la lecture, qui peut venir de deux endroits a la fois, et c'est une
+-- ecriture conditionnelle sur elle qui designe le gagnant.
+--
+-- Nulle pour les travaux deja echoues : ce qui a ete perdu avant cette
+-- migration se rattrape a la prochaine lecture, ce qui est exactement ce
+-- qu'on veut.
+ALTER TABLE "generation_jobs" ADD COLUMN "refunded_at" TIMESTAMPTZ(3);

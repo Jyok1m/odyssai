@@ -222,7 +222,7 @@ export function CharacterSheetForm({
           {t("sheet.attributesLegend", { min: ATTRIBUTE_MIN, max: ATTRIBUTE_MAX })}
         </legend>
 
-        <ul className="mt-3 grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {ATTRIBUTES.map((attribute) => (
             <li key={attribute}>
               <label

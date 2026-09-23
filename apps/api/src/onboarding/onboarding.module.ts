@@ -9,6 +9,7 @@ import { CharacterService } from './character.service.js';
 import { GenerationController } from './generation.controller.js';
 import { OpenWorldsController } from './open-worlds.controller.js';
 import { GenerationQueueService } from './generation-queue.service.js';
+import { GenerationRefundService } from './generation-refund.service.js';
 import { NARRATOR_LLM, narratorLlmProvider } from './narrator-llm.provider.js';
 import { OnboardingController } from './onboarding.controller.js';
 import { OnboardingService } from './onboarding.service.js';
@@ -32,6 +33,7 @@ import { OnboardingService } from './onboarding.service.js';
     OnboardingService,
     CharacterService,
     GenerationQueueService,
+    GenerationRefundService,
     narratorLlmProvider,
   ],
   exports: [OnboardingService, NARRATOR_LLM],

@@ -886,6 +886,17 @@ model GenerationJob {
   /// Metadonnee `generation_job_id` cote LangSmith, pour retrouver la trace.
   traceId String? @map("trace_id")
 
+  /// Quand les credits de cette generation ont ete rendus.
+  ///
+  /// Une generation qui echoue ne doit rien couter : le joueur n'a pas eu son
+  /// monde. Tous les autres appels de modele remboursent deja, celui-la ne le
+  /// faisait pas, et c'est le plus cher des cinq.
+  ///
+  /// La colonne est le verrou autant que la trace : le remboursement se
+  /// declenche a la lecture, qui peut venir de deux endroits a la fois, et
+  /// c'est une ecriture conditionnelle sur elle qui designe le gagnant.
+  refundedAt DateTime? @map("refunded_at") @db.Timestamptz(3)
+
   startedAt  DateTime? @map("started_at") @db.Timestamptz(3)
   finishedAt DateTime? @map("finished_at") @db.Timestamptz(3)
   createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)

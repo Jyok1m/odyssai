@@ -66,7 +66,7 @@ export function GameHeader() {
           })}
         </div>
 
-        <div className="ml-auto flex items-center gap-x-3">
+        <div className="flex items-center gap-x-3 sm:ml-auto">
           <AdminLink />
           <LocaleSwitcher />
           <AuthMenu />

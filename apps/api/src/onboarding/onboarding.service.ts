@@ -14,6 +14,7 @@ import { Prisma, PrismaClient, type User } from '@odyssai/db';
 import { PRISMA } from '../prisma/prisma.module.js';
 import { CreditsService } from '../credits/credits.service.js';
 import { GenerationQueueService } from './generation-queue.service.js';
+import { GenerationRefundService } from './generation-refund.service.js';
 import { StoriesService, currentStory } from '../stories/stories.service.js';
 
 // L'etape visee n'est pas ouverte : on n'ecrit pas plus loin qu'on n'est.
@@ -75,6 +76,7 @@ export class OnboardingService {
     @Inject(PRISMA) private readonly prisma: PrismaClient,
     private readonly queue: GenerationQueueService,
     private readonly credits: CreditsService,
+    private readonly refunds: GenerationRefundService,
     private readonly stories: StoriesService,
   ) {}
 
@@ -90,6 +92,13 @@ export class OnboardingService {
           },
         })
       : null;
+
+    /*
+      Une generation qui a echoue se solde ici aussi : celui qui revient plus
+      tard n'ouvre pas le flux d'avancement, et ses credits l'attendraient
+      indefiniment.
+    */
+    if (universe?.step === 'failed') await this.refunds.settle(universe.id);
 
     return this.toState(user, universe);
   }

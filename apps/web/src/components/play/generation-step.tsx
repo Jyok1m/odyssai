@@ -154,7 +154,7 @@ export function GenerationStep({ onReady }: Props) {
 
               <span
                 className={[
-                  "hidden w-full text-center text-caption text-balance hyphens-auto md:block",
+                  "hidden w-full text-center text-caption text-balance md:block",
                   state === "current" ? "text-vellum" : "text-vellum-3",
                 ].join(" ")}
                 aria-current={state === "current" ? "step" : undefined}

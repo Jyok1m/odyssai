@@ -28,6 +28,7 @@ import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
 import { PRISMA } from '../prisma/prisma.module.js';
 import { currentStory } from '../stories/stories.service.js';
+import { GenerationRefundService } from './generation-refund.service.js';
 
 const PING_INTERVAL_MS = 15_000;
 
@@ -57,7 +58,10 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 export class GenerationController {
   private readonly logger = new Logger(GenerationController.name);
 
-  constructor(@Inject(PRISMA) private readonly prisma: PrismaClient) {}
+  constructor(
+    @Inject(PRISMA) private readonly prisma: PrismaClient,
+    private readonly refunds: GenerationRefundService,
+  ) {}
 
   @Get('onboarding/generation')
   async progress(@CurrentUser() user: User, @Res() res: Response): Promise<void> {
@@ -101,6 +105,9 @@ export class GenerationController {
         const job = universe.jobs[0];
 
         if (universe.step === 'failed' || job?.status === 'failed') {
+          // Une generation qui echoue ne doit rien couter : le joueur n'a pas
+          // eu son monde. Idempotent, deux lectures ne creditent pas deux fois.
+          if (where) await this.refunds.settle(where.id);
           this.write(res, { type: 'failed', error: job?.error ?? null });
           return;
         }

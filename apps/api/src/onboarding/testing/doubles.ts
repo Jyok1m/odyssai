@@ -197,6 +197,8 @@ interface JobRow {
   step: string | null;
   attempts: number;
   error: string | null;
+  // Quand les credits de cette generation ont ete rendus.
+  refundedAt: Date | null;
   traceId: string | null;
   startedAt: Date | null;
   finishedAt: Date | null;
@@ -691,6 +693,29 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
     },
 
     generationJob: {
+      /*
+        Le solde d'une generation qui a echoue passe par la : les travaux qui
+        n'ont pas encore rendu leurs credits, puis le verrou qui designe qui
+        rembourse.
+      */
+      findMany: async ({ where }: any = {}) =>
+        store.jobs
+          .filter(
+            (row) =>
+              (where?.universeId === undefined || row.universeId === where.universeId) &&
+              (where?.status === undefined || row.status === where.status) &&
+              (where?.refundedAt === undefined || row.refundedAt === null),
+          )
+          .map((row) => ({ ...row })),
+      updateMany: async ({ where, data }: any) => {
+        const rows = store.jobs.filter(
+          (row) =>
+            (where?.id === undefined || row.id === where.id) &&
+            (where?.refundedAt === undefined || row.refundedAt === null),
+        );
+        for (const row of rows) assign(row, data);
+        return { count: rows.length };
+      },
       deleteMany: async ({ where }: any) => {
         const kept = store.jobs.filter((row) => row.universeId !== where.universeId);
         const count = store.jobs.length - kept.length;
@@ -705,6 +730,7 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
           step: null,
           attempts: 0,
           error: null,
+          refundedAt: null,
           traceId: null,
           startedAt: null,
           finishedAt: null,
@@ -761,6 +787,30 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
     },
 
     creditEntry: {
+      // Le grand livre repond a « lequel reste-t-il a rendre ».
+      findMany: async ({ where, select }: any = {}) => {
+        const rows = (store.creditEntries ?? []).filter((row) => {
+          if (where?.reason !== undefined && row.reason !== where.reason) return false;
+          if (where?.ref !== undefined) {
+            const wanted = where.ref?.in ?? where.ref;
+            if (Array.isArray(wanted) ? !wanted.includes(row.ref) : row.ref !== wanted) {
+              return false;
+            }
+          }
+          if (where?.delta?.lt !== undefined && !(row.delta < where.delta.lt)) {
+            return false;
+          }
+          return true;
+        });
+
+        return rows.map((row) =>
+          select
+            ? Object.fromEntries(
+                Object.keys(select).map((key) => [key, (row as any)[key]]),
+              )
+            : { ...row },
+        );
+      },
       create: async ({ data }: any) => {
         const row: CreditEntryRow = {
           id: randomUUID(),
@@ -776,7 +826,6 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
       },
       findUnique: async ({ where }: any) =>
         (store.creditEntries ?? []).find((row) => row.id === where.id) ?? null,
-      findMany: async () => [...(store.creditEntries ?? [])],
     },
 
     /*
