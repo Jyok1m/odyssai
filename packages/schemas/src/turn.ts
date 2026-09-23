@@ -273,9 +273,9 @@ export const TurnMessageSchema = z.object({
   // Porte par la reponse du meneur, jamais par le message du joueur.
   outcome: PublicOutcomeSchema.nullable(),
   /*
-    Ce a quoi la reponse du meneur repond, portee par elle aussi. Le recit
-    relu a part s'en sert : une reponse a une question n'est pas une scene,
-    elle n'y figure pas.
+    Ce que le joueur a envoye, porte par son message et par la reponse du
+    meneur : une question et sa reponse se lisent en aparte, et le recit ne
+    les reprend pas, une question n'etant pas une scene.
   */
   request: TurnRequestKindSchema.nullable(),
   createdAt: z.iso.datetime(),

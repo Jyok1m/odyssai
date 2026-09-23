@@ -134,8 +134,16 @@ export class TurnController {
         .filter((turn) => turn.usedDie)
         .map((turn) => [turn.seq + 1, publicOutcome(turn.band as never)]),
     );
-    // Meme rang : ce que le joueur avait envoye, porte par la reponse.
-    const requests = new Map(turns.map((turn) => [turn.seq + 1, turn.request]));
+    /*
+      Ce que le joueur a envoye, sur son message et sur la reponse. Le rang
+      du tour est celui du message du joueur, sauf a l'ouverture, ou il n'y
+      en a pas et ou la reponse prend le rang elle-meme.
+    */
+    const requests = new Map<number, string | null>();
+    for (const turn of turns) {
+      requests.set(turn.seq, turn.request);
+      if (turn.request !== 'open') requests.set(turn.seq + 1, turn.request);
+    }
 
     return {
       inventory: world.inventory,

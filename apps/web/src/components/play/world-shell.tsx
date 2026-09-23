@@ -123,7 +123,7 @@ function GameTable({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 print:hidden">
+      <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
         <CreditsBadge refreshKey={played} />
       </div>
 
@@ -132,7 +132,7 @@ function GameTable({
             consulte sans quitter la partie des yeux. */}
         <GameChat world={world} report={report} />
 
-        <aside className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1 print:hidden">
+        <aside className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
           <Panel
             title={t("character")}
             aside={<PanelLink href="/play/character">{t("sheetLink")}</PanelLink>}

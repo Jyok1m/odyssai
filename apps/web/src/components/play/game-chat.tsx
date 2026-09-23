@@ -12,13 +12,12 @@ import {
   type TurnMessage,
   type WorldView,
 } from "@odyssai/schemas";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 import { useEffect, useRef, useState } from "react";
 
 import { OutOfCredits } from "@/components/billing/out-of-credits";
 import { Panel, Tag } from "@/components/ui/panel";
-import { Story } from "@/components/play/story";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { Button } from "@/components/ui/button";
 import { isOutOfCredits } from "@/lib/billing";
@@ -53,12 +52,10 @@ export function GameChat({
   report: TableEvents;
 }) {
   const t = useTranslations("Game");
+  const locale = useLocale();
 
   const [messages, setMessages] = useState<TurnMessage[]>([]);
   const [input, setInput] = useState("");
-  // La lecture du récit, à côté du fil et non à sa place : on y revient pour
-  // relire, puis on reprend la partie là où elle était.
-  const [reading, setReading] = useState(false);
   /*
     Le jet en deux temps. `awaiting` dit qu'une action attend son dé ; le
     résultat, lui, se range sous le message qu'il a tranché.
@@ -136,7 +133,7 @@ export function GameChat({
               role: "user",
               content: request.kind === "fate" ? t("fateSaid") : request.content,
               outcome: null,
-              request: null,
+              request: request.kind,
               createdAt: now,
             },
           ];
@@ -271,6 +268,40 @@ export function GameChat({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded, messages.length]);
 
+  /*
+    Le récit en PDF, dans un onglet. L'onglet s'ouvre dans le clic, avant le
+    rendu : ouvert après, le navigateur le prendrait pour une fenêtre
+    surgissante. La bibliothèque n'arrive qu'à ce moment.
+  */
+  const openPdf = async () => {
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      toast.error(t("pdfBlocked"));
+      return;
+    }
+
+    try {
+      const { renderStoryPdf, scenesOf } = await import("@/components/play/story-pdf");
+      const blob = await renderStoryPdf({
+        world,
+        messages,
+        strings: {
+          kicker: t("pdf.kicker"),
+          character: t("pdf.character"),
+          act: act(world, t),
+          scenes: t("pdf.scenes", { count: scenesOf(messages).length }),
+          generated: t("pdf.generated"),
+        },
+        generatedOn: new Date().toLocaleDateString(locale, { dateStyle: "long" }),
+      });
+      tab.location.replace(URL.createObjectURL(blob));
+    } catch (caught: unknown) {
+      tab.close();
+      console.error("rendu du récit impossible", caught);
+      setError(t("errorGeneric"));
+    }
+  };
+
   const submit = (kind: "say" | "ask") => {
     const content = input.trim();
     if (!content) return;
@@ -284,7 +315,7 @@ export function GameChat({
 
   return (
     <div className="space-y-5">
-      <Panel className="print:border-0 print:p-0">
+      <Panel>
         {/* L'acte en italique et le nom du monde en titre, comme le kit : un
             chapitre s'annonce, il ne se crie pas en capitales. */}
         <header className="mb-6 flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
@@ -305,74 +336,81 @@ export function GameChat({
               {world.story.title ?? world.name}
             </h1>
           </div>
-          <div className="flex flex-wrap gap-2 print:hidden">
-            <Button
-              variant="ghost"
-              size="sm"
-              type="button"
-              onClick={() => setReading((open) => !open)}
-            >
-              {reading ? t("storyClose") : t("storyOpen")}
-            </Button>
-            {/* Le PDF passe par l'impression du navigateur : il sait déjà
-                produire ce document, et le récit seul est ce qui s'imprime. */}
-            <Button variant="ghost" size="sm" type="button" onClick={() => window.print()}>
-              {t("storyPdf")}
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            type="button"
+            disabled={!loaded || messages.length === 0}
+            onClick={() => void openPdf()}
+          >
+            {t("storyOpen")}
+          </Button>
         </header>
 
         {!loaded ? (
           <p className="text-ui-sm text-vellum-3">{t("loading")}</p>
-        ) : reading ? (
-          <Story messages={messages} />
         ) : (
-          <>
-            {/* À l'impression, le récit, quel que soit le mode affiché. */}
-            <div className="hidden print:block">
-              <Story messages={messages} />
-            </div>
-            <ol
-              ref={thread}
-              className="flex max-h-136 flex-col gap-6 overflow-y-auto overscroll-contain px-1 print:hidden"
-            >
+          <ol
+            ref={thread}
+            className="flex max-h-136 flex-col gap-6 overflow-y-auto overscroll-contain px-1"
+          >
             {messages.length === 0 ? (
               <li className="text-ui-sm text-pretty text-vellum-3">{t("opening")}</li>
             ) : null}
 
-            {messages.map((message) => (
-              <li key={message.id}>
-                {message.role === "user" ? (
+            {group(messages).map((item) =>
+              item.kind === "aside" ? (
+                <li
+                  key={item.question.id}
+                  className="rounded-card border border-arcane/35 bg-arcane/6 px-4 py-3.5"
+                >
+                  <p className="text-caption text-arcane">{t("aside")}</p>
+                  <p className="mt-2 text-ui-sm text-pretty text-vellum italic">
+                    {item.question.content}
+                  </p>
+                  {item.answer ? (
+                    <div className="mt-3 border-t border-arcane/25 pt-3">
+                      <p className="font-voice text-ui-sm whitespace-pre-wrap text-vellum-2">
+                        {item.answer.content || t("thinking")}
+                      </p>
+                      {(notes[item.answer.id] ?? []).map((entry) => (
+                        <LoreNote key={`${item.answer!.id}-${entry.name}`} entry={entry} />
+                      ))}
+                    </div>
+                  ) : null}
+                </li>
+              ) : (
+              <li key={item.message.id}>
+                {item.message.role === "user" ? (
                   <p className="ml-auto max-w-17/20 rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum">
                     <span className="sr-only">{t("you")} : </span>
-                    {message.content}
+                    {item.message.content}
                   </p>
                 ) : (
                   <div className="max-w-measure">
                     {/* Le jet d'abord : le joueur a lancé, puis le meneur a
                         raconté, et c'est dans cet ordre que ça s'est passé. */}
-                    {rolls[message.id] ? <RollPill roll={rolls[message.id]!} /> : null}
+                    {rolls[item.message.id] ? <RollPill roll={rolls[item.message.id]!} /> : null}
 
                     <p className="flex items-center gap-2 text-caption text-vellum-3">
                       {t("narrator")}
-                      {message.outcome ? <Verdict outcome={message.outcome} /> : null}
+                      {item.message.outcome ? <Verdict outcome={item.message.outcome} /> : null}
                     </p>
 
                     {/* `font-voice` reste : c'est la voix du meneur. La taille
-                        est celle du récit, la colonne de lecture aussi : c'est
-                        là qu'on passe la partie. */}
+                        est celle des autres conversations du site. */}
                     <p
                       className={[
-                        "mt-1.5 font-voice text-story whitespace-pre-wrap text-vellum",
-                        message.id === first?.id ? "dropcap" : "",
+                        "mt-1.5 font-voice text-ui-sm whitespace-pre-wrap text-vellum",
+                        item.message.id === first?.id ? "dropcap" : "",
                       ]
                         .filter(Boolean)
                         .join(" ")}
                     >
-                      {message.content || t("thinking")}
+                      {item.message.content || t("thinking")}
                     </p>
 
-                    {busy && message.content && message.id === messages.at(-1)?.id ? (
+                    {busy && item.message.content && item.message.id === messages.at(-1)?.id ? (
                       <p className="mt-2 font-voice text-ui-sm text-vellum-3 italic">
                         {t("writing")}
                         <span
@@ -382,19 +420,19 @@ export function GameChat({
                       </p>
                     ) : null}
 
-                    {(notes[message.id] ?? []).map((entry) => (
-                      <LoreNote key={`${message.id}-${entry.name}`} entry={entry} />
+                    {(notes[item.message.id] ?? []).map((entry) => (
+                      <LoreNote key={`${item.message.id}-${entry.name}`} entry={entry} />
                     ))}
                   </div>
                 )}
               </li>
-            ))}
-            </ol>
-          </>
+              ),
+            )}
+          </ol>
         )}
       </Panel>
 
-      <Panel title={t("composer")} className="print:hidden">
+      <Panel title={t("composer")}>
         {/*
           Premier temps : l'action attend son dé, et la saisie laisse la place
           au lancer. Rien n'a encore été débité.
@@ -566,6 +604,34 @@ export function Verdict({ outcome }: { outcome: PublicOutcome }) {
   Le rang de l'acte, jamais son but. Au-delà du dernier, la partie continue en
   aventure libre : un arc donne un départ, pas une fin.
 */
+/*
+  Le fil, groupé : une question au meneur et sa réponse forment un aparté,
+  qu'on lit comme tel, à part des scènes. Le reste passe tel quel.
+*/
+type Item =
+  | { kind: "turn"; message: TurnMessage }
+  | { kind: "aside"; question: TurnMessage; answer: TurnMessage | null };
+
+function group(messages: TurnMessage[]): Item[] {
+  const items: Item[] = [];
+
+  for (let index = 0; index < messages.length; index += 1) {
+    const message = messages[index]!;
+    const next = messages[index + 1];
+
+    if (message.role === "user" && message.request === "ask") {
+      const answer = next?.role === "assistant" && next.request === "ask" ? next : null;
+      items.push({ kind: "aside", question: message, answer });
+      if (answer) index += 1;
+      continue;
+    }
+
+    items.push({ kind: "turn", message });
+  }
+
+  return items;
+}
+
 function act(world: WorldView, t: ReturnType<typeof useTranslations<"Game">>) {
   if (world.story.act === null || world.story.acts === 0) return t("noAct");
   if (world.story.act > world.story.acts) return t("free");

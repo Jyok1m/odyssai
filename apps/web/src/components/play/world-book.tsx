@@ -304,7 +304,7 @@ function World({ world }: { world: WorldView }) {
           circonstances : c'est elle qui empêche un monde sans magie d'en voir
           apparaître au troisième tour. */}
       <Panel title={t("charter")}>
-        <p className="max-w-measure font-voice text-story text-pretty text-vellum">
+        <p className="max-w-measure font-voice text-narration text-pretty text-vellum">
           {world.charter.premise}
         </p>
         <p className="mt-4 max-w-measure text-ui-sm text-pretty text-vellum-2">

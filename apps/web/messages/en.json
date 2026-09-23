@@ -1072,9 +1072,7 @@
     "errorSignedOut": "Your session has expired. Sign in again, your game is kept.",
     "errorUnavailable": "The game master is not available right now.",
     "errorRefused": "This message was refused. The game accepts violence and dark subjects, but not insults or explicit content.",
-    "storyOpen": "Read the story",
-    "storyClose": "Back to the thread",
-    "storyEmpty": "The story will be written here, turn after turn.",
+    "storyOpen": "Read the story as PDF",
     "rollPrompt": "What you are attempting can fail. Roll the die.",
     "rollAction": "Roll the die",
     "dieRolled": "on the die",
@@ -1134,7 +1132,14 @@
       "peur": "fear",
       "conviction": "conviction"
     },
-    "storyPdf": "Save as PDF"
+    "aside": "Aside with the game master",
+    "pdfBlocked": "The browser blocked the new tab. Allow pop-ups for this site, then try again.",
+    "pdf": {
+      "kicker": "The story",
+      "character": "Character",
+      "scenes": "{count, plural, one {# scene} other {# scenes}}",
+      "generated": "Generated on"
+    }
   },
   "Sheet": {
     "title": "Character sheet",

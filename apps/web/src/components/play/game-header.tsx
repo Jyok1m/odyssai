@@ -27,7 +27,7 @@ export function GameHeader() {
   const pathname = usePathname();
 
   return (
-    <header className="absolute inset-x-0 top-0 z-50 print:hidden">
+    <header className="absolute inset-x-0 top-0 z-50">
       <nav
         aria-label={t("label")}
         className="mx-auto flex max-w-wrap flex-wrap items-center gap-x-8 gap-y-4 px-6 py-6 lg:px-8"

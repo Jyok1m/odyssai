@@ -1072,9 +1072,7 @@
     "errorSignedOut": "Ta session a expiré. Reconnecte-toi, ta partie est gardée.",
     "errorUnavailable": "Le meneur n'est pas disponible pour le moment.",
     "errorRefused": "Ce message a été refusé. Le jeu accepte la violence et les sujets sombres, mais pas les insultes ni le contenu explicite.",
-    "storyOpen": "Lire le récit",
-    "storyClose": "Revenir au fil",
-    "storyEmpty": "Le récit s'écrira ici, au fil de la partie.",
+    "storyOpen": "Lire le récit en version PDF",
     "rollPrompt": "Ce que tu tentes peut échouer. Lance le dé.",
     "rollAction": "Lancer le dé",
     "dieRolled": "au dé",
@@ -1134,7 +1132,14 @@
       "peur": "peur",
       "conviction": "conviction"
     },
-    "storyPdf": "Enregistrer en PDF"
+    "aside": "Aparté avec le meneur",
+    "pdfBlocked": "Le navigateur a bloqué l'ouverture de l'onglet. Autorise les fenêtres surgissantes pour ce site, puis réessaie.",
+    "pdf": {
+      "kicker": "Le récit",
+      "character": "Personnage",
+      "scenes": "{count, plural, one {# scène} other {# scènes}}",
+      "generated": "Généré le"
+    }
   },
   "Sheet": {
     "title": "Fiche de personnage",

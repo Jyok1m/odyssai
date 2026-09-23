@@ -49,7 +49,7 @@ export function AlphaNotice() {
     : "border-line bg-mist/60";
 
   return (
-    <div role="status" className={`border-b px-6 py-3 lg:px-8 print:hidden ${tone}`}>
+    <div role="status" className={`border-b px-6 py-3 lg:px-8 ${tone}`}>
       <div className="mx-auto flex max-w-wrap items-center gap-4">
         <p className="flex-1 text-ui-sm text-vellum-2">
           {refused ? (
