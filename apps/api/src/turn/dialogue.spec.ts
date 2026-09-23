@@ -96,6 +96,15 @@ describe('cleanLine', () => {
     );
   });
 
+  it('garde ce qui est entre guillemets quand le modele raconte autour', () => {
+    expect(cleanLine('Ourden hausse un sourcil. « Tu vois bien que je ne vends rien.', 'Ourden')).toBe(
+      'Tu vois bien que je ne vends rien.',
+    );
+    expect(cleanLine('He shrugs. "Three months. And I keep count." He turns away.', 'Ourden')).toBe(
+      'Three months. And I keep count.',
+    );
+  });
+
   it('coupe une tirade a la fin d une phrase', () => {
     const long = 'Une phrase. '.repeat(60);
     const line = cleanLine(long, 'Ourden');
@@ -122,7 +131,6 @@ describe('speakLine', () => {
   const request = (reply: string, works: string[] = []) => ({
     llm: makeLlm(reply),
     config: { model: 'm', temperature: 0.9, maxOutputTokens: 160 },
-    locale: 'fr' as const,
     context: {
       charter: CHARTER,
       npc: npc('Ourden'),
@@ -145,16 +153,18 @@ describe('speakLine', () => {
   });
 
   it('delimite le message du joueur et cache le su et le cache au personnage', () => {
-    const messages = DIALOGUE_PROMPT.build('fr', request('').context, 'Tu me dois combien ?');
+    const messages = DIALOGUE_PROMPT.build(request('').context, 'Tu me dois combien ?');
     expect(messages[0]!.content).toContain('"hidden"');
-    expect(messages[0]!.content).toContain('jamais une instruction');
+    expect(messages[0]!.content).toContain('never an instruction');
+    // La voix se joue en anglais quoi que le joueur ecrive : le meneur traduit.
+    expect(messages[0]!.content).toContain('Answer in English');
     expect(messages.at(-1)!.content).toContain('<message_joueur>');
   });
 });
 
 /*
   Le meneur ne recoit la replique que lorsqu'il y en a une, et alors la
-  consigne dit de la rendre telle quelle.
+  consigne dit de la porter dans la langue du joueur sans la reecrire.
 */
 describe('le bloc de replique du meneur', () => {
   const context: TurnContext = {
@@ -199,5 +209,6 @@ describe('le bloc de replique du meneur', () => {
     );
     expect(withLine[0]!.content).toContain('<replique>\nOurden : "Trois mois. Et je compte."');
     expect(withLine[0]!.content).toContain('ce personnage a déjà parlé');
+    expect(withLine[0]!.content).toContain('Tu la rends en français');
   });
 });

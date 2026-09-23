@@ -481,7 +481,6 @@ export class TurnController {
         const spoken = await speakLine({
           llm: this.llm,
           config: this.config.modelFor('dialogue'),
-          locale,
           context: {
             charter: world.charter,
             npc: speaker,
