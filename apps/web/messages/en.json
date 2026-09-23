@@ -335,7 +335,9 @@
         "validation": "Reading it all back"
       },
       "label": "Next",
-      "failedLabel": "If it fails"
+      "failedLabel": "If it fails",
+      "queued": "Waiting to start.",
+      "at": "Step {position} of {total}: {step}."
     },
     "world": {
       "openingTitle": "Here you are",

@@ -102,8 +102,13 @@ export function GenerationStep({ onReady }: Props) {
       {/*
         Le fil des noeuds, a l'horizontale : neuf etapes en colonne tenaient
         tout l'ecran pour dire qu'on attend, et on les relit a chaque fois.
+
+        Les libelles ne tiennent qu'a partir de `md` : sous cette largeur, la
+        colonne fait moins que le plus long mot, et les titres se chevauchent
+        d'un pas a l'autre. Plus bas, les pastilles seules et une ligne qui dit
+        ou l'on en est : c'est la seule chose qu'on vienne lire.
       */}
-      <ol className="mt-6 flex items-start gap-1 overflow-x-auto" aria-live="polite">
+      <ol className="mt-6 flex items-start gap-1" aria-live="polite">
         {STEPS.map((name, index) => {
           const state =
             current === -1
@@ -149,7 +154,7 @@ export function GenerationStep({ onReady }: Props) {
 
               <span
                 className={[
-                  "text-center text-caption text-balance",
+                  "hidden w-full text-center text-caption text-balance hyphens-auto md:block",
                   state === "current" ? "text-vellum" : "text-vellum-3",
                 ].join(" ")}
                 aria-current={state === "current" ? "step" : undefined}
@@ -160,6 +165,18 @@ export function GenerationStep({ onReady }: Props) {
           );
         })}
       </ol>
+
+      {/* Sous `md`, le fil n'a plus de libelles : celui de l'etape en cours
+          se dit ici, et lui seul. */}
+      <p className="mt-4 text-ui-sm text-vellum md:hidden">
+        {current === -1
+          ? t("generation.queued")
+          : t("generation.at", {
+              position: current + 1,
+              total: STEPS.length,
+              step: t(`generation.steps.${STEPS[current]!}`),
+            })}
+      </p>
 
       <p className="mt-6 max-w-measure text-ui-sm text-pretty text-vellum-2">
         {t("generation.lead")}

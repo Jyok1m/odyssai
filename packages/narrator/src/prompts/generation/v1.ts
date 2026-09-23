@@ -17,6 +17,12 @@ import type { PromptMessage } from '../guide/v1.js';
   parce que le but de l'acte lui est cache : une histoire qui dit ou elle va ne
   se joue plus. Un titre nomme la situation sans la resoudre, donc il peut se
   lire, et c'est la seule part de l'arc qui le fait.
+
+  v7 : le noeud politique dit la forme de ses trois valeurs. Il demandait des
+  conflits « nommant les factions concernees et l'objet precis du desaccord »,
+  ce qu'un modele structure naturellement en objets : une generation a echoue
+  deux fois de suite dessus, le schema attendant des phrases. Les autres noeuds
+  disaient deja la leur, celui-la l'avait laissee deviner.
 */
 export interface GenerationContext {
   themes: WorldThemes;
@@ -138,16 +144,16 @@ Each object: name, creed, strength, territory, symbol.
   politics: {
     fr: `Tu écris l'équilibre politique d'un monde, à partir de ses factions.
 
-Clés : balance, conflicts, stakes.
-- balance : qui tient quoi, concrètement (une route, un port, une réserve, une garnison, un tribunal), et par quoi cet équilibre tient encore.
-- conflicts : de un à quatre conflits ouverts ou latents, nommant les factions concernées et l'objet précis du désaccord.
-- stakes : ce qui basculerait si l'équilibre cédait : qui perdrait quoi.`,
+Clés : balance, conflicts, stakes. **Les trois sont du texte, jamais des objets.**
+- balance : du texte. Qui tient quoi, concrètement (une route, un port, une réserve, une garnison, un tribunal), et par quoi cet équilibre tient encore.
+- conflicts : une liste de une à quatre **phrases**, et non d'objets. Chaque phrase nomme les factions concernées et l'objet précis du désaccord, d'un seul tenant : « La maison Varek et les gens du Pont se disputent le péage du gué bas, que les deux ont affermé la même année. » Pas {"factions": [...], "objet": "..."} : une phrase.
+- stakes : du texte. Ce qui basculerait si l'équilibre cédait : qui perdrait quoi.`,
     en: `You write the political balance of a world, from its factions.
 
-Keys: balance, conflicts, stakes.
-- balance: who holds what, concretely (a road, a harbour, a store, a garrison, a court), and what still holds this balance together.
-- conflicts: one to four open or latent conflicts, naming the factions involved and the precise object of the dispute.
-- stakes: what would tip if the balance gave way: who would lose what.`,
+Keys: balance, conflicts, stakes. **All three are text, never objects.**
+- balance: text. Who holds what, concretely (a road, a harbour, a store, a garrison, a court), and what still holds this balance together.
+- conflicts: a list of one to four **sentences**, not of objects. Each sentence names the factions involved and the precise object of the dispute, in one piece: "House Varek and the Bridge folk both claim the toll at the low ford, which each was granted the same year." Not {"factions": [...], "object": "..."}: a sentence.
+- stakes: text. What would tip if the balance gave way: who would lose what.`,
   },
 
   characters: {
@@ -231,7 +237,7 @@ Each object: subject, target, stance, note.
 };
 
 export const GENERATION_PROMPT = {
-  id: 'generation/v6',
+  id: 'generation/v7',
 
   build(
     node: GenerationNode,

@@ -335,7 +335,9 @@
         "validation": "Relire l'ensemble"
       },
       "label": "Ensuite",
-      "failedLabel": "Si ça échoue"
+      "failedLabel": "Si ça échoue",
+      "queued": "En attente de départ.",
+      "at": "Étape {position} sur {total} : {step}."
     },
     "world": {
       "openingTitle": "Te voilà",
