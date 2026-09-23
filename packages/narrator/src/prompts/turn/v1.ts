@@ -1,3 +1,4 @@
+import { OVERUSED_NAMES } from '@odyssai/schemas';
 import type {
   CanonFact,
   Condition,
@@ -112,7 +113,7 @@ Comment tu racontes :
 Ce que le joueur connaît :
 - **Il ne sait rien de ce monde.** Il n'a pas lu le lore, il ne découvre que ce que tu lui montres. Un nom propre qu'il n'a jamais entendu ne lui dit rien, même s'il est écrit dans ce que tu as sous les yeux.
 - **Un seul nom propre nouveau par tour** : une personne, un lieu, une faction ou un objet nommé, pas deux. Le lore t'en offre beaucoup, ce n'est pas une raison pour les sortir vite.
-- **Tout nom cité pour la première fois se présente sur-le-champ**, en trois mots dans la phrase : « Kaelen, qui t'a formé », « les Gardiens, ceux qui tiennent la citadelle ». **Une seule fois.** Ensuite le nom s'écrit nu : « Kaelen, qui t'a formé » une seconde fois est une faute, il s'appelle Kaelen et c'est tout.
+- **Tout nom cité pour la première fois se présente sur-le-champ**, en trois mots dans la phrase : « Untel, qui t'a formé », « les Untels, ceux qui tiennent la citadelle ». **Une seule fois.** Ensuite le nom s'écrit nu : « Untel, qui t'a formé » une seconde fois est une faute, il s'appelle Untel et c'est tout.
 - Approfondis ce qui est déjà devant lui plutôt que d'ouvrir autre chose. Une scène qui se creuse vaut mieux qu'une scène qui s'élargit.
 
 Comment tu fais avancer :
@@ -187,6 +188,7 @@ Termine ta réponse par ${CANON_MARKER} suivi d'un objet JSON, sur une seule lig
 - usedDie : vrai seulement si la bande a coloré ce que tu viens de raconter.
 - facts : une vérité durable du monde que tu viens d'établir et que le lore ne disait pas. **Vide la plupart du temps, et c'est la réponse normale** : les trois places ne sont pas un quota à remplir.
   N'y mets jamais un événement, une action en cours, ni ce qui vient de se passer : cela se lit déjà dans ton récit. Le canon dit ce qui est vrai de ce monde, pas ce qui s'y passe, et un fait entré ici te revient à chaque tour jusqu'à la fin de la partie.
+- **Un nom nouveau sonne comme ceux de ce monde** (relis « monde » et « entites »), et jamais comme ceux-ci, que tous les modèles donnent à tout le monde : ${OVERUSED_NAMES.join(', ')}. Pas de groupe appelé « le Syndicat », « le Consortium », « le Conseil », « l'Ordre », ni de nom qui contienne « ombre ».
 - met : les noms nouveaux posés ce tour, avec leur genre (npc, item, place, faction, sans accent, recopiés tels quels) et hint, ce que la scène en a montré en une phrase. Vide si tu n'as rien nommé de neuf. Un nom déjà dans « entites » n'y va pas.
 - revealed : les noms dont le caché vient de sortir dans ton récit. Vide la plupart du temps.
 - gained et lost : ce que le personnage vient de prendre et de perdre, par leur nom, trois au plus de chaque côté. **Un objet qu'on tient dans la main**, et rien d'autre : jamais une idée, un sentiment, un pouvoir ni un lien. « Volonté collective » n'est pas un objet, une torche l'est. Vides la plupart du temps. Ce que tu n'écris pas ici n'a pas changé de main, quoi que ton récit ait raconté.`,
@@ -208,7 +210,7 @@ How you tell it:
 What the player knows:
 - **They know nothing of this world.** They have not read the lore; they only find out what you show them. A proper name they have never heard means nothing to them, even if it is written in what you have before you.
 - **One new proper name per turn**: a person, a place, a faction or a named object, not two. The lore offers you many, that is no reason to spend them quickly.
-- **Any name used for the first time introduces itself on the spot**, in three words inside the sentence: "Kaelen, who trained you", "the Guardians, who hold the citadel". **Once only.** After that the name stands bare: "Kaelen, who trained you" a second time is a mistake, he is Kaelen and that is all.
+- **Any name used for the first time introduces itself on the spot**, in three words inside the sentence: "So-and-so, who trained you", "the So-and-sos, who hold the citadel". **Once only.** After that the name stands bare: "So-and-so, who trained you" a second time is a mistake, he is So-and-so and that is all.
 - Dig into what already stands before them rather than opening something else. A scene that deepens is worth more than a scene that widens.
 
 How you move things on:
@@ -283,6 +285,7 @@ End your answer with ${CANON_MARKER} followed by a JSON object, on a single line
 - usedDie: true only if the band coloured what you just told.
 - facts: a lasting truth about the world that you just established and that the lore did not hold. **Empty most of the time, and that is the normal answer**: the three slots are not a quota to fill.
   Never put an event, an action under way, or what just happened: that is already in your telling. The canon says what is true of this world, not what happens in it, and a fact entered here comes back to you every turn until the end of the game.
+- **A new name sounds like this world's names** (reread "monde" and "entites"), never like these, which every model gives to everyone: ${OVERUSED_NAMES.join(', ')}. No group called "the Syndicate", "the Consortium", "the Council", "the Order", and no name containing "shadow".
 - met: the new names set this turn, with their kind (npc, item, place, faction, unaccented, copied as they are) and hint, what the scene showed of them in one sentence. Empty if you named nothing new. A name already in "entites" does not go there.
 - revealed: the names whose hidden part just came out in your telling. Empty most of the time.
 - gained and lost: what the character just took and just lost, by name, three at most on each side. **Something held in the hand**, nothing else: never an idea, a feeling, a power or a bond. "Collective will" is not an object, a torch is. Empty most of the time. What you do not write here has not changed hands, whatever your telling said.`,
@@ -376,7 +379,7 @@ function arcBlock(context: TurnContext): string {
 }
 
 export const TURN_PROMPT = {
-  id: 'turn/v21',
+  id: 'turn/v22',
 
   build(
     locale: UiLocale,

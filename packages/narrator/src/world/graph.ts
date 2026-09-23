@@ -14,6 +14,8 @@ import {
   WorldLoreSchema,
   bibleProse,
   findBorrowedNames,
+  overusedNamesIn,
+  type Flavour,
   type Affinity,
   type CharacterSheet,
   type Faction,
@@ -69,6 +71,8 @@ const GenerationState = Annotation.Root({
   themes: Annotation<WorldThemes>,
   character: Annotation<CharacterSheet>,
   works: Annotation<string[]>,
+  // Le registre et la palette tires par le worker, gardes avec le fil.
+  flavour: Annotation<Flavour>,
 
   charter: Annotation<WorldCharter | undefined>,
   lore: Annotation<WorldLore | undefined>,
@@ -116,6 +120,8 @@ function node<T, K extends keyof GenerationStateType>(
   field: K,
   schema: z.ZodType<T>,
   pick: (value: unknown) => unknown,
+  // Ce que le schema ne dit pas et qui vaut pourtant un rejeu : les noms.
+  check: (value: T) => string[] = () => [],
 ) {
   return async function run(
     state: GenerationStateType,
@@ -131,6 +137,7 @@ function node<T, K extends keyof GenerationStateType>(
           themes: state.themes,
           character: state.character,
           produced: produced(state),
+          flavour: state.flavour,
         }),
         trace: {
           name: `generation-${step}`,
@@ -148,10 +155,15 @@ function node<T, K extends keyof GenerationStateType>(
 
       const parsed = schema.safeParse(pick(result.value));
       if (parsed.success) {
-        return {
-          [field]: parsed.data,
-          usage,
-        } as Partial<GenerationStateType>;
+        const faults = check(parsed.data);
+        if (faults.length === 0) {
+          return {
+            [field]: parsed.data,
+            usage,
+          } as Partial<GenerationStateType>;
+        }
+        details = faults;
+        continue;
       }
 
       details = parsed.error.issues.map(
@@ -251,6 +263,7 @@ export function buildGenerationGraph(deps: GraphDeps) {
         'factions',
         z.array(FactionSchema).min(2).max(5),
         under('factions'),
+        (rows) => overusedNamesIn(rows.map((row) => row.name)).map((name) => `nom trop vu : ${name}`),
       ),
     )
     .addNode(
@@ -261,7 +274,14 @@ export function buildGenerationGraph(deps: GraphDeps) {
     // joueur, lui, existe deja.
     .addNode(
       WRITE.characters,
-      node(deps, 'characters', 'npcs', z.array(NpcSchema).min(3).max(6), under('npcs')),
+      node(
+        deps,
+        'characters',
+        'npcs',
+        z.array(NpcSchema).min(3).max(6),
+        under('npcs'),
+        (rows) => overusedNamesIn(rows.map((row) => row.name)).map((name) => `nom trop vu : ${name}`),
+      ),
     )
     .addNode(
       WRITE.affinities,
@@ -305,6 +325,7 @@ export interface RunGenerationOptions {
     themes: WorldThemes;
     character: CharacterSheet;
     works: string[];
+    flavour: Flavour;
   };
   signal?: AbortSignal;
   // Appele quand un noeud a fini, pour suivre l'avancement.

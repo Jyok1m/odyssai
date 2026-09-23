@@ -436,6 +436,80 @@ export function bibleProse(charter: WorldCharter, bible: WorldBible): string {
 }
 
 /*
+  Le registre d'une histoire et la couleur de ses noms, tires par le code
+  avant la generation et imposes au modele. Sans eux, il retombe sur ses
+  pentes : le complot d'une organisation de l'ombre, et les memes prenoms
+  d'un monde a l'autre. Le code decide, le modele ecrit dedans. Les
+  identifiants sont sans accent, les prompts en portent la description.
+*/
+export const STORY_REGISTERS = [
+  'enquete',
+  'dette',
+  'fete',
+  'chantier',
+  'heritage',
+  'route',
+  'proces',
+  'disparition',
+  'commerce',
+  'rivalite',
+  'saison',
+  'voyage',
+  'concours',
+  'malentendu',
+] as const;
+export const StoryRegisterSchema = z.enum(STORY_REGISTERS);
+export type StoryRegister = z.infer<typeof StoryRegisterSchema>;
+
+export const NAME_PALETTES = [
+  'bref',
+  'latin',
+  'nordique',
+  'meridional',
+  'slave',
+  'ouvert',
+  'compose',
+  'ancien',
+] as const;
+export const NamePaletteSchema = z.enum(NAME_PALETTES);
+export type NamePalette = z.infer<typeof NamePaletteSchema>;
+
+export const FlavourSchema = z.object({
+  register: StoryRegisterSchema,
+  palette: NamePaletteSchema,
+});
+export type Flavour = z.infer<typeof FlavourSchema>;
+
+/*
+  Les prenoms que les modeles donnent a tout le monde, et les mots de groupe
+  qui reviennent d'un monde a l'autre. Dits aux prompts, et verifies par le
+  graphe : un noeud qui en rend un est rejoue. Compares sur des mots entiers
+  replies, comme les titres d'oeuvres.
+*/
+export const OVERUSED_NAMES = [
+  'kaelen', 'kael', 'kaelin', 'elara', 'lyra', 'seraphina', 'thorne', 'zephyr',
+  'vex', 'nyx', 'aria', 'kira', 'ravenna', 'cassian', 'varek', 'nym', 'silas',
+  'corvin', 'draven', 'soren', 'elowen', 'maelis', 'orin', 'theron', 'cyrus',
+  'ezra', 'aldric', 'isolde', 'lucian', 'ilya', 'mara', 'mira', 'joren', 'joric',
+  'talia', 'torin', 'maren',
+] as const;
+
+export const OVERUSED_GROUP_WORDS = [
+  'syndicat', 'consortium', 'conseil', 'ordre', 'cercle', 'veilleurs', 'ombre',
+  'ombres', 'eclats', 'tisserands',
+] as const;
+
+// Les noms d'une liste qui portent un prenom ou un mot de groupe trop vu.
+export function overusedNamesIn(names: string[]): string[] {
+  const forbidden = new Set<string>([...OVERUSED_NAMES, ...OVERUSED_GROUP_WORDS]);
+  return names.filter((name) =>
+    normalizeWorkTitle(name)
+      .split(' ')
+      .some((word) => forbidden.has(word)),
+  );
+}
+
+/*
   Essais par noeud du graphe de generation. Un modele rate rarement deux fois
   de la meme facon, et un troisieme essai coute plus qu'il ne rattrape.
 

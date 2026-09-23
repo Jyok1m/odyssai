@@ -1,5 +1,5 @@
 import type { LlmClient } from '@odyssai/llm';
-import { seedEntities } from '@odyssai/engine';
+import { drawFlavour, seedEntities } from '@odyssai/engine';
 import { Prisma, type PrismaClient } from '@odyssai/db';
 import {
   CharacterSheetSchema,
@@ -191,6 +191,8 @@ export async function generate(
         themes,
         character: character.data,
         works,
+        // Tire ici, garde dans le fil : une reprise ne retire pas.
+        flavour: drawFlavour(),
       },
       signal,
       onStep: (name) => {

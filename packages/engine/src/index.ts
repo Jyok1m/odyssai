@@ -2,6 +2,7 @@ export * from './canon.js';
 export * from './credits.js';
 export * from './dialogue.js';
 export * from './die.js';
+export * from './flavour.js';
 export * from './health.js';
 export * from './lore.js';
 export * from './marks.js';

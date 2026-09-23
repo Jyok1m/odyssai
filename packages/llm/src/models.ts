@@ -48,7 +48,14 @@ export const LLM_MODELS: Record<LlmRole, LlmModelSpec> = {
   // Sept appels par monde, amortis sur vingt-cinq credits : la qualite y est
   // presque gratuite, et c'est elle qui decide de la coherence de tout ce qui
   // suit.
-  generation: { model: 'qwen/qwen3.7-plus', temperature: 0.8, maxOutputTokens: 1400 },
+  /*
+    Mesure sur six mondes, memes inspirations, memes tirages, prompt v9 :
+    qwen3.7-plus rend 21 prenoms distincts sur 24 et glisse encore trois
+    prenoms interdits ; deepseek-v4-flash en rend 33 sur 35, aucun interdit,
+    et suit les palettes de noms a la lettre. Le lore reste sur qwen : trois
+    phrases sans nom nouveau, la question ne s'y pose pas.
+  */
+  generation: { model: 'deepseek/deepseek-v4-flash-0731', temperature: 0.8, maxOutputTokens: 1400 },
 
   // Rare, court, et tout tient a la coherence avec ce qui est deja pose.
   lore: { model: 'qwen/qwen3.7-plus', temperature: 0.7, maxOutputTokens: 400 },
