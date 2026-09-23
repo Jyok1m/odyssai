@@ -31,7 +31,7 @@ export function Panel({
     >
       {title ? (
         <header className="mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <h2 className="font-ui text-caption font-medium tracking-[0.12em] text-vellum-2 uppercase">
+          <h2 className="font-ui text-caption font-medium tracking-widest text-vellum-2 uppercase">
             {title}
           </h2>
           {aside ? <span className="text-caption text-vellum-3">{aside}</span> : null}

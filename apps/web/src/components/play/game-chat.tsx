@@ -320,7 +320,7 @@ export function GameChat({
         ) : (
           <ol
             ref={thread}
-            className="flex max-h-[34rem] flex-col gap-6 overflow-y-auto overscroll-contain px-1"
+            className="flex max-h-136 flex-col gap-6 overflow-y-auto overscroll-contain px-1"
           >
             {messages.length === 0 ? (
               <li className="text-ui-sm text-pretty text-vellum-3">{t("opening")}</li>
@@ -329,7 +329,7 @@ export function GameChat({
             {messages.map((message) => (
               <li key={message.id}>
                 {message.role === "user" ? (
-                  <p className="ml-auto max-w-[85%] rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum">
+                  <p className="ml-auto max-w-17/20 rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum">
                     <span className="sr-only">{t("you")} : </span>
                     {message.content}
                   </p>

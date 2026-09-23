@@ -23,7 +23,7 @@ export function Story({ messages }: { messages: TurnMessage[] }) {
   }
 
   return (
-    <div className="flex max-h-[32rem] flex-col gap-6 overflow-y-auto overscroll-contain px-1">
+    <div className="flex max-h-128 flex-col gap-6 overflow-y-auto overscroll-contain px-1">
       {scenes.map((scene, index) => (
         <article key={scene.id}>
           {index > 0 ? <hr className="mb-6 border-line" /> : null}

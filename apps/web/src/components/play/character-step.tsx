@@ -219,12 +219,12 @@ export function CharacterStep({ initial, arrival, saving, error, onAdvance }: Pr
           {messages.map((message) => (
             <li key={message.id}>
               {message.role === "user" ? (
-                <p className="ml-auto max-w-[85%] rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum">
+                <p className="ml-auto max-w-17/20 rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum">
                   <span className="sr-only">{t("character.you")} : </span>
                   {message.content}
                 </p>
               ) : (
-                <div className="max-w-[92%]">
+                <div className="max-w-23/25">
                   <p className="text-caption text-vellum-3">
                     {t("character.guide")}
                   </p>

@@ -69,7 +69,7 @@ function Header({ world }: { world?: WorldView }) {
   return (
     <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
       <div>
-        <p className="text-caption tracking-[0.12em] text-vellum-3 uppercase">
+        <p className="text-caption tracking-widest text-vellum-3 uppercase">
           {t("title")}
         </p>
         <h1 className="mt-2 font-voice text-display-compact text-balance text-vellum">

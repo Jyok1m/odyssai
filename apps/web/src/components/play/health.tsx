@@ -45,7 +45,7 @@ export function HealthBar({
 
       <div className="mt-2.5 h-1.5 overflow-hidden rounded-xs bg-mist">
         <div
-          className={`h-full transition-[width] duration-500 motion-reduce:transition-none ${tone.bar}`}
+          className={`h-full transition-all duration-500 motion-reduce:transition-none ${tone.bar}`}
           style={{ width: `${share}%` }}
         />
       </div>

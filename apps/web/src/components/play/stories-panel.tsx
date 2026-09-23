@@ -159,7 +159,7 @@ export function StoriesPanel() {
 
       {carrying ? (
         <section className="rounded-card border border-line bg-abyss p-5 sm:p-6">
-          <h2 className="font-ui text-caption font-medium tracking-[0.12em] text-vellum-2 uppercase">
+          <h2 className="font-ui text-caption font-medium tracking-widest text-vellum-2 uppercase">
             {t("carryTitle")}
           </h2>
           <p className="mt-2 max-w-measure text-ui-sm text-pretty text-vellum-3">
@@ -313,7 +313,7 @@ function StoryCard({ story, busy, onPlay, onDeleted }: CardProps) {
                   setOpening(false);
                 }
               }}
-              className="mt-0.5 size-4 flex-none accent-[var(--accent)]"
+              className="mt-0.5 size-4 flex-none accent-accent"
             />
             <span>
               <span className="block text-ui-sm text-vellum">
