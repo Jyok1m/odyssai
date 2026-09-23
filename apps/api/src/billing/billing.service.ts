@@ -41,7 +41,10 @@ export class BillingService {
     repondrait 503.
   */
   async catalog(): Promise<BillingCatalog> {
-    const [plans, salesOpen] = await Promise.all([this.plans.all(), this.alpha.salesOpen()]);
+    const [plans, salesOpen] = await Promise.all([
+      this.plans.all(),
+      this.alpha.salesOpen(),
+    ]);
 
     return {
       salesOpen,
@@ -58,7 +61,10 @@ export class BillingService {
         amountCents: plan.amountCents,
         currency: plan.currency,
         purchasable:
-          salesOpen && this.config.enabled && plan.stripePriceId !== null && !plan.comingSoon,
+          salesOpen &&
+          this.config.enabled &&
+          plan.stripePriceId !== null &&
+          !plan.comingSoon,
         recommended: plan.recommended,
         comingSoon: plan.comingSoon,
       })),
@@ -74,9 +80,10 @@ export class BillingService {
   */
   async summary(user: User): Promise<BillingSummary> {
     const subscription = await this.credits.ensure(user.id);
-    const [plan, salesOpen] = await Promise.all([
+    const [plan, salesOpen, granted] = await Promise.all([
       this.plans.bySlug(subscription.plan),
       this.alpha.salesOpen(),
+      this.credits.granted(subscription),
     ]);
 
     return {
@@ -84,6 +91,7 @@ export class BillingService {
       planName: plan.name,
       status: subscription.status,
       credits: subscription.credits,
+      granted,
       monthly: plan.monthlyCredits,
       renewsAt: subscription.periodEnd.toISOString(),
       cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
@@ -186,7 +194,9 @@ export class BillingService {
   */
   async cancelSubscription(stripeSubscriptionId: string): Promise<void> {
     await this.client().subscriptions.cancel(stripeSubscriptionId);
-    this.logger.warn(`abonnement resilie par un administrateur : ${stripeSubscriptionId}`);
+    this.logger.warn(
+      `abonnement resilie par un administrateur : ${stripeSubscriptionId}`,
+    );
   }
 
   /*
@@ -286,7 +296,8 @@ export class BillingService {
         plan: plan.slug,
         // `trialing` vaut `active` pour nous : la seule question que le statut
         // tranche ici est celle du droit a la dotation.
-        status: subscription.status === 'trialing' ? 'active' : subscription.status,
+        status:
+          subscription.status === 'trialing' ? 'active' : subscription.status,
         stripeSubscriptionId: subscription.id,
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
       },
@@ -322,7 +333,9 @@ export class BillingService {
       `customer.subscription.created`, et sans cette relecture un joueur qui
       vient de payer recevrait la dotation du palier libre.
     */
-    await this.syncById(invoice.parent?.subscription_details?.subscription ?? null);
+    await this.syncById(
+      invoice.parent?.subscription_details?.subscription ?? null,
+    );
 
     const local = await this.find(String(invoice.customer));
     if (!local) return;

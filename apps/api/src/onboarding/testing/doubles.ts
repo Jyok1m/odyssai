@@ -312,6 +312,45 @@ export function makeUser(overrides: Partial<UserRow> = {}): UserRow {
   };
 }
 
+function entriesMatching(store: OnboardingStore, where: any): CreditEntryRow[] {
+  return (store.creditEntries ?? []).filter((row) => {
+    if (
+      where?.subscriptionId !== undefined &&
+      row.subscriptionId !== where.subscriptionId
+    ) {
+      return false;
+    }
+    if (typeof where?.reason === 'string' && row.reason !== where.reason)
+      return false;
+    if (where?.reason?.notIn?.includes(row.reason)) return false;
+    if (where?.ref !== undefined) {
+      const wanted = where.ref?.in ?? where.ref;
+      if (
+        Array.isArray(wanted) ? !wanted.includes(row.ref) : row.ref !== wanted
+      ) {
+        return false;
+      }
+    }
+    if (where?.delta?.lt !== undefined && !(row.delta < where.delta.lt))
+      return false;
+    if (
+      where?.createdAt?.gte !== undefined &&
+      row.createdAt < where.createdAt.gte
+    ) {
+      return false;
+    }
+    return true;
+  });
+}
+
+function pickEntry(row: CreditEntryRow, select?: Record<string, boolean>) {
+  return select
+    ? Object.fromEntries(
+        Object.keys(select).map((key) => [key, (row as any)[key]]),
+      )
+    : { ...row };
+}
+
 export function makeOnboardingPrisma(store: OnboardingStore) {
   const hydrate = (
     universe: UniverseRow | undefined,
@@ -333,9 +372,12 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
     return {
       ...universe,
       character: include.character
-        ? (store.characters.find((row) => row.universeId === universe.id) ?? null)
+        ? (store.characters.find((row) => row.universeId === universe.id) ??
+          null)
         : undefined,
-      jobs: include.jobs ? jobs.slice(0, include.jobs.take ?? jobs.length) : undefined,
+      jobs: include.jobs
+        ? jobs.slice(0, include.jobs.take ?? jobs.length)
+        : undefined,
       // Aucun test n'en seme : ce qui compte est que la vue en porte une liste.
       entities: include.entities ? [] : undefined,
       canon: include.canon ? [] : undefined,
@@ -384,7 +426,10 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
     essence: {
       findMany: async ({ where }: any = {}) =>
         (store.essences ?? [])
-          .filter((row) => where?.ownerId === undefined || row.ownerId === where.ownerId)
+          .filter(
+            (row) =>
+              where?.ownerId === undefined || row.ownerId === where.ownerId,
+          )
           .map((row) => ({ ...row, incarnations: [] })),
       findUnique: async ({ where }: any) => {
         const row = (store.essences ?? []).find(
@@ -396,7 +441,8 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
       },
       findFirst: async ({ where }: any = {}) =>
         (store.essences ?? []).find(
-          (row) => where?.ownerId === undefined || row.ownerId === where.ownerId,
+          (row) =>
+            where?.ownerId === undefined || row.ownerId === where.ownerId,
         ) ?? null,
       create: async ({ data, select }: any) => {
         const now = new Date();
@@ -420,11 +466,15 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         );
       },
       update: async ({ where, data }: any) => {
-        const row = (store.essences ?? []).find((item) => item.id === where.id)!;
+        const row = (store.essences ?? []).find(
+          (item) => item.id === where.id,
+        )!;
         return { ...assign(row, data) };
       },
       delete: async ({ where }: any) => {
-        store.essences = (store.essences ?? []).filter((row) => row.id !== where.id);
+        store.essences = (store.essences ?? []).filter(
+          (row) => row.id !== where.id,
+        );
         return {};
       },
       count: async ({ where }: any = {}) =>
@@ -450,7 +500,9 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         }).length,
       findUnique: async ({ where, select }: any) => {
         const row = store.users.find((user) =>
-          where.id ? user.id === where.id : user.keycloakId === where.keycloakId,
+          where.id
+            ? user.id === where.id
+            : user.keycloakId === where.keycloakId,
         );
         if (!row) return null;
         if (!select) return { ...row };
@@ -525,12 +577,19 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
       },
       findMany: async ({ where, orderBy, select, include }: any = {}) => {
         const rows = store.universes
-          .filter((row) => where?.ownerId === undefined || row.ownerId === where.ownerId)
+          .filter(
+            (row) =>
+              where?.ownerId === undefined || row.ownerId === where.ownerId,
+          )
           // Les visites d'un monde : aucun test n'en joue, donc aucune ligne.
-          .filter(() => where?.visiting === undefined && where?.visitingId === undefined)
-          .sort((a, b) =>
-            (orderBy?.createdAt === 'desc' ? -1 : 1) *
-            (a.createdAt.getTime() - b.createdAt.getTime()),
+          .filter(
+            () =>
+              where?.visiting === undefined && where?.visitingId === undefined,
+          )
+          .sort(
+            (a, b) =>
+              (orderBy?.createdAt === 'desc' ? -1 : 1) *
+              (a.createdAt.getTime() - b.createdAt.getTime()),
           );
         return rows.map((row) => {
           const hydrated = hydrate(row, include) as Record<string, unknown>;
@@ -542,7 +601,8 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
       },
       count: async ({ where }: any = {}) =>
         store.universes.filter(
-          (row) => where?.ownerId === undefined || row.ownerId === where.ownerId,
+          (row) =>
+            where?.ownerId === undefined || row.ownerId === where.ownerId,
         ).length,
       create: async ({ data, select }: any) => {
         const now = new Date();
@@ -573,7 +633,9 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         );
       },
       update: async ({ where, data, include }: any) => {
-        const row = store.universes.find((universe) => universe.id === where.id)!;
+        const row = store.universes.find(
+          (universe) => universe.id === where.id,
+        )!;
         assign(row, data);
         row.updatedAt = new Date();
         return hydrate(row, include);
@@ -583,15 +645,19 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
       delete: async ({ where }: any) => {
         store.universes = store.universes.filter((row) => row.id !== where.id);
         for (const user of store.users) {
-          if (user.currentUniverseId === where.id) user.currentUniverseId = null;
+          if (user.currentUniverseId === where.id)
+            user.currentUniverseId = null;
         }
-        store.messages = store.messages.filter((row) => row.universeId !== where.id);
+        store.messages = store.messages.filter(
+          (row) => row.universeId !== where.id,
+        );
         store.jobs = store.jobs.filter((row) => row.universeId !== where.id);
         store.encounters = (store.encounters ?? []).filter(
           (row) => row.universeId !== where.id,
         );
         for (const character of store.characters) {
-          if (character.universeId === where.id) character.universeId = null as any;
+          if (character.universeId === where.id)
+            character.universeId = null as any;
         }
         return {};
       },
@@ -600,7 +666,9 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
     character: {
       findUnique: async ({ where, select }: any) => {
         const row = store.characters.find((item) =>
-          where.id ? item.id === where.id : item.universeId === where.universeId,
+          where.id
+            ? item.id === where.id
+            : item.universeId === where.universeId,
         );
         if (!row) return null;
         if (!select) return { ...row };
@@ -610,12 +678,16 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
       },
       update: async ({ where, data }: any) => {
         const row = store.characters.find((item) =>
-          where.id ? item.id === where.id : item.universeId === where.universeId,
+          where.id
+            ? item.id === where.id
+            : item.universeId === where.universeId,
         )!;
         return { ...assign(row, data) };
       },
       delete: async ({ where }: any) => {
-        store.characters = store.characters.filter((row) => row.id !== where.id);
+        store.characters = store.characters.filter(
+          (row) => row.id !== where.id,
+        );
         store.encounters = (store.encounters ?? []).filter(
           (row) => row.characterId !== where.id,
         );
@@ -656,10 +728,16 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
     encounter: {
       count: async ({ where }: any) =>
         (store.encounters ?? []).filter((row) => {
-          if (where.universeId !== undefined && row.universeId !== where.universeId) {
+          if (
+            where.universeId !== undefined &&
+            row.universeId !== where.universeId
+          ) {
             return false;
           }
-          if (where.characterId !== undefined && row.characterId !== where.characterId) {
+          if (
+            where.characterId !== undefined &&
+            row.characterId !== where.characterId
+          ) {
             return false;
           }
           return where.visitorId?.not === undefined
@@ -716,7 +794,9 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
             (where.role === undefined || row.role === where.role),
         ).length,
       deleteMany: async ({ where }: any) => {
-        const kept = store.messages.filter((row) => row.universeId !== where.universeId);
+        const kept = store.messages.filter(
+          (row) => row.universeId !== where.universeId,
+        );
         const count = store.messages.length - kept.length;
         store.messages = kept;
         return { count };
@@ -733,7 +813,8 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         store.jobs
           .filter(
             (row) =>
-              (where?.universeId === undefined || row.universeId === where.universeId) &&
+              (where?.universeId === undefined ||
+                row.universeId === where.universeId) &&
               (where?.status === undefined || row.status === where.status) &&
               (where?.refundedAt === undefined || row.refundedAt === null),
           )
@@ -748,7 +829,9 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         return { count: rows.length };
       },
       deleteMany: async ({ where }: any) => {
-        const kept = store.jobs.filter((row) => row.universeId !== where.universeId);
+        const kept = store.jobs.filter(
+          (row) => row.universeId !== where.universeId,
+        );
         const count = store.jobs.length - kept.length;
         store.jobs = kept;
         return { count };
@@ -818,29 +901,24 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
     },
 
     creditEntry: {
-      // Le grand livre repond a « lequel reste-t-il a rendre ».
-      findMany: async ({ where, select }: any = {}) => {
-        const rows = (store.creditEntries ?? []).filter((row) => {
-          if (where?.reason !== undefined && row.reason !== where.reason) return false;
-          if (where?.ref !== undefined) {
-            const wanted = where.ref?.in ?? where.ref;
-            if (Array.isArray(wanted) ? !wanted.includes(row.ref) : row.ref !== wanted) {
-              return false;
-            }
-          }
-          if (where?.delta?.lt !== undefined && !(row.delta < where.delta.lt)) {
-            return false;
-          }
-          return true;
-        });
-
-        return rows.map((row) =>
-          select
-            ? Object.fromEntries(
-                Object.keys(select).map((key) => [key, (row as any)[key]]),
-              )
-            : { ...row },
-        );
+      // Le grand livre repond a « lequel reste-t-il a rendre » et a « ce que
+      // la reserve contenait au depart ».
+      findMany: async ({ where, select }: any = {}) =>
+        entriesMatching(store, where).map((row) => pickEntry(row, select)),
+      findFirst: async ({ where, orderBy, select }: any = {}) => {
+        const rows = entriesMatching(store, where);
+        if (orderBy?.createdAt === 'desc') rows.reverse();
+        return rows[0] ? pickEntry(rows[0], select) : null;
+      },
+      aggregate: async ({ where }: any = {}) => {
+        const rows = entriesMatching(store, where);
+        return {
+          _sum: {
+            delta: rows.length
+              ? rows.reduce((sum, row) => sum + row.delta, 0)
+              : null,
+          },
+        };
       },
       create: async ({ data }: any) => {
         const row: CreditEntryRow = {
@@ -882,10 +960,13 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
     },
 
     siteSettings: {
-      findUnique: async () => ({ ...(store.siteSettings ?? OPEN_SETTINGS) }),
+      findFirst: async () => ({ ...(store.siteSettings ?? OPEN_SETTINGS) }),
       upsert: async () => ({ ...(store.siteSettings ?? OPEN_SETTINGS) }),
       update: async ({ data }: any) => {
-        store.siteSettings = { ...(store.siteSettings ?? OPEN_SETTINGS), ...data };
+        store.siteSettings = {
+          ...(store.siteSettings ?? OPEN_SETTINGS),
+          ...data,
+        };
         return { ...store.siteSettings };
       },
     },
@@ -907,7 +988,9 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         return rows
           .filter((row) => (where?.archived === false ? !row.archived : true))
           .filter((row) =>
-            where?.stripePriceId?.not === null ? row.stripePriceId !== null : true,
+            where?.stripePriceId?.not === null
+              ? row.stripePriceId !== null
+              : true,
           )
           .map((row) => ({ ...row }));
       },

@@ -44,15 +44,27 @@ export class AlphaService {
     Ouvert ou non, lu a chaque requete de jeu par AlphaOpenGuard : une lecture
     par cle primaire, sans upsert et sans cache, pour la meme raison que les
     paliers. Une ligne absente ou illisible vaut ferme.
+
+    `findFirst` et non `findUnique` : Prisma regroupe les `findUnique`
+    concurrents d'un meme tick en un seul `findMany` sur `id: { in: [...] }`,
+    et un filtre booleen ne connait pas `in`. Deux requetes de jeu arrivees
+    ensemble (la page des histoires en fait deux) tombaient en 500 sur
+    « Unknown argument in ». `alpha.service.spec.ts` le rejoue sur le vrai
+    client.
   */
   async isOpen(): Promise<boolean> {
-    const row = await this.prisma.siteSettings.findUnique({ where: { id: true } });
+    const row = await this.prisma.siteSettings.findFirst({
+      where: { id: true },
+    });
     return row?.alphaPhase === 'open';
   }
 
-  // La vente, lue au catalogue et a l'achat. Absente, fermee.
+  // La vente, lue au catalogue et a l'achat. Absente, fermee. `findFirst`
+  // pour la raison dite sur `isOpen`.
   async salesOpen(): Promise<boolean> {
-    const row = await this.prisma.siteSettings.findUnique({ where: { id: true } });
+    const row = await this.prisma.siteSettings.findFirst({
+      where: { id: true },
+    });
     return row?.salesOpen === true;
   }
 
@@ -61,8 +73,12 @@ export class AlphaService {
       where: { id: true },
       data: {
         ...(request.phase !== undefined ? { alphaPhase: request.phase } : {}),
-        ...(request.notice !== undefined ? { alphaNotice: request.notice } : {}),
-        ...(request.salesOpen !== undefined ? { salesOpen: request.salesOpen } : {}),
+        ...(request.notice !== undefined
+          ? { alphaNotice: request.notice }
+          : {}),
+        ...(request.salesOpen !== undefined
+          ? { salesOpen: request.salesOpen }
+          : {}),
       },
     });
 

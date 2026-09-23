@@ -24,6 +24,13 @@ export const BillingSummarySchema = z.object({
   // active, canceled, past_due, incomplete... tel que Stripe le dit.
   status: z.string(),
   credits: z.number().int().nonnegative(),
+  /*
+    Ce que la reserve contenait au depart de la periode, bienvenue et
+    ajustements compris : le solde s'affiche en regard (« 47 sur 80 »).
+    Absent, l'ecran prend le solde : les deux images basculent l'une apres
+    l'autre.
+  */
+  granted: z.number().int().nonnegative().optional(),
   // La dotation de la periode, pour dessiner une jauge.
   monthly: z.number().int().nonnegative(),
   // Fin de la periode en cours, ISO 8601.

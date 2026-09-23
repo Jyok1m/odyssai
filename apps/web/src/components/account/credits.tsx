@@ -89,24 +89,22 @@ export function Credits() {
   */
   const renews = summary.monthly > 0 && !summary.unlimited;
 
-  // La jauge peut dépasser sa dotation le premier mois, la bienvenue s'y
-  // ajoutant : elle se borne à cent pour cent plutôt que de déborder.
-  const filled = renews
-    ? Math.min(100, Math.round((summary.credits / summary.monthly) * 100))
-    : 0;
-
   /*
-    Tant que le solde dépasse la dotation, « 55 sur 30 » se lit comme une
-    incohérence : le surplus vient de la bienvenue. Sa part exacte n'est pas
-    affichée, le grand livre ne sachant plus quel crédit a été consommé.
-
-    Un administrateur ne consomme rien : une jauge pleine se lirait comme un
-    compteur cassé.
+    Ce que la réserve contenait au départ, bienvenue et ajustements compris :
+    le dénominateur du « 47 / 80 » et de la jauge, qui ne peut donc plus
+    déborder le premier mois. Absent d'une api plus ancienne, il vaut le solde.
   */
+  const granted = summary.granted ?? summary.credits;
+
+  const filled =
+    renews && granted > 0 ? Math.round((summary.credits / granted) * 100) : 0;
+
+  // Un administrateur ne consomme rien : une jauge pleine se lirait comme un
+  // compteur cassé.
   const balance = summary.unlimited
     ? t("balanceUnlimited")
     : renews
-      ? t(summary.credits > summary.monthly ? "balanceWelcome" : "balance", {
+      ? t(granted > summary.monthly ? "balanceWelcome" : "balance", {
           credits: summary.credits,
           monthly: summary.monthly,
         })
@@ -122,13 +120,18 @@ export function Credits() {
         <span className="font-voice text-display-compact tabular-nums text-vellum">
           {summary.unlimited ? "\u221e" : summary.credits}
         </span>
+        {summary.unlimited ? null : (
+          <span className="font-voice text-subtitle tabular-nums text-vellum-3">
+            / {granted}
+          </span>
+        )}
         <span className="text-ui-sm text-pretty text-vellum-2">{balance}</span>
       </p>
 
       {renews ? (
         <div
           role="img"
-          aria-label={balance}
+          aria-label={`${summary.credits} / ${granted} ${balance}`}
           className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-mist"
         >
           <div

@@ -39,7 +39,9 @@ describe('bareme', () => {
   // Une dotation negative rendrait un solde negatif, une dotation demesuree
   // viderait le budget sans qu'aucune limite ne s'y oppose.
   it('borne ce qu un palier peut valoir', () => {
-    expect(PLAN_LIMITS.monthlyCreditsMax).toBeGreaterThan(CREDIT_COSTS.worldGeneration);
+    expect(PLAN_LIMITS.monthlyCreditsMax).toBeGreaterThan(
+      CREDIT_COSTS.worldGeneration,
+    );
     // Sous cinquante centimes, les frais fixes de Stripe mangent tout.
     expect(PLAN_LIMITS.amountCentsMin).toBeGreaterThanOrEqual(50);
   });
@@ -102,13 +104,17 @@ describe('bonus des cent premiers', () => {
         }),
       },
       creditEntry: {
-        create: vi.fn(({ data }: { data: { delta: number; reason: string } }) => {
-          entries.push(data);
-          return Promise.resolve(data);
-        }),
+        create: vi.fn(
+          ({ data }: { data: { delta: number; reason: string } }) => {
+            entries.push(data);
+            return Promise.resolve(data);
+          },
+        ),
       },
       user: {
-        findUnique: vi.fn().mockResolvedValue({ ...user, createdAt: new Date() }),
+        findUnique: vi
+          .fn()
+          .mockResolvedValue({ ...user, createdAt: new Date() }),
         count: vi.fn().mockResolvedValue(before),
       },
     };
@@ -128,7 +134,10 @@ describe('bonus des cent premiers', () => {
 
     expect(created.credits).toBe(plan.welcomeCredits + FOUNDER_BONUS.credits);
     // Deux ecritures : le grand livre doit dire pourquoi, pas seulement combien.
-    expect(entries.map((entry) => entry.reason)).toEqual(['welcome', 'founder']);
+    expect(entries.map((entry) => entry.reason)).toEqual([
+      'welcome',
+      'founder',
+    ]);
   });
 
   it('ne donne rien au cent unieme', async () => {
@@ -189,7 +198,9 @@ describe('reserve illimitee', () => {
   it('refuse un joueur ordinaire dont la reserve est vide', async () => {
     const service = serviceFor(false, 0);
 
-    await expect(service.spend('turn', 'u1')).rejects.toThrow(OutOfCreditsError);
+    await expect(service.spend('turn', 'u1')).rejects.toThrow(
+      OutOfCreditsError,
+    );
   });
 });
 
@@ -215,10 +226,12 @@ describe('roulement de periode', () => {
         }),
       },
       creditEntry: {
-        create: vi.fn(({ data }: { data: { delta: number; reason: string } }) => {
-          entries.push(data);
-          return Promise.resolve(data);
-        }),
+        create: vi.fn(
+          ({ data }: { data: { delta: number; reason: string } }) => {
+            entries.push(data);
+            return Promise.resolve(data);
+          },
+        ),
       },
     };
 
@@ -280,16 +293,20 @@ describe('apres une resiliation', () => {
 
     const tx = {
       subscription: {
-        update: vi.fn(({ data }: { data: { credits: number; plan: string } }) => {
-          state.credits = data.credits;
-          state.plan = data.plan;
-          return Promise.resolve({ id: 's1', ...data });
+        update: vi.fn(
+          ({ data }: { data: { credits: number; plan: string } }) => {
+            state.credits = data.credits;
+            state.plan = data.plan;
+            return Promise.resolve({ id: 's1', ...data });
+          },
+        ),
+      },
+      creditEntry: {
+        create: vi.fn((data: unknown) => {
+          entries.push(data);
+          return Promise.resolve(data);
         }),
       },
-      creditEntry: { create: vi.fn((data: unknown) => {
-        entries.push(data);
-        return Promise.resolve(data);
-      }) },
     };
 
     const prisma = {
@@ -346,7 +363,10 @@ describe('ouverture concurrente', () => {
     const conflict = Object.assign(new Error('duplicate'), {
       code: 'P2002',
     });
-    Object.setPrototypeOf(conflict, Prisma.PrismaClientKnownRequestError.prototype);
+    Object.setPrototypeOf(
+      conflict,
+      Prisma.PrismaClientKnownRequestError.prototype,
+    );
 
     const prisma = {
       subscription: {
@@ -360,7 +380,9 @@ describe('ouverture concurrente', () => {
       },
       creditEntry: { create: vi.fn() },
       user: {
-        findUnique: vi.fn().mockResolvedValue({ isAdmin: false, createdAt: new Date() }),
+        findUnique: vi
+          .fn()
+          .mockResolvedValue({ isAdmin: false, createdAt: new Date() }),
         count: vi.fn().mockResolvedValue(0),
       },
     };
@@ -381,5 +403,64 @@ describe('ouverture concurrente', () => {
     await expect(service.ensure('u1')).resolves.toEqual(existing);
     // Rien n'est credite deux fois : la bienvenue appartient a la ligne creee.
     expect(prisma.creditEntry.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('ce que la reserve contenait au depart', () => {
+  function serviceWith(
+    reset: { createdAt: Date } | null,
+    consumed: number | null,
+  ) {
+    const prisma = {
+      creditEntry: {
+        findFirst: vi.fn().mockResolvedValue(reset),
+        aggregate: vi.fn().mockResolvedValue({ _sum: { delta: consumed } }),
+      },
+    };
+    const service = new CreditsService(
+      prisma as unknown as PrismaClient,
+      {} as unknown as PlansService,
+    );
+
+    return { prisma, service };
+  }
+
+  it('rend le solde plus ce que le jeu a consomme', async () => {
+    const { service } = serviceWith(null, -33);
+    await expect(service.granted({ id: 's1', credits: 47 })).resolves.toBe(80);
+  });
+
+  it('vaut le solde quand rien n a ete consomme', async () => {
+    const { service } = serviceWith(null, null);
+    await expect(service.granted({ id: 's1', credits: 80 })).resolves.toBe(80);
+  });
+
+  // Une remise a la dotation est un nouveau depart : ce qui a ete consomme
+  // avant appartient a la periode d'avant.
+  it('ne compte que depuis la derniere remise a la dotation', async () => {
+    const at = new Date('2026-09-01T00:00:00Z');
+    const { prisma, service } = serviceWith({ createdAt: at }, -5);
+
+    await expect(service.granted({ id: 's1', credits: 25 })).resolves.toBe(30);
+    expect(prisma.creditEntry.aggregate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          createdAt: { gte: at },
+          reason: {
+            notIn: expect.arrayContaining([
+              'welcome',
+              'founder',
+              'grant',
+              'adjustment',
+            ]),
+          },
+        }),
+      }),
+    );
+  });
+
+  it('ne descend jamais sous le solde', async () => {
+    const { service } = serviceWith(null, 3);
+    await expect(service.granted({ id: 's1', credits: 10 })).resolves.toBe(10);
   });
 });

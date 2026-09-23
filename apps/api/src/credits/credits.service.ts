@@ -11,6 +11,10 @@ import { PlansService } from '../plans/plans.service.js';
 import { PRISMA } from '../prisma/prisma.module.js';
 import { isUniqueViolation } from '../prisma/unique-violation.js';
 
+// Les ecritures qui donnent, par opposition a celles qui depensent ou qui
+// rendent : c'est la ligne de partage de `granted`.
+const GRANT_REASONS = ['welcome', 'founder', 'grant', 'adjustment'];
+
 // La reserve est vide : l'action est refusee avant tout appel au modele.
 export class OutOfCreditsError extends Error {
   readonly needed: number;
@@ -65,6 +69,42 @@ export class CreditsService {
   }
 
   /*
+    Ce que la reserve contenait au depart, pour l'afficher en regard du solde
+    (« 47 sur 80 »).
+
+    Le depart est la derniere remise a la dotation (`grant`), ou l'ouverture
+    du compte s'il n'y en a jamais eu : le palier offert ne reverse rien, sa
+    reserve ne repart jamais. Depuis ce point, le solde plus ce que le jeu a
+    consomme (remboursements deduits) rend ce qui a ete recu, bienvenue et
+    ajustements compris, sans distinguer un premier mois d'un autre.
+  */
+  async granted(
+    subscription: Pick<Subscription, 'id' | 'credits'>,
+  ): Promise<number> {
+    const reset = await this.prisma.creditEntry.findFirst({
+      where: { subscriptionId: subscription.id, reason: 'grant' },
+      orderBy: { createdAt: 'desc' },
+      select: { createdAt: true },
+    });
+
+    const consumed = await this.prisma.creditEntry.aggregate({
+      _sum: { delta: true },
+      where: {
+        subscriptionId: subscription.id,
+        reason: { notIn: GRANT_REASONS },
+        ...(reset ? { createdAt: { gte: reset.createdAt } } : {}),
+      },
+    });
+
+    // Jamais sous le solde : un remboursement d'avant le depart, rendu apres,
+    // ferait lire « 47 sur 44 ».
+    return Math.max(
+      subscription.credits,
+      subscription.credits - (consumed._sum.delta ?? 0),
+    );
+  }
+
+  /*
     Debite, ou refuse. Rend l'identifiant de l'ecriture, qui sert a rembourser
     si l'appel echoue ensuite.
   */
@@ -109,7 +149,9 @@ export class CreditsService {
     } catch (error: unknown) {
       // Un remboursement rate se voit dans le grand livre, qui reste juste :
       // le debit y figure, le credit n'y figure pas.
-      this.logger.error(`remboursement impossible (${entryId}) : ${String(error)}`);
+      this.logger.error(
+        `remboursement impossible (${entryId}) : ${String(error)}`,
+      );
     }
   }
 
@@ -179,7 +221,12 @@ export class CreditsService {
     // se relit des annees apres, quand le bonus n'existera plus. « 80 credits »
     // ne dirait pas pourquoi ce joueur en a recu trente de plus que le suivant.
     await this.prisma.creditEntry.create({
-      data: { subscriptionId: subscription.id, delta: welcome, reason: 'welcome', balance: welcome },
+      data: {
+        subscriptionId: subscription.id,
+        delta: welcome,
+        reason: 'welcome',
+        balance: welcome,
+      },
     });
 
     if (bonus > 0) {
@@ -241,7 +288,10 @@ export class CreditsService {
     dotation est relue a chaque roulement, donc un palier modifie s'applique a
     la periode suivante et jamais a celle en cours.
   */
-  private async roll(subscription: Subscription, now: Date): Promise<Subscription> {
+  private async roll(
+    subscription: Subscription,
+    now: Date,
+  ): Promise<Subscription> {
     // Un abonnement resilie ou impaye retombe au palier libre plutot que de
     // renouveler une dotation qui n'est plus payee.
     const entitled = subscription.status === 'active';
