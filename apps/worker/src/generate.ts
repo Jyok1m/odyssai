@@ -3,6 +3,7 @@ import { seedEntities } from '@odyssai/engine';
 import { Prisma, type PrismaClient } from '@odyssai/db';
 import {
   CharacterSheetSchema,
+  GENERATION_ATTEMPTS_PER_NODE,
   InspirationSchema,
   WorldBibleSchema,
   entityKey,
@@ -259,26 +260,47 @@ async function abstract(
   inspiration: ReturnType<typeof InspirationSchema.parse>,
   signal?: AbortSignal,
 ): Promise<WorldThemes> {
-  const result = await abstractWorld({
-    llm: deps.llm,
-    config: deps.config.models.abstraction,
-    input: { inspiration, locale: 'fr' },
-    signal,
-    trace: { name: 'abstraction', metadata: { universe_id: universeId } },
-  });
+  /*
+    Elle rejoue, comme un noeud du graphe et pour la meme raison : un JSON
+    tronque, une borne depassee ou un nom emprunte sont des sorties du
+    modele, pas des pannes, et `abstractWorld` dit lui-meme que l'appelant
+    relance. Sans cette boucle, une seule sortie malheureuse emportait une
+    generation a vingt-cinq credits, la ou les six autres appels de la chaine
+    avaient droit a un second essai.
 
-  await journal(deps, 'abstraction', universeId, ownerId, [result.usage]);
+    Une erreur de transport, elle, remonte tout de suite : c'est BullMQ qui
+    la relance, avec son delai.
+  */
+  const rejections: string[] = [];
 
-  if (result.kind !== 'ok') {
-    throw new Error(`abstraction : ${result.reason} ${result.details.join(' | ')}`);
+  for (let attempt = 1; attempt <= GENERATION_ATTEMPTS_PER_NODE; attempt += 1) {
+    const result = await abstractWorld({
+      llm: deps.llm,
+      config: deps.config.models.abstraction,
+      input: { inspiration, locale: 'fr' },
+      signal,
+      trace: {
+        name: 'abstraction',
+        metadata: { universe_id: universeId, attempt },
+      },
+    });
+
+    // Chaque essai se compte : un rejeu est paye comme le reste.
+    await journal(deps, 'abstraction', universeId, ownerId, [result.usage]);
+
+    if (result.kind === 'ok') {
+      await deps.prisma.universe.update({
+        where: { id: universeId },
+        data: { themes: result.themes },
+      });
+
+      return result.themes;
+    }
+
+    rejections.push(`${result.reason} ${result.details.join(' | ')}`.trim());
   }
 
-  await deps.prisma.universe.update({
-    where: { id: universeId },
-    data: { themes: result.themes },
-  });
-
-  return result.themes;
+  throw new Error(`abstraction : ${rejections.join(' ; ')}`);
 }
 
 // L'avancement est indicatif : une ecriture ratee ne casse pas le travail.

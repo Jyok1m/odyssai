@@ -103,24 +103,43 @@ const Prose = (max: number) =>
     });
 
 /*
+  Ce que chaque theme peut faire de long, en caracteres.
+
+  Nomme ici et non ecrit en clair dans le schema, parce que le prompt doit les
+  dire au modele : il ne respecte pas une borne qu'il ignore, et une
+  generation a echoue sur un `setting` trop long faute de la connaitre. Les
+  recopier dans le prompt en ferait deux verites, et la fausse serait celle
+  que le modele lit.
+*/
+export const THEME_LIMITS = {
+  tone: 200,
+  setting: 400,
+  power: 400,
+  mystery: 400,
+  tension: 200,
+  motif: 120,
+  forbidden: 120,
+} as const;
+
+/*
   Sortie de la passe d'abstraction, et seule chose que les etapes suivantes de
   la generation recoivent. Les titres saisis s'arretent avant.
 */
 export const WorldThemesSchema = z.object({
   // Le ton dominant, ce que le monde fait ressentir.
-  tone: Prose(200),
+  tone: Prose(THEME_LIMITS.tone),
   // Le cadre physique : ou l'on est, de quoi c'est fait.
-  setting: Prose(400),
+  setting: Prose(THEME_LIMITS.setting),
   // Comment le pouvoir se tient, et sur quoi il repose.
-  power: Prose(400),
+  power: Prose(THEME_LIMITS.power),
   // Ce qui echappe a l'explication, et jusqu'ou.
-  mystery: Prose(400),
+  mystery: Prose(THEME_LIMITS.mystery),
   // Les lignes de fracture dont naissent les histoires.
-  tensions: z.array(Prose(200)).min(2).max(5),
+  tensions: z.array(Prose(THEME_LIMITS.tension)).min(2).max(5),
   // Les motifs qui reviennent : objets, gestes, lieux.
-  motifs: z.array(Prose(120)).min(3).max(8),
+  motifs: z.array(Prose(THEME_LIMITS.motif)).min(3).max(8),
   // Ce que ce monde ne contient pas. Aussi structurant que le reste.
-  forbidden: z.array(Prose(120)).min(1).max(5),
+  forbidden: z.array(Prose(THEME_LIMITS.forbidden)).min(1).max(5),
 });
 
 export type WorldThemes = z.infer<typeof WorldThemesSchema>;
