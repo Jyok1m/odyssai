@@ -243,13 +243,18 @@ function toStoredSession(
 
 /*
   Keycloak omet refresh_expires_in quand le jeton est hors ligne ou sans
-  expiration propre : on retombe alors sur la duree maximale de session SSO du
-  realm, dix heures. Elle borne la cle Redis et l'age du cookie de session.
+  expiration propre : on retombe alors sur ssoSessionIdleTimeout du realm, huit
+  heures, recopie ici faute de le connaitre autrement. A faire bouger avec lui,
+  dans le role ansible : un repli plus long que le realm rendrait un cookie
+  valide sur une session que Keycloak a deja fermee.
+
+  Cette valeur borne la cle Redis et l'age du cookie, que SessionGuard fait
+  ensuite glisser a chaque requete.
 */
 export function refreshLifetimeSeconds(tokens: TokenSet): number {
   return tokens.refresh_expires_in && tokens.refresh_expires_in > 0
     ? tokens.refresh_expires_in
-    : 36_000;
+    : 28_800;
 }
 
 function refreshDeadline(tokens: TokenSet): number {

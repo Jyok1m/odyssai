@@ -18,11 +18,12 @@ import {
   type SignOutResult,
   UiLocale,
 } from '@odyssai/schemas';
-import type { CookieOptions, Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { AppConfig } from '../config/app-config.js';
 import { UsersService } from '../users/users.service.js';
 import { OidcService } from './oidc.service.js';
+import { sessionCookieOptions } from './session-cookie.js';
 import { SessionService, refreshLifetimeSeconds, safeCompare } from './session.service.js';
 
 // Retour de Keycloak : succes (code, state) et echec (error) sur la meme route.
@@ -80,7 +81,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<Redirection> {
     const expectedState = this.readCookie(req, this.config.cookies.transaction);
-    res.clearCookie(this.config.cookies.transaction, this.cookieOptions());
+    res.clearCookie(this.config.cookies.transaction, sessionCookieOptions(this.config));
 
     const parsed = CallbackQuery.safeParse(rawQuery);
     if (!parsed.success) return this.failure('invalid_request');
@@ -119,7 +120,7 @@ export class AuthController {
       const sessionId = await this.sessions.create(tokens, identity, user.id);
 
       res.cookie(this.config.cookies.session, sessionId, {
-        ...this.cookieOptions(),
+        ...sessionCookieOptions(this.config),
         maxAge: refreshLifetimeSeconds(tokens) * 1000,
       });
 
@@ -145,7 +146,7 @@ export class AuthController {
     const session = await this.sessions.read(sessionId);
     if (!session) {
       // Session expiree ou revoquee : cookie devenu inutile.
-      res.clearCookie(this.config.cookies.session, this.cookieOptions());
+      res.clearCookie(this.config.cookies.session, sessionCookieOptions(this.config));
       return { authenticated: false };
     }
 
@@ -203,7 +204,7 @@ export class AuthController {
       }
     }
 
-    res.clearCookie(this.config.cookies.session, this.cookieOptions());
+    res.clearCookie(this.config.cookies.session, sessionCookieOptions(this.config));
     return { logoutUrl };
   }
 
@@ -221,7 +222,7 @@ export class AuthController {
     // Lie la transaction a ce navigateur. Lax et non Strict : en Strict le
     // cookie ne reviendrait pas avec la redirection depuis Keycloak.
     res.cookie(this.config.cookies.transaction, state, {
-      ...this.cookieOptions(),
+      ...sessionCookieOptions(this.config),
       maxAge: 600_000,
     });
 
@@ -248,17 +249,6 @@ export class AuthController {
     const url = new URL('/', this.config.webBaseUrl);
     url.searchParams.set('auth_error', code);
     return { url: url.toString(), statusCode: HttpStatus.FOUND };
-  }
-
-  private cookieOptions(): CookieOptions {
-    return {
-      httpOnly: true,
-      secure: this.config.cookies.secure,
-      sameSite: 'lax',
-      // Pas d'attribut domain : __Host- l'interdit et borne le cookie a
-      // l'origine exacte de l'API.
-      path: '/',
-    };
   }
 
   private readCookie(req: Request, name: string): string | undefined {
