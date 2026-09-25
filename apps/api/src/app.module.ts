@@ -17,6 +17,7 @@ import { PlansModule } from './plans/plans.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { StripeModule } from './stripe/stripe.module.js';
 import { RedisModule } from './redis/redis.module.js';
+import { HealthModule } from './health/health.module.js';
 import { TurnModule } from './turn/turn.module.js';
 import { CreditsModule } from './credits/credits.module.js';
 import { UsageModule } from './usage/usage.module.js';
@@ -26,6 +27,7 @@ import { UsageModule } from './usage/usage.module.js';
     ConfigModule,
     RedisModule,
     PrismaModule,
+    HealthModule,
     UsageModule,
     PlansModule,
     StripeModule,
