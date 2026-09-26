@@ -229,6 +229,8 @@ export interface OnboardingStore {
   parties?: PartyRow[];
   partyMembers?: PartyMemberRow[];
   turns?: TurnRow[];
+  // Absent, rien ne s'y ecrit : seuls les tests de canon le posent.
+  canonFacts?: CanonFactRow[];
 }
 
 export interface PartyRow {
@@ -248,6 +250,16 @@ export interface PartyMemberRow {
   ready: boolean;
   isHost: boolean;
   joinedAt: Date;
+}
+
+export interface CanonFactRow {
+  id: string;
+  universeId: string;
+  memberId: string | null;
+  subject: string;
+  statement: string;
+  seq: number;
+  createdAt: Date;
 }
 
 export interface TurnRow {
@@ -541,12 +553,24 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
     },
 
     /*
-      Le canon n'est pas joue de bout en bout non plus : il naît au tour, et
-      le tour a son propre double. Seule la lecture compte ici.
+      Le canon n'est joue de bout en bout que si le test pose sa liste : il
+      s'y ecrit alors, et se relit par univers.
     */
     canonFact: {
-      findMany: async () => [],
-      create: async ({ data }: any) => data,
+      findMany: async ({ where }: any = {}) =>
+        (store.canonFacts ?? [])
+          .filter((row) => !where?.universeId?.in || where.universeId.in.includes(row.universeId))
+          .map((row) => ({ ...row })),
+      create: async ({ data }: any) => {
+        const row: CanonFactRow = {
+          id: randomUUID(),
+          memberId: null,
+          createdAt: new Date(),
+          ...data,
+        };
+        store.canonFacts?.push(row);
+        return { ...row };
+      },
       update: async ({ data }: any) => data,
       groupBy: async () => [],
     },

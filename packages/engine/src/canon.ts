@@ -7,7 +7,8 @@ import {
 // Pourquoi un fait invente a ete refuse.
 export type CanonRejection =
   | { reason: 'forbidden'; detail: string }
-  | { reason: 'borrowed'; detail: string };
+  | { reason: 'borrowed'; detail: string }
+  | { reason: 'other_player'; detail: string };
 
 export interface CanonVerdict {
   accepted: CanonFact[];
@@ -71,16 +72,32 @@ function contradicts(statement: string, forbidden: string): boolean {
   Le canon grandit a chaque question hors lore, donc la garde sur les emprunts
   doit grandir avec lui : ce qui a ete refuse a la generation ne doit pas
   rentrer par une reponse du meneur trois cents tours plus tard.
+
+  `others` porte les personnages des autres joueurs d'une table : un fait
+  dont ils sont le sujet parlerait pour eux dans chaque prompt suivant, sur
+  la foi d'un tour qui n'etait pas le leur.
 */
 export function arbitrateCanon(
   facts: CanonFact[],
   charter: WorldCharter,
   works: string[],
+  others: string[] = [],
 ): CanonVerdict {
   const verdict: CanonVerdict = { accepted: [], rejected: [] };
+  const names = others.map(fold).filter((name) => name.length > 0);
 
   for (const fact of facts) {
     const text = `${fact.subject} ${fact.statement}`;
+
+    const subject = ` ${fold(fact.subject)} `;
+    const named = names.find((name) => subject.includes(` ${name} `));
+    if (named) {
+      verdict.rejected.push({
+        fact,
+        verdict: { reason: 'other_player', detail: named },
+      });
+      continue;
+    }
 
     const borrowed = findBorrowedNames(text, works);
     if (borrowed.length > 0) {

@@ -99,6 +99,8 @@ model User {
   thread       ConversationMessage[] @relation("ThreadMessage")
   /// Les tours dont c'etait a lui de jouer, dans une partie.
   playedTurns  Turn[] @relation("PlayedTurn")
+  /// Les faits de canon nes de ses tours, dans une partie.
+  canonFacts   CanonFact[] @relation("CanonAuthor")
   encounters   Encounter[]
   llmUsage     LlmUsage[]
   subscription Subscription?
@@ -850,6 +852,12 @@ model CanonFact {
 
   /// Le tour qui l'a fait naitre.
   seq Int
+
+  /// Le membre dont le tour l'a fait naitre, dans une table. Nul dans une
+  /// histoire solo, et apres l'effacement de son compte : le fait reste au
+  /// monde, il n'a simplement plus d'auteur.
+  memberId String? @map("member_id") @db.Uuid
+  member   User?   @relation("CanonAuthor", fields: [memberId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 

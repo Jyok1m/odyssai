@@ -710,7 +710,16 @@ export class TurnController {
           Le canon nourrit tous les tours suivants, donc un nom qui entre ici
           ne ressort plus.
         */
-        const arbitrated = arbitrateCanon(delta.facts, world.charter, world.works);
+        /*
+          Dans une table, un fait sur le personnage d'un autre joueur est
+          refuse : il parlerait pour lui dans chaque prompt suivant.
+        */
+        const arbitrated = arbitrateCanon(
+          delta.facts,
+          world.charter,
+          world.works,
+          world.party?.others ?? [],
+        );
 
         /*
           Ce que le modele dit avoir change de main, applique par le code : un
@@ -1035,6 +1044,8 @@ export class TurnController {
                 subject: fact.subject,
                 statement: fact.statement,
                 seq,
+                // Dans une table, le membre dont le tour l'a fait naitre.
+                memberId: world.party ? user.id : null,
               },
             }),
           ),

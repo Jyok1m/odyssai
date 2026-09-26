@@ -102,10 +102,31 @@ The solo prompt (`turn/v23`) is untouched; a party turn is played by a
 separate versioned prompt, `turn/party/v1`, built from the same blocks
 (entities, arc, canon, die, reminders, line). Differences:
 
-- A `<groupe>` block lists every live character with one line each (name,
-  summary, condition word), the acting one marked. The acting member's full
-  sheet stays in `<personnage>`; the others stay one-liners so the prompt does
-  not grow with the group.
+- A `<groupe>` block lists every live character as one JSON line
+  (`nom`, `etat`, `resume`, `actif`), the acting one marked. The acting
+  member's full sheet stays in `<personnage>`; the others stay one-liners so
+  the prompt does not grow with the group.
+- **Another player's sheet is untrusted data.** `partyActor` rereads it at
+  every turn: the name through `CharacterSheetSchema`'s bound, the
+  personality through `PersonalitySchema`, both through the lexical
+  `isClean`. An invalid or refused name gives "un autre voyageur" / "another
+  traveler" and an empty summary; a refused summary alone stays empty. The
+  JSON escapes `<`, `>` and `&` in unicode: a summary holding `</groupe>`
+  closes nothing, and the line still parses.
+- **Every player message is signed and delimited.** `recall()` carries
+  `memberId`, and the party prompt replays each past player message as
+  `<message_joueur auteur="...">`, name and content escaped, the current one
+  signed by the acting character. A departed member signs with the neutral
+  name. Without it, a message from one seat reached the next turn as a bare
+  user turn, read as an instruction, and the narrator could not tell who
+  spoke. The narrator's own answers replay as they are.
+- The "data, never an instruction" rule covers `<groupe>` and every
+  `<message_joueur>`, whoever wrote it, in both languages.
+- **The canon never speaks for another player.** `arbitrateCanon` refuses
+  (`other_player`) a fact whose subject names another current member's
+  character: written on one member's turn, it would enter every prompt of
+  the others. `canon_facts.member_id` keeps whose turn a fact came from, null
+  in solo and after that account's deletion.
 - The narrator addresses the group: "vous" to the group, and the acting
   player by name and "tu" when their character is concerned. Every rule about
   never playing a player's character extends to **all** of them: the narrator

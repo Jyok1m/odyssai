@@ -1,11 +1,12 @@
 import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import { TUNING, conditionOf, hpMaxOf, type Progress } from '@odyssai/engine';
+import { TUNING, conditionOf, hpMaxOf, isClean, type Progress } from '@odyssai/engine';
 import type { LlmClient } from '@odyssai/llm';
 import {
   AttributesSchema,
   CanonFactSchema,
   CharacterSheetSchema,
   MarksSchema,
+  PersonalitySchema,
   WorldBibleSchema,
   WorldCharterSchema,
   type CanonFact,
@@ -91,15 +92,64 @@ export interface TurnWorld {
   /*
     Les personnages joues, un par siege. Nul dans une histoire solo : le
     prompt du tour seul n'en a pas besoin, celui de la table le demande.
+
+    `authors` donne, par membre, le nom crible qui signe ses messages.
+    `others` porte les noms bruts des personnages des autres membres : il
+    ne sert qu'a `arbitrateCanon` et n'entre dans aucun prompt.
   */
-  party: { actors: PartyActor[]; members: string[] } | null;
+  party: {
+    actors: PartyActor[];
+    members: string[];
+    authors: Map<string, string | null>;
+    others: string[];
+  } | null;
 }
 
 export interface TurnMemory {
   canon: CanonFact[];
-  recent: { role: 'user' | 'assistant'; content: string }[];
+  recent: {
+    role: 'user' | 'assistant';
+    content: string;
+    memberId: string | null;
+    // Dans une table, le nom qui signe un message de joueur, nul s'il ne se lit plus.
+    author?: string | null;
+  }[];
   recalled: string[];
   nextSeq: number;
+}
+
+/*
+  Un personnage d'une table tel que le meneur le voit, relu a chaque tour.
+
+  La fiche est ecrite par un autre joueur : elle repasse par ses bornes et
+  par le crible lexical avant d'entrer dans le prompt d'un autre. Un nom
+  illisible ou refuse emporte le resume avec lui, le meneur ne voit alors
+  qu'un voyageur sans nom.
+*/
+export function partyActor(
+  row: { name: string | null; personality: unknown; attributes: unknown; hp: number | null },
+  active: boolean,
+): PartyActor {
+  const name = CharacterSheetSchema.shape.name.safeParse(row.name);
+  const personality = PersonalitySchema.safeParse(row.personality);
+  const summary = personality.success
+    ? personality.data.summary || personality.data.traits.join(', ')
+    : '';
+
+  const attributes = AttributesSchema.safeParse(row.attributes);
+  const hpMax = attributes.success ? hpMaxOf(attributes.data.corps) : 1;
+  const condition = conditionOf(row.hp ?? hpMax, hpMax);
+
+  if (!name.success || !isClean(name.data)) {
+    return { name: null, summary: '', condition, active };
+  }
+
+  return {
+    name: name.data,
+    summary: isClean(summary) ? summary : '',
+    condition,
+    active,
+  };
 }
 
 /*
@@ -275,10 +325,7 @@ export class TurnMemoryService implements OnModuleInit {
         }),
       ),
       party: universe.party
-        ? {
-            actors: await this.actors(universe.id, universe.party.members, user.id),
-            members: universe.party.members.map((member) => member.userId),
-          }
+        ? await this.party(universe.id, universe.party.members, user.id)
         : null,
     };
   }
@@ -291,11 +338,11 @@ export class TurnMemoryService implements OnModuleInit {
     La fiche du joueur actif part entiere dans le prompt, les autres en une
     ligne : le meneur doit savoir qui est la, pas recalculer leurs jets.
   */
-  private async actors(
+  private async party(
     universeId: string,
     members: { userId: string }[],
     activeId: string,
-  ): Promise<PartyActor[]> {
+  ): Promise<NonNullable<TurnWorld['party']>> {
     const rows = await this.prisma.character.findMany({
       where: { universeId, ownerId: { in: members.map((member) => member.userId) } },
       select: {
@@ -309,32 +356,20 @@ export class TurnMemoryService implements OnModuleInit {
 
     const byOwner = new Map(rows.flatMap((row) => (row.ownerId ? [[row.ownerId, row] as const] : [])));
 
-    return members.flatMap((member) => {
+    const seated = members.flatMap((member) => {
       const row = byOwner.get(member.userId);
       if (!row || !row.name) return [];
-
-      // Une ligne de lui, pas un socle chiffre : le prompt de table demande
-      // qui il est, ses jets restent au moteur.
-      const personality = (row.personality ?? {}) as {
-        summary?: string;
-        traits?: string[];
-      };
-      const summary =
-        personality.summary || (personality.traits ?? []).join(', ');
-
-      const attributes = AttributesSchema.safeParse(row.attributes);
-      const hpMax = attributes.success ? hpMaxOf(attributes.data.corps) : 1;
-      const condition = conditionOf(row.hp ?? hpMax, hpMax);
-
       return [
-        {
-          name: row.name,
-          summary,
-          condition,
-          active: member.userId === activeId,
-        },
+        { userId: member.userId, raw: row.name, actor: partyActor(row, member.userId === activeId) },
       ];
     });
+
+    return {
+      actors: seated.map((seat) => seat.actor),
+      members: members.map((member) => member.userId),
+      authors: new Map(seated.map((seat) => [seat.userId, seat.actor.name])),
+      others: seated.filter((seat) => seat.userId !== activeId).map((seat) => seat.raw),
+    };
   }
 
   /*
@@ -345,10 +380,10 @@ export class TurnMemoryService implements OnModuleInit {
     seule : ceux de l'hote sont sa partie a lui, et un visiteur n'y etait pas.
   */
   async recall(
-    where: Pick<TurnWorld, 'universeId' | 'sourceId'>,
+    where: Pick<TurnWorld, 'universeId' | 'sourceId'> & Partial<Pick<TurnWorld, 'party'>>,
     message: string,
   ): Promise<TurnMemory> {
-    const { universeId, sourceId } = where;
+    const { universeId, sourceId, party } = where;
 
     const [canonRows, recentRows, last] = await Promise.all([
       this.prisma.canonFact.findMany({
@@ -367,9 +402,18 @@ export class TurnMemoryService implements OnModuleInit {
       }),
     ]);
 
-    const recent = recentRows
-      .reverse()
-      .map((row) => ({ role: row.role, content: row.content }));
+    /*
+      Dans une table, chaque message de joueur garde son auteur : un membre
+      parti, ou dont la fiche ne se lit plus, signe d'un nom neutre.
+    */
+    const recent = recentRows.reverse().map((row) => ({
+      role: row.role,
+      content: row.content,
+      memberId: row.memberId ?? null,
+      ...(party && row.role === 'user'
+        ? { author: row.memberId ? (party.authors.get(row.memberId) ?? null) : null }
+        : {}),
+    }));
 
     const canon = canonRows.flatMap((row) => {
       const parsed = CanonFactSchema.safeParse({
