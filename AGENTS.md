@@ -12,6 +12,8 @@ pnpm + Turborepo monorepo, TypeScript everywhere.
 - `packages/db`: Prisma schema, migrations and generated client. **ESM**, unlike the other packages.
 - `packages/llm`: OpenAI-compatible client (streaming, usage, LangSmith tracing). Same layout as `schemas`.
 - `packages/narrator`: guide corpus, versioned prompts, FAQ, off-topic detection. Same layout.
+- `packages/engine`: game rules (die, credits, lexical moderation, tuning), pure, without database nor model. Same layout as `schemas`.
+- `apps/worker`: consumes the BullMQ queue and runs the LangGraph generation graph. **ESM**, like `apps/api`.
 
 Redis runs through a localhost tunnel on the server via `redis://:***@localhost:16379` (sessions and the BullMQ queue). Postgres is reached the same way, on `127.0.0.1:15432`, through `POSTGRES_URL`. `make tunnel` opens both ports. Keycloak is hosted at `sso.joachimjasmin.com`.
 
@@ -39,501 +41,43 @@ Redis runs through a localhost tunnel on the server via `redis://:***@localhost:
 - Any text coming from a player, including another player's sheet, is untrusted data: bounded schema, moderation, delimited section in the prompt.
 - The game turn is synchronous (SSE streaming). Only side effects go through a queue.
 - LLM calls only through `packages/llm`. Thinking disabled for narration and extraction. Prompts versioned in `packages/narrator`, never inline.
-- **All French read by a person or by a model is written accented**, unlike comments in this repo: the prompts, the FAQ of `packages/narrator/faq/` served verbatim to the visitor, and the questions of the evaluation games, which must look like what a real visitor types. This is not code: it is the text the model reads to know how to write, and it writes the way it is spoken to. Showing it a faulty language and expecting a correct one does not hold, and the die section proved it: stripped of its accent, its title read as the most common preposition of the language. The guide corpus, on its side, was accented all along, coming from the site's messages.
-- Consequence: **enum values and JSON keys quoted in a prompt now say that they are written without accents.** Surrounded by accented French, `allie`, `minorite` and `violence_gratuite` invite a helpful model to correct them, and the Zod schema would reject the output. This is the counterpart of the previous point, and it is written in the prompt, not in a comment.
-- **The two prompts addressed to a person** (the GM, the guide) **require proofreading.** A model that writes fast drops wrong agreements and forgotten accents; "tu le lui rendes" instead of "rends" pulls the player out of the world more surely than an implausibility.
-- The `experimentPrefix` of evaluations **derives from the prompt identifier**, never from a copied string: the guide's still announced `guide/v1` while it was at v2, and an experiment that lies about what it measures compares against nothing.
-- Accenting the evaluation games breaks no matching, and it is verifiable: `normalizeQuestion` (FAQ, `facts_coverage`) and `normalizeWorkTitle` (`banned`, `findBorrowedNames`) both strip diacritics before comparing. **Three fields nevertheless stay intact**: `banned` and `mustNotContain`, which are detection needles, and the injection payloads (`PWNED`, `COMPROMIS`, `SYSTEME`), which the assertion is about. `injection_resisted` compares in raw `toLowerCase()`, without normalization: an accent added there would genuinely change the test.
-- The fixtures `apps/api/test/fixtures/faq-*/guide.fr.json` deliberately keep their pair "Comment ça marche ?" / "Comment ca marche": the missing accent is the subject of the test there, not an oversight.
 - Key, `baseURL`, `organization` and `project` are **always** passed explicitly to the SDK, including as `null`. Without this the OpenAI client reads `OPENAI_API_KEY` and `OPENAI_BASE_URL` from the environment: with the `openrouter` provider and an OpenRouter key absent, the OpenAI key would go to OpenRouter. The provider URL is a hardcoded registry in `packages/llm`, never an env variable.
 - **No automatic caching of an LLM output.** Only FAQ entries marked `validated: true` are served without a call: caching a generated answer would let a visitor poison what the others see.
 
-## Database
+## Security invariants
 
-Postgres through Prisma 7, in `packages/db`. The schema lives in `packages/db/prisma/schema.prisma`, and the package is consumed by `apps/api` as it will be by `apps/worker`: a single source for the schema, the migrations and the client.
-
-- The client is generated in TypeScript into `packages/db/src/generated/prisma`, git-ignored. It is in `src` because the generator emits TypeScript: elsewhere it would fall outside the build's `rootDir`. The `build`, `typecheck` and `dev` scripts of the package run `prisma generate` before compiling, and turbo builds it before its consumers.
-- `packages/db` is the only package in **ESM**: the generated client emits `import.meta`, which TypeScript refuses to transpile to CommonJS. No consequence: only ESM consumers read it.
-- Prisma 7 no longer accepts `url` in the `datasource` block. Two readers of `POSTGRES_URL`: `packages/db/prisma7.config.ts` for the CLI (migrate, studio), the `@prisma/adapter-pg` adapter of `PrismaModule` at runtime. There is no more embedded query engine, the connection necessarily goes through a driver adapter.
-- The Prisma 7 CLI no longer loads any `.env` by itself: `prisma7.config.ts` calls `loadRootEnvFile`, the same loading as `main.ts`.
-- Tables in plural, columns in `snake_case` via `@map`: TypeScript keeps camelCase, hand-written SQL stays readable.
-- **Migrations are applied by the deployment, not by the api.** `packages/db/Dockerfile` produces `odyssai-migrate`, a disposable container carrying the CLI, the schema and the migrations; the Jenkinsfile runs it (`compose run --rm migrate`) between the `pull` and the `up -d`. The api image deliberately removes the Prisma CLI and its engines: letting it migrate the database would hand back those 190 MB and leave a schema-writing tool in the container that answers players. The `migrate` service lives in the `tools` profile of the compose, hosted by the ansible role, so it never starts with the others.
-- Migrate **before** switching the images, so the old code runs a few seconds on the new schema: a migration must stay readable by the version it replaces. A column is removed in two deployments, never in the one that stops writing it.
-- The realm remains the source of truth for identity. `email` and `emailVerified` are only mirrors refreshed at login: no unique constraint on a value whose uniqueness belongs to Keycloak.
-
-## Authentication
-
-One Keycloak realm per environment (`odyssai-dev`, `odyssai-prod`). `apps/api` is its only client, confidential.
+### Authentication
 
 - Authorization Code + PKCE S256 flow, with the API as proxy. Direct grant is disabled on the client: no password ever transits through the API.
-- Login and signup are served by Keycloak. `GET /auth/signin` targets the authorization endpoint, `GET /auth/signup` targets `/protocol/openid-connect/registrations`.
 - Tokens never leave the server. The browser holds only an opaque session identifier, in a `__Host-` httpOnly SameSite=Lax cookie; tokens live in Redis. Never return a token in an HTTP response.
-- The realm is not configured from this repo: the ansible role `keycloak` of the infrastructure repo describes it end to end through the Admin REST API, and it is the source of truth, not the web console.
 - The realm is under strict refresh token rotation (`revokeRefreshToken`, `refreshTokenMaxReuse: 0`). Every renewal goes through the Redis lock of `SessionService`: two concurrent renewals would have Keycloak invalidate the whole session, reading the second one as a replay.
 - Identity (email, password, MFA) belongs to Keycloak. The game profile (pseudo, universes, progression) belongs to the application database and never goes up into the realm.
 - `SessionGuard` protects the game routes and drops the session on the request.
-- The verbs open to the browser are listed in `apps/api/src/config/cors.ts`, **not in `main.ts`**: the configuration would be outside the module graph there, hence invisible to tests. **Any route served under a new verb is added to `CORS_METHODS`.** Without that it works from curl and from supertest, which emit no preflight, and fails in a browser alone. `test/cors.e2e-spec.ts` boots the application with the real configuration and checks the preflight of every verb.
-- The `odyssai` theme dresses the realm pages and lives in the same ansible role. Its CSS redeclares the tokens of `globals.css`, Keycloak not compiling Tailwind: report any evolution of the kit there.
 
-## Guide
+### Data and privacy
 
-Q&A agent of the showcase site, on the home page. It answers in SSE streaming from the sole texts of the content pages.
-
-- The corpus is generated from `apps/web/messages/{fr,en}.json` into `packages/narrator/src/generated/guide-corpus.ts`, **committed**, and `corpus:check` fails if it drifted. Any change to a content page therefore requires a `corpus:build`.
-- Five layers bound the cost: validated FAQ (free, served without pass nor limit), Turnstile pass in a cookie, hourly and daily windows by hashed IP, concurrency semaphore, reserved then tuned daily budget. Everything goes through Lua scripts on the existing Redis.
-- The off-topic question is flagged by the model with the `[[HORS_SUJET]]` sentinel, intercepted before the first byte served; the text rendered to the visitor is written server-side.
+- **Migrations are applied by the deployment, not by the api.** `packages/db/Dockerfile` produces `odyssai-migrate`, a disposable container carrying the CLI, the schema and the migrations; the Jenkinsfile runs it (`compose run --rm migrate`) between the `pull` and the `up -d`. The api image deliberately removes the Prisma CLI and its engines: letting it migrate the database would hand back those 190 MB and leave a schema-writing tool in the container that answers players. The `migrate` service lives in the `tools` profile of the compose, hosted by the ansible role, so it never starts with the others.
 - The `guide_questions` log carries neither IP address nor player identifier. `traced` says whether the request was sampled: the trace ends up in LangSmith through the `guide_question_id` metadata.
 - FAQ entries arrive as `validated: false` and are only served after human review.
-- **The prompt is at v2.** The v1 claimed the game was not playable, which stopped being true, and forbade any price, which was fair as long as no amount reached the model. The v2 talks about a closed alpha and pre-registration, and allows quoting a price, but **only from the `<tarifs>` block**, never otherwise and never if it is absent.
-- **Amounts do not enter the corpus, they arrive alongside.** The corpus is generated from the site messages, where no price appears: the tiers live in the database and the amounts at Stripe, copying them into a translation file would make two truths. `GuidePricingService` therefore reads the tiers at every question and passes them as `live`, after the corpus and before the question, which only breaks the prompt cache on the day a price changes.
-- This service **caches nothing** and **never fails**: an unavailable database returns an empty string, the block disappears, and the guide points to the pricing page instead of inventing.
-- The budget is estimated on the prompt **tarifs included**: counting them afterwards would under-estimate the reservation, and it is the budget that keeps the spend.
-- The About page enters the corpus. "Who is behind this site" gets asked before entrusting an address to an alpha game, and the answer must not be hard to find.
-
-## Getting into the game
-
-From the home page to the generated world. `GET/PUT /onboarding` behind `SessionGuard`, a single resource for the whole path, and the `/play` route web-side.
-
-- **Two schemas per step** in `packages/schemas/src/onboarding.ts`: a permissive draft saved as the input goes, a strict one gating the move to the next step. The path must be resumable, so a half-filled input must be writable to the database.
-- `advance: true` on an incomplete input **still saves**, then answers 422 `incomplete`: nothing the player typed is lost because he clicked too early.
-- The `username` step does not exist in the database enum: it is inferred from the presence of a pseudo, and setting it goes through `PATCH /me`, not through this resource.
-- The `universes` row is born at the first save, never at a read: `GET /onboarding` writes nothing. Since multiple stories, it is `StoriesService.start` that creates it when no story is open.
-- One writes at one's own step or below, never beyond. `generating` and `ready` close the path; `failed` stays open, it is the only exit of a generation that did not complete.
-- Themes are wiped at each change of the inspiration: they are a pure function of it, and a stale theme would have a world generated from an input the player changed.
-- `characters.name` is nullable: the sheet is written several times, the presence of the name is required by the strict schema, not by the table.
-
-### The numeric base, and talents
-
-The attributes were a dictionary with free keys that the model filled with whatever passed in the conversation: one sheet carried "Kendo", "Tir à l'arc" and "Discrétion", the next "vigueur". Those are **skills**, not attributes, and no rule could be written on them. The schema comment already announced the move to the engine.
-
-- **Five fixed attributes**: `corps`, `adresse`, `esprit`, `presence`, `instinct`. Without accents, because the model reads and copies them: surrounded by accented French, it would correct `presence` and the schema would reject its output.
-- **One to five, and three is the middle**, hence the null modifier. Going three-to-eighteen would have broken existing sheets for nothing on a twenty-sided die. `modifierOf` returns the value minus three, from -2 to +2: two points are worth ten percent on a d20, enough for a strength to be felt without it deciding in the die's place.
-- **`attributeFor` says which attribute a roll calls on**, from the situation and therefore by the code. Asking the model which one applies would amount to letting it pick the highest on the sheet. `instinct` is not listed yet, for lack of a situation calling for it: it is read and feeds the narrative, an attribute does not need to be computed to exist.
-- **`bandFor` bounds the total to the faces** rather than letting it overflow, `bandOf` rejecting what is not a valid roll. Accepted consequence: a bonus can carry a nineteen up to a critical, and a malus sink a two.
-- Outside a settled roll, **the modifier stays null**: the GM then judges the uncertainty himself, and mixing his freedom into the base would make the result unreadable.
-- The **talents** (`characters.talents`) collect what the model used to name freely: the color, where the attributes are the calculation. The engine does not read them, the GM does.
-- **An attribute rises with use, and the code decides it.** Not the GM: a player who insists would end up getting his rise, and "you feel you are progressing" costs nothing to write. Every settled roll counts for the attribute it calls on, **failures included**: missing is the most ordinary way of learning, and counting only successes would make the strongest rise and the weakest stagnate.
-- `PROGRESS_STEPS` says how many rolls each tier needs, and it is increasing: three to leave one, fifteen to reach five. A real flaw gets corrected in the game where it bothers, and five is not reached by accident.
-- `characters.progress` counts **since the last rise**, not since forever, and resets to zero at the tier crossed: without it one would have to replay the whole story to know where a character stands. It lives next to the sheet and not inside it, and the GM sees nothing of it.
-- The rise goes out as a `grew` event, separate from `done`: it is news of its own, read once, where a turn's verdict is read with the turn.
-- **The inventory is a list of names, with no effect whatsoever** (v14). An item granting a bonus would be a rule, and the effect belongs to the engine, never to the text: otherwise "I craft a sword that kills everything" would be obeyed and the game state decided in prose. The GM receives `<inventaire>`, ascribes no numeric effect to anything, and the character carries only what it contains.
-- The model declares `gained` and `lost` in its tail block, `carryAfter` applies: **what it did not write there did not change hands**, whatever its narrative told. The comparison is normalized because it writes "l'épée" where it had written "épée corrompue", and what does not reappear is ignored rather than failing the turn, like the rest of `readDelta`.
-- Beyond `INVENTORY_MAX`, **the item does not enter**. Dropping the oldest would lose a sword for three pebbles, and a full bag is easier to understand than a silent disappearance.
-- The migration converts in this direction: the old keys become talents, the base starts at three. Without it, `CharacterSheetSchema` would reject the sheet, so `TurnMemoryService.world()` would return `null`, so **the game would become unplayable**: the strict schema is re-read at every turn.
-- `AuthModule` re-exports `UsersModule` because Nest builds `SessionGuard` in the module that applies it. A game module therefore only has to import `AuthModule`.
-- **The route is gated by the alpha phase**, the one of `site_settings` that the dashboard tunes, and no longer by a compile flag: opening the game is a decision taken some morning, not a deployment. Api-side, `AlphaOpenGuard` after `SessionGuard` on every game route, 403 `alpha_closed`; it is the rule. Web-side, a convenience: `GameLink` answers with a toast instead of navigating, `GameGate` displays a page saying so instead of a 404, the phase being public anyway. An administrator always passes, on both sides: that is how production gets checked before opening. `NEXT_PUBLIC_ALPHA_OPEN` no longer exists, neither in the Jenkinsfile nor in the image.
-
-## Character creation
-
-Step 3 of the path. `GET /onboarding/character` renders the conversation, `POST .../messages` streams a turn in SSE, `POST .../extract` proposes a sheet.
-
-- **The model proposes, the schema decides, the player corrects.** The extraction writes nothing: it returns a proposal, and it is `PUT /onboarding` that saves what the player validated.
-- **The conversation does not open the game** (v3). The v2 asked to "invite the player to validate the sheet": the model asked the question, the player answered yes, and the next turn followed with "what is your first action?". It was playing the GM in a world that was not generated yet. The v3 forbids it to describe a scene or ask for an action.
-- **The guide does not rephrase what the player just said** (v4). The v3 asked it to "rephrase in one sentence", and a weak model made a full recapitulation at every turn ("I understand your character is named Joachim, he is a 28-year-old man who likes..."). One single recapitulation, at the end, when it proposes drawing up the sheet.
-- **A player who asks for his sheet gets it**, and is not told to go find a button. The model then sets `CHARACTER_SHEET_MARKER` at the end of the message, `converseCharacter` removes it from the stream via `splitTail`, and the screen draws up the sheet when the stream closes. The marker is therefore neither streamed nor saved: the message kept in the database is the sentence alone.
-- The marker is in the **tail** like the canon's, never in the head like the off-topic sentinel: the sentence addressed to the player goes first, the signal follows. Hence the `seen()` of `splitTail`, which an empty tail does not replace: this marker carries nothing, it signals.
-- **It is only a request if `canExtract` is true.** Set before `CHARACTER_TURNS_MIN`, it would have an extraction called that the API would refuse with 422, and the player would see an error for having asked too early.
-- The extraction validates **field by field**: a fanciful age must not carry away the name and the personality. What does not fit goes into `missing`, and the screen asks for it.
-- Two distinct calls, conversation and extraction. Mixing an answer addressed to the player and a structure destined for the database would put two roles on the same text.
-- The player's message is written **before** the model call: a cut in the middle of a response must not make him lose what he typed. The response, on its side, is only written if complete.
-- The conversation sees **nothing of the cited works**. The player wrote them, so there would be no leak in sending them back to him, but the sheet then goes into the generation prompts.
-- On the other hand the **character name is not subject to the guard on borrowings**: the player names his character, it is his decision. The guard protects the generated world, not the player's choices.
-- The cost is bounded by the number of turns (`CHARACTER_TURNS_MAX`), not by a rate limit: the player is authenticated. `CHARACTER_TURNS_MIN` decides when the sheet becomes extractable.
-- **`DELETE /onboarding/character` resets the creation to zero**, and it alone: the conversation and the sheet draft go away, the inspiration and its themes stay, the step does not move. Same guard as the read: once generation has started, the conversation is closed and the character is bound to the world. Credits spent for these messages are not refunded, the calls happened. Behind a word to type (`DangerAction`), like everything that cannot be undone.
-- The first message is not saved: as long as the player has said nothing, there is no conversation, and writing it would create one the extraction would count for nothing.
-- **The story reads as a PDF**, in a tab: `story-pdf.tsx`, rendered by `@react-pdf/renderer` in the browser, imported on click so as not to weigh on the bundle. GM scenes only, without the player's sentences nor the answers to his questions, with at the top the title, the world, the character, the act and the date. Base PDF fonts, which cover French without loading anything. The tab opens on the click, before the render: opened after, the browser would take it for a popup. No reading view in the page: it was the same text at another size, and the PDF is what one rereads.
-- **A question to the GM and its answer read as an aside**: `request` is carried by the player's message and by the response (`TurnMessage`), and the thread groups them in a separate block, arcane tint. The GM speaks there in `font-voice` as elsewhere, but it is not a scene.
-- `apps/web/src/lib/sse.ts` carries the stream reader, shared by the guide and the conversation. Do not copy it into a third caller.
-
-## World generation
-
-The abstraction pass converts what the player cited into themes, and it is the **only step of the whole chain to see the titles**. Everything after receives only `WorldThemes`.
-
-The guard on intellectual property has three stages, and none suffices alone:
-
-1. The `abstraction/v1` prompt forbids proper nouns in the output. A model forgets an instruction.
-2. `WorldThemesSchema` rejects them field by field, via `findProperNouns`. A schema does not read a plot.
-3. `findBorrowedNames` rereads the produced prose against the entered titles. A control only sees what it knows to look for.
-
-- **Every prompt states the bounds its schema holds, in words and on the key itself** (`abstraction/v5`, `generation/v8`), from `THEME_LIMITS` and `GENERATION_LIMITS` in `schemas/world.ts`, read by the Zod schemas and converted by `wordsWithin` (eight characters per word, margin included). Copying them in plain text would make two truths, and the false one would be the one the model reads. A model does not respect a bound it ignores: generation failed on a `setting` over 400 characters, then the charter on an `allowed` over 200, the doctrine asking it to write each thing "with its rule" without saying the room it had for that. **Stated in characters, a bound serves it as a target**: measured on `qwen3.7-plus`, geography 1335 for 1200, era 379 for 300, and at that volume it forgot `accentHue`. In words, with the margin, the `lore` node passes three times out of three and a whole generation fits in seven calls without replay. Counterpart: it only half-fills the word budget (geography around 500 characters), and `CHARS_PER_WORD` is the dial if the lore looks short.
-- `findProperNouns` takes a capital outside sentence head for a proper noun. The rule is crude and errs in the direction of refusal: a retry costs less than a borrowed world.
-- `findBorrowedNames` only compares **capitalized** words, and ignores single-word titles in lowercase: otherwise a desert world inspired by Dune could no longer talk of dunes. The comparison bears on whole words, never on substrings.
-- **One model per role, in code**: `packages/llm/src/models.ts`. A single variable served six roles that do not have the same needs, and forced a compromise between the GM's prose and the JSON rigor of extraction. The turn runs on a dense model (`qwen3.8-27b`), generation and lore on the best one we accept to pay for (`qwen3.7-plus`, seven calls amortized over twenty-five credits), the two short roles (character, extraction) on a small disciplined model at low temperature (`qwen3.5-9b`), and abstraction on a dense model (`qwen3.5-27b`), for the reason measured below. `NarratorConfig.modelFor(role)` and `config.models` worker-side serve them, with the `extraBody` of the environment, which depends on the provider and not on the role.
-- In code and not in a variable: a model change is a product decision that rereads in the history. `LLM_NARRATOR_MODEL`, `LLM_NARRATOR_TEMPERATURE` and `LLM_NARRATOR_MAX_OUTPUT_TOKENS` no longer exist, and `configured` with them: there is no more empty-model possibility. **The ansible role setting these variables is to be cleaned**, they would be ignored.
-- The narration model **is chosen by evaluation**, not by reputation. `LLM_NARRATOR_CANDIDATES` carries the models to compare, `pnpm --filter @odyssai/api eval:narration` runs them on `packages/narrator/evals/abstraction.{fr,en}.jsonl`, and the winner gets reported into `models.ts`. Measured at equal tooling: `qwen3.5-27b` 92 % fr / 100 % en, `qwen3.5-35b-a3b` 92 % / 92 %, the failures all being incomplete JSON, never a borrowed name. Re-measured with `abstraction/v4` on 23 September 2026: `qwen3.5-9b` 17 % fr / 33 % en, `qwen3.5-35b-a3b` 58 % / 92 %, `qwen3.7-plus` 83 % / 100 %, `qwen3.5-27b` 92 % / 92 %. The failures are almost all a `setting` beyond its 400 characters in French: **a small model does not count characters**, even when the prompt tells it to, and that is what made every generation fail when abstraction ran on the 9b. The worst side decides, hence the 27b. In `abstraction/v5` (lengths in words), the 27b does 83 % fr / 100 % en, its two French failures being the guard on proper nouns and no longer a length; at twelve cases per language, one case is worth eight points.
-- The fallback prices `LLM_NARRATOR_PRICE_*` only know one scale: they are wrong for the roles that do not run on the turn's model, and only serve if OpenRouter stops returning the cost.
-- **`llm_usage.cached_tokens` says whether a prompt cache serves.** The turn prompt is ordered stable first, and some providers bill cached tokens at a fraction of the price; without that figure, choosing a provider for its cache would be a reputation. `packages/llm` reads it in `prompt_tokens_details.cached_tokens`.
-- **Both languages, always, and one line per language.** The GM answers in the player's language: a model that abstracts cleanly in French can borrow in English, and a candidate is only judged on its worst side. It is the gap between the two lines one looks at, never their average, hence a case set and a LangSmith experiment per language, the case identifiers staying the same on both sides.
-- The English game **cites works under their English title** and keeps the same `banned`: a proper noun does not get translated. The injection payloads stay intact too, for the reason already given. Empty, `NarratorConfig.configured` is false and the api still starts: no route reads narration.
-- The evaluators are in code, without an LLM judge. The severest is `no_banned_name`: a hand-written list, case by case, of names that must not survive the abstraction.
-- **A rejected output scores zero on the safety controls**, not one. Its prose is empty, so it would pass everything without having produced anything, and a model unable to answer would display as the safest of all.
-- Forbidden names are searched on **whole words**, as in `findBorrowedNames`. On substrings, "San" is found in "sans" and "paysan", and made clean outputs fail.
-- An OpenRouter `:free` model scoring 0 % is not bad, it is **throttled**: under the continuous load of the evaluation its free tier closes. Measuring it requires running it alone.
-- `eval:narration` does not enter `make check` and consumes real calls: one run is worth the number of cases times the number of candidates.
-
-## Worker and generation graph
-
-`apps/worker` consumes the BullMQ queue `odyssai-generation` and runs the LangGraph graph. The graph lives in `packages/narrator`, its persistence in the worker: narrator does not know Postgres.
-
-- **Redis transports, Postgres records.** `generation_jobs` carries the step, the status and the error; finished jobs are not kept in Redis, which would prevent a rerun, the job identifier being that of the universe.
-- The job identifier is the `universeId`: two concurrent requests from the same player only start one generation. The database cannot guarantee that alone, nothing there preventing two concurrent reads from seeing the same step.
-- **A BullMQ prefix per environment** (`BULLMQ_PREFIX`, `bull` by default, `QueuePrefixSchema` shared by the api that publishes and the worker that consumes). The dev machine shares the server's Redis through the tunnel, and the `worker-dev` running there took the jobs published by a local api: we tested the server's code believing we tested ours, and a day of failures "despite the fixes" came from there. `bull-local` in the machine's `.env`, nothing to change ansible-side.
-- **Resuming a thread is done by passing `null` as input.** Passing the full input restarts the graph from the beginning even when a checkpoint exists. It is `getState().next` that says whether there is something to resume.
-- The **abstraction pass stays outside the graph**: it is the only one to see the titles, and having it apart makes the boundary visible. Its themes are written to the database as soon as they exist, which is a resume point and gives in addition a queryable datum.
-- The graph nodes are prefixed `write_`: LangGraph refuses a node carrying the name of a state channel, and `charter` or `lore` are both at once.
-- A node replays **twice** an unreadable or schema-rejected output. A transport error, on its side, goes up immediately: it is BullMQ that retries it, with its delay, and the checkpointer makes it resume at the right node.
-- The final write is **one single transaction**: a half-written world with a `ready` step would be worse than a failure, the player would enter it without lore.
-- The final control replays the lore **once** if a borrowed name appears. Beyond that, the generation fails: a loop that insists would cost seven calls per turn with no guarantee of converging.
-- The checkpointer tables belong to LangGraph, not to Prisma: `setup()` creates them at startup, no migration describes them.
-- The `dev` of the worker runs **two processes**: `tsc --watch` emits, `node --watch` rereads `dist`. Node cannot run the sources directly, its type stripping not rewriting `.js` specifiers into `.ts`. The initial compilation precedes the watch, else node would start on an absent `dist`.
-- **Each Dockerfile copies its internal dependencies by hand**, manifest then sources, because the install there is filtered and turbo is not there. Adding an `@odyssai/*` to an app's `package.json` without touching its Dockerfile therefore passes all `make check` and all suites (the whole workspace is present locally) and only falls at the `docker build` of the CI: it happened to the worker with `engine`. The missing control is `docker build -f apps/<app>/Dockerfile .` before committing a new internal dependency.
-- **`packages/narrator` is CommonJS**, so its declarations resolve `@langchain/*` through the `require` condition while the worker, in ESM, resolves them through `import`. Same class at runtime, two type identities: `apps/worker/src/generate.ts` takes narrator's type so the only conversion stays at the entry point.
-
-### The story the player is dropped into
-
-The graph produced a world without a story: charter, lore, factions, politics, NPCs, affinities, and nothing to tend towards. The `arc` node is added after the others, because it draws on the factions and characters already written: a story using nothing of the world could have happened anywhere else.
-
-- **Three acts, one goal and one sign per act.** `done` is an observable fact ("the gallery is found"), never a feeling ("he finally understands"): that is what lets the code advance without taking the model's word for it.
-- **The GM only receives the current act.** A model reading the end would lead straight to it, and the player would only have to follow: a story that knows where it goes gets told, it does not get played. The prompt also says it is **a slope, not a corridor**.
-- The model declares `actDone`, the code bounds it: **one notch at most, never backwards**. A declaration must not be able to skip half a story nor replay it.
-- **Beyond the last act, the game continues** as free adventure: `arcAct` is then four, the block says the story is over, and the GM has no more goal. An arc gives a start, not an end.
-- **`arc` is optional in `WorldBibleSchema`**, and that is what keeps the worlds generated before playable: a bible the schema would reject would make their game unplayable, since it is re-read at every turn. Without an arc, no block is set and the GM plays as he played.
-- It **does not enter `WorldViewSchema`**: the player never sees the end of his own story, and it is the type that guarantees it, as for the characters' `secret`.
-- **Not all worlds are dark** (`generation/v4`). The charter chose the grave register by reflex; the prompt now lists what an adventure can be, and the arc recalls that a quiet investigation or a debt to repay are worth a catastrophe.
-- **Three** lists of steps were copied by hand, in `GenerationStreamEventSchema`, in the generation screen, and in the final assembly of `runGeneration`. The third one did damage: the arc node ran, `validate` accepted it, and the assembly threw it away. A world was generated without a story for that line, and its arc was **salvaged from the LangGraph checkpoint** (`langgraph.checkpoint_blobs`, `arc` channel, as JSON) rather than regenerated for twenty-five credits. The first two lists: `arc` broke both of them. They now derive from `GenerationStepSchema`, and the call counts of the graph tests derive from the node count.
-
-### Worlds that do not look alike
-
-The same first names came back from one world to the next and every story was a shadow-organization plot. Measured on six inspirations, charter, factions and characters, with `generation/v8` and `qwen3.7-plus`: 25 NPCs, **14 distinct first names**, Kaelen ×4, Elara ×4, Mira ×4, and "la maison Varek" copied from the prompt. Two causes, neither is chance.
-
-- **The model copies the prompt's examples.** The GM gave "Kaelen, who trained you" as a presentation example; the generation gave "la maison Varek". Named examples are replaced by "so-and-so", and the common rule says the remaining examples are not to be reused. `Varek` is in the forbidden list for the same reason.
-- **Left free, it falls back on its ruts.** The code therefore draws, before each generation, a story **register** (`STORY_REGISTERS`: investigation, debt, feast, worksite, inheritance, road, trial, disappearance, trade, rivalry, season, journey, contest, misunderstanding) and a **palette** of names (`NAME_PALETTES`: short, latin, nordic, southern, slavic, open, compound, ancient), `drawFlavour` in `engine`, kept in the graph state so a resume does not remove them. The prompt carries them at the head of the input (`<registre>`, `<noms>`) and says they bind the charter as much as the arc. The palettes are **described, never illustrated**: an example would be copied.
-- **The conspiracy is forbidden by default**, along with the prophecy, the chosen one and the ancient evil: it is the rut of every model, and it only opens if the drawn register calls for it in so many words.
-- **Overseen first names are forbidden and checked**: `OVERUSED_NAMES` and `OVERUSED_GROUP_WORDS` in `schemas/world.ts`, told to the generation and GM prompts, and reread by the graph on factions and characters (`overusedNamesIn`, folded whole words): a node returning one is replayed as an invalid form. Not in `WorldBibleSchema`, which is re-read at every turn: a pre-existing world carrying a Kaelen must stay playable.
-- **The generation model is chosen on this measure.** Same six inspirations, same draws, `generation/v9`: `qwen3.7-plus` returns 21 distinct first names out of 24 and still lets three forbidden ones slip through; `deepseek-v4-flash` returns 33 out of 35, no forbidden one, and follows the palettes to the letter; `skyfall-36b-v2` is throttled by the provider (429 at the fourth world). Generation therefore moves to `deepseek-v4-flash`; the game lore stays on `qwen3.7-plus`, three sentences with no new name, the question does not arise there. The GM (`qwen3.8-27b`) keeps its model: it receives the list, and nothing was measured on it.
-
-### Realism, whatever the world
-
-A world read in the database was "gloubi-boulga": factions named "les Éclats du Foyer" and "les Tisserands de Lumière", inhabitants who "cook with their inner warmth", a cook "known for transforming her internal heat into nourishing dishes that strengthen the group's bonds". The cause was not one node but the chain: `abstraction/v2` asked for "abstract themes" and returned metaphors ("an inherent internal force", "the warmth of action"), and every following node took them literally, down to the game lore.
-
-- **Themes are concrete** (`abstraction/v3`): `setting` is a physical place (climate, relief, water, houses, food, travel), `power` stands in hands (land, water, weapons, law, money, knowledge, roads), `mystery` is an observed phenomenon and not a felt one, `motifs` contains only what one can point a finger at. The prompt cites the faulty metaphors by name so the model recognizes them.
-- **A doctrine common to all nodes** (`generation/v5`), in `COMMON` and not repeated per node: an idea is never a mechanism; a magic or a technology has rules, a cost, practitioners, limits and a social place, like a trade; names sound like names people really give (a place, a trade, a founder, a possession), never two poetic words; the test is being able to explain the sentence by pointing at something. Each node then says what that means for it: `allowed` is written with its rule, `strength` is a resource and never a virtue, `role` is a trade, `drive` a precise thing, `secret` a fact, `hook` a problem a person could really have.
-- **The game lore follows** (`lore/v2`): a person has a trade and debts, not an aura; an object has a provenance and a value; it respects the charter's magic and does not invent another one.
-- **The GM too** (`turn/v18`), in one line: the world is real even if it is magic, a thing happens only through a means one could describe.
-- Tone is not at issue: a warm world stays warm, and the rule "not all worlds are dark" holds. Realistic does not mean grey, it means the cook cooks.
-
-### The lore that grows: entities
-
-A true role-playing game gives a story to everything it names. The bible gave one to the day-one characters and to nothing else: an NPC met at the tenth turn had only one canon fact, an object had only a name. The `entities` table is the living matter, next to the bible which no longer moves.
-
-- **An entity has two parts**: `known`, what the player has learned, and `hidden`, what the GM keeps until the game reveals it. Four kinds, without accents because the model copies them: `npc`, `item`, `place`, `faction`.
-- **Generation seeds them** (`seedEntities`): NPCs with their `secret` hidden, factions without hidden. It is the only place where the bible and the entities get copied, and it is at the start. The GM prompt no longer shows NPCs in `<monde>` but in `<entites>`, hidden included: two copies of the same secret would end up diverging, and it is `<entites>` that grows.
-- **Every new name the GM sets, he declares in `met`**, with what the scene showed of it. The code writes its fragment for him (`lore/v1`, `describeEntity`): two or three known sentences, two or three hidden, consistent with the charter, the lore, the factions and the names already set, and serving the current act without resolving it. An unreadable fragment is replayed once, like a graph node; beyond that, the entity stays without a story and the turn does not suffer for it.
-- **A fragment costs one credit** (`CREDIT_COSTS.lore`), at most two per turn (`ENTITIES_PER_TURN_MAX`). Debited before the call, refunded if refused, skipped if the reserve is empty: the price of coherence shows on the invoice rather than being melted into the turn. That is where the cost of a game climbs, and it is accepted as such.
-- **The guard on borrowings rereads every fragment** against the cited works, like the lore: a name refused at generation does not come back in through an entity.
-- **The hidden comes out through the game, never in plain text.** When a hidden fact really comes out in the narrative, the GM declares it in `revealed` and `revealLore` pours it into the known: a revelation cannot be undone, and costs nothing. The GM may lie or forget to declare; the truth stays in `hidden` for him, and only the player's codex depends on it.
-- **The hero has his lore too** (`generation/v4`): `arc.hero.bond`, what ties him to this story and that he knows; `arc.hero.secret`, what the world knows of him and that he still ignores. Written with the arc, because both must hold with the same story. Optional for the same reason as the arc.
-- `GET /world` serves the codex, `PublicEntitySchema` without the hidden: a field a type does not carry does not leak. A new or revealed lore goes out as a `lore` event so the screen can say it.
-- Uniqueness goes through `key`, the folded name through `entityKey` (the same folding as work titles): the GM writes "l'Épée" where he had written "épée corrompue", and "Soeur Nym" where the bible says "Sœur Nym".
-- The world generated the day before that table existed was seeded by hand from its bible, by `seedEntities` itself and not by a separate query: one seeding rule, two callers.
-
-## Generation screen and game shell
-
-- Progress reads from `generation_jobs` through a `GET /onboarding/generation` in SSE, which rereads the table every two seconds. **No Redis channel published by the worker**: the table is already the source of truth, it survives a restart, and two api instances read the same thing from it.
-- The stream closes by itself after ten minutes and the browser reopens: a generation may be slow, not indefinitely.
 - `GET /world` serves the world **through a projection**, `WorldViewSchema`, which does not carry the characters' `secret`. It is the schema that guarantees it, not a `delete`: a field a type does not carry does not leak by distraction. An e2e test checks the word appears nowhere in the response.
-- The `failed` step reopens the inspiration in the assistant: it is the only exit of a generation that did not complete, and the API accepts a write for that reason.
-- The page title is carried by `OnboardingWizard`, not by `page.tsx`: once the world is generated, the screen is no longer a path and does not want one.
-- The world tint goes through `--world-hue` under `[data-world]`, as the kit plans it. Do not write `--accent` by hand: it would bypass the rule instead of following it, and lose its transition.
-- The game turn input field is **present and inert**, and says so. The turn does not exist yet, and making believe otherwise would be worse than an absence.
-
-## Leaving: restarting, deleting one's account
-
-`DELETE /onboarding` restarts a game, `DELETE /me` erases the account. Both go through `ErasureService` (`apps/api/src/erasure/`), a separate module: `MeController` lives in `AuthModule`, which `OnboardingModule` already imports, and the reverse would make a cycle.
-
-- **Two independent questions**, not one. A character met elsewhere is kept with `died_at` set; a visited world is kept, detached. A character travels, so it can have been met without its world having received anyone.
-- `encounters.universe_id` is the universe **where** the encounter took place, not the one the character comes from. That is what makes the two questions genuinely independent, and a test demonstrated it by failing on a fixture that confused them.
-- Nobody writes into `encounters`: the crossing between universes remains to be built. The two predicates are therefore false and everything is deleted, which is fair as long as nobody can cross paths.
-- A kept world is **emptied of the player's words**: `works`, `own_description` and the whole creation conversation. What remains is the model's text, with no link to a person. That is what allows keeping it without betraying the Privacy page, which now says it explicitly.
-- `DELETE /onboarding` only touches the open story (see "Several stories per player"), `DELETE /me` all of them.
-- `universes.owner_id` and `characters.universe_id` are nullable in `SetNull`, not in `Cascade`: it is the service that decides the fate of a world, not the database. Counterpart: deleting a user by hand leaves his world orphaned. The worker refuses to generate for a world without an owner.
-- **The API has no rights over Keycloak**, and gains none: `DELETE /me` erases the game and closes the session, then returns `accountUrl` so the player deletes his identity himself. The ansible role enables for that the required action `delete_account` and the client role `account/delete-account`.
-- The confirmation is a **word to type** (`DangerAction`), not a checkbox nor a second click: both are obtained by reflex, copying a word requires reading.
-- **The Stripe subscription is cancelled before the row disappears.** `subscriptions` cascades on `users`: deleting first would carry away the Stripe identifier, and the player would keep being charged for an account that no longer exists. Immediately and not at period end, nobody remaining to enjoy it, and without refund.
-- A Stripe failure **does not stop the departure**: the right to erasure is not suspended on a third party's availability. It goes to `logger.error` with the identifier, to be caught up by hand. It is the only case where someone would keep being charged without being able to object.
-- The Stripe client stays, only the subscription goes: invoices must survive the game account, it is an accounting obligation, and they carry nothing attached to it anymore.
-- `ErasureService` takes the Stripe client from `StripeModule`, which is global. Going through `BillingService` would make `AuthModule` to `ErasureModule` to `BillingModule` to `AuthModule`, and a `forwardRef` for one cancellation line would be paid dearly.
-
-### Several stories per player
-
-`universes.owner_id` is no longer unique: a player runs several stories, on the same credit reserve. `users.current_universe_id` says which one is **open**, and it is the one the path, the generation, `GET /world` and the game turn read.
-
-- **The pointer is not proof.** `currentStory(user)` (`apps/api/src/stories/stories.service.ts`) returns the filter `{ id, ownerId }`, never `{ id }` alone: a pointer aiming at another's world would read `null`. Pure, so that erasure and the turn do not have to import the module.
-- `GET /stories` lists, `POST /stories` starts one (empty, at the inspiration, open at once), `PUT /stories/:id/current` opens another one, `DELETE /stories/:id` deletes one, open or not, by the departure rule (`ErasureService.releaseStory`), and refuses `locked` during generation like the restart does. The controller lives in `OnboardingModule`, which already has the session guard and the erasure: a `StoriesModule` importing `AuthModule` would make Auth to Erasure to Stories to Auth.
-- **Without an open story, the first write of the path starts one**: that is what replaces the per-owner `upsert`, and what keeps the first path identical. `GET /onboarding` still writes nothing.
-- **Restarting only erases the open story.** A deleted world removes the pointer through the database (`SetNull`), a kept world (detached) removes it through the service: the player restarts on a new story, the others stay within reach. Deleting the account passes all stories through the same rule, and `DepartureOutcome` keeps the worst case visible: kept wins over deleted.
-- `STORIES_MAX` (`packages/schemas/src/stories.ts`) bounds the count: an empty story costs nothing, but beyond a few the list stops being a choice.
-- The migration opened, for each existing player, the only story he had. The pointer of a player who had none stays null, which is the state of a new player.
-- **Web-side, stories have their tab**: `/play/stories`, two tabs above the game (`GameTabs`), and `StoriesPanel` to create, play and delete. Playing opens the story then brings back to the table: it is the path that follows the open story, the tab only says which one. An inline selector above the assistant was tried and removed: it could not delete, and two places for the same thing read as two rules. The table therefore never displays for two stories at once, which dispenses with a per-story key on the input screens: changing story goes through a navigation, which raises the wizard again.
-- An e2e test (`test/stories.e2e-spec.ts`) plays the round trip, including that opening another's world answers 404 without saying it exists.
-
-### The LangGraph checkpointer lives in its own schema
-
-`PostgresSaver` is built with `schema: 'langgraph'`. In `public`, its tables were invisible to Prisma, and **every `migrate diff` proposed dropping them**, which would have erased the resume state of generations in progress. Do not bring them back there.
-
-## The game turn
-
-The narrator is a GM: he leads, the player answers. `POST /turn` in SSE, `GET /turn` to resume. `packages/engine` carries the rules, pure, without database nor model.
-
-- **The code rolls the die at every turn**, with `randomInt` and not `Math.random`. No pre-ranking to decide whether to roll: that would be the model deciding. It only receives a **band**, never the number.
-- **It is the code that decides whether the die settles** (v11), as it is it that rolls. The v10 left the model judge ("you only use it if the outcome was uncertain"): measured on twelve turns, it used it once, and narrated "you cut it clean" on a failure band, which empties the die of its meaning. `settledByDie` sorts `violence`, `contrainte`, `tromperie` and `entreprise` to the side of what fails; the die block then carries "tranche : oui", and the prompt enumerates what each band imposes, from critical failure to critical success. An opening settles nothing, the player having attempted nothing yet.
-- **The roll plays in two steps, and the player sees his number.** An action `settledByDie` recognizes generates nothing on the first send: it waits in Redis (`PendingRollService`), the stream returns `roll_required`, and the screen asks for the roll. The second send, `kind: 'roll'`, carries nothing: making it resend his sentence would amount to taking his word, and nothing would prevent him from changing it between the asked roll and the thrown roll.
-- **Nothing is debited nor written at the first step.** The credit goes at the second, the player's message too: an abandoned action leaves neither invoice nor unanswered message. The hourly limit, on its side, is consumed at the first, else one turn would cost two.
-- `take()` is a `getdel`: two clicks on the button must not play the turn twice, and a read followed by a delete would let two concurrent calls through.
-- **The d20 number now comes out of the server**, in the `roll` event, unlike the original rule: the player rolls, so he sees. The **band stays internal**: five shades serve to color a narrative, not to be read. The fate call (`fate`), on its side, keeps its number hidden, since the player attempts nothing.
-- **It is the code that says whether the die settled, not the model.** It declared `usedDie` in the response tail and was wrong both ways: false where the player had just rolled, true on a plain question, which displayed "unfavorable" under a question asked to the boatman. The verdict shown in the bubble and `turns.used_die` come from `settled` alone, the decision taken before the call, and the tail block no longer carries the key (v23). On a turn left to his judgment, the band can color his narrative, but nothing displays: the player rolled nothing.
-- The raw roll stays kept in `turns`: it is what allows checking afterwards that a die was not loaded.
-- `splitTail` (`packages/narrator/src/turn/`) separates the narrative from the structured block. It is **the inverse of `splitOffTopic`**: its sentinel is in the head and it decides before the first byte, here the marker is in the tail and the prose flows as it comes. One must therefore permanently retain the longest suffix that could be a marker start.
-- **The player leaving stops the streaming, not the generation.** The tail block must arrive for the canon to be written, and the turn must save for him to find it back. It is the inverse of the guide, where cutting the upstream call is right.
-- The GM **always hands back by asking what the player does**, but on the new situation. The instruction "something has changed" and the one "ask a question" do not oppose each other: they hold together. If he has nothing new to ask, it is that nothing moved, and that is the flaw.
-- **The GM answers in the player's language.** The language is detected by the moderation classifier, which already reads the message: a separate detection would cost a call or a dependency. As soon as it is not French, the instructions take their English version, **for that turn only**. The account is not touched: a sentence dropped in English must not flip someone's whole site.
-- **The GM never plays in the player's place** (v6). He narrates the world and what others do in it, never what the player's character does, says or thinks. The v5 said "if the player hesitates or stays vague, decide in his place": the GM read a question as vagueness, wrote "you take the organ, you bring your hand closer", then built the next turn on that invented action. The player was no longer driving anything, and the game spun in circles on the same object.
-- **The player can ask instead of acting** (v13). `kind: 'ask'` asks the GM a question: the scene does not move, nobody enters, time does not pass, and the die does not serve. It is the same input field and the other gesture. What the GM invents to answer enters the canon like the rest, so an answer given once stays true: it is him who decides of this world. To a question the character cannot know, he answers with what he knows (a rumor, an assumed ignorance), "you ignore it" being worth more than a free invention.
-- It has its own dial on the scale, `CREDIT_COSTS.question`. It is the same call as a turn, hence the same default cost, but it is an accepted setting: at zero it would open a channel to the model only the hourly limits would bound, at one it discourages what we want to encourage. It gets lowered in `credits.ts`, touching nothing else.
-- **A player question calls for an answer, not an action.** "Do you need help?" is answered by what the person says, and nothing moves because of the player as long as he has not said what he does. A vague player leaves the world going on without him: the others act, time passes, but no gesture is ascribed to him.
-- **The character only knows how to do what his sheet says.** A talent invented for the needs of a scene repeats at the next turn and becomes a fact: the GM had endowed a character with skills nothing mentioned.
-- No menu two turns in a row. "Name the possibilities when they exist" had become a reflex, and every turn ended with "you do X, or you do Y?": a multiple-choice questionnaire, not a game.
-- **Characters speak** (v5): a short line in their own voice, two per turn at most, and never two answering each other in a loop, it is the player who holds the conversation. When he addresses someone, that someone answers with what he knows, what he wants and what he has an interest in hiding. A character is not a service window: he can refuse, lie, ask for something in exchange.
-- **A character never resolves the scene in the player's place** (v12). A game showed it without any instruction being broken: the GM had stopped posing menus, but an NPC said "take this hose, shoot the red valve", then "we go to the shelter", then "are you ready?". The player's three answers were "tell me what to do", "what do we do" and "yes, let's go". The multiple-choice questionnaire had only changed mouths. A character may fear, want, know, ask; he does not dictate the gesture, and to "what do we do?" one answers with an opinion or a fear, never with a step-by-step.
-- The limit went from one hundred twenty to **one hundred fifty words** with that instruction. Without that margin, dialogue would have been the first thing sacrificed to fit the count, and the instruction would have stayed a dead letter.
-- **The first scene is played by the GM** (`kind: 'open'`), triggered on arrival on an empty game. Without it the player arrived before an empty field and had to guess he was starting: it is the GM who opens a game. No `<message_joueur>` is sent, the instruction takes its place, and nothing is written player-side: the response takes the first rank. The api refuses as soon as a turn exists, else every reload would replay one, each time for a credit.
-- **Every turn starts from the player's gesture and draws a consequence from it** (v7). That is the rule that moves things forward: he obtains, he misses, he learns, he disturbs someone, a door opens or closes. A turn he paid for that leaves the situation where it was is a lost turn. The decor set once is not set again: what is described is new, or has changed, or serves what just happened. Description feeds the action, it does not replace it.
-- **The first scene situates before playing** (v10). It is the only one allowed to set the decor, and it does it in an imposed order: where one is and what plays there, who the player is in that, then the scene. The second point is the one giving meaning: without it, the character wakes before a decor that does not concern him, which a first game showed by putting him on a parapet without saying why he was there. The lore is told as what the character already knows, "the way one remembers where one is upon opening one's eyes, never the way one would explain it to a stranger": that is what distinguishes a situation-setting from a recitation.
-- That scene gets **two hundred fifty words** instead of one hundred fifty, and three proper nouns instead of one. It is the only exception, and it is justified: a game turn continues a story, this one starts it.
-- **No formula comes back, and a name introduces itself only once** (v16). On a nine-turn game, "Kaelen, qui t'a formé" came back every turn, "sa baguette de bois rouge" six times, and every turn built on the same pattern, gesture then line then threat then punchline. The model over-applied the presentation rule and copied itself: two answers to the same question were identical word for word. The prompt requires rereading previous turns and reusing no expression; temperature goes from 0.6 to 0.85 and `repetition_penalty` to 1.1 in `LLM_NARRATOR_EXTRA_BODY`, which OpenRouter passes to the providers that take it.
-- **The charter tone commands every turn** (v16, and `generation/v3` for the arc). A charter said "epic, warm and full of hope"; the narrative gave a cell, an icy terror and "tomorrow we'll see if you are a monster", and the generated arc opened on smoking ruins and a doomed community. The model's dramatic reflex overrides a `tone` it has right under its eyes: both prompts ask it to reread it before writing and say that in a warm world, ruin is a fault. The opening too: the "thing that is wrong" is chosen to the measure of the tone, and it is not always a beast.
-- **The classifier receives the player's previous message** (`moderation/v6`). "I retry!" has no situation to it, hence no settled roll: a **natural 20** got lost on that, and the narrative crushed the player on his best possible roll. The previous one is given in `<precedent>` to situate a short message, and it alone is judged.
-- **A question receives no GM reminder.** "What do I have in my inventory?" had served "what is found changes the situation", and the scene had moved on a question. `turns.request` now logs what the player sent (`say`, `ask`, `fate`, `roll`, `open`) next to the `kind` of the delta, which is only what the model made of it: without that column, nothing said whether a question had gone through the right path.
-- **An item is a thing one holds in the hand.** The model had filed "volonté collective" into the inventory; the prompt now says it in so many words, with the example.
-- **The player knows nothing of this world** (v9), and that is the rule the v8 lacked. He has not read the lore: a proper noun he has never heard says nothing to him, even written in the bible. Hence **a single new proper noun per turn**, introduced in three words at the moment it falls ("Kaelen, who trained you"). Measured on a first game: seven turns had produced two NPCs and two factions without introducing one, and the player ended up asking "does your thing deal damage?". Yet the GM invented no name, he dumped lore, which produces exactly the same confusion.
-- The game screen already shows charter, geography, factions and NPCs: the lack was not the information, it was that **the narrative never hooked it**. One more panel would have changed nothing.
-- **"What do you do" is no longer prescribed** (v9). The v8 said "you hand back, always, asking the player what he does" and "most often, *what do you do* suffices": the seven turns of the first game ended on that sentence, in a standalone paragraph. The turn now ends on what remains in suspense, and the direct question is forbidden two turns in a row.
-- **The canon says what is true, not what happens** (v9). It had drifted into a chronicle: twelve facts in eight turns, the bound of three reached four times, with entries like "the creature leaps at the player". Those facts went back into every prompt, so the GM reread his own agitation and raised the stakes. The prompt now says that **empty is the normal answer** and that the three slots are not a quota.
-- That rule and the v6 one (**never play in the player's place**) seem to oppose each other and do not: it is the world that moves in response to him, never him being made to move. The prompt says it itself, else the model arbitrates between the two and always sacrifices the same one.
-- The GM prompt is at **v23**, having started from v3. The v1 was cryptic and looped: it asked to "end on an opening", which the model translated into a question every turn. The v2 requires that **something has changed** at the end of the turn, forbids asking the same question again, imposes deciding in the place of a hesitating player, and bans the oracular register in favor of the concrete.
-- `readDelta` never throws: the narrative has already gone to the player when it runs. An absent or unreadable block leaves the turn standing, only the canon does not grow.
-- An invented fact goes through `arbitrateCanon`: refused if it contradicts a charter ban, refused if it borrows a name. The canon feeds all the following turns, so a ban crossed once never closes again. **The works cited at the inspiration are passed to it**, and `TurnWorld` carries them for that: the game turn gave it an empty array, so the third stage of the guard on borrowings compared against nothing. They enter no prompt, only the reread reads them.
-- **`seq` is set explicitly at every write.** It has a default at zero and a uniqueness constraint per channel: the creation conversation did not set it, so all its messages targeted rank zero. The first passed, the second failed, systematically. The test double accepted it because it did not reproduce the constraint, and seven e2e passed on a bug.
-- `conversation_messages.seq` is the explicit rank. The order of a game log cannot depend on a millisecond clock, the message and its response being written in the same transaction.
-- **Long memory degrades cleanly.** `TurnMemoryService` probes the `vector` extension at startup: absent, the GM only remembers the last twelve turns and the game stays playable. The probe is in a `try`, not a `.catch`: a broken client throws before having a promise to reject, and a capability probe must never bring down the startup.
-- The Postgres image must be `pgvector/pgvector:pg18`. The official one does not embed the extension.
-- `TurnLimitsService` **imports** the guide's Lua script rather than copying it: it only knows its keys. The key is here the player identifier, the HMAC anonymization having no more purpose for an authenticated one.
-
-### Characters speak through a roleplay model
-
-The GM wrote the lines himself, in his own voice, and all characters ended up talking like him. A second call, apart, plays the character the player addresses with only his card before his eyes (role `dialogue` in `models.ts`). It first ran on `gryphe/mythomax-l2-13b`, a roleplay finetune meant to hold a voice, refuse, lie and not smooth out. Measured on the first production game (`turns.line`): one line out of three, the other two being the translation of the player's message. The role has since run on the turn's model, and it is the separate call, with the card alone, that holds the voice.
-
-- **The code chooses who speaks, never the model** (`interlocutorOf`, `packages/engine/src/dialogue.ts`): the character named in the message, else the last one named by the GM at the previous turn, the one in scene. Only when the situation is a speech act (`SPEECH_SITUATIONS`): one does not interrogate a door, and one does not negotiate by hitting. Not at the opening, not on a question to the GM, not on a fate call.
-- **It plays before the GM, and the GM carries its line as is** (`turn/v23`, block `<replique>`). It sees the character card, hidden included, the charter tone, the last two turns and the player's message. It narrates nothing, describes nothing, does not speak for the player: it is the GM who holds the scene, it holds only a voice.
-- **What a roleplay model returns despite the instruction gets cleaned** (`cleanLine`): the name in head, the quotes, the stage directions between asterisks, the narrative set around the quotes (what is quoted is the line, the rest is not its to say), the tirade cut at the end of a sentence. Reread by the lexical layer and by the guard on borrowings, like the GM's answer: a refused line is an absent line, never a lost turn. The GM then makes him speak himself, as before. **A line repeating the player's message is dropped** (`echoes`): the GM ignored it by himself, but `turns.line` kept a line the narrative had never carried, and the table no longer said whether the dialogue model served. Folding of work titles, words of three letters at least, four full words or equality: an answer taking the player's words to add its own passes, it is its share of the words that counts.
-- **Melted into the turn** (`CREDIT_COSTS.dialogue` at zero): three sentences on a short prompt, a fraction of the GM. The dial exists for the day that would stop being true. `llm_usage` logs it under `dialogue`, and `turns.speaker` and `turns.line` keep who spoke and what he said, to reread what the GM received and what he made of it.
-- **The line plays in the player's language** (`dialogue/v3`), and its message arrives alone, without an instruction glued behind. The v2 made it play in English, MythoMax having a weak French, and recalled the language at the tail of the prompt, right after the message in French: the measure that validated it (5 out of 5) counted the language of the output, not whether it was an answer. A text followed by "answer in English, the line alone" has the silhouette of a translation task, and a small model does it. The language and the no-repeat ban live in the system; the GM instruction keeps the case of a line arrived in English, which he translates, and that is the only freedom he takes. `turns.line` keeps what the GM received.
-
-### The GM reference cards
-
-What only holds in a precise situation does not fit in the prompt: recalled at every turn, it would cost tokens without teaching anything and would dilute the permanent instructions. Twenty cards therefore live in `packages/narrator/src/guidance/v1.ts`, bilingual like the prompts, and only enter on the call of the situation.
-
-- **The entry criterion is strict**: an instruction true at every turn belongs to the GM prompt, not to the corpus. That is what cut the most while writing.
-- **The label comes from the moderation classifier** (`moderation/v6`), which already reads the player's sentence and already derives the language from it: a separate detection would cost a call or a dependency. The twelve values of `SituationSchema` are **speech acts**, readable in the message alone. A situation that would need the history (the scene drags, the action repeats) would come from the code, which knows how to count.
-- The field carries a `.catch(null)`, and that is the point that counts: without it, an invented or accented label would fail the parse of the whole verdict, which stands for acceptance. A refusable message would pass for having badly named its situation.
-- **No label, no reminder.** Unreadable verdict, unknown value, opening or fate call: the turn plays exactly as before this corpus.
-- The table is a `Record<Situation, …>`, so the compiler refuses to forget a situation. But **the order decides what exists**: the bound only serves the first two, and a card placed beyond in all its lists is never rendered to anyone. `guidance.spec.ts` holds that rule, nothing in the type prevents it.
-- The `<rappels>` block arrives **after the die**, hence after everything that does not change from one turn to the next: the prompt cache loses nothing there. The prompt says its rank, else the model would arbitrate alone between a card and the v6.
-- **An approximate label is worse than no label**, and the first game showed it: "one must flee" and "I'm going far away" had both been classified `attente`, serving a card about a place with nobody while an NPC was there and talking. `attente` therefore explicitly excludes the one who hesitates and the one who leaves, `exploration` covers fleeing, and the prompt asks for `null` in doubt.
-- `lieu-sans-personne` is the card that revealed the model's limit: its condition is not a speech act but a scene state, which the classifier does not see. It is therefore written **in the conditional** ("if nobody is present, then...") and no longer depends on `attente`.
-- `turns.situation` and `turns.guidance` keep the label and the served identifiers, for the same reason as the die roll: check afterwards what the model received, and measure how often the reminder triggers.
-
-## Moderation
-
-Two layers, in that order, on everything a player writes.
-
-- **Lexical first** (`packages/engine/src/moderation.ts`): instantaneous, free, it stops what is manifest before any call and before any write.
-- **Classifier next** (`moderation/v6`): a small conversation model. **No dedicated moderation endpoint is reachable** with the project's keys, verified: OpenRouter answers 404 on `/moderations` and the OpenAI key is empty. An unreadable verdict or an unreachable model stand for acceptance: the lexical layer has already run, and a broken classifier must not prevent playing.
-- The lexical list is **deliberately short**. Three roots were removed after taking down everyday French: `retard` (an everyday word), `fag` (caught "fagot"), `rape` (every grated cheese once accents undone). Missing them is the price; the classifier reads the sentence, not the letters.
-- The comparison is **always on whole words**, never on substring, and the collapsing of repetitions only touches stretches of three letters or more: at two, `faggot` became `fagot`. A spelled-out word ("c.o.n.n.a.r.d") is only re-glued on a run of at least four isolated letters, the signature of a workaround and not of a sentence.
+- `GET /world` serves the codex, `PublicEntitySchema` without the hidden: a field a type does not carry does not leak. A new or revealed lore goes out as a `lore` event so the screen can say it.
 - **The recognized word never goes back to the player**, only the reason: sending it back would amount to republishing it.
-- The GM's answer is reread by the lexical layer alone. A second classification call would delay a narrative already gone.
-- The classifier receives **the same `extraBody` as narration**, and not a variable of its own: same provider, same requirements. Without it it billed 140 to 178 reasoning tokens at the output rate to return a one-line verdict, i.e. two thirds of the cost of a moderation, and the player's message went out without `data_collection: deny`. Measured: 0.000133 $ before, 0.0000513 $ after.
+- `GET /admin/marketing/emails` returns **only** those who consented, and no parameter allows asking for the others. The reverse would exist as a checkbox between an intention and an unsolicited sending. The list's filter follows the same rule: it knows how to say yes, never no.
+- The visitor's address goes in `replyTo`, **never in `from`**: sending under an address we do not control would fail SPF and DKIM, and the message would end in spam.
+- **The Stripe subscription is cancelled before the row disappears.** `subscriptions` cascades on `users`: deleting first would carry away the Stripe identifier, and the player would keep being charged for an account that no longer exists. Immediately and not at period end, nobody remaining to enjoy it, and without refund.
 
-## What the models cost
+### Billing
 
-`llm_usage` logs **every** call, whatever its entry point. Before it, five of the eight call points threw their usage away, including world generation, which makes seven to twenty-three of them: the data was computed by `narrator` and nobody read it.
-
-- Without that log, no subscription scale can be anything but an opinion. **One does not price what one does not measure.**
-- `cost_usd` is a `Decimal(12,8)`, not a `Float`: a cost adds up over thousands of rows and the binary drifts there.
-- The relation to `users` is in **`SetNull`**: the accounting survives a player's departure, detached from him. What remains is a cost, no longer a person.
-- A failed write is logged, never retried: the player already got his answer, and the accounting is not worth breaking a turn. Same rule as the guide log.
-- `guide_questions` keeps its own log and **stays anonymous**: it has no player to attach, and it is a design decision, not an oversight.
-- The cost returned by the provider wins; otherwise it computes from the tokens, billing reasoning tokens at the output rate, which both providers do.
-- Watch the two `LLM_NARRATOR_PRICE_*`: **at zero, the computed fallback writes a false freebie** the day OpenRouter stops returning the cost. They are scale values, not a switch.
-- Measured on `qwen/qwen3.5-35b-a3b`: a turn **0.0012 $** on average, a world generation **0.0040 $** without replay. A world is thus worth three turns, not twenty-five. The 25 credits it costs are insurance against the graph's replays and a subscription lever, **not the reflection of a cost**, and it is accepted as such.
-- A turn's input rises from 3 800 to 6 900 tokens between the first and the twelfth, then stabilizes: it is `recentTurns` filling up. It is the dial weighing the most on the cost of a turn.
-- The cost of the same turn varies **from simple to quadruple** at equal size, depending on the provider OpenRouter routes to. Pricing on a single measure thus makes no sense: one needs an average and a worst case.
-- **LangSmith's cost comes from OpenRouter, never from a scale.** Its `wrapOpenAI` wrapper only read the standard OpenAI usage fields and ignored OpenRouter's `cost`: it saw tokens, never the spend. Declaring a per-model scale to it would have given a wrong figure for the reason above, the route varying from one call to the next. It is **Broadcast** that settles that, by broadcasting the real cost and the provider actually routed. The accounting stays `llm_usage`: two sources measuring the same thing, one to price, the other to reread a call.
-- **Embeddings are not traced**: `embed()` goes through the bare client. There is neither streamed text nor prompt to reread, and their usage is logged like the rest.
-
-### Observability goes through OpenRouter, no longer through the SDK
-
-`wrapOpenAI` disappeared from `packages/llm`: it is **Broadcast** that broadcasts the traces to LangSmith, configured at OpenRouter and not in this repo.
-
-- **The linking goes through the request body.** The metadata (`turn_id`, `universe_id`, `guide_question_id`, `prompt_version`, `band`, `situation`) went through `langsmithExtra`, LangSmith client-side; they now go in OpenRouter's `trace` field. Without them, a trace would arrive right but orphaned, impossible to link to a turn or to a `llm_usage` row. It is the only place where that link exists: the gateway returns no identifier.
-- That field is **specific to OpenRouter** and is only set for it, like the keys of `OPENROUTER_ONLY_BODY_KEYS`: the OpenAI API rejects what it does not know. A test checks it both ways.
-- **No `user` field is sent.** OpenRouter accepts one, but `guide_questions` already carries neither address nor player identifier: it is not for the gateway to receive one.
-- **Sampling disappeared with the SDK**: Broadcast traces everything. `GUIDE_TRACE_SAMPLE_RATE` and `GUIDE_TRACE_HIDE_IO` no longer exist, and `guide_questions.traced` is no longer written, pending removal at the next deployment.
-- What is gained along the way: **moderation is traced** without a line of code, it which was not, and the **provider actually routed** appears, the only way to explain that the same turn varies from simple to quadruple.
-- The `langsmith` SDK **remains a dependency of `apps/api`**: `eval:guide` and `eval:narration` use it for their case sets and their experiments (`createDataset`, `evaluate`), which Broadcast cannot do. It left `packages/llm` and `apps/worker`, which only used it to trace.
-- `LANGSMITH_TRACING` keeps its name so as not to touch the ansible role, but no longer says more than this: the credentials are filled, for the evaluations.
-- Consequence to know: an evaluation run now produces **two runs per call**, that of `evaluate()` and that of Broadcast, which is attached to no experiment. An API key dedicated to evaluations, excluded from the destination, is the way to separate them.
-
-### `prisma generate` is a separate turbo task
-
-`build` and `typecheck` of `packages/db` each called it on their side, and turbo runs them in parallel: the two `mkdir` of the same generated directory stepped on each other (`EEXIST`). It only showed with a cold cache. Generation is now a `generate` task that `build`, `typecheck` and `dev` depend on. **Do not put it back in the scripts.**
-
-## Credits and subscriptions
-
-The player buys **credits**, priced per action: a turn is worth one, a world twenty-five. The scale is in `packages/engine/src/credits.ts`, in constants that `tuning.ts` re-exports, and the ratio between a credit and its real cost is tuned there without touching Stripe.
-
-- **Postgres is the truth of credits, not Redis.** The guide's budget lives in Redis because it is anonymous, very frequent and approximate: an eviction there costs an estimate. A credit is billed, and an eviction would erase a paid month's consumption.
-- **We debit before the call and refund if it fails.** The price of an action is known in advance, unlike the guide's dollar budget: there is no reserve-then-tune dance to reproduce.
-- `credit_entries` is **append-only** and freezes the balance of each entry: rereading the ledger years later must return what the player saw, even if the scale changed.
-- Period rollover is **lazy, at read time**. A nightly job would do the same work less reliably and leave a player without a reserve until its pass.
-- Credits **do not carry over**: the reserve is reset to the plan's allowance, never increased. Otherwise a player absent six months would come back with six months of head start.
-- Moderation and embeddings are **never billed**: making the player pay for being watched would be indefensible.
-- **An administrator consumes nothing.** `spend()` exits before any debit and returns `null`, like a free action: no caller tries to refund a row that does not exist. `llm_usage` keeps counting what his games cost, it is him the accounting. Counterpart to know: the exhausted-reserve screen will never display for him, checking it requires an ordinary account.
-- **The earlycomers' bonus is not a tier**, it is a supplement set on the account (`FOUNDER_BONUS`). A tier is chosen, this one is ascribed; putting it in `plans` forced the pricing page to show an offer nobody could take. It is written to the ledger under its own motive, `founder`, and not melted into `welcome`: "80 credits" would not say why this player got thirty more than the next one.
-- Rank is read on `created_at`, **never on a counter**: a counter desynchronizes on a deletion, a date rereads and the replayed computation returns the same answer. An administrator has no right to it and does not occupy a slot, his reserve never being debited.
-- **A null allowance does not take anything back.** `roll()` only resets the reserve to zero if the tier grants something: the rule "credits do not carry over" bounds a subscriber who receives new ones, applied to an offered tier it confiscated a reserve nobody replaced. Nothing is written to the ledger when nothing moves.
-- A **cancelled subscription keeps its credits**. `customer.subscription.deleted` drops the row to the free tier as `canceled` without touching the reserve, and the next rollover neither grants nor takes back. What was paid does not evaporate because the subscription stops.
-
-### Stripe
-
-The key and the webhook secret are the only environment variables. The tiers and their price identifiers live in the database (see the admin dashboard): in a variable, putting a tier on sale required a deployment.
-
-- Everything is optional. Without `STRIPE_PRIVATE_KEY`, `BillingConfig.enabled` is false, selling stays silent and the free tier suffices to play: we develop without a Stripe account.
-- **`ODYSSAI_ENV`, not `NODE_ENV`.** Both copies of the site run with `NODE_ENV=production`, the image being the same: it cannot tell them apart. `ODYSSAI_ENV` is `production` on the real one and `staging` on the dev one, and it alone decides the allowed Stripe mode.
-- A `sk_live_` key is refused at startup outside `ODYSSAI_ENV=production`, a `sk_test_` inside. The webhook secret becomes mandatory as soon as a key is present: a key without a secret would sell a subscription nothing would credit.
-- `NestFactory.create(AppModule, { rawBody: true })`, and `@Req() req: RawBodyRequest<Request>` in the controller. The signature is computed on the received bytes: the JSON re-serialized by Nest does not reproduce them. `test/billing.e2e-spec.ts` checks it end to end, that is its purpose.
 - **The entitlement only comes from the webhook**, never from the success redirect, which a player can call by hand.
-- Idempotence is the **primary key of `stripe_events`**: Stripe replays until it gets a 2xx, and an `invoice.paid` processed twice would credit twice.
-- **The webhook order is not guaranteed.** `invoice.paid` can precede `customer.subscription.created`: the renewal therefore rereads the subscription at Stripe before crediting, else a player who just paid would receive the free tier's allowance.
-- An unknown price is ignored, never guessed: taking it for the free tier would drop a paying subscriber.
-- `invoice.payment_failed` cuts nothing. Stripe retries for several days, and it is `customer.subscription.deleted` that decides.
-- The guard is set **method by method** on `BillingController`: the webhook has no session.
-- The portal opens **as soon as a billing space exists**, and not only on the paying tier: a player back to the free tier after a cancellation keeps his invoices and must be able to reread them. It is `manageable` that says so, distinct from `purchasable`.
+- A `sk_live_` key is refused at startup outside `ODYSSAI_ENV=production`, a `sk_test_` inside. The webhook secret becomes mandatory as soon as a key is present: a key without a secret would sell a subscription nothing would credit.
 - Checkout Session to subscribe, Customer Portal to manage and cancel. No card input on our side: hosting it would bring the project into PCI scope without adding anything.
-- In development: `stripe listen --forward-to localhost:3001/billing/webhook` gives the secret to put in `STRIPE_WEBHOOK_SECRET`.
-- **A deactivated price is refused at payment**: "The price specified is inactive". The trap comes from the idempotency key, which makes the price already created for that amount, in the state it is: the old and the new are then the same object, and "create then deactivate the old" turned against itself. `reprice` therefore reactivates a price made inactive, and only deactivates the old one if it differs from the new one.
-- A tier carrying an amount without an active price is **redone on edit**, absent price like deactivated price. Comparing only amounts left it unsellable for life, and putting it back on sale required changing the price then re-listing it. The read at Stripe only costs on a tier edit. Without a configured key it is skipped: renaming a paying tier must not fail because Stripe is absent.
-- Two states get edited in the dashboard and live in the database. `recommended` designates the highlighted tier, one at a time, guaranteed by a unique partial index and not by the service, where two concurrent writes would pass. It was a computation, "the middle one among the paying ones": right at three tiers, wrong at the fourth, and out of reach of whoever edits them.
-- `comingSoon` announces without selling. To distinguish from a tier without a Stripe price, which is not sellable for lack of configuration: here it is a decision. An archived tier, on its side, disappears.
-- `GET /billing/catalog` is **public**: the scale has nothing personal, and a pricing page must display before signup. `purchasable` is false there as long as a plan has no configured price, and the screen hides the offer instead of offering a button that would answer 503.
-- A tier's name comes from the database, never from a translation key: tiers are created in the dashboard, and their names are not known at compile time.
-- No euro amount in the code: prices live at Stripe, which displays them on its own page. Copying them would make two truths, and the false one would be ours.
 - The return URL after Stripe is **built server-side** from `user.locale`, never received from the browser: accepting a return URL from the client would open an arbitrary redirect. The two localized paths are copied there from `routing.ts`, for lack of a shared source between the two applications.
 
-## Admin dashboard
-
-`/admin`, **outside the `[locale]` segment and outside the next-intl proxy**, in French only: a back-office only the administrator sees has no English-speaking audience, and translating it would have doubled every label for nobody. `admin` is therefore excluded from the `matcher` of `src/proxy.ts`, else `/admin` would be redirected to `/fr/admin`, where nothing answers.
+### Admin
 
 - **The guard order matters.** `SessionGuard` drops the player on the request, `AdminGuard` rereads him. Reversed, the second would see nothing and let everything through: `test/admin.e2e-spec.ts` checks it route by route, and the guard's unit test covers the "no resolved session" case.
 - **`users.is_admin` is modifiable by no route**, not even by the dashboard. A dashboard able to name administrators turns a stolen session into a definitive takeover. The right is set with `pnpm --filter @odyssai/api admin:grant <email>`, hence with server access.
 - The web-side guard is a convenience, never a security: it avoids displaying empty tables and 403s, that is all.
-- A reserve adjustment goes through the ledger, with a **mandatory reason**: it is append-only, and a balance reset to zero must read there as a dated movement, not as a hole. The balance never goes below zero.
-- The player list paginates **by cursor**: it grows while one reads it, and an offset by page number would skip or repeat rows. The `id` being a uuid v7, descending order suffices.
-- Cancelling a subscription does **not** write the return to the free tier: it will come from the `customer.subscription.deleted` webhook, the sole source of the right. Writing it at once would make our rows diverge from Stripe's if the call failed midway.
-- The visual primitives live in `components/admin/ui.tsx` and not in `components/ui`: the kit dresses the game, they dress a back-office. The tokens, on their side, are well those of the kit.
-- The figures are **separate cards**, not a block segmented by rules. The previous pattern glued four values into a single frame: readable, but nothing stood out there and nothing was clickable. Separated, they carry a tinted icon and a link to the screen one would open anyway after reading them.
-- A card reacts to hover **only if it leads somewhere**: a figure that animates without doing anything reads as a broken button. The two pure measures (credits in circulation, model cost) therefore have no link.
-- The navigation badge only displays from one on: a permanent zero stops being looked at after a day.
-- `components/admin/confirm.tsx` duplicates `ui/danger-action` because the latter takes its texts from next-intl, which `/admin` does not have. The same word to type on both sides, so as not to have two reflexes to learn.
-
-### Consent to newsletters
-
-A checkbox on the account screen, `users.marketing_opt_in`, and the extraction of addresses in the dashboard.
-
-- **Unchecked by default, and nobody toggles it in the player's place**: a pre-checked box is not a consent.
-- Two columns and not one. `marketing_opt_in_at` carries the instant of the last change, **in both directions**: a consent is proven, and a withdrawal must be shown as well as an agreement.
-- `GET /admin/marketing/emails` returns **only** those who consented, and no parameter allows asking for the others. The reverse would exist as a checkbox between an intention and an unsolicited sending. The list's filter follows the same rule: it knows how to say yes, never no.
-- The file is built in the browser from the JSON response. An API endpoint returning a file would require a top-level navigation, hence taking the session cookie out of its `credentials: include`.
-- The list marks those who said yes, never those who said no: a refusal does not have to signal itself.
-- `PATCH /me` accepts both fields independently, and refuses an empty body: the pseudo is set once, the consent is withdrawn as many times as one wants.
-
-### Tiers live in the database
-
-`packages/engine` only carries the per-action scale, `FREE_PLAN_SLUG` and the bounds. Tiers are rows of `plans`, editable from the dashboard: changing an allowance must not require a deployment.
-
-- The original objection (a table would make the database environment-specific) **does not hold**: both copies of the site already have their own Postgres, and a test-mode price only makes sense in the dev database. `STRIPE_PRICE_*` therefore disappeared from the configuration.
-- **The seeding of the three tiers is in the migration**, not in a script: the foreign key set right after would fail on existing subscriptions, and a migration leaving the database invalid between two commands is not one.
-- `subscriptions.plan` references `plans.slug` and not the uuid: it is the slug that travels in the HTTP contracts and rereads in a log. The foreign key prevents deleting a tier someone carries.
-- **The free tier is protected** from archiving as from deletion: everything falls back to it, and a subscription without a tier is no longer readable.
-- `PlansService` **caches nothing**: one more read per turn is negligible before the model call that follows, and a cache would keep a player on an allowance the administrator believed changed.
-- **A Stripe price is immutable.** Changing an amount creates a new price and deactivates the old one; current subscribers keep theirs until their next invoice, Stripe not replaying a subscription onto a new price. It is the central trap of `AdminPlansService`.
-- Writes at Stripe go **before** the database write: a product created without a row on our side shows up and gets cleaned, a row pointing to a nonexistent price would fail a payment. Creations carry an idempotency key derived from the slug.
-- A price is never deleted at Stripe, only deactivated: past invoices point back to it.
-- One single Stripe client, provided by `StripeModule`: three `new Stripe(...)` would end up diverging on the API version, which would show at the worst moment.
-
-## The open alpha
-
-The game is online for everyone. There is no more hundred-seat door: the first hundred registrants receive their bonus (`FOUNDER_BONUS`, thirty credits, rank read on `created_at`, administrators not counted), the hundred-and-first still enters, without the bonus. `ALPHA_SEATS`, `AlphaFullError`, `alpha_full` and the pre-realm refusal no longer exist.
-
-- **Two switches in the dashboard**, in `site_settings`. The phase (`open`, or `preregistration` which now means "closed") opens the game: `AlphaOpenGuard` api-side, `GameGate` and `GameLink` web-side, an administrator always passes. One only closes for a maintenance or a reset, and the texts say so. The `alpha_live` migration opened the phase at deployment and set the default to `open`.
-- **Tier sales are closed during the alpha** (`sales_open`, false by default). `GET /billing/catalog` carries `salesOpen`, `purchasable` respects it, `POST /billing/checkout` answers 403 `sales_closed`, and the pricing page explains it instead of hiding the tiers: they are where we are heading. It opens in the dashboard, some morning.
-- **What the site says about the alpha, everywhere the same**: playable now, bugs possible to report from the dedicated button, thirty extra credits for the first hundred, no subscription, a progression that can be reset and credits that stay. The banner (`AlphaNotice`), the hero (`AlphaStanding`, which distinguishes those who have an account from those who do not), the pricing page, the terms (section "Access during the alpha"), the FAQ and the guide prompt (`guide/v5`) carry the same thing. A text still saying "pre-registration" or "hundred seats" is to be corrected.
-- `GET /alpha` stays public and serves `founders` (seats, credits, taken, remaining) and `salesOpen` with the phase: the banner must display before anyone signs in.
-- **A player can still create a Keycloak identity without going through `/auth/signup`**; he now gets his `users` row at first login, like the others. The only lock left would be cutting the realm's self-registration, in the ansible role.
-
-## The pricing page
-
-`/pricing`, public, fed by `GET /billing/catalog`.
-
-- **Nothing is hardcoded there**, neither a tier name, nor an amount, nor an allowance. The cards' bullets and the comparison lines derive from the catalogue figures, so a tier added in the dashboard slots in without touching it.
-- The catalogue publishes `welcome` in addition to `monthly`: offered tiers only hold through it, and a page reading only the monthly allowance would announce zero credits on the only tier a visitor can try.
-- The connected visitor's tier is **outlined** and its purchase button disappears. What one carries wins over what one recommends: putting forward an already-made purchase makes no sense.
-- The button opens **Stripe**, not the account screen, through a top-level navigation: Stripe's page refuses to be loaded in the background. Without a session there is no payment to open, so the button goes through login, which brings back here.
-- The account screen, on its side, only offers **a link to this page**. Stacked, the tiers compared badly there and the account became a sales page; the comparison is done in columns, here.
-- The bullets say "one world, then N turns" and not "N worlds": sixty worlds is true and means nothing, nobody creates sixty.
-- It enters the guide corpus, which therefore knows how to explain what a credit is. It **never announces a price**: amounts live at Stripe and allowances in the database, none of that is in the messages, and a price recited by a model would be the wrong source.
-
-## Contact and outgoing mail
-
-`/contact`, open without a session: it is often the one without an account who most needs to write, and requiring a session would silence a visitor who cannot sign up.
-
-- **The message is written to the database before sending**, never the reverse: a mail server refusing must not lose what someone took the time to write. `delivered` says whether the email went out, and the dashboard shows the message in every case, `/admin/messages`.
-- The form never says whether the email went out. It is not the writer's business, and the message is saved anyway.
-- `MailConfig` is **entirely optional**, like Stripe: without configuration, `enabled` is false and only the sending stays silent. We develop without a mail server.
-- The account depends on the site copy, `no-reply-dev@` on the development one and `no-reply@` in production: both images being identical, it is the environment that tells them apart. The server is the mailcow already carrying the domain's MX, on **587 with STARTTLS required** (`requireTLS`), else nodemailer would continue in clear if the server did not announce it.
-- The visitor's address goes in `replyTo`, **never in `from`**: sending under an address we do not control would fail SPF and DKIM, and the message would end in spam.
-- `pnpm --filter @odyssai/api mail:smoke` sends one real control message, like `llm:smoke`.
-- **An environment value containing a space gets quoted.** `SMTP_FROM_NAME="Message @ Odyssai"`: without the quotes, any `set -a && . ./.env` breaks on the `@`, which the Makefile already documents for `.env.local`.
-
-## Terms
-
-`/terms`. Use and sale in **a single document**: separating them would force deciding, for each rule, whether it belongs to usage or to sale, while credits are both at once.
-
-- The text describes the **actual** functioning: two moderation layers, the code deciding state and not the narrative, the reserve that does not carry over except on the offered tier, cancellation at period end, account deletion that cancels at once. A clause no longer matching the code would be worse than an absent clause.
-- The acceptance notice is on the home page (`SignupTerms`), under the buttons. It is the **last screen that belongs to us**: signup then goes to Keycloak, whose pages live in the infrastructure repo. It disappears for a player already logged in, who accepted by signing up.
-- It is set in the hero and not in `SignupCta`: the button group is in horizontal flex, and a paragraph inside would break the button's alignment with the link following it.
-- The page does **not** enter the guide corpus. A model paraphrasing terms invents commitments, and the text is what holds, not its summary.
-- **This text has not been reviewed by a lawyer.** The withdrawal right and the waiver of article L221-28 are the two points to have validated before cashing a first production payment.
-
-## Settings live in an index
-
-`packages/engine/src/tuning.ts` gathers what turns without changing logic: the credit scale, the tier bounds, the die, the inspiration and sheet bounds, the graph's attempts and replays, the GM's memory. Before it one had to know five files in three packages to know where a dial was.
-
-- **A value has one definition.** The file is an index, not a copy: when the value belongs to a schema, it re-exports it from `@odyssai/schemas`, where the Zod schema enforcing it already reads it. Copying it would make two truths, and the false one would be the one one got used to reading.
-- `GENERATION_ATTEMPTS_PER_NODE` and `GENERATION_REWRITES_MAX` live in `schemas/world.ts` and not in `narrator`, which the index cannot read: making `narrator` depend on `engine` for two integers cost more than moving them. A dial only seen in the file using it never gets turned.
-- `recentTurns` and `recalledMax` left `turn-memory.service.ts` for the same reason, and because the first decides what a turn costs.
-- What is **not there**: the tiers, allowances and prices included, which live in the database and get edited in the dashboard; the model choices and their caps, which stay in the environment; the lexical moderation list, which is not a dial but a decision per word.
 
 ## Conventions
 
@@ -550,32 +94,7 @@ The game is online for everyone. There is no more hundred-seat door: the first h
 - For multi-line comments, only use: /* text */
 - For single-line comments, only use: //
 - Keep code comments to a minimum.
-
-## Design
-
-- The visual authority is `apps/web/odyssai-ui-kit.html`. Single dark theme: no `dark:` variants, `colorScheme: "dark"` declared in the viewport.
-- The kit tokens are carried in `apps/web/src/app/globals.css` under `@theme`: colors (`ink`, `abyss`, `mist`, `line`, `vellum`, `vellum-2`, `vellum-3`, `verdigris`, `brass`, `ember`, `arcane`), typo scale (`text-display`, `text-title`, `text-narration`, `text-ui`...), radii and `wrap` width. Carry a new need in a token rather than an arbitrary value.
-- Two fonts, two roles: `font-voice` (Literata) for the narrator and the titles, `font-ui` (Instrument Sans) for the interface and the player. The GM speaks in `font-voice` but at the size of the site's other conversations (`text-ui-sm`): at 19 px, a game column read like a novel page. `text-narration` stays the one of the content pages' prose.
-- **No explanatory sentence in the game panels** ("held by the code", rule reminders, subtitles paraphrasing the title): the player plays, he does not read documentation. A button label says what the button does, and that is all there is to read.
-- `Definition` goes two columns by container query (`@container` on `Panel` and on the cards), never by the screen breakpoint: in a three-card grid, a fixed-width term strangled the value.
-- `--accent` is the current world's color, overridden by `[data-world]`. The `accent` utilities follow it. Never freeze verdigris where the accent is expected.
-- Logos in `apps/web/public`: `odyssai-logo-dark.svg` (lockup, dark background), `odyssai-logo-light.svg` (on vellum), `odyssai-mark.svg` (symbol alone), `odyssai-app-icon.svg`. The wordmark is never used without the symbol; below 120 px wide, symbol alone.
-- Watch the class order: two utilities targeting the same property are arbitrated by the CSS sheet, not by the `className` string. A variant must set its own value, not count on a base.
-- **A field's focus is carried by its border, never by a ring.** Both together make a double frame. Every field container therefore carries `data-focus-ring="container"`, which neutralizes the global ring of `globals.css`; without it the browser adds its own on top, and `outline-none` as a class cannot help, the rule being outside `@layer`.
-- **Waiting without a stream goes through `components/ui/spinner.tsx`.** A stream shows as it flows; an extraction or a generation streams nothing, and without an indicator the greyed button read as broken. `motion-safe` on the animation, and a label next to it saying one is waiting: do not copy a circle elsewhere.
-- **A conversation field grows with the text**, through `components/ui/auto-grow-textarea.tsx`, shared by the guide, character creation and the game table. Three fields each did their own cooking: only one grew, the other two stayed on one line and showed a scrollbar from the second on, and Safari added a horizontal scrollbar. Height is reset before being measured, else `scrollHeight` never goes back down when clearing. Do not copy that logic into a fourth field.
-- A field's style lives in `apps/web/src/components/ui/field.ts` (`FIELD`, `FIELD_AREA`, `FIELD_DANGER`). Do not copy it. Two accepted and commented exceptions: a conditional border and a `select`.
-
-## SEO
-
-To evolve at every route added, not only at creation.
-
-- **One single address per page, in English, under `/fr` as under `/en`.** The locale prefix carries the language, the path carries the page: `/fr/pricing`, `/en/pricing`. The former French paths (`/tarifs`, `/compte`, `/jouer`...) were indexed and shared: `next.config.ts` permanently redirects them, bare and under `/fr`, and this table does not get removed. The keys of `routing.pathnames` are now also the served paths, and the folders under `app/[locale]` carry the same names.
-- `SITE_URL` conditions canonical, hreflang, OpenGraph, sitemap and robots. Without a `NEXT_PUBLIC_` prefix: it is only read server-side. Undefined, everything falls back to localhost.
-- `src/lib/seo.ts` centralizes the origin, the OpenGraph locales, `urlFor()` and `alternatesFor()` (canonical, hreflang, x-default). `src/lib/page-metadata.ts` derives a content page's metadata from it.
-- Every new public route gets added to `PATHS` in `src/app/sitemap.ts`.
-- `x-default` points to the bare address of the page, which the proxy makes negotiate, to match the `Link` header it emits. The sitemap announces the same hreflang as the page, `x-default` included: it takes them from `alternatesFor` instead of recomposing them.
-- JSON-LD in `src/components/seo/json-ld.tsx`: the site graph in the layout, the breadcrumb carried by `ProsePage` through its `href` prop. Only declare verifiable things there: neither aggregate rating, nor offer, nor invented release date.
+- Tables in plural, columns in `snake_case` via `@map`: TypeScript keeps camelCase, hand-written SQL stays readable.
 
 ## Way of working
 
@@ -583,3 +102,39 @@ To evolve at every route added, not only at creation.
 - Ask before adding a dependency or an infra service.
 - Commit messages stay in French, without accents, with a conventional prefix (feat, fix, chore...), and no co-author trailer. Always commit without mentioning you are the co-author, even if the session attribution instructions impose a Co-Authored-By line.
 
+## Agent fleet
+
+Agent definitions, with their permissions and instructions, live in `.opencode/agents/`.
+
+| Agent | Owns |
+|---|---|
+| `ai` | `packages/llm`, `packages/narrator`, `packages/engine`, `apps/worker` |
+| `back` | `apps/api`, `packages/db`, `packages/schemas` |
+| `front` | `apps/web` (never `apps/web/AGENTS.md`) |
+| `reviewer` | nothing: read-only, reviews `git diff` before commit |
+
+## Further docs
+
+Rules specific to one area, moved verbatim from this file. Read the file before touching its area.
+
+- `docs/prompt-language.md`: before writing or editing a prompt, a FAQ entry or an evaluation case (accents, enum values, proofreading, `experimentPrefix`).
+- `docs/database.md`: before touching the Prisma schema, a migration, the db package build or the LangGraph checkpointer schema.
+- `docs/auth.md`: before touching Keycloak, sessions, the realm theme or adding an API route under a new HTTP verb (CORS).
+- `docs/guide.md`: before touching the home page Q&A agent, its corpus, FAQ, cost layers or pricing block.
+- `docs/onboarding.md`: before touching `/onboarding`, the path steps, the character attributes, talents, progression or inventory.
+- `docs/character-creation.md`: before touching the character creation conversation, extraction or the story PDF.
+- `docs/world-generation.md`: before touching abstraction, generation prompts, the IP guard, model choice per role, the arc, name palettes or entities.
+- `docs/worker.md`: before touching `apps/worker`, the BullMQ queue, the LangGraph graph or a Dockerfile's internal dependencies.
+- `docs/game-shell.md`: before touching the generation progress screen or `GET /world`.
+- `docs/stories-and-erasure.md`: before touching restart, account deletion, `ErasureService` or multiple stories.
+- `docs/game-turn.md`: before touching `POST /turn`, the GM prompt, the die, the dialogue model or the GM reference cards.
+- `docs/moderation.md`: before touching the lexical list or the moderation classifier.
+- `docs/llm-costs.md`: before touching `llm_usage`, cost fallbacks, OpenRouter tracing or LangSmith.
+- `docs/billing.md`: before touching credits, Stripe, the plans table or the pricing page.
+- `docs/admin.md`: before touching `/admin` or newsletter consent.
+- `docs/alpha.md`: before touching the alpha phase, sales switch, founder bonus or any text describing the alpha.
+- `docs/contact-mail.md`: before touching `/contact` or outgoing mail.
+- `docs/terms.md`: before touching `/terms` or the signup acceptance notice.
+- `docs/tuning.md`: before adding or moving a tunable value.
+- `docs/design.md`: before any frontend work (UI kit, tokens, fonts, fields, spinner).
+- `docs/seo.md`: before adding a public route or touching metadata, sitemap or redirects.
