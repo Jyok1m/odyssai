@@ -121,7 +121,7 @@ export function InspirationStep({
               <span
                 aria-hidden="true"
                 className={[
-                  "absolute inset-y-0 left-0 w-1/2 rounded-control bg-accent transition-transform duration-base ease-emerge",
+                  "absolute inset-y-0 left-0 w-1/2 rounded-control bg-accent transition-transform duration-base ease-emerge motion-reduce:transition-none",
                   mode === "own" ? "translate-x-full" : "translate-x-0",
                 ].join(" ")}
               />

@@ -66,7 +66,7 @@ export function Connector({ filled, className = "" }: { filled: boolean; classNa
     <span aria-hidden="true" className={`relative h-px overflow-hidden bg-line ${className}`}>
       <span
         className={[
-          "absolute inset-0 origin-left bg-accent transition-transform duration-slow ease-emerge",
+          "absolute inset-0 origin-left bg-accent transition-transform duration-slow ease-emerge motion-reduce:transition-none",
           filled ? "scale-x-100" : "scale-x-0",
         ].join(" ")}
       />

@@ -27,7 +27,7 @@ const NAV_ITEMS = [
   garde son liseré de focus.
 */
 const NAV_LINK =
-  "relative text-ui-sm font-medium text-vellum-2 transition-colors hover:text-vellum after:absolute after:inset-x-0 after:-bottom-1 after:h-px after:origin-left after:scale-x-0 after:bg-accent after:transition-transform after:duration-base after:ease-emerge hover:after:scale-x-100";
+  "relative text-ui-sm font-medium text-vellum-2 transition-colors hover:text-vellum after:absolute after:inset-x-0 after:-bottom-1 after:h-px after:origin-left after:scale-x-0 after:bg-accent after:transition-transform after:duration-base after:ease-emerge hover:after:scale-x-100 motion-reduce:after:transition-none";
 
 export function SiteHeader() {
   const t = useTranslations("Nav");
