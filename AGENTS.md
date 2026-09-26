@@ -15,7 +15,7 @@ pnpm + Turborepo monorepo, TypeScript everywhere.
 
 Redis runs through a localhost tunnel on the server via `redis://:***@localhost:16379` (sessions and the BullMQ queue). Postgres is reached the same way, on `127.0.0.1:15432`, through `POSTGRES_URL`. `make tunnel` opens both ports. Keycloak is hosted at `sso.joachimjasmin.com`.
 
-Planned, not yet created: `packages/engine`, pgvector. Do not create them without an explicit request.
+`packages/engine` exists and is documented below (rules, die, dialogue, credits, tuning). pgvector is not adopted: the schema carries no vector column and no migration creates the extension, `TurnMemoryService` probes for it at startup and plays without long memory in its absence. Do not adopt pgvector without an explicit request.
 
 ## Commands
 
