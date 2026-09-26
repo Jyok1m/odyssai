@@ -309,7 +309,7 @@
 /* Le remplissage d'une jauge change par découpe et non par largeur : la
    largeur recalcule la mise en page à chaque image. */
 @utility transition-clip {
-  transition-property: clip-path;
+  transition-property: clip-path, background-color;
   transition-duration: var(--motion-slow);
   transition-timing-function: var(--ease-settle);
 }
