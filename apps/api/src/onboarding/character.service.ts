@@ -84,20 +84,38 @@ export class CharacterService {
 
     Les credits depenses pour ces messages ne sont pas rendus : les appels ont
     eu lieu, et le joueur les a lus.
+
+    Un siege pret a paye sa part sur cette fiche : la remettre a zero
+    laissait le siege pret sans fiche, que la generation ecartait sans rien
+    dire, et le joueur ne trouvait plus jamais de partie. Il est ferme, comme
+    la fiche elle-meme l'est au parcours.
   */
   async reset(universeId: string, thread: ThreadKey): Promise<void> {
-    await this.prisma.$transaction([
-      this.prisma.conversationMessage.deleteMany({
+    await this.prisma.$transaction(async (tx) => {
+      if (thread) {
+        /*
+          Une ecriture qui ne change rien, pour prendre la ligne du siege :
+          une avancee simultanee attend la fin de celle-ci, et un siege deja
+          pret ne correspond pas.
+        */
+        const open = await tx.partyMember.updateMany({
+          where: { userId: thread, ready: false },
+          data: { ready: false },
+        });
+        if (open.count === 0) throw new LockedError();
+      }
+
+      await tx.conversationMessage.deleteMany({
         where: threaded(thread, {
           universeId,
           channel: CHANNEL,
         }),
-      }),
+      });
       // La fiche, la sienne : une par joueur et par univers.
-      this.prisma.character.deleteMany({
+      await tx.character.deleteMany({
         where: { universeId, ...(thread ? { ownerId: thread } : {}) },
-      }),
-    ]);
+      });
+    });
   }
 
   async conversation(

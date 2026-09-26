@@ -164,6 +164,10 @@ connection per api instance for a gain a poll already gives.
 - **Their own actions**: a turn, a question, a dialogue call, a lore
   fragment, a mark are debited to the acting member, at the existing scale.
   Nobody pays for anybody else's play.
+- **The opening scene is paid by whoever opens it**, one turn at the usual
+  price. It is the group's scene, but a single request plays it, and
+  splitting one credit across seats would add ledger rows and refund paths
+  for nothing. A decision, not an oversight.
 - **The world, split**: each member pays
   `ceil(worldGeneration / size)` credits, at their own character advance, to
   the same ledger reason and ref as solo. Rounding up is the honest direction:
@@ -178,10 +182,34 @@ connection per api instance for a gain a poll already gives.
   deletion): their membership row goes, their creation thread goes, and
   their character is kept with `died_at` set, the existing vocabulary of "a
   character other players have met": the group has met them thoroughly, and
-  the shared log keeps making sense. Their **game messages stay**: a group
-  story belongs to the group, and cutting a departed player's lines out of
-  the log would tear every scene the narrator answered them in. The departure
-  answers `{ world: kept, character: remembered }`.
+  the shared log keeps making sense. The departure answers
+  `{ world: kept, character: remembered }`.
+- **Their game messages keep their rank, not their words.** The content is
+  emptied, the row and its `seq` stay: the narrator's answers around them
+  still read in order, and the world is emptied of the player's words as the
+  departure rule and the Privacy page say. `GET /turn` marks the row
+  `erased`, the screen says "message removed", and the party prompt replays
+  it as a neutral placeholder signed by "another traveler". Keeping them
+  verbatim contradicted both.
+- **Deleting the account goes further for the character**: it is deleted
+  unless someone outside the table met it (an encounter), as in solo. The
+  sheet and personality are what the player wrote; the group keeps the
+  narrator's story, not the sheet. Their essence goes with the account.
+- **The last member out** also applies the solo rule to the characters the
+  departed members left behind: kept only if a visitor met them, deleted
+  otherwise (their essence stays with their player). They used to survive
+  as orphans of a deleted world, player-written personality included. A
+  kept world loses its `parties` row and invite code: it is no longer a
+  table.
+- **Deleting the account during `generating`** is not refused: the right to
+  erasure does not wait on a generation. The share is not refunded, as for
+  leaving after generation: the world is being made with them. Leaving
+  voluntarily still waits (`locked`), and only `inspiration`, `character`
+  and `failed` refund a share.
+- **A ready member cannot reset their sheet** (`DELETE /onboarding/character`
+  answers `locked`), as the sheet itself is locked: the reset left the seat
+  ready without a sheet, the worker dropped it silently, and the player
+  never found a game again.
 - **The host leaves**: the story survives. Ownership of the universe passes
   to the earliest-joined remaining member, the party with it. The last member
   out applies the usual departure rule to the world (kept if visited, deleted

@@ -274,6 +274,11 @@ export const TurnMessageSchema = z.object({
     les reponses du meneur et partout dans une histoire solo.
   */
   author: z.string().nullable(),
+  /*
+    Le message d'un joueur parti de la table : son rang reste, ses mots non.
+    L'ecran dit qu'il a ete retire plutot que de montrer une bulle vide.
+  */
+  erased: z.boolean(),
   // Porte par la reponse du meneur, jamais par le message du joueur.
   outcome: PublicOutcomeSchema.nullable(),
   /*

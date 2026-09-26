@@ -182,6 +182,8 @@ export class TurnController {
         role: row.role,
         content: row.content,
         author: row.memberId ? (authors?.get(row.memberId) ?? null) : null,
+        // Un message de joueur n'est jamais vide, sauf vide au depart de son auteur.
+        erased: row.role === 'user' && row.content === '',
         outcome: outcomes.get(row.seq) ?? null,
         request: TurnRequestKindSchema.nullable().catch(null).parse(requests.get(row.seq) ?? null),
         createdAt: row.createdAt.toISOString(),

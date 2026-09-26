@@ -1088,6 +1088,7 @@
     "loading": "Opening the table.",
     "opening": "The game master is waiting for you to say what you do. You can also ask a question, or defer to fate.",
     "you": "You",
+    "erased": "Message removed: its player left the table.",
     "narrator": "The game master",
     "thinking": "Thinking.",
     "inputLabel": "What you do, or what you ask",

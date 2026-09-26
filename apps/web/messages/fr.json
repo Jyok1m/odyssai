@@ -1088,6 +1088,7 @@
     "loading": "Ouverture de la table.",
     "opening": "Le meneur attend que tu dises ce que tu fais. Tu peux aussi lui poser une question, ou t'en remettre au sort.",
     "you": "Toi",
+    "erased": "Message retiré : son joueur a quitté la table.",
     "narrator": "Le meneur",
     "thinking": "Il réfléchit.",
     "inputLabel": "Ce que tu fais, ou ce que tu demandes",

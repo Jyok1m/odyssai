@@ -378,6 +378,15 @@ export function makeUser(overrides: Partial<UserRow> = {}): UserRow {
   };
 }
 
+function messageMatches(row: MessageRow, where: any): boolean {
+  return (
+    row.universeId === where.universeId &&
+    (where.channel === undefined || row.channel === where.channel) &&
+    (where.role === undefined || row.role === where.role) &&
+    (where.memberId === undefined || row.memberId === where.memberId)
+  );
+}
+
 function entriesMatching(store: OnboardingStore, where: any): CreditEntryRow[] {
   return (store.creditEntries ?? []).filter((row) => {
     if (
@@ -700,13 +709,49 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         for (const row of rows) assign(row, data);
         return { count: rows.length };
       },
-      // SetNull sur universes.owner_id : le monde survit, detache.
+      /*
+        Les regles de la base au depart d'un compte : SetNull sur ce qu'il a
+        possede ou ecrit (mondes, personnages, messages, tours), cascade sur
+        ce qui n'etait qu'a lui (essences, sieges, abonnement).
+      */
       delete: async ({ where }: any) => {
         const row = store.users.find((user) => user.id === where.id)!;
         store.users = store.users.filter((user) => user.id !== where.id);
         for (const universe of store.universes) {
           if (universe.ownerId === where.id) universe.ownerId = null as any;
         }
+        const essences = (store.essences ?? [])
+          .filter((essence) => essence.ownerId === where.id)
+          .map((essence) => essence.id);
+        store.essences = (store.essences ?? []).filter(
+          (essence) => essence.ownerId !== where.id,
+        );
+        for (const character of store.characters) {
+          if (character.ownerId === where.id) character.ownerId = null as any;
+          if (character.essenceId && essences.includes(character.essenceId))
+            character.essenceId = null;
+        }
+        for (const message of store.messages) {
+          if (message.memberId === where.id) message.memberId = null;
+        }
+        for (const turn of store.turns ?? []) {
+          if (turn.memberId === where.id) turn.memberId = null;
+        }
+        for (const fact of store.canonFacts ?? []) {
+          if (fact.memberId === where.id) fact.memberId = null;
+        }
+        store.partyMembers = (store.partyMembers ?? []).filter(
+          (member) => member.userId !== where.id,
+        );
+        const subscriptions = (store.subscriptions ?? [])
+          .filter((subscription) => subscription.userId === where.id)
+          .map((subscription) => subscription.id);
+        store.subscriptions = (store.subscriptions ?? []).filter(
+          (subscription) => subscription.userId !== where.id,
+        );
+        store.creditEntries = (store.creditEntries ?? []).filter(
+          (entry) => !subscriptions.includes(entry.subscriptionId),
+        );
         return { ...row };
       },
     },
@@ -1051,13 +1096,21 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
             row.channel === where.channel &&
             (where.role === undefined || row.role === where.role),
         ).length,
+      /*
+        Le canal et le membre filtrent aussi : sans eux, effacer le fil de
+        creation d'un partant effacait tout le journal du jeu, et aucun test
+        ne pouvait voir ce qui en restait.
+      */
       deleteMany: async ({ where }: any) => {
-        const kept = store.messages.filter(
-          (row) => row.universeId !== where.universeId,
-        );
+        const kept = store.messages.filter((row) => !messageMatches(row, where));
         const count = store.messages.length - kept.length;
         store.messages = kept;
         return { count };
+      },
+      updateMany: async ({ where, data }: any) => {
+        const rows = store.messages.filter((row) => messageMatches(row, where));
+        for (const row of rows) assign(row, data);
+        return { count: rows.length };
       },
     },
 
@@ -1119,6 +1172,17 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
       d'invitation l'universalite de la sienne.
     */
     party: {
+      // Cascade sur les sieges, comme en base.
+      deleteMany: async ({ where }: any) => {
+        const gone = (store.parties ?? [])
+          .filter((row) => row.id === where.id)
+          .map((row) => row.id);
+        store.parties = (store.parties ?? []).filter((row) => !gone.includes(row.id));
+        store.partyMembers = (store.partyMembers ?? []).filter(
+          (row) => !gone.includes(row.partyId),
+        );
+        return { count: gone.length };
+      },
       findUnique: async ({ where, include, select }: any) => {
         const row = (store.parties ?? []).find(
           (party) =>

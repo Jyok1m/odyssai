@@ -302,6 +302,15 @@ const FALLBACK_NAME: Record<UiLocale, string> = {
 };
 
 /*
+  Un message vide est celui d'un joueur parti : ses mots ont ete retires, le
+  rang est reste pour que les reponses du meneur autour se lisent en ordre.
+*/
+const ERASED_MESSAGE: Record<UiLocale, string> = {
+  fr: '(message retiré : son joueur a quitté la table)',
+  en: '(message removed: its player left the table)',
+};
+
+/*
   Ce qu'un joueur a ecrit ne ferme aucune balise : le JSON garde ses
   chevrons en echappement unicode, et reste du JSON.
 */
@@ -387,7 +396,9 @@ export const PARTY_TURN_PROMPT = {
         turn.role === 'user'
           ? {
               role: 'user' as const,
-              content: playerMessage(turn.author ?? FALLBACK_NAME[locale], turn.content),
+              content: turn.content
+                ? playerMessage(turn.author ?? FALLBACK_NAME[locale], turn.content)
+                : playerMessage(FALLBACK_NAME[locale], ERASED_MESSAGE[locale]),
             }
           : { role: 'assistant' as const, content: turn.content },
       ),

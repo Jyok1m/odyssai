@@ -13,6 +13,16 @@ import { pendingRollKey } from '../turn/pending-roll.service.js';
 // Le canal de creation, dont le fil part avec celui qui l'a ecrit.
 const CREATION_CHANNEL = 'character_creation';
 
+// Le journal du jeu, qui reste au groupe quand un joueur part.
+const GAME_CHANNEL = 'game_turn';
+
+/*
+  Les etapes ou partir rend sa part : le monde n'existe pas encore, ou sa
+  generation a rate. Pendant `generating`, il est en train de naitre pour
+  lui aussi, et apres, il existe parce qu'il en etait.
+*/
+const REFUNDABLE_STEPS = ['inspiration', 'character', 'failed'];
+
 // Le motif sous lequel une part de monde se debite au grand livre.
 const WORLD_REASON = 'worldGeneration';
 
@@ -145,8 +155,11 @@ export class ErasureService {
     universe: WithParty & {
       characters: { id: string; essenceId: string | null }[];
     },
+    erasing = false,
   ): Promise<DepartureOutcome> {
-    return universe.party ? this.depart(userId, universe) : this.release(userId, universe);
+    return universe.party
+      ? this.depart(userId, universe, erasing)
+      : this.release(userId, universe);
   }
 
   /*
@@ -208,12 +221,19 @@ export class ErasureService {
     }
   }
 
+  /*
+    `erasing` : le compte part, pas seulement le siege. Son personnage ne
+    reste alors que si quelqu'un d'autre l'a croise hors de la table, comme
+    en solo : sa fiche est ce qu'il a ecrit, et le groupe garde le recit du
+    meneur, pas la fiche.
+  */
   private async depart(
     userId: string,
     universe: WithParty & {
       characters: { id: string; essenceId: string | null }[];
       step: string;
     },
+    erasing = false,
   ): Promise<DepartureOutcome> {
     // Ce qui attendait un jet n'a plus de scene : la partie avance sans lui.
     await this.redis.del(pendingRollKey(userId));
@@ -234,7 +254,7 @@ export class ErasureService {
       suppriment qu'une. Rendre avant, sur une lecture du grand livre, rendait
       deux fois.
     */
-    const refund = universe.step !== 'ready';
+    const refund = REFUNDABLE_STEPS.includes(universe.step);
 
     if (others.length === 0) {
       const left = await this.prisma.partyMember.deleteMany({
@@ -244,23 +264,51 @@ export class ErasureService {
 
       if (refund) await this.refundShare(userId, universe.id);
       this.logger.log(`dernier joueur sorti : la table ${partyId} se ferme`);
-      return this.release(userId, universe);
+      const outcome = await this.release(userId, universe);
+
+      /*
+        Un monde garde n'est plus une table : sa ligne et son code partent.
+        Un monde supprime les a deja emportes en cascade.
+      */
+      await this.prisma.party.deleteMany({ where: { id: partyId } });
+      return outcome;
     }
+
+    // Garde seulement si quelqu'un d'autre l'a croise, a l'effacement du compte.
+    const met =
+      character && erasing
+        ? (await this.prisma.encounter.count({
+            where: { characterId: character.id, visitorId: { not: userId } },
+          })) > 0
+        : true;
 
     const senior = others[0]!;
     const left = await this.prisma.$transaction(async (tx) => {
       const seat = await tx.partyMember.deleteMany({ where: { partyId, userId } });
       if (seat.count === 0) return false;
 
-      // Son fil de creation part ; le journal du jeu reste au groupe.
+      // Son fil de creation part.
       await tx.conversationMessage.deleteMany({
         where: { universeId: universe.id, channel: CREATION_CHANNEL, memberId: userId },
       });
-      if (character) {
+      /*
+        Ses mots au journal du jeu partent aussi, leur rang reste : les
+        reponses du meneur autour se lisent toujours dans l'ordre, et le
+        message vide dit qu'un joueur a parle ici. Les laisser mot pour mot
+        contredisait la regle du depart, qui vide le monde de ce que le
+        joueur a ecrit.
+      */
+      await tx.conversationMessage.updateMany({
+        where: { universeId: universe.id, channel: GAME_CHANNEL, role: 'user', memberId: userId },
+        data: { content: '' },
+      });
+      if (character && met) {
         await tx.character.update({
           where: { id: character.id },
           data: { diedAt: new Date() },
         });
+      } else if (character) {
+        await tx.character.delete({ where: { id: character.id } });
       }
       // L'hote part : le monde reste a la table, et quelqu'un doit l'heberger.
       if (universe.ownerId === userId) {
@@ -287,7 +335,10 @@ export class ErasureService {
       }`,
     );
 
-    return { world: 'kept', character: character ? 'remembered' : 'none' };
+    return {
+      world: 'kept',
+      character: character ? (met ? 'remembered' : 'deleted') : 'none',
+    };
   }
 
   private async release(
@@ -314,9 +365,38 @@ export class ErasureService {
     const worldKept = visits > 0;
     const characterRemembered = meetings > 0;
 
+    /*
+      Les autres personnages du monde : ceux des joueurs deja partis d'une
+      table, restes avec leur tombe. Le dernier sortant leur applique la
+      regle du solo, gardes seulement si un visiteur les a croises : sans
+      cela ils survivaient orphelins, fiche et personnalite ecrites par leur
+      joueur comprises, a un monde supprime. Leur essence reste a leur
+      joueur, elle n'est pas a celui qui part. Aucun en solo.
+    */
+    const tombs = (
+      await this.prisma.character.findMany({
+        where: { universeId: universe.id },
+        select: { id: true, ownerId: true },
+      })
+    ).filter((row) => row.id !== characterId);
+    const forgotten: string[] = [];
+    for (const tomb of tombs) {
+      const seen = await this.prisma.encounter.count({
+        where: {
+          characterId: tomb.id,
+          ...(tomb.ownerId ? { visitorId: { not: tomb.ownerId } } : {}),
+        },
+      });
+      if (seen === 0) forgotten.push(tomb.id);
+    }
+
     // Une seule transaction : un monde a moitie efface serait pire qu'un
     // monde intact.
     await this.prisma.$transaction(async (tx) => {
+      for (const id of forgotten) {
+        await tx.character.delete({ where: { id } });
+      }
+
       if (characterId && characterRemembered) {
         await tx.character.update({
           where: { id: characterId },
@@ -408,7 +488,7 @@ export class ErasureService {
         where: { id: await this.universeOf(seat.partyId) },
         include: WITH_CHARACTER(userId),
       });
-      if (universe) outcomes.push(await this.depart(userId, universe));
+      if (universe) outcomes.push(await this.depart(userId, universe, true));
     }
 
     const universes = await this.prisma.universe.findMany({
@@ -417,7 +497,7 @@ export class ErasureService {
     });
 
     for (const universe of universes) {
-      outcomes.push(await this.departOrRelease(userId, universe));
+      outcomes.push(await this.departOrRelease(userId, universe, true));
     }
 
     await this.prisma.user.delete({ where: { id: userId } });

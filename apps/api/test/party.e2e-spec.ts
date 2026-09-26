@@ -1133,3 +1133,198 @@ describe('les parts d une table sous concurrence (e2e)', () => {
     await app.close();
   });
 });
+
+/*
+  Ce qui reste d'un joueur qui quitte une table ou efface son compte. Le
+  journal garde ses rangs, jamais ses mots ; sa fiche reste en tombe s'il
+  part, disparait s'il efface son compte sans avoir ete croise ailleurs ;
+  et le dernier sortant ne laisse rien d'orphelin derriere lui.
+*/
+describe('ce qui reste d un joueur parti (e2e)', () => {
+  let app: INestApplication<App>;
+  let store: OnboardingStore;
+
+  beforeEach(async () => {
+    ({ app, store } = await readyParty());
+  });
+
+  function play(cookie: string, content: string) {
+    return request(app.getHttpServer())
+      .post('/turn')
+      .set('Cookie', cookie)
+      .send({ kind: 'say', content });
+  }
+
+  // Un fil de creation par membre, pour voir lequel part.
+  function threads(): void {
+    const universeId = store.universes[0]!.id;
+    for (const [at, user] of store.users.slice(0, 2).entries()) {
+      store.messages.push({
+        id: `fil-${at}`,
+        universeId,
+        channel: 'character_creation',
+        role: 'user',
+        content: `Mon personnage, par ${user.username}.`,
+        memberId: user.id,
+        seq: 100 + at,
+        createdAt: new Date(),
+      });
+    }
+  }
+
+  const said = (userId: string | null) =>
+    store.messages.filter(
+      (row) => row.channel === 'game_turn' && row.role === 'user' && row.memberId === userId,
+    );
+
+  it('quitter vide ses mots du journal et garde leur rang', async () => {
+    const [host, friend] = store.users;
+    threads();
+    await play(HOST_COOKIE, 'Je force la porte du depot.').expect(200);
+    await play(FRIEND_COOKIE, 'Je surveille la rue.').expect(200);
+    const seq = said(friend!.id)[0]!.seq;
+
+    await request(app.getHttpServer()).delete('/parties/me').set('Cookie', FRIEND_COOKIE).expect(200);
+
+    expect(said(friend!.id)).toEqual([expect.objectContaining({ content: '', seq })]);
+    expect(said(host!.id)[0]!.content).toBe('Je force la porte du depot.');
+    // Son fil de creation part, celui de l'hote reste.
+    expect(store.messages.filter((row) => row.channel === 'character_creation').map((row) => row.memberId)).toEqual([
+      host!.id,
+    ]);
+
+    const history = (await request(app.getHttpServer()).get('/turn').set('Cookie', HOST_COOKIE).expect(200))
+      .body as TurnHistory;
+    const erased = history.messages.find((message) => message.seq === seq)!;
+    expect(erased).toMatchObject({ content: '', erased: true, author: null });
+    expect(history.messages.filter((message) => message.erased)).toHaveLength(1);
+    await app.close();
+  });
+
+  it('effacer son compte vide ses mots, delie ses messages et emporte sa fiche', async () => {
+    const [host, friend] = store.users;
+    threads();
+    await play(FRIEND_COOKIE, 'Je surveille la rue.').expect(200);
+    const hostRow = structuredClone(store.characters.find((row) => row.ownerId === host!.id)!);
+
+    await request(app.getHttpServer()).delete('/me').set('Cookie', FRIEND_COOKIE).expect(200);
+
+    // Ses messages restent a leur rang, vides et sans auteur.
+    const orphans = store.messages.filter(
+      (row) => row.channel === 'game_turn' && row.role === 'user',
+    );
+    expect(orphans).toEqual([expect.objectContaining({ content: '', memberId: null })]);
+    expect(store.messages.some((row) => row.id === 'fil-1')).toBe(false);
+    // Personne ne l'a croise hors de la table : sa fiche part.
+    expect(store.characters.some((row) => row.name === 'Bren')).toBe(false);
+    expect(store.characters.find((row) => row.ownerId === host!.id)).toEqual(hostRow);
+    // La table continue avec l'hote.
+    expect(store.partyMembers?.map((row) => row.userId)).toEqual([host!.id]);
+    expect(store.universes[0]!.ownerId).toBe(host!.id);
+    await app.close();
+  });
+
+  it('l hote qui efface son compte laisse la table a l ami', async () => {
+    const [host, friend] = store.users;
+    await play(HOST_COOKIE, 'Je force la porte du depot.').expect(200);
+
+    await request(app.getHttpServer()).delete('/me').set('Cookie', HOST_COOKIE).expect(200);
+
+    expect(store.universes[0]!.ownerId).toBe(friend!.id);
+    expect(store.partyMembers?.map((row) => row.userId)).toEqual([friend!.id]);
+    expect(store.characters.some((row) => row.name === 'Ael')).toBe(false);
+    expect(said(null)).toEqual([expect.objectContaining({ content: '' })]);
+    // L'ami joue toujours, et le meneur lit un message retire, pas vide.
+    await play(FRIEND_COOKIE, 'Je reprends la route.').expect(200);
+    await app.close();
+  });
+
+  it('le dernier sortant n emporte pas de tombe orpheline', async () => {
+    const universeId = store.universes[0]!.id;
+    await request(app.getHttpServer()).delete('/parties/me').set('Cookie', FRIEND_COOKIE).expect(200);
+    expect(store.characters.find((row) => row.name === 'Bren')?.diedAt).toBeInstanceOf(Date);
+
+    await request(app.getHttpServer()).delete('/parties/me').set('Cookie', HOST_COOKIE).expect(200);
+
+    // Le monde n'a recu personne : il part, et les deux fiches avec lui.
+    expect(store.universes.some((row) => row.id === universeId)).toBe(false);
+    expect(store.characters).toHaveLength(0);
+    await app.close();
+  });
+
+  it('un monde garde par une visite perd sa table, et ne garde que les tombes croisees', async () => {
+    const [host, friend, late] = store.users;
+    const universeId = store.universes[0]!.id;
+    const bren = store.characters.find((row) => row.ownerId === friend!.id)!;
+    // Un visiteur est passe : le monde reste. Il n'a croise personne.
+    store.encounters = [
+      { id: 'visite', visitorId: late!.id, universeId, characterId: null, createdAt: new Date() },
+    ];
+
+    await request(app.getHttpServer()).delete('/parties/me').set('Cookie', FRIEND_COOKIE).expect(200);
+    await request(app.getHttpServer()).delete('/parties/me').set('Cookie', HOST_COOKIE).expect(200);
+
+    expect(store.universes.find((row) => row.id === universeId)?.ownerId).toBeNull();
+    expect(store.parties ?? []).toHaveLength(0);
+    expect(store.characters.some((row) => row.id === bren.id)).toBe(false);
+    expect(store.characters.some((row) => row.ownerId === host!.id)).toBe(false);
+    await app.close();
+  });
+});
+
+describe('une fiche payee reste en place (e2e)', () => {
+  let app: INestApplication<App>;
+  let store: OnboardingStore;
+
+  beforeEach(async () => {
+    ({ app, store } = await boot());
+  });
+
+  async function assemble(): Promise<void> {
+    const party = (
+      (await request(app.getHttpServer()).post('/parties').set('Cookie', HOST_COOKIE).send({ size: 2 }).expect(201)).body as Party
+    );
+    await request(app.getHttpServer())
+      .post('/parties/join')
+      .set('Cookie', FRIEND_COOKIE)
+      .send({ code: party.inviteCode })
+      .expect(201);
+    for (const cookie of [HOST_COOKIE, FRIEND_COOKIE]) {
+      await save(app, cookie, { step: 'inspiration', inspiration: WORKS, advance: true }).expect(200);
+    }
+  }
+
+  const reset = (cookie: string) =>
+    request(app.getHttpServer()).delete('/onboarding/character').set('Cookie', cookie);
+
+  it('un siege pret ne remet pas sa fiche a zero, un siege en cours si', async () => {
+    await assemble();
+    const [host, friend] = store.users;
+    await save(app, HOST_COOKIE, { step: 'character', character: SHEET, advance: true }).expect(200);
+    await save(app, FRIEND_COOKIE, {
+      step: 'character',
+      character: { name: 'Bren' },
+    }).expect(200);
+
+    await reset(HOST_COOKIE).expect(409).expect({ code: 'locked' });
+    expect(store.characters.some((row) => row.ownerId === host!.id)).toBe(true);
+
+    await reset(FRIEND_COOKIE).expect(204);
+    expect(store.characters.some((row) => row.ownerId === friend!.id)).toBe(false);
+    await app.close();
+  });
+
+  it('effacer son compte pendant la generation ne rend pas sa part', async () => {
+    await assemble();
+    const friend = store.users[1]!;
+    await save(app, HOST_COOKIE, { step: 'character', character: SHEET, advance: true }).expect(200);
+    await save(app, FRIEND_COOKIE, { step: 'character', character: FRIEND_SHEET, advance: true }).expect(200);
+    expect(store.universes[0]!.step).toBe('generating');
+
+    // Par le service, avant que l'abonnement parte avec le compte.
+    await app.get(ErasureService).releaseMembership(friend.id);
+
+    expect((store.creditEntries ?? []).filter((row) => row.reason === 'refund')).toHaveLength(0);
+    await app.close();
+  });
+});

@@ -162,6 +162,7 @@ export function GameChat({
               // Dans une table, son nom au-dessus de sa phrase : le journal
               // se lit comme une conversation de groupe.
               author: world.character.name,
+              erased: false,
               outcome: null,
               request: request.kind,
               createdAt: now,
@@ -178,6 +179,7 @@ export function GameChat({
         content: "",
         // La réponse du meneur est celle du groupe, jamais signée.
         author: null,
+        erased: false,
         outcome: null,
         request: request.kind,
         createdAt: now,
@@ -423,12 +425,20 @@ export function GameChat({
                         {item.message.author}
                       </p>
                     ) : null}
-                    <p className="rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum">
-                      <span className="sr-only">
-                        {item.message.author ?? t("you")} :{" "}
-                      </span>
-                      {item.message.content}
-                    </p>
+                    {/* Le message d'un joueur parti : son rang reste, ses
+                        mots non, et la bulle le dit plutôt que de rester vide. */}
+                    {item.message.erased ? (
+                      <p className="rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum-3 italic">
+                        {t("erased")}
+                      </p>
+                    ) : (
+                      <p className="rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum">
+                        <span className="sr-only">
+                          {item.message.author ?? t("you")} :{" "}
+                        </span>
+                        {item.message.content}
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <div className="max-w-measure">

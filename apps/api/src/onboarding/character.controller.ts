@@ -104,7 +104,7 @@ export class CharacterController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async reset(@CurrentUser() user: User): Promise<void> {
     const { universeId, thread } = await this.guard(() => this.characters.open(user));
-    await this.characters.reset(universeId, thread);
+    await this.guard(() => this.characters.reset(universeId, thread));
   }
 
   @Post('messages')
