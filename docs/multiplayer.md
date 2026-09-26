@@ -173,7 +173,10 @@ connection per api instance for a gain a poll already gives.
   otherwise). A host deleting "their" story while others play is therefore
   the same as leaving it, and nobody can gut a table others sit at.
 - **Leaving while assembling** refunds the share: nothing was generated for
-  them. A member who leaves after generation does not get their share back:
+  them. Only the request that actually deletes the seat refunds (the delete
+  runs first, in the departure's transaction, and a count of zero means
+  someone else already left): refunding first, on a ledger read, let two
+  concurrent leaves refund twice. A member who leaves after generation does not get their share back:
   the world exists because they were part of it.
 - **No late join**: once the story leaves the inspiration step the code
   closes. A party must also be **full** to generate: the size is the count
@@ -181,13 +184,24 @@ connection per api instance for a gain a poll already gives.
   table that never fills is disbanded and recreated; the disbanded members'
   shares are refunded.
 - **A failed generation** settles like solo: every unreturned debit with the
-  story's ref is refunded (the refund service now returns all of them, not
-  the oldest), and the path reopens for all members, who re-advance and
-  re-pay, as a solo player retries.
+  story's ref, **up to the failed job's creation**, is refunded (the refund
+  service returns all of them, not the oldest), and the path reopens for all
+  members, who re-advance and re-pay, as a solo player retries. The reader
+  that claims the job (`refunded_at`) also sets every seat back to not
+  ready: before, the seats stayed ready on a refunded share, and the first
+  member to re-advance relaunched for everyone. A re-advance settles first,
+  so `ready` has a single meaning (share paid for the next generation), and
+  a share re-paid for the relaunch is never refunded by the old failure.
 - **Disconnect mid-turn** changes nothing for the group: the narration is
   never aborted, the tail block writes the canon, and the player finds the
   turn in the log when they return. The lock expires on its own if the
   process dies.
+- **Paying for a seat** reserves before it debits: a conditional write turns
+  the seat ready (`ready: false` to `true`), and only the request that flips
+  it pays; the other gets `locked`. An out-of-credits debit sets it back.
+  Solo does the same with the step (`character` or `failed` to
+  `generating`). Two concurrent advances both read "not ready" and both
+  paid before.
 - **Idempotency**: the party lock serializes narrations per story, the
   pending roll is a `getdel`, the message seq is unique per channel, the
   generation job is the universe id (one generation, however many advance

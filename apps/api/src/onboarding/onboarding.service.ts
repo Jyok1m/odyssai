@@ -157,6 +157,7 @@ export class OnboardingService {
       : await this.saveCharacter(
           user.id,
           existing.id,
+          existing.step,
           update.character,
           update.advance,
         );
@@ -261,31 +262,111 @@ export class OnboardingService {
   private async saveCharacter(
     userId: string,
     universeId: string,
+    step: OnboardingStep,
     character: CharacterDraft,
     advance: boolean,
   ): Promise<UniverseRow> {
+    /*
+      Une generation ratee se solde avant qu'on repaie : la part rendue
+      revient d'abord, et dans une table chaque siege redevient non pret.
+      C'est ce qui laisse a `ready` un seul sens, part payee pour la
+      prochaine generation.
+    */
+    if (step === 'failed') await this.refunds.settle(universeId);
+
     const seat = await this.seatOf(userId, universeId);
 
     /*
       Sa fiche est validee et sa part payee : elle ne se reecrit plus tant
       que la table n'a pas avance. Le laisser faire serait le faire payer
-      deux fois sa part sans le lui dire. Apres un echec de generation,
-      l'etape `failed` reouvre tout le monde : la part rendue se repaiera au
-      prochain passage, comme un solo qui relance.
+      deux fois sa part sans le lui dire.
     */
-    if (seat?.ready) {
-      const universe = await this.prisma.universe.findUniqueOrThrow({
-        where: { id: universeId },
-        select: { step: true },
-      });
-      if (universe.step !== 'failed') throw new LockedError();
+    if (seat?.ready) throw new LockedError();
 
-      await this.prisma.partyMember.update({
-        where: { userId },
-        data: { ready: false },
-      });
+    const sheet = CharacterSheetSchema.safeParse(character);
+    const complete = sheet.success;
+    const paying = advance && complete;
+
+    /*
+      Le passage se reserve avant de payer, par une ecriture conditionnelle :
+      deux avancees simultanees lisaient toutes deux l'etat d'avant et
+      payaient toutes deux. Celle qui perd n'ecrit rien. Dans une table,
+      c'est le siege qui passe pret ; en solo, l'histoire qui part en
+      generation.
+    */
+    if (paying) {
+      const claimed = seat
+        ? await this.prisma.partyMember.updateMany({
+            where: { userId, ready: false },
+            data: { ready: true },
+          })
+        : await this.prisma.universe.updateMany({
+            where: { id: universeId, step: { in: ['character', 'failed'] } },
+            data: { step: 'generating' },
+          });
+      if (claimed.count === 0) throw new LockedError();
     }
 
+    try {
+      await this.writeCharacter(userId, universeId, character, sheet);
+
+      if (paying) {
+        /*
+          Debite avant la file, jamais dans le worker : un refus doit arriver
+          avant que le travail ne parte, sans quoi le joueur verrait une
+          generation demarrer puis echouer. Dans une table, sa part a lui,
+          au moment ou SA fiche est validee.
+        */
+        await this.credits.spend(
+          'worldGeneration',
+          userId,
+          universeId,
+          seat ? partyShare(seat.partySize) : undefined,
+        );
+      }
+    } catch (error: unknown) {
+      // Rien de paye : le passage reserve se rend, le joueur pourra relancer.
+      if (paying) {
+        await (seat
+          ? this.prisma.partyMember.updateMany({
+              where: { userId },
+              data: { ready: false },
+            })
+          : this.prisma.universe.updateMany({
+              where: { id: universeId, step: 'generating' },
+              // La reservation n'est passee que depuis l'une de ces deux-la.
+              data: { step: step === 'failed' ? 'failed' : 'character' },
+            }));
+      }
+      throw error;
+    }
+
+    if (paying) {
+      if (seat) {
+        // Le dernier pret lance la generation, et seulement si la table est
+        // pleine : un siege vide, c'est quelqu'un qu'on attend encore.
+        await this.launch(seat.partyId, universeId);
+      } else {
+        // La ligne d'abord, la file ensuite : c'est elle qui rend la generation
+        // interrogeable et diagnosticable, Redis ne fait que transporter.
+        await this.prisma.generationJob.create({ data: { universeId } });
+        await this.queue.enqueue(universeId);
+      }
+    }
+
+    const universe = await this.read(userId, universeId);
+
+    if (advance && !complete) throw new IncompleteError();
+    return universe;
+  }
+
+  // La fiche du joueur, et l'essence qu'elle fait naitre une fois validee.
+  private async writeCharacter(
+    userId: string,
+    universeId: string,
+    character: CharacterDraft,
+    sheet: ReturnType<typeof CharacterSheetSchema.safeParse>,
+  ): Promise<void> {
     const data = {
       name: character.name ?? null,
       gender: character.gender ?? null,
@@ -301,9 +382,6 @@ export class OnboardingService {
       update: data,
     });
 
-    const sheet = CharacterSheetSchema.safeParse(character);
-    const complete = sheet.success;
-
     /*
       La fiche validee fait naitre l'essence : c'est ce que ce personnage
       emportera s'il franchit une faille un jour. Une seule fois, et jamais
@@ -312,7 +390,7 @@ export class OnboardingService {
       Ici et non a la generation : une essence est ce que le joueur a ecrit,
       pas ce que le monde en a fait.
     */
-    if (complete) {
+    if (sheet.success) {
       const existing = await this.prisma.character.findUnique({
         where: { universeId_ownerId: { universeId, ownerId: userId } },
         select: { id: true, essenceId: true },
@@ -336,50 +414,6 @@ export class OnboardingService {
         });
       }
     }
-
-    if (advance && complete) {
-      if (seat) {
-        /*
-          Sa part du monde, a lui : debitee au moment ou SA fiche est validee,
-          comme le solo paie la sienne au moment ou il valide. Le dernier pret
-          lance la generation, et seulement si la table est pleine : un siege
-          vide, c'est quelqu'un qu'on attend encore.
-        */
-        await this.credits.spend(
-          'worldGeneration',
-          userId,
-          universeId,
-          partyShare(seat.partySize),
-        );
-
-        await this.prisma.partyMember.update({
-          where: { userId },
-          data: { ready: true },
-        });
-        await this.launch(seat.partyId, universeId);
-      } else {
-        /*
-          Debite ici et non dans le worker : un refus doit arriver avant que le
-          travail ne parte en file, sans quoi le joueur verrait une generation
-          demarrer puis echouer.
-        */
-        await this.credits.spend('worldGeneration', userId, universeId);
-
-        await this.prisma.universe.update({
-          where: { id: universeId },
-          data: { step: 'generating' },
-        });
-        // La ligne d'abord, la file ensuite : c'est elle qui rend la generation
-        // interrogeable et diagnosticable, Redis ne fait que transporter.
-        await this.prisma.generationJob.create({ data: { universeId } });
-        await this.queue.enqueue(universeId);
-      }
-    }
-
-    const universe = await this.read(userId, universeId);
-
-    if (advance && !complete) throw new IncompleteError();
-    return universe;
   }
 
   /*

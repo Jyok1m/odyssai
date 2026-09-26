@@ -218,58 +218,68 @@ export class ErasureService {
     // Ce qui attendait un jet n'a plus de scene : la partie avance sans lui.
     await this.redis.del(pendingRollKey(userId));
 
-    /*
-      Partir avant que le monde existe rend sa part : rien n'a ete genere
-      pour lui. Apres, la part est due : le monde existe parce qu'il en
-      etait, et les autres y jouent.
-    */
-    if (universe.step !== 'ready') await this.refundShare(userId, universe.id);
-
     const character = universe.characters[0] ?? null;
     const partyId = universe.party!.id;
     const others = universe.party!.members.filter(
       (member) => member.userId !== userId,
     );
 
+    /*
+      Partir avant que le monde existe rend sa part : rien n'a ete genere
+      pour lui. Apres, la part est due : le monde existe parce qu'il en
+      etait, et les autres y jouent.
+
+      Seulement pour qui a vraiment quitte son siege : c'est la suppression
+      de la ligne qui designe le partant, et deux departs simultanes n'en
+      suppriment qu'une. Rendre avant, sur une lecture du grand livre, rendait
+      deux fois.
+    */
+    const refund = universe.step !== 'ready';
+
     if (others.length === 0) {
-      await this.prisma.partyMember.deleteMany({
+      const left = await this.prisma.partyMember.deleteMany({
         where: { partyId, userId },
       });
+      if (left.count === 0) return { world: 'none', character: 'none' };
+
+      if (refund) await this.refundShare(userId, universe.id);
       this.logger.log(`dernier joueur sorti : la table ${partyId} se ferme`);
       return this.release(userId, universe);
     }
 
     const senior = others[0]!;
-    await this.prisma.$transaction([
-      this.prisma.partyMember.deleteMany({ where: { partyId, userId } }),
+    const left = await this.prisma.$transaction(async (tx) => {
+      const seat = await tx.partyMember.deleteMany({ where: { partyId, userId } });
+      if (seat.count === 0) return false;
+
       // Son fil de creation part ; le journal du jeu reste au groupe.
-      this.prisma.conversationMessage.deleteMany({
+      await tx.conversationMessage.deleteMany({
         where: { universeId: universe.id, channel: CREATION_CHANNEL, memberId: userId },
-      }),
-      ...(character
-        ? [
-            this.prisma.character.update({
-              where: { id: character.id },
-              data: { diedAt: new Date() },
-            }),
-          ]
-        : []),
+      });
+      if (character) {
+        await tx.character.update({
+          where: { id: character.id },
+          data: { diedAt: new Date() },
+        });
+      }
       // L'hote part : le monde reste a la table, et quelqu'un doit l'heberger.
-      ...(universe.ownerId === userId
-        ? [
-            this.prisma.universe.update({
-              where: { id: universe.id },
-              data: { ownerId: senior.userId },
-            }),
-          ]
-        : []),
+      if (universe.ownerId === userId) {
+        await tx.universe.update({
+          where: { id: universe.id },
+          data: { ownerId: senior.userId },
+        });
+      }
       // Le pointeur du partant ne vise plus rien de vrai : il repart sur une
       // histoire a commencer, les autres restent a portee.
-      this.prisma.user.updateMany({
+      await tx.user.updateMany({
         where: { id: userId, currentUniverseId: universe.id },
         data: { currentUniverseId: null },
-      }),
-    ]);
+      });
+      return true;
+    });
+    if (!left) return { world: 'none', character: 'none' };
+
+    if (refund) await this.refundShare(userId, universe.id);
 
     this.logger.log(
       `depart d une table : monde ${universe.id} ${

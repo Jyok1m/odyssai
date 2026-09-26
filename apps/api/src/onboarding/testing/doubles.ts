@@ -405,6 +405,12 @@ function entriesMatching(store: OnboardingStore, where: any): CreditEntryRow[] {
     ) {
       return false;
     }
+    if (
+      where?.createdAt?.lte !== undefined &&
+      row.createdAt > where.createdAt.lte
+    ) {
+      return false;
+    }
     return true;
   });
 }
@@ -418,6 +424,9 @@ function pickEntry(row: CreditEntryRow, select?: Record<string, boolean>) {
 }
 
 export function makeOnboardingPrisma(store: OnboardingStore) {
+  // Les transactions interactives du double, une a la fois.
+  let serial: Promise<unknown> = Promise.resolve();
+
   /*
     Les sieges d'une table, par ordre d'arrivee, le pseudo venu avec : c'est
     la forme que lisent le parcours et la vue du monde.
@@ -1114,6 +1123,9 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         const row = (store.parties ?? []).find(
           (party) =>
             (where.id !== undefined ? party.id === where.id : true) &&
+            (where.universeId !== undefined
+              ? party.universeId === where.universeId
+              : true) &&
             (where.inviteCode !== undefined
               ? party.inviteCode === where.inviteCode
               : true),
@@ -1230,6 +1242,16 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         )!;
         return { ...assign(row, data) };
       },
+      updateMany: async ({ where, data }: any) => {
+        const rows = (store.partyMembers ?? []).filter(
+          (row) =>
+            (where?.userId === undefined || row.userId === where.userId) &&
+            (where?.partyId === undefined || row.partyId === where.partyId) &&
+            (where?.ready === undefined || row.ready === where.ready),
+        );
+        for (const row of rows) assign(row, data);
+        return { count: rows.length };
+      },
       deleteMany: async ({ where }: any) => {
         const kept = (store.partyMembers ?? []).filter(
           (row) =>
@@ -1312,10 +1334,31 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
       },
     },
 
-    // Les deux formes : la liste d'ecritures, et la callback qui recoit le
-    // double. La liste se joue dans l'ordre, comme une transaction.
-    $transaction: async (run: any) =>
-      Array.isArray(run) ? Promise.all(run) : run(double),
+    /*
+      Les deux formes : la liste d'ecritures, et la callback qui recoit le
+      double. La liste se joue dans l'ordre, comme une transaction.
+
+      La callback qui jette defait ce qu'elle avait ecrit, comme la base :
+      sans cela, un remboursement refuse par l'index laissait son solde
+      credite. Les callbacks passent une a une, comme deux transactions qui
+      se heurtent sur la meme ligne ou le meme index : sans cela, celle qui
+      echoue restaurerait un etat anterieur a celle qui a reussi.
+    */
+    $transaction: async (run: any) => {
+      if (Array.isArray(run)) return Promise.all(run);
+      const turn = serial.then(async () => {
+        const before = structuredClone(store);
+        try {
+          return await run(double);
+        } catch (error: unknown) {
+          for (const key of Object.keys(store)) delete (store as any)[key];
+          Object.assign(store, before);
+          throw error;
+        }
+      });
+      serial = turn.catch(() => undefined);
+      return turn;
+    },
 
     subscription: {
       findUnique: async ({ where }: any) =>
@@ -1381,6 +1424,22 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         };
       },
       create: async ({ data }: any) => {
+        /*
+          L'index partiel `credit_entries_refund_ref_key`, reproduit : un
+          debit ne se rembourse qu'une fois, et la base le refuse avec la
+          meme erreur que Prisma.
+        */
+        if (
+          data.reason === 'refund' &&
+          (store.creditEntries ?? []).some(
+            (row) => row.reason === 'refund' && row.ref === data.ref,
+          )
+        ) {
+          throw new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+            code: 'P2002',
+            clientVersion: 'double',
+          });
+        }
         const row: CreditEntryRow = {
           id: randomUUID(),
           subscriptionId: data.subscriptionId,

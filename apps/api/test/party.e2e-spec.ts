@@ -15,6 +15,9 @@ import { PRISMA } from './../src/prisma/prisma.module.js';
 import { REDIS } from './../src/redis/redis.module.js';
 import { NARRATOR_LLM } from './../src/onboarding/narrator-llm.provider.js';
 import { GenerationQueueService } from './../src/onboarding/generation-queue.service.js';
+import { ErasureService } from './../src/erasure/erasure.service.js';
+import { LockedError, OnboardingService } from './../src/onboarding/onboarding.service.js';
+import type { User } from '@odyssai/db';
 import { GuideFakeRedis } from './../src/guide/testing/doubles.js';
 import { makeFakeLlm, type FakeLlm } from './../src/guide/testing/doubles.js';
 import {
@@ -881,6 +884,190 @@ describe('ce que les autres joueurs ont ecrit (e2e)', () => {
     expect(messages[messages.length - 1]!.content).toBe(
       '<message_joueur auteur="Bren">\nJe regarde autour.\n</message_joueur>',
     );
+    await app.close();
+  });
+});
+
+/*
+  Les credits d'une table quand les requetes se croisent. Chaque part se
+  debite une fois et se rend une fois, quel que soit le nombre de clics ou
+  de chemins qui arrivent ensemble.
+*/
+describe('les parts d une table sous concurrence (e2e)', () => {
+  let app: INestApplication<App>;
+  let store: OnboardingStore;
+  let enqueued: string[];
+
+  beforeEach(async () => {
+    ({ app, store, enqueued } = await boot());
+  });
+
+  // Une table de deux, jusqu'a l'etape de la fiche.
+  async function assemble(): Promise<Party> {
+    const party = (
+      (await request(app.getHttpServer()).post('/parties').set('Cookie', HOST_COOKIE).send({ size: 2 }).expect(201)).body as Party
+    );
+    await request(app.getHttpServer())
+      .post('/parties/join')
+      .set('Cookie', FRIEND_COOKIE)
+      .send({ code: party.inviteCode })
+      .expect(201);
+    for (const cookie of [HOST_COOKIE, FRIEND_COOKIE]) {
+      await save(app, cookie, {
+        step: 'inspiration',
+        inspiration: WORKS,
+        advance: true,
+      }).expect(200);
+    }
+    return party;
+  }
+
+  const advance = (cookie: string, sheet: typeof SHEET) =>
+    save(app, cookie, { step: 'character', character: sheet, advance: true });
+
+  const leave = (cookie: string) =>
+    request(app.getHttpServer()).delete('/parties/me').set('Cookie', cookie);
+
+  const shares = () =>
+    (store.creditEntries ?? []).filter((row) => row.reason === 'worldGeneration');
+  const refunds = () =>
+    (store.creditEntries ?? []).filter((row) => row.reason === 'refund');
+  const creditsOf = (userId: string) =>
+    store.subscriptions?.find((row) => row.userId === userId)?.credits;
+
+  // La generation lancee, puis ratee : l'etat d'ou part un solde.
+  function fail(universeId: string): void {
+    for (const job of store.jobs) job.status = 'failed';
+    store.universes.find((row) => row.id === universeId)!.step = 'failed';
+  }
+
+  it('deux departs simultanes ne rendent la part qu une fois', async () => {
+    await assemble();
+    const host = store.users[0]!;
+    await advance(HOST_COOKIE, SHEET).expect(200);
+    const paid = creditsOf(host.id)!;
+
+    /*
+      Par le service et non par la route : la route relit le siege avant, et
+      le second appel s'y arrete le plus souvent. Ici les deux passent la
+      lecture, et c'est le depart lui-meme qui doit trancher.
+    */
+    const erasure = app.get(ErasureService);
+    const outcomes = await Promise.all([
+      erasure.releaseMembership(host.id),
+      erasure.releaseMembership(host.id),
+    ]);
+
+    expect(outcomes.map((outcome) => outcome.world).sort()).toEqual(['kept', 'none']);
+    expect(refunds()).toHaveLength(1);
+    expect(creditsOf(host.id)).toBe(paid + 13);
+    await app.close();
+  });
+
+  it('un depart et le solde d un echec ne rendent chaque part qu une fois', async () => {
+    const party = await assemble();
+    await advance(HOST_COOKIE, SHEET).expect(200);
+    await advance(FRIEND_COOKIE, FRIEND_SHEET).expect(200);
+    fail(party.universeId);
+
+    // L'ami part pendant que l'hote relit le parcours, qui solde l'echec.
+    await Promise.all([
+      leave(FRIEND_COOKIE).expect(200),
+      onboarding(app, HOST_COOKIE).expect(200),
+    ]);
+
+    const returned = refunds().map((row) => row.ref);
+    expect(returned).toHaveLength(2);
+    expect(new Set(returned)).toEqual(new Set(shares().map((row) => row.id)));
+    await app.close();
+  });
+
+  it('deux avancees simultanees ne debitent la part qu une fois', async () => {
+    await assemble();
+    const host = store.users[0]!;
+
+    // Par le service : les deux avancees lisent le siege avant que l'une paie.
+    const onboarded = app.get(OnboardingService);
+    const update = { step: 'character' as const, character: SHEET, advance: true };
+    const results = await Promise.allSettled([
+      onboarded.save(host as unknown as User, update),
+      onboarded.save(host as unknown as User, update),
+    ]);
+
+    expect(results.map((result) => result.status).sort()).toEqual(['fulfilled', 'rejected']);
+    const lost = results.find((result) => result.status === 'rejected');
+    expect(lost?.reason).toBeInstanceOf(LockedError);
+    expect(shares()).toHaveLength(1);
+    expect(store.partyMembers?.find((row) => row.userId === host.id)?.ready).toBe(true);
+    await app.close();
+  });
+
+  it('une avancee sans reserve laisse le siege non pret', async () => {
+    await assemble();
+    const host = store.users[0]!;
+    store.subscriptions = [
+      {
+        id: 'reserve-vide',
+        userId: host.id,
+        plan: 'free',
+        status: 'active',
+        credits: 0,
+        periodStart: new Date(),
+        periodEnd: new Date(Date.now() + 86_400_000),
+        welcomed: true,
+        stripeCustomerId: null,
+        stripeSubscriptionId: null,
+        cancelAtPeriodEnd: false,
+      },
+    ];
+
+    await advance(HOST_COOKIE, SHEET).expect(402);
+
+    expect(shares()).toHaveLength(0);
+    expect(store.partyMembers?.find((row) => row.userId === host.id)?.ready).toBe(false);
+    await app.close();
+  });
+
+  /*
+    Apres un echec, chaque siege repaie pour relancer. La part repayee
+    n'appartient pas a l'echec : le solde ne la rend pas, et le premier qui
+    relance ne relance pas pour les autres.
+  */
+  it('une relance apres echec garde la part repayee et attend chaque siege', async () => {
+    const party = await assemble();
+    const [host, friend] = store.users;
+    await advance(HOST_COOKIE, SHEET).expect(200);
+    await advance(FRIEND_COOKIE, FRIEND_SHEET).expect(200);
+    expect(enqueued).toHaveLength(1);
+    fail(party.universeId);
+
+    // L'hote relance avant que quiconque ait relu le parcours.
+    await advance(HOST_COOKIE, SHEET).expect(200);
+
+    const sharesOf = (userId: string) => {
+      const subscription = store.subscriptions?.find((row) => row.userId === userId);
+      return shares().filter((row) => row.subscriptionId === subscription?.id);
+    };
+    const [hostFailed, hostRepaid] = sharesOf(host!.id);
+    const [friendFailed] = sharesOf(friend!.id);
+    expect(hostRepaid).toBeDefined();
+
+    // Les deux parts de l'echec reviennent, la part repayee reste.
+    const returned = new Set(refunds().map((row) => row.ref));
+    expect(returned).toEqual(new Set([hostFailed!.id, friendFailed!.id]));
+
+    // L'ami n'est plus pret : rien ne repart sans lui.
+    expect(store.partyMembers?.find((row) => row.userId === friend!.id)?.ready).toBe(false);
+    expect(enqueued).toHaveLength(1);
+
+    // Relire ne rend rien de plus.
+    await onboarding(app, FRIEND_COOKIE).expect(200);
+    expect(refunds()).toHaveLength(2);
+
+    // L'ami repaie : la table repart, une fois.
+    await advance(FRIEND_COOKIE, FRIEND_SHEET).expect(200);
+    expect(enqueued).toHaveLength(2);
+    expect(refunds()).toHaveLength(2);
     await app.close();
   });
 });

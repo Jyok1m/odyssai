@@ -10,6 +10,7 @@ import {
 } from '@odyssai/engine';
 import { CreditsService, OutOfCreditsError } from './credits.service.js';
 import type { PlansService } from '../plans/plans.service.js';
+import { makeOnboardingPrisma, type OnboardingStore } from '../onboarding/testing/doubles.js';
 
 describe('bareme', () => {
   it('prend le tour pour unite', () => {
@@ -462,5 +463,77 @@ describe('ce que la reserve contenait au depart', () => {
   it('ne descend jamais sous le solde', async () => {
     const { service } = serviceWith(null, 3);
     await expect(service.granted({ id: 's1', credits: 10 })).resolves.toBe(10);
+  });
+});
+
+/*
+  Un debit ne se rembourse qu'une fois. Deux chemins qui le lisent chacun
+  comme non rendu arrivent ensemble jusqu'ici : l'index partiel refuse le
+  second, et sa transaction emporte l'increment du solde avec elle.
+*/
+describe('remboursement unique', () => {
+  function ledger(): OnboardingStore {
+    return {
+      users: [],
+      universes: [],
+      characters: [],
+      messages: [],
+      jobs: [],
+      subscriptions: [
+        {
+          id: 's1',
+          userId: 'u1',
+          plan: FREE_PLAN_SLUG,
+          status: 'active',
+          credits: 37,
+          periodStart: new Date(),
+          periodEnd: new Date(Date.now() + 86_400_000),
+          welcomed: true,
+          stripeCustomerId: null,
+          stripeSubscriptionId: null,
+          cancelAtPeriodEnd: false,
+        },
+      ],
+      creditEntries: [
+        {
+          id: 'debit-1',
+          subscriptionId: 's1',
+          delta: -13,
+          reason: 'worldGeneration',
+          ref: 'univers-1',
+          balance: 37,
+          createdAt: new Date(),
+        },
+      ],
+    };
+  }
+
+  it('ne rend qu une fois deux remboursements simultanes du meme debit', async () => {
+    const store = ledger();
+    const service = new CreditsService(
+      makeOnboardingPrisma(store) as unknown as PrismaClient,
+      {} as PlansService,
+    );
+
+    await Promise.all([service.refund('debit-1'), service.refund('debit-1')]);
+
+    const refunds = store.creditEntries!.filter((row) => row.reason === 'refund');
+    expect(refunds).toHaveLength(1);
+    expect(refunds[0]).toMatchObject({ ref: 'debit-1', delta: 13, balance: 50 });
+    expect(store.subscriptions![0]!.credits).toBe(50);
+  });
+
+  it('ne rend rien de plus a un second remboursement tardif', async () => {
+    const store = ledger();
+    const service = new CreditsService(
+      makeOnboardingPrisma(store) as unknown as PrismaClient,
+      {} as PlansService,
+    );
+
+    await service.refund('debit-1');
+    await expect(service.refund('debit-1')).resolves.toBeUndefined();
+
+    expect(store.creditEntries!.filter((row) => row.reason === 'refund')).toHaveLength(1);
+    expect(store.subscriptions![0]!.credits).toBe(50);
   });
 });

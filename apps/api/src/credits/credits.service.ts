@@ -141,6 +141,11 @@ export class CreditsService {
   /*
     Rembourse une ecriture. Une action qui a echoue ne doit rien couter : le
     joueur n'a pas eu son tour.
+
+    Une fois par debit, et c'est la base qui le tient : deux chemins qui
+    lisent chacun le debit comme non rendu arrivent tous deux ici, l'index
+    partiel refuse le second, et sa transaction emporte l'increment du solde
+    avec elle.
   */
   async refund(entryId: string): Promise<void> {
     try {
@@ -151,6 +156,10 @@ export class CreditsService {
 
       await this.write(entry.subscriptionId, -entry.delta, 'refund', entry.id);
     } catch (error: unknown) {
+      if (isUniqueViolation(error)) {
+        this.logger.log(`deja rembourse (${entryId})`);
+        return;
+      }
       // Un remboursement rate se voit dans le grand livre, qui reste juste :
       // le debit y figure, le credit n'y figure pas.
       this.logger.error(

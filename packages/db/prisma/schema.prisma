@@ -596,6 +596,9 @@ model CreditEntry {
   reason String @db.VarChar(24)
 
   /// Ce a quoi l'ecriture se rattache : un univers, un tour, une facture.
+  /// Pour un remboursement, le debit qu'il annule : un index partiel unique
+  /// (`credit_entries_refund_ref_key`, en SQL seul, Prisma ne sachant pas le
+  /// dire) n'en laisse qu'un par debit, quel que soit le chemin qui rembourse.
   ref String?
 
   /// Le solde apres l'ecriture, fige. Relire le grand livre des annees plus

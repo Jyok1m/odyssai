@@ -24,6 +24,10 @@ const REASON = 'worldGeneration';
 
   Deux lecteurs peuvent donc arriver ensemble. C'est `refunded_at` qui tranche,
   par une ecriture conditionnelle : un seul la pose, un seul rembourse.
+
+  Celui qui la pose rouvre aussi la table : chaque siege redevient non pret,
+  et devra repayer sa part pour relancer. Sans cela, les sieges restaient
+  prets sur une part rendue, et le premier a relancer relancait pour tous.
 */
 @Injectable()
 export class GenerationRefundService {
@@ -38,7 +42,7 @@ export class GenerationRefundService {
     const failed = await this.prisma.generationJob.findMany({
       where: { universeId, status: 'failed', refundedAt: null },
       orderBy: { createdAt: 'asc' },
-      select: { id: true },
+      select: { id: true, createdAt: true },
     });
     if (failed.length === 0) return;
 
@@ -53,8 +57,10 @@ export class GenerationRefundService {
       });
       if (claimed.count === 0) continue;
 
-      // Tous les debits non rendus, un par siege dans une table.
-      const entries = await this.pending(universeId);
+      await this.reopen(universeId);
+
+      // Tous les debits non rendus de ce travail, un par siege dans une table.
+      const entries = await this.pending(universeId, job.createdAt);
       if (entries.length === 0) {
         /*
           Rien a rendre : un administrateur ne consomme rien, donc rien ne
@@ -73,16 +79,41 @@ export class GenerationRefundService {
     }
   }
 
+  // Dans une table, chaque siege redevient non pret : sa part vient d'etre rendue.
+  private async reopen(universeId: string): Promise<void> {
+    const party = await this.prisma.party.findUnique({
+      where: { universeId },
+      select: { id: true },
+    });
+    if (!party) return;
+
+    await this.prisma.partyMember.updateMany({
+      where: { partyId: party.id },
+      data: { ready: false },
+    });
+  }
+
   /*
     Les debits qui n'ont pas encore ete rendus, le plus ancien d'abord.
 
     C'est le grand livre qui repond, et non un compteur a cote : il est en
     ajout seul, un remboursement y porte l'identifiant du debit qu'il annule,
     et la question « lesquels restent-ils a rendre » se lit donc dedans.
+
+    Seulement ceux d'avant le travail rate : une part repayee depuis, pour la
+    relance, n'appartient pas a cet echec, et la rendre laisserait jouer
+    quelqu'un qui n'a rien paye.
   */
-  private async pending(universeId: string): Promise<string[]> {
+  private async pending(universeId: string, before: Date): Promise<string[]> {
     const debits = await this.prisma.creditEntry.findMany({
-      where: { ref: universeId, reason: REASON, delta: { lt: 0 } },
+      where: {
+        ref: universeId,
+        reason: REASON,
+        delta: { lt: 0 },
+        // Au plus tard avec lui : la derniere part et le travail peuvent
+        // tomber dans la meme milliseconde, une relance jamais.
+        createdAt: { lte: before },
+      },
       orderBy: { createdAt: 'asc' },
       select: { id: true },
     });

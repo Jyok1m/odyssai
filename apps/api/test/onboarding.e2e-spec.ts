@@ -10,6 +10,8 @@ import { PRISMA } from './../src/prisma/prisma.module.js';
 import { REDIS } from './../src/redis/redis.module.js';
 import { FakeRedis } from './../src/auth/testing/doubles.js';
 import { GenerationQueueService } from './../src/onboarding/generation-queue.service.js';
+import { LockedError, OnboardingService } from './../src/onboarding/onboarding.service.js';
+import type { User } from '@odyssai/db';
 import {
   makeOnboardingPrisma,
   makeUser,
@@ -290,5 +292,95 @@ describe('/onboarding (e2e)', () => {
       mode: 'works',
       works: ['Dune', 'Le Nom de la Rose'],
     });
+  });
+});
+
+/*
+  Le monde d'un solo se debite une fois par generation, quel que soit le
+  nombre de clics qui arrivent ensemble, et une relance apres echec garde
+  ce qu'elle a paye.
+*/
+describe('le prix d un monde solo sous concurrence (e2e)', () => {
+  let app: INestApplication<App>;
+  let store: OnboardingStore;
+  let queued: string[];
+
+  beforeEach(async () => {
+    ({ app, store, queued } = await boot());
+    await put(app, {
+      step: 'inspiration',
+      inspiration: { mode: 'own', ownDescription: LONG_DESCRIPTION },
+      advance: true,
+    }).expect(200);
+  });
+
+  const debits = () =>
+    (store.creditEntries ?? []).filter((row) => row.reason === 'worldGeneration');
+  const refunds = () =>
+    (store.creditEntries ?? []).filter((row) => row.reason === 'refund');
+
+  it('deux avancees simultanees ne debitent et ne lancent qu une fois', async () => {
+    const onboarded = app.get(OnboardingService);
+    const user = store.users[0] as unknown as User;
+    const update = { step: 'character' as const, character: SHEET, advance: true };
+
+    const results = await Promise.allSettled([
+      onboarded.save(user, update),
+      onboarded.save(user, update),
+    ]);
+
+    expect(results.map((result) => result.status).sort()).toEqual(['fulfilled', 'rejected']);
+    expect(results.find((result) => result.status === 'rejected')?.reason).toBeInstanceOf(
+      LockedError,
+    );
+    expect(debits()).toHaveLength(1);
+    expect(store.jobs).toHaveLength(1);
+    expect(queued).toHaveLength(1);
+    await app.close();
+  });
+
+  it('une avancee sans reserve laisse l histoire a la fiche', async () => {
+    store.subscriptions = [
+      {
+        id: 'reserve-vide',
+        userId: store.users[0]!.id,
+        plan: 'free',
+        status: 'active',
+        credits: 0,
+        periodStart: new Date(),
+        periodEnd: new Date(Date.now() + 86_400_000),
+        welcomed: true,
+        stripeCustomerId: null,
+        stripeSubscriptionId: null,
+        cancelAtPeriodEnd: false,
+      },
+    ];
+
+    await put(app, { step: 'character', character: SHEET, advance: true }).expect(402);
+
+    expect(store.universes[0]!.step).toBe('character');
+    expect(store.jobs).toHaveLength(0);
+    expect(queued).toHaveLength(0);
+    await app.close();
+  });
+
+  it('une relance apres echec garde ce qu elle a paye', async () => {
+    await put(app, { step: 'character', character: SHEET, advance: true }).expect(200);
+    store.jobs[0]!.status = 'failed';
+    store.universes[0]!.step = 'failed';
+
+    // La relance arrive avant que quiconque ait relu le parcours.
+    await put(app, { step: 'character', character: SHEET, advance: true }).expect(200);
+
+    const [failed, relaunch] = debits();
+    expect(refunds().map((row) => row.ref)).toEqual([failed!.id]);
+
+    // Le solde relu ensuite ne rend pas la relance.
+    store.jobs[1]!.status = 'running';
+    await get(app).expect(200);
+    expect(refunds().map((row) => row.ref)).toEqual([failed!.id]);
+    expect(relaunch).toBeDefined();
+    expect(queued).toHaveLength(2);
+    await app.close();
   });
 });
