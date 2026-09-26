@@ -30,7 +30,7 @@ export function StepRail({ current }: { current: OnboardingStep }) {
               <span
                 aria-hidden="true"
                 className={[
-                  "flex size-5 items-center justify-center rounded-full border text-tag",
+                  "relative flex size-5 items-center justify-center rounded-full border text-tag transition-colors duration-base",
                   state === "done"
                     ? "border-accent bg-accent text-on-accent"
                     : state === "current"
@@ -38,17 +38,48 @@ export function StepRail({ current }: { current: OnboardingStep }) {
                       : "border-line text-vellum-3",
                 ].join(" ")}
               >
-                {state === "done" ? "✓" : position + 1}
+                {state === "current" ? <Halo /> : null}
+                {/* La clé suit l'état : la coche éclot quand l'étape passe. */}
+                <span key={state} className={state === "done" ? "animate-pop" : undefined}>
+                  {state === "done" ? "✓" : position + 1}
+                </span>
               </span>
               {t(`steps.${step}`)}
             </span>
 
             {position < STEPS.length - 1 ? (
-              <span aria-hidden="true" className="h-px w-6 bg-line sm:w-10" />
+              <Connector filled={state === "done"} className="w-6 sm:w-10" />
             ) : null}
           </li>
         );
       })}
     </ol>
+  );
+}
+
+/*
+  Le trait entre deux pastilles. Le remplissage se déroule par `scale` depuis
+  la gauche, sur le trait de fond : il ne réagence rien.
+*/
+export function Connector({ filled, className = "" }: { filled: boolean; className?: string }) {
+  return (
+    <span aria-hidden="true" className={`relative h-px overflow-hidden bg-line ${className}`}>
+      <span
+        className={[
+          "absolute inset-0 origin-left bg-accent transition-transform duration-slow ease-emerge",
+          filled ? "scale-x-100" : "scale-x-0",
+        ].join(" ")}
+      />
+    </span>
+  );
+}
+
+// L'onde autour de la pastille en cours. Coupée quand le mouvement est réduit.
+export function Halo() {
+  return (
+    <span
+      aria-hidden="true"
+      className="absolute -inset-px animate-halo rounded-full border border-accent"
+    />
   );
 }

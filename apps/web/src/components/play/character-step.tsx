@@ -10,6 +10,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 import { OutOfCredits } from "@/components/billing/out-of-credits";
+import { Caret, StreamedText } from "@/components/motion/streamed-text";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { Button } from "@/components/ui/button";
 import { DangerAction } from "@/components/ui/danger-action";
@@ -174,26 +175,29 @@ export function CharacterStep({ initial, arrival, saving, error, onAdvance }: Pr
     Un voyageur n'a pas de conversation : il arrive avec sa fiche, et lui en
     ouvrir une lui ferait repayer ce qu'il a déjà écrit.
   */
+  // La fiche arrive de la droite, là où elle se pose à côté de la conversation.
   const sheet = proposal ? (
-    <StepCard
-      rank={3}
-      label={t("sheet.title")}
-      title={carried ? t("traveller.title") : t("sheet.lead")}
-      aside={
-        <span className="text-caption text-vellum-3">
-          {carried ? t("traveller.lead") : t("sheet.drawnFrom")}
-        </span>
-      }
-    >
-      <CharacterSheetForm
-        initial={proposal.character}
-        missing={proposal.missing}
-        saving={saving}
-        error={error}
-        onSubmit={onAdvance}
-        onBack={carried ? undefined : () => setProposal(null)}
-      />
-    </StepCard>
+    <div className="animate-forward">
+      <StepCard
+        rank={3}
+        label={t("sheet.title")}
+        title={carried ? t("traveller.title") : t("sheet.lead")}
+        aside={
+          <span className="text-caption text-vellum-3">
+            {carried ? t("traveller.lead") : t("sheet.drawnFrom")}
+          </span>
+        }
+      >
+        <CharacterSheetForm
+          initial={proposal.character}
+          missing={proposal.missing}
+          saving={saving}
+          error={error}
+          onSubmit={onAdvance}
+          onBack={carried ? undefined : () => setProposal(null)}
+        />
+      </StepCard>
+    </div>
   ) : null;
 
   if (carried && sheet) return sheet;
@@ -221,8 +225,8 @@ export function CharacterStep({ initial, arrival, saving, error, onAdvance }: Pr
         ref={thread}
         className="mt-5 flex max-h-96 flex-col gap-5 overflow-y-auto overscroll-contain px-1"
       >
-        {messages.map((message) => (
-          <li key={message.id}>
+        {messages.map((message, index) => (
+          <li key={message.id} className="animate-rise">
             {message.role === "user" ? (
               <p className="ml-auto max-w-17/20 rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum">
                 <span className="sr-only">{t("character.you")} : </span>
@@ -233,9 +237,19 @@ export function CharacterStep({ initial, arrival, saving, error, onAdvance }: Pr
                 <p className="text-caption text-vellum-3">
                   {t("character.guide")}
                 </p>
-                <p className="mt-1 text-ui-sm whitespace-pre-wrap text-vellum">
-                  {message.content || t("character.thinking")}
-                </p>
+                {message.content ? (
+                  <p className="mt-1 text-ui-sm whitespace-pre-wrap text-vellum">
+                    <StreamedText
+                      text={message.content}
+                      live={streaming && index === messages.length - 1}
+                    />
+                    {streaming && index === messages.length - 1 ? <Caret /> : null}
+                  </p>
+                ) : (
+                  <p className="mt-1 animate-breathe text-ui-sm text-vellum-3">
+                    {t("character.thinking")}
+                  </p>
+                )}
               </div>
             )}
           </li>

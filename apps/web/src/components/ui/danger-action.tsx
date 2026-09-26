@@ -62,7 +62,7 @@ export function DangerAction({
   return (
     <form
       data-focus-ring="container"
-      className="rounded-card border border-ember/40 bg-ember/8 p-5"
+      className="animate-pop rounded-card border border-ember/40 bg-ember/8 p-5"
       onSubmit={(event) => {
         event.preventDefault();
         if (!ready || busy) return;

@@ -34,7 +34,7 @@ export function StepCard({
             <span
               aria-hidden="true"
               className={[
-                "flex size-6 items-center justify-center rounded-full border text-tag",
+                "flex size-6 items-center justify-center rounded-full border text-tag transition-colors duration-base",
                 done
                   ? "border-accent bg-accent text-on-accent"
                   : "border-accent text-accent",

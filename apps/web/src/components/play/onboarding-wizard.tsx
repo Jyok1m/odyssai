@@ -8,12 +8,13 @@ import type {
   OnboardingUpdate,
 } from "@odyssai/schemas";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { OutOfCredits } from "@/components/billing/out-of-credits";
 import { useAuthLinks } from "@/components/auth/auth-links";
 import { useSession } from "@/components/auth/session-provider";
 import { Button } from "@/components/ui/button";
+import { Loading, Skeleton } from "@/components/ui/skeleton";
 import { OnboardingError, fetchOnboarding, saveOnboarding } from "@/lib/onboarding";
 
 import { CharacterStep } from "./character-step";
@@ -186,7 +187,7 @@ export function OnboardingWizard() {
   );
 
   if (session.status === "loading") {
-    return <p className="text-ui-sm text-vellum-3">{t("loading")}</p>;
+    return <WizardSkeleton label={t("loading")} />;
   }
 
   if (session.status === "anonymous") {
@@ -205,7 +206,7 @@ export function OnboardingWizard() {
   }
 
   if (!state) {
-    return <p className="text-ui-sm text-vellum-3">{t("loading")}</p>;
+    return <WizardSkeleton label={t("loading")} />;
   }
 
   // Le monde prêt n'est plus un parcours : il prend tout l'écran, sans titre
@@ -216,7 +217,9 @@ export function OnboardingWizard() {
     return (
       <div className="space-y-6">
         <Header step="generating" />
-        <GenerationStep onReady={reload} />
+        <div className="animate-forward">
+          <GenerationStep onReady={reload} />
+        </div>
       </div>
     );
   }
@@ -231,13 +234,14 @@ export function OnboardingWizard() {
     l'étape côté serveur.
   */
   const showing = back && state.step === "character" ? "inspiration" : state.step;
+  const shown = failedRun ? "inspiration" : showing;
 
   return (
     <div className="space-y-6">
-      <Header step={failedRun ? "inspiration" : showing} status={status} />
+      <Header step={shown} status={status} />
 
       {empty ? (
-        <p className="rounded-card border border-brass/40 bg-brass/8 px-4 py-3 text-ui-sm">
+        <p className="animate-fade rounded-card border border-brass/40 bg-brass/8 px-4 py-3 text-ui-sm">
           <OutOfCredits />
         </p>
       ) : null}
@@ -252,30 +256,32 @@ export function OnboardingWizard() {
       ) : null}
 
       {failedRun ? (
-        <p className="rounded-card border border-ember/40 bg-ember/8 px-4 py-3 text-ui-sm text-vellum-2">
+        <p className="animate-fade rounded-card border border-ember/40 bg-ember/8 px-4 py-3 text-ui-sm text-vellum-2">
           {t("generation.failedLead")}
         </p>
       ) : null}
 
-      {state.step === "username" ? (
-        <UsernameStep onDone={reload} />
-      ) : showing === "character" ? (
-        <CharacterStep
-          initial={state.character}
-          arrival={state.arrival}
-          saving={status === "saving"}
-          error={error}
-          onAdvance={onCharacter}
-        />
-      ) : (
-        <InspirationStep
-          initial={state.inspiration}
-          status={status}
-          error={error}
-          onDraft={onDraft}
-          onAdvance={onAdvance}
-        />
-      )}
+      <StepMotion step={shown}>
+        {state.step === "username" ? (
+          <UsernameStep onDone={reload} />
+        ) : showing === "character" ? (
+          <CharacterStep
+            initial={state.character}
+            arrival={state.arrival}
+            saving={status === "saving"}
+            error={error}
+            onAdvance={onCharacter}
+          />
+        ) : (
+          <InspirationStep
+            initial={state.inspiration}
+            status={status}
+            error={error}
+            onDraft={onDraft}
+            onAdvance={onAdvance}
+          />
+        )}
+      </StepMotion>
 
       {/* Reculer d'une étape, ou en revenir. La saisie est déjà gardée des
           deux côtés : il ne manquait que le chemin. */}
@@ -287,6 +293,43 @@ export function OnboardingWizard() {
 
       {failedRun ? <RestartAction onDone={reload} /> : null}
     </div>
+  );
+}
+
+/*
+  Le pas qui arrive glisse depuis le côté où il se trouve : en avant vers la
+  gauche, en arrière vers la droite. Le rang précédent est gardé en état et
+  comparé au rendu, sans effet : c'est le changement de pas qui décide.
+*/
+const ORDER: readonly OnboardingStep[] = ["username", "inspiration", "character", "generating"];
+
+function StepMotion({ step, children }: { step: OnboardingStep; children: ReactNode }) {
+  const [last, setLast] = useState({ step, forward: true });
+
+  if (last.step !== step) {
+    setLast({ step, forward: ORDER.indexOf(step) >= ORDER.indexOf(last.step) });
+  }
+
+  return (
+    <div key={step} className={last.forward ? "animate-forward" : "animate-backward"}>
+      {children}
+    </div>
+  );
+}
+
+// La forme de l'assistant, titre à gauche et fil d'étapes à droite.
+function WizardSkeleton({ label }: { label: string }) {
+  return (
+    <Loading label={label} className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
+        <div className="w-full max-w-headline space-y-4">
+          <Skeleton className="h-11 w-3/4" />
+          <Skeleton className="h-4 w-full max-w-measure" />
+        </div>
+        <Skeleton className="h-5 w-64" />
+      </div>
+      <Skeleton className="h-72 rounded-card" />
+    </Loading>
   );
 }
 
