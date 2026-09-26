@@ -8,6 +8,7 @@ import { AppConfig } from './../src/config/app-config.js';
 import { corsOptions } from './../src/config/cors.js';
 import { PRISMA } from './../src/prisma/prisma.module.js';
 import { REDIS } from './../src/redis/redis.module.js';
+import { GenerationQueueService } from './../src/onboarding/generation-queue.service.js';
 import { FakeRedis } from './../src/auth/testing/doubles.js';
 import { makeOnboardingPrisma } from './../src/onboarding/testing/doubles.js';
 
@@ -36,6 +37,8 @@ describe('CORS (e2e)', () => {
           jobs: [],
         }),
       )
+      .overrideProvider(GenerationQueueService)
+      .useValue({ enqueue: async () => {}, onApplicationShutdown: async () => {} })
       .compile();
 
     app = moduleFixture.createNestApplication<INestApplication<App>>();

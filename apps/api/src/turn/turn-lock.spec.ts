@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Redis } from 'ioredis';
 import { FakeRedis } from '../auth/testing/doubles.js';
-import { LOCK_TTL_SECONDS, TurnLockService } from './turn-lock.service.js';
+import { LOCK_TTL_SECONDS, RENEW_EVERY_MS, TurnLockService } from './turn-lock.service.js';
 
 function service() {
   return new TurnLockService(new FakeRedis() as unknown as Redis);
@@ -82,13 +82,14 @@ describe('prolongation du verrou', () => {
     const locks = new TurnLockService(redis);
     const token = (await locks.acquire('univers'))!;
 
-    const stop = locks.keep('univers', token);
+    const lease = locks.keep('univers', token);
     await vi.advanceTimersByTimeAsync(LOCK_TTL_SECONDS * 3 * 1000);
     expect(await redis.get('turn:lock:univers')).toBe(token);
     expect(await locks.acquire('univers')).toBeNull();
+    expect(await lease.confirm()).toBe(true);
 
     // Le tour s'arrete sans rendre la main : le verrou finit par expirer seul.
-    stop();
+    lease.stop();
     await vi.advanceTimersByTimeAsync((LOCK_TTL_SECONDS + 1) * 1000);
     expect(await redis.get('turn:lock:univers')).toBeNull();
   });
@@ -101,5 +102,56 @@ describe('prolongation du verrou', () => {
 
     await vi.advanceTimersByTimeAsync((LOCK_TTL_SECONDS + 1) * 1000);
     expect(await locks.acquire('univers')).not.toBeNull();
+  });
+});
+
+/*
+  Un tour qui a perdu son verrou ne doit plus ecrire : `confirm` le dit au
+  controleur avant l'ecriture finale, et un renouvellement rate le dit pour
+  toute la suite du tour.
+*/
+describe('verrou perdu en route', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('confirme faux quand un autre tour a pris le verrou', async () => {
+    const redis = new FakeRedis() as unknown as Redis;
+    const locks = new TurnLockService(redis);
+    const token = (await locks.acquire('univers'))!;
+    const lease = locks.keep('univers', token);
+
+    await redis.set('turn:lock:univers', 'autre-jeton', 'EX', LOCK_TTL_SECONDS);
+    expect(await lease.confirm()).toBe(false);
+    lease.stop();
+  });
+
+  it('confirme faux quand le renouvellement echoue', async () => {
+    const redis = new FakeRedis();
+    const locks = new TurnLockService(redis as unknown as Redis);
+    const token = (await locks.acquire('univers'))!;
+    const lease = locks.keep('univers', token);
+
+    redis.eval = () => Promise.reject(new Error('Connection is closed.'));
+    expect(await lease.confirm()).toBe(false);
+    lease.stop();
+  });
+
+  it('reste perdu apres un renouvellement manque en arriere-plan', async () => {
+    vi.useFakeTimers();
+    const redis = new FakeRedis();
+    const locks = new TurnLockService(redis as unknown as Redis);
+    const token = (await locks.acquire('univers'))!;
+    const lease = locks.keep('univers', token);
+
+    const evalOriginal = redis.eval.bind(redis);
+    redis.eval = () => Promise.reject(new Error('Connection is closed.'));
+    await vi.advanceTimersByTimeAsync(RENEW_EVERY_MS);
+
+    // Redis revient et le verrou est toujours la : trop tard, un autre a pu passer.
+    redis.eval = evalOriginal;
+    expect(await redis.get('turn:lock:univers')).toBe(token);
+    expect(await lease.confirm()).toBe(false);
+    lease.stop();
   });
 });

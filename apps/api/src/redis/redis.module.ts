@@ -1,6 +1,8 @@
 import { Global, Inject, Logger, Module, type OnApplicationShutdown } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
 import { Redis } from 'ioredis';
 import { AppConfig } from '../config/app-config.js';
+import { RedisUnavailableFilter } from './redis-unavailable.js';
 
 export const REDIS = Symbol('REDIS');
 
@@ -22,6 +24,7 @@ export const REDIS = Symbol('REDIS');
         return client;
       },
     },
+    { provide: APP_FILTER, useClass: RedisUnavailableFilter },
   ],
   exports: [REDIS],
 })

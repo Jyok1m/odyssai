@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { AppModule } from './../src/app.module.js';
 import { PRISMA } from './../src/prisma/prisma.module.js';
 import { REDIS } from './../src/redis/redis.module.js';
+import { GenerationQueueService } from './../src/onboarding/generation-queue.service.js';
 import { FakeRedis } from './../src/auth/testing/doubles.js';
 import {
   adminUser,
@@ -79,6 +80,8 @@ async function boot(isAdmin: boolean): Promise<Harness> {
     .useValue(redis)
     .overrideProvider(PRISMA)
     .useValue(makeAdminPrisma(store))
+    .overrideProvider(GenerationQueueService)
+    .useValue({ enqueue: async () => {}, onApplicationShutdown: async () => {} })
     .compile();
 
   const app = moduleFixture.createNestApplication<INestApplication<App>>();

@@ -25,6 +25,7 @@ import {
 import type { User } from '@odyssai/db';
 import { PendingRollService } from './../src/turn/pending-roll.service.js';
 import { TurnMemoryService } from './../src/turn/turn-memory.service.js';
+import { EXTEND_LOCK } from './../src/turn/turn-lock.service.js';
 import { GuideFakeRedis } from './../src/guide/testing/doubles.js';
 import { makeFakeLlm, type FakeLlm } from './../src/guide/testing/doubles.js';
 import {
@@ -787,6 +788,36 @@ describe('le tour d une table (e2e)', () => {
     expect(
       (store.creditEntries ?? []).filter((row) => row.reason === 'turn' || row.reason === 'question'),
     ).toHaveLength(0);
+    await app.close();
+  });
+
+  /*
+    Un tour qui a perdu son verrou en route n'ecrit rien : un autre a pu
+    prendre le rang suivant. Le joueur recoit l'erreur, pas la facture, et
+    le creneau se rend quand meme.
+  */
+  it('un verrou perdu en route arrete le tour avant l ecriture finale', async () => {
+    const universeId = store.universes[0]!.id;
+    const evalOriginal = redis.eval.bind(redis);
+    redis.eval = ((script: string, ...rest: unknown[]) =>
+      script === EXTEND_LOCK
+        ? Promise.resolve(0)
+        : (evalOriginal as (...args: unknown[]) => Promise<unknown>)(script, ...rest)) as typeof redis.eval;
+
+    const stream = (await play(HOST_COOKIE, 'Je force la porte du depot.').expect(200)).text;
+    expect(stream).toContain('"type":"error","code":"upstream_error"');
+    expect(stream).not.toContain('"type":"done"');
+
+    const turnRows = store.messages.filter((row) => row.channel === 'game_turn');
+    expect(turnRows.map((row) => row.role)).toEqual(['user']);
+    expect((store.turns ?? []).filter((row) => row.universeId === universeId)).toHaveLength(0);
+
+    const debits = (store.creditEntries ?? []).filter((row) => row.reason === 'turn');
+    const refunds = (store.creditEntries ?? []).filter((row) => row.reason === 'refund');
+    expect(debits).toHaveLength(1);
+    expect(refunds.map((row) => row.delta)).toEqual([-debits[0]!.delta]);
+
+    expect(await redis.get('turn:lock:' + universeId)).toBeNull();
     await app.close();
   });
 

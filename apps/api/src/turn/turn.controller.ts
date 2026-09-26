@@ -297,7 +297,7 @@ export class TurnController {
     if (!token) {
       throw new HttpException({ code: 'busy' }, HttpStatus.CONFLICT);
     }
-    const stop = this.locks.keep(found.universeId, token);
+    const lease = this.locks.keep(found.universeId, token);
 
     try {
       /*
@@ -568,6 +568,12 @@ export class TurnController {
       let answer = '';
 
       /*
+        Ce que le tour a encore debite en route, lore et marque, et qui ne
+        vaut que si l'ecriture finale passe : sans elle, rien n'en reste.
+      */
+      const extras: string[] = [];
+
+      /*
         A qui le joueur parle, si c'est a quelqu'un : ce personnage repond par
         le modele de jeu de role, et le meneur rend sa replique telle quelle.
         Le code choisit l'interlocuteur, jamais le modele. Un echec ici ne
@@ -822,6 +828,7 @@ export class TurnController {
             continue;
           }
 
+          if (loreDebit) extras.push(loreDebit);
           known.add(key);
           born.push({
             name: candidate.name,
@@ -894,6 +901,7 @@ export class TurnController {
             // Relue par la couche lexicale comme le reste : une marque refusee
             // est une marque absente, jamais un tour perdu.
             if (written.kind === 'ok' && this.moderation.clean(written.text)) {
+              if (markDebit) extras.push(markDebit);
               mark = {
                 kind,
                 world: world.bible.lore.name,
@@ -945,6 +953,14 @@ export class TurnController {
 
         for (const { fact, verdict: why } of arbitrated.rejected) {
           this.logger.warn(`fait refuse (${why.reason}) : ${fact.subject}`);
+        }
+
+        /*
+          Le verrou se confirme avant d'ecrire : perdu en route, un autre tour
+          a pu prendre le rang suivant, et ce tour-ci ne doit plus rien poser.
+        */
+        if (!(await lease.confirm())) {
+          throw new Error(`verrou de narration perdu avant l'ecriture : ${world.universeId}`);
         }
 
         await this.prisma.$transaction([
@@ -1143,7 +1159,9 @@ export class TurnController {
       } catch (error: unknown) {
         this.logger.warn(`tour en echec : ${String(error)}`);
         // Le joueur n'a pas eu son tour : il ne doit pas l'avoir paye.
-        if (debit) await this.credits.refund(debit);
+        for (const entry of debit ? [debit, ...extras] : extras) {
+          await this.credits.refund(entry);
+        }
         if (streaming) this.write(res, { type: 'error', code: 'upstream_error' });
       } finally {
         clearInterval(ping);
@@ -1153,8 +1171,11 @@ export class TurnController {
     } finally {
       // Le creneau de narration se rend, toujours : un tour qui rend la
       // main ferme la porte qu il a ouverte, et un tour en echec aussi.
-      stop();
-      await this.locks.release(found.universeId, token);
+      lease.stop();
+      // Un Redis tombe ne doit ni masquer l'erreur du tour ni laisser un rejet orphelin.
+      await this.locks.release(found.universeId, token).catch((error: unknown) => {
+        this.logger.warn(`verrou de narration non rendu : ${String(error)}`);
+      });
     }
   }
 
