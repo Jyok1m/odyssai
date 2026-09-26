@@ -6,6 +6,7 @@ import { App } from 'supertest/types.js';
 import { FakeRedis } from './../src/auth/testing/doubles.js';
 import { AppModule } from './../src/app.module.js';
 import { REDIS } from './../src/redis/redis.module.js';
+import { GenerationQueueService } from './../src/onboarding/generation-queue.service.js';
 
 describe('API (e2e)', () => {
   let app: INestApplication<App>;
@@ -18,6 +19,8 @@ describe('API (e2e)', () => {
       // vit dans un double en memoire.
       .overrideProvider(REDIS)
       .useValue(new FakeRedis())
+      .overrideProvider(GenerationQueueService)
+      .useValue({ enqueue: async () => {}, onApplicationShutdown: async () => {} })
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -61,3 +64,4 @@ describe('API (e2e)', () => {
     await app.close();
   });
 });
+
