@@ -1109,6 +1109,7 @@
     "rollAction": "Lancer le dé",
     "dieRolled": "au dé",
     "errorRollExpired": "Ton action a expiré. Réécris ce que tu veux faire, rien n'a été décompté.",
+    "errorBusy": "La table joue : un autre membre est en pleine action. Réessaie dans un instant, rien n'a été décompté.",
     "credits": "{credits, plural, =0 {Aucun crédit} one {# crédit} other {# crédits}}",
     "askAction": "Poser cette question au meneur",
     "dieModifier": "{sign} {value} ({attribute}) = {total}",

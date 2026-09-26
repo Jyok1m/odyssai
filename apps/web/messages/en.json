@@ -1109,6 +1109,7 @@
     "rollAction": "Roll the die",
     "dieRolled": "on the die",
     "errorRollExpired": "Your action has expired. Write again what you want to do, nothing was charged.",
+    "errorBusy": "The table is playing: another member is mid-action. Try again in a moment, nothing was charged.",
     "credits": "{credits, plural, =0 {No credits} one {# credit} other {# credits}}",
     "askAction": "Ask the game master this question",
     "dieModifier": "{sign} {value} ({attribute}) = {total}",
