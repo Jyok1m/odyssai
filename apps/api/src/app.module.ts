@@ -13,6 +13,7 @@ import { ErasureModule } from './erasure/erasure.module.js';
 import { ModerationModule } from './moderation/moderation.module.js';
 import { GuideModule } from './guide/guide.module.js';
 import { OnboardingModule } from './onboarding/onboarding.module.js';
+import { PartyModule } from './party/party.module.js';
 import { PlansModule } from './plans/plans.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { StripeModule } from './stripe/stripe.module.js';
@@ -42,6 +43,7 @@ import { UsageModule } from './usage/usage.module.js';
     AuthModule,
     GuideModule,
     OnboardingModule,
+    PartyModule,
     ModerationModule,
     TurnModule,
   ],

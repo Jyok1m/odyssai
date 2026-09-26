@@ -1,5 +1,6 @@
 import type { CookieOptions, Request, Response } from 'express';
 import { AppConfig } from '../../config/app-config.js';
+import { EXTEND_LOCK } from '../../turn/turn-lock.service.js';
 
 const BASE_ENV: Record<string, string> = {
   NODE_ENV: 'test',
@@ -116,18 +117,31 @@ export class FakeRedis {
     return value;
   }
 
-  async del(key: string): Promise<number> {
-    return this.store.delete(key) ? 1 : 0;
+  // Plusieurs cles a la fois : les actions en attente d'une table tombent
+  // ensemble, et chacune compte.
+  async del(...keys: string[]): Promise<number> {
+    let count = 0;
+    for (const key of keys) {
+      if (this.store.delete(key)) count += 1;
+    }
+    return count;
   }
 
-  // Rejoue le script de liberation : supprime si la valeur colle.
+  /*
+    Rejoue les scripts de verrou : supprime si la valeur colle, ou prolonge
+    si c'est le script de prolongation.
+  */
   async eval(
-    _script: string,
+    script: string,
     _numKeys: number,
     ...args: unknown[]
   ): Promise<unknown> {
-    const [key, owner] = args.map(String);
+    const [key, owner, ttl] = args.map(String);
     if (!key || this.live(key) !== owner) return 0;
+    if (script === EXTEND_LOCK) {
+      this.store.set(key, { value: owner, expiresAt: Date.now() + Number(ttl) * 1000 });
+      return 1;
+    }
     this.store.delete(key);
     return 1;
   }

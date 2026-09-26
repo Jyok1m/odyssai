@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CharacterService } from './character.service.js';
+import { LockedError } from './onboarding.service.js';
 import { makeOnboardingPrisma, type OnboardingStore } from './testing/doubles.js';
 
 const UNIVERSE_ID = '01860000-0000-7000-8000-0000000000a1';
@@ -26,12 +27,12 @@ describe('conversation de creation', () => {
   it('enchaine plusieurs echanges', async () => {
     const characters = open();
 
-    await characters.recordUser(UNIVERSE_ID, 'Elle vient du nord.');
-    await characters.recordAssistant(UNIVERSE_ID, 'Du nord. Son nom ?');
-    await characters.recordUser(UNIVERSE_ID, 'Ael.');
-    await characters.recordAssistant(UNIVERSE_ID, 'Ael, entendu.');
+    await characters.recordUser(UNIVERSE_ID, null, 'Elle vient du nord.');
+    await characters.recordAssistant(UNIVERSE_ID, null, 'Du nord. Son nom ?');
+    await characters.recordUser(UNIVERSE_ID, null, 'Ael.');
+    await characters.recordAssistant(UNIVERSE_ID, null, 'Ael, entendu.');
 
-    const { messages } = await characters.conversation(UNIVERSE_ID);
+    const { messages } = await characters.conversation(UNIVERSE_ID, null);
     expect(messages).toHaveLength(4);
   });
 
@@ -40,11 +41,11 @@ describe('conversation de creation', () => {
   it('rend les echanges dans l ordre ou ils ont ete dits', async () => {
     const characters = open();
 
-    await characters.recordUser(UNIVERSE_ID, 'un');
-    await characters.recordAssistant(UNIVERSE_ID, 'deux');
-    await characters.recordUser(UNIVERSE_ID, 'trois');
+    await characters.recordUser(UNIVERSE_ID, null, 'un');
+    await characters.recordAssistant(UNIVERSE_ID, null, 'deux');
+    await characters.recordUser(UNIVERSE_ID, null, 'trois');
 
-    const { messages } = await characters.conversation(UNIVERSE_ID);
+    const { messages } = await characters.conversation(UNIVERSE_ID, null);
     expect(messages.map((message) => message.content)).toEqual([
       'un',
       'deux',
@@ -61,12 +62,52 @@ describe('conversation de creation', () => {
   it('donne au prompt la meme suite', async () => {
     const characters = open();
 
-    await characters.recordUser(UNIVERSE_ID, 'un');
-    await characters.recordAssistant(UNIVERSE_ID, 'deux');
+    await characters.recordUser(UNIVERSE_ID, null, 'un');
+    await characters.recordAssistant(UNIVERSE_ID, null, 'deux');
 
-    expect(await characters.history(UNIVERSE_ID)).toEqual([
+    expect(await characters.history(UNIVERSE_ID, null)).toEqual([
       { role: 'user', content: 'un' },
       { role: 'assistant', content: 'deux' },
     ]);
+  });
+});
+
+/*
+  Dans une table, la remise a zero ne touche que son fil et sa fiche, et
+  jamais une fiche deja payee : le siege resterait pret sans fiche, et la
+  generation l'ecarterait sans rien dire.
+*/
+describe('remise a zero dans une table', () => {
+  const NOW = new Date();
+
+  function seated(ready: boolean) {
+    const store: OnboardingStore = {
+      users: [],
+      universes: [],
+      characters: [
+        { id: 'fiche', universeId: UNIVERSE_ID, ownerId: 'joueur', name: 'Ael' } as never,
+        { id: 'autre', universeId: UNIVERSE_ID, ownerId: 'voisin', name: 'Bren' } as never,
+      ],
+      messages: [],
+      jobs: [],
+      partyMembers: [
+        { id: 's1', partyId: 'table', userId: 'joueur', works: [], ready, isHost: true, joinedAt: NOW },
+      ],
+    };
+    return { store, characters: new CharacterService(makeOnboardingPrisma(store) as never) };
+  }
+
+  it('refuse a un siege pret, et ne touche a rien', async () => {
+    const { store, characters } = seated(true);
+
+    await expect(characters.reset(UNIVERSE_ID, 'joueur')).rejects.toBeInstanceOf(LockedError);
+    expect(store.characters.map((row) => row.id)).toEqual(['fiche', 'autre']);
+  });
+
+  it('efface sa fiche seule quand le siege n est pas pret', async () => {
+    const { store, characters } = seated(false);
+
+    await characters.reset(UNIVERSE_ID, 'joueur');
+    expect(store.characters.map((row) => row.id)).toEqual(['autre']);
   });
 });

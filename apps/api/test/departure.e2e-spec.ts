@@ -87,6 +87,7 @@ async function boot(
       {
         id: CHARACTER_ID,
         universeId: UNIVERSE_ID,
+        ownerId: user.id,
         name: 'Ael',
         gender: 'femme',
         age: 31,
@@ -114,6 +115,7 @@ async function boot(
         channel: 'character_creation',
         role: 'user',
         content: 'Elle s appelle Ael.',
+        memberId: null,
         seq: 0,
         createdAt: new Date(),
       },

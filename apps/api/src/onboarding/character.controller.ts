@@ -74,8 +74,8 @@ export class CharacterController {
 
   @Get()
   async conversation(@CurrentUser() user: User): Promise<CharacterConversation> {
-    const universeId = await this.guard(() => this.characters.open(user));
-    const conversation = await this.characters.conversation(universeId);
+    const { universeId, thread } = await this.guard(() => this.characters.open(user));
+    const conversation = await this.characters.conversation(universeId, thread);
 
     // Le premier message n'est pas ecrit en base : tant que le joueur n'a rien
     // dit, il n'y a pas de conversation, et l'enregistrer en creerait une que
@@ -103,8 +103,8 @@ export class CharacterController {
   @Delete()
   @HttpCode(HttpStatus.NO_CONTENT)
   async reset(@CurrentUser() user: User): Promise<void> {
-    const universeId = await this.guard(() => this.characters.open(user));
-    await this.characters.reset(universeId);
+    const { universeId, thread } = await this.guard(() => this.characters.open(user));
+    await this.guard(() => this.characters.reset(universeId, thread));
   }
 
   @Post('messages')
@@ -130,7 +130,7 @@ export class CharacterController {
       });
     }
 
-    const universeId = await this.guard(() => this.characters.open(user));
+    const { universeId, thread } = await this.guard(() => this.characters.open(user));
 
     let debit: string | null = null;
     try {
@@ -145,9 +145,9 @@ export class CharacterController {
       throw error;
     }
 
-    const history = await this.characters.history(universeId);
+    const history = await this.characters.history(universeId, thread);
     await this.guard(() =>
-      this.characters.recordUser(universeId, parsed.data.content),
+      this.characters.recordUser(universeId, thread, parsed.data.content),
     );
 
     // A partir d'ici, plus aucune exception ne sort : seulement du SSE.
@@ -188,7 +188,7 @@ export class CharacterController {
       // Ecrite seulement si elle est complete : une reponse coupee en deux
       // reviendrait telle quelle a la reprise, et le modele la relirait.
       if (answer && !controller.signal.aborted) {
-        await this.characters.recordAssistant(universeId, answer);
+        await this.characters.recordAssistant(universeId, thread, answer);
       }
 
       await this.usage.record({
@@ -200,8 +200,8 @@ export class CharacterController {
         prices: this.config.prices,
       });
 
-      const turns = await this.characters.turnsUsed(universeId);
-      const { canExtract } = await this.characters.conversation(universeId);
+      const turns = await this.characters.turnsUsed(universeId, thread);
+      const { canExtract } = await this.characters.conversation(universeId, thread);
       this.write(res, {
         type: 'done',
         turnsLeft: Math.max(0, CHARACTER_TURNS_MAX - turns),
@@ -224,10 +224,10 @@ export class CharacterController {
   @Post('extract')
   async extract(@CurrentUser() user: User): Promise<CharacterExtractResponse> {
 
-    const universeId = await this.guard(() => this.characters.open(user));
-    await this.guard(() => this.characters.assertExtractable(universeId));
+    const { universeId, thread } = await this.guard(() => this.characters.open(user));
+    await this.guard(() => this.characters.assertExtractable(universeId, thread));
 
-    const history = await this.characters.history(universeId);
+    const history = await this.characters.history(universeId, thread);
 
     const result = await extractCharacter({
       llm: this.llm,

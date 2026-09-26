@@ -76,7 +76,7 @@ export class ChronicleService {
         id: true,
         createdAt: true,
         owner: { select: { username: true } },
-        character: { select: { name: true } },
+        characters: { select: { name: true }, take: 1 },
         _count: { select: { turns: true } },
         canon: {
           where: { accepted: null },
@@ -99,7 +99,7 @@ export class ChronicleService {
         .map((visit) => ({
           visitId: visit.id,
           visitor: visit.owner?.username ?? null,
-          character: visit.character?.name ?? null,
+          character: visit.characters[0]?.name ?? null,
           turns: visit._count.turns,
           at: visit.createdAt.toISOString(),
           entries: [

@@ -18,6 +18,7 @@ import { OnboardingError, fetchOnboarding, saveOnboarding } from "@/lib/onboardi
 
 import { CharacterStep } from "./character-step";
 import { GenerationStep } from "./generation-step";
+import { PartyPanel } from "./party-panel";
 import { RestartAction } from "./restart-action";
 import { WorldShell } from "./world-shell";
 import { InspirationStep, type SaveStatus } from "./inspiration-step";
@@ -239,6 +240,15 @@ export function OnboardingWizard() {
         <p className="rounded-card border border-brass/40 bg-brass/8 px-4 py-3 text-ui-sm">
           <OutOfCredits />
         </p>
+      ) : null}
+
+      {/*
+          La table pendant l'assemblage : le code à partager, les sièges, qui
+          est prêt. Elle vit au-dessus de l'étape, parce que chacun remplit sa
+          part en même temps que les autres remplissent la leur.
+      */}
+      {state.party && (showing === "inspiration" || showing === "character") ? (
+        <PartyPanel party={state.party} />
       ) : null}
 
       {failedRun ? (

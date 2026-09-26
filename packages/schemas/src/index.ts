@@ -8,6 +8,7 @@ export * from './contact.js';
 export * from './essence.js';
 export * from './guide.js';
 export * from './onboarding.js';
+export * from './party.js';
 export * from './profile.js';
 export * from './stories.js';
 export * from './turn.js';

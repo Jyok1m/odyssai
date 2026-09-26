@@ -34,11 +34,13 @@ import {
   CREDIT_COSTS,
   FOUNDER_BONUS,
   FREE_PLAN_SLUG,
+  partyShare,
   PLAN_LIMITS,
 } from './credits.js';
 import { DIE_FACES } from './die.js';
 import { HP_BASE, HP_PER_CORPS, REST_STEP } from './health.js';
 import { PROGRESS_STEPS } from './progress.js';
+import { PARTY_MAX, PARTY_MIN } from '@odyssai/schemas';
 
 /*
   Les tours rendus au meneur mot pour mot. Au dela, c'est le rappel par
@@ -125,6 +127,9 @@ export const TUNING = {
 
   // L'agent de questions-reponses du site vitrine.
   guide: { questionMaxChars: GUIDE_QUESTION_MAX_CHARS },
+
+  // La table : bornes de tailles, et la part de chacun dans le monde.
+  party: { min: PARTY_MIN, max: PARTY_MAX, worldShare: partyShare },
 } as const;
 
 export type Tuning = typeof TUNING;

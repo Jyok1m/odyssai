@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { IncarnationSchema, MarksSchema } from './essence.js';
+import { PartySchema } from './party.js';
 import {
   ArrivalSchema,
   AttributeSchema,
@@ -674,6 +675,12 @@ export const WorldViewSchema = z.object({
   */
   canon: z.array(CanonFactSchema),
   story: StoryStandingSchema,
+  /*
+    La table quand ce monde se joue a plusieurs : l'ecran du groupe s'en
+    sert pour rafraichir le journal pendant que d'autres jouent. Nul dans
+    une histoire solo.
+  */
+  party: PartySchema.nullable(),
   character: z.object({
     name: z.string(),
     gender: z.string(),

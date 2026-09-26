@@ -11,8 +11,11 @@ const REASON = 'worldGeneration';
 
   Une generation qui echoue ne doit rien couter : le joueur n'a pas eu son
   monde. Tous les autres appels de modele remboursent deja, celui-la ne le
-  faisait pas, et c'est le plus cher des cinq : vingt-cinq credits perdus par
-  echec, et vingt-cinq de plus a chaque relance.
+  faisait pas, et il est le plus cher des cinq : vingt-cinq credits perdus
+  par echec, et vingt-cinq de plus a chaque relance.
+
+  Dans une table, chacun a paye sa part : il y a autant de debits que de
+  sieges, et chacun se rembourse comme il s'etait debite.
 
   Le remboursement se declenche a la lecture, la ou la panne se constate : le
   flux d'avancement qui la sert, et la relecture du parcours qui trouve l'etape
@@ -21,6 +24,10 @@ const REASON = 'worldGeneration';
 
   Deux lecteurs peuvent donc arriver ensemble. C'est `refunded_at` qui tranche,
   par une ecriture conditionnelle : un seul la pose, un seul rembourse.
+
+  Celui qui la pose rouvre aussi la table : chaque siege redevient non pret,
+  et devra repayer sa part pour relancer. Sans cela, les sieges restaient
+  prets sur une part rendue, et le premier a relancer relancait pour tous.
 */
 @Injectable()
 export class GenerationRefundService {
@@ -35,7 +42,7 @@ export class GenerationRefundService {
     const failed = await this.prisma.generationJob.findMany({
       where: { universeId, status: 'failed', refundedAt: null },
       orderBy: { createdAt: 'asc' },
-      select: { id: true },
+      select: { id: true, createdAt: true },
     });
     if (failed.length === 0) return;
 
@@ -50,8 +57,11 @@ export class GenerationRefundService {
       });
       if (claimed.count === 0) continue;
 
-      const entry = await this.pending(universeId);
-      if (!entry) {
+      await this.reopen(universeId);
+
+      // Tous les debits non rendus de ce travail, un par siege dans une table.
+      const entries = await this.pending(universeId, job.createdAt);
+      if (entries.length === 0) {
         /*
           Rien a rendre : un administrateur ne consomme rien, donc rien ne
           s'est ecrit au grand livre. La date reste posee, la question est
@@ -60,25 +70,54 @@ export class GenerationRefundService {
         continue;
       }
 
-      await this.credits.refund(entry);
-      this.logger.log(`generation ${universeId} remboursee apres echec`);
+      for (const entry of entries) {
+        await this.credits.refund(entry);
+      }
+      this.logger.log(
+        `generation ${universeId} remboursee apres echec (${entries.length} part(s))`,
+      );
     }
   }
 
+  // Dans une table, chaque siege redevient non pret : sa part vient d'etre rendue.
+  private async reopen(universeId: string): Promise<void> {
+    const party = await this.prisma.party.findUnique({
+      where: { universeId },
+      select: { id: true },
+    });
+    if (!party) return;
+
+    await this.prisma.partyMember.updateMany({
+      where: { partyId: party.id },
+      data: { ready: false },
+    });
+  }
+
   /*
-    Le debit qui n'a pas encore ete rendu, le plus ancien d'abord.
+    Les debits qui n'ont pas encore ete rendus, le plus ancien d'abord.
 
     C'est le grand livre qui repond, et non un compteur a cote : il est en
     ajout seul, un remboursement y porte l'identifiant du debit qu'il annule,
-    et la question « lequel reste-t-il a rendre » se lit donc dedans.
+    et la question « lesquels restent-ils a rendre » se lit donc dedans.
+
+    Seulement ceux d'avant le travail rate : une part repayee depuis, pour la
+    relance, n'appartient pas a cet echec, et la rendre laisserait jouer
+    quelqu'un qui n'a rien paye.
   */
-  private async pending(universeId: string): Promise<string | null> {
+  private async pending(universeId: string, before: Date): Promise<string[]> {
     const debits = await this.prisma.creditEntry.findMany({
-      where: { ref: universeId, reason: REASON, delta: { lt: 0 } },
+      where: {
+        ref: universeId,
+        reason: REASON,
+        delta: { lt: 0 },
+        // Au plus tard avec lui : la derniere part et le travail peuvent
+        // tomber dans la meme milliseconde, une relance jamais.
+        createdAt: { lte: before },
+      },
       orderBy: { createdAt: 'asc' },
       select: { id: true },
     });
-    if (debits.length === 0) return null;
+    if (debits.length === 0) return [];
 
     const returned = new Set(
       (
@@ -89,6 +128,6 @@ export class GenerationRefundService {
       ).map((row) => row.ref),
     );
 
-    return debits.find((row) => !returned.has(row.id))?.id ?? null;
+    return debits.filter((row) => !returned.has(row.id)).map((row) => row.id);
   }
 }

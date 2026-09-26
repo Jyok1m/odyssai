@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PartySchema } from './party.js';
 
 /*
   Ou en est le joueur. `username` n'existe pas dans l'enumeration de la base :
@@ -182,7 +183,7 @@ export type Attributes = z.infer<typeof AttributesSchema>;
 */
 const Talents = z.array(z.string().trim().min(2).max(40)).max(TALENTS_MAX);
 
-const Personality = z.object({
+export const PersonalitySchema = z.object({
   traits: z.array(z.string().trim().min(2).max(40)).max(TRAITS_MAX),
   summary: z.string().trim().max(500),
 });
@@ -192,7 +193,7 @@ export const CharacterDraftSchema = z.object({
   name: z.string().trim().max(CHARACTER_NAME_MAX).optional(),
   gender: z.string().trim().max(40).optional(),
   age: Age.optional(),
-  personality: Personality.optional(),
+  personality: PersonalitySchema.optional(),
   attributes: AttributesSchema.partial().optional(),
   talents: Talents.optional(),
 });
@@ -204,7 +205,7 @@ export const CharacterSheetSchema = z.object({
   name: z.string().trim().min(2).max(CHARACTER_NAME_MAX),
   gender: z.string().trim().min(1).max(40),
   age: Age,
-  personality: Personality.extend({
+  personality: PersonalitySchema.extend({
     traits: z.array(z.string().trim().min(2).max(40)).min(1).max(TRAITS_MAX),
   }),
   attributes: AttributesSchema,
@@ -278,6 +279,11 @@ export const OnboardingStateSchema = z.object({
   */
   arrival: ArrivalSchema.nullable(),
   generation: GenerationProgressSchema.nullable(),
+  /*
+    La table, quand l'histoire ouverte se joue a plusieurs : le code a
+    partager, les sieges, qui est pret. Nul dans une histoire solo.
+  */
+  party: PartySchema.nullable(),
 });
 
 export type OnboardingState = z.infer<typeof OnboardingStateSchema>;

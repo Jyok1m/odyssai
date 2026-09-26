@@ -14,12 +14,14 @@ import {
   AttributesSchema,
   CanonFactSchema,
   MarksSchema,
+  PartySchema,
   WorldBibleSchema,
   WorldCharterSchema,
   WorldViewSchema,
   type Attribute,
   type AttributeStanding,
   type GenerationStreamEvent,
+  type Party,
   type WorldView,
 } from '@odyssai/schemas';
 import { PROGRESS_STEPS, conditionOf, hpMaxOf, modifierOf } from '@odyssai/engine';
@@ -28,7 +30,7 @@ import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
 import { AlphaOpenGuard } from '../alpha/alpha-open.guard.js';
 import { PRISMA } from '../prisma/prisma.module.js';
-import { currentStory } from '../stories/stories.service.js';
+import { openStoryWhere } from '../stories/stories.service.js';
 import { GenerationRefundService } from './generation-refund.service.js';
 
 const PING_INTERVAL_MS = 15_000;
@@ -79,14 +81,15 @@ export class GenerationController {
     res.on('close', onClose);
 
     const deadline = Date.now() + STREAM_MAX_MS;
-    const where = currentStory(user);
+    const where = openStoryWhere(user);
 
     try {
       while (open && Date.now() < deadline) {
         const universe = where
-          ? await this.prisma.universe.findUnique({
+          ? await this.prisma.universe.findFirst({
               where,
               select: {
+                id: true,
                 step: true,
                 name: true,
                 jobs: { orderBy: { createdAt: 'desc' }, take: 1 },
@@ -109,7 +112,7 @@ export class GenerationController {
         if (universe.step === 'failed' || job?.status === 'failed') {
           // Une generation qui echoue ne doit rien couter : le joueur n'a pas
           // eu son monde. Idempotent, deux lectures ne creditent pas deux fois.
-          if (where) await this.refunds.settle(where.id);
+          await this.refunds.settle(universe.id);
           this.write(res, { type: 'failed', error: job?.error ?? null });
           return;
         }
@@ -137,14 +140,29 @@ export class GenerationController {
 
   @Get('world')
   async world(@CurrentUser() user: User): Promise<WorldView> {
-    const where = currentStory(user);
+    const where = openStoryWhere(user);
     const universe = where
-      ? await this.prisma.universe.findUnique({
+      ? await this.prisma.universe.findFirst({
           where,
           include: {
-            character: { include: { essence: { select: { marks: true } } } },
+            /*
+              Sa fiche, et lui seul : une histoire solo en porte une, une
+              table une par membre, et le filtre rend toujours la sienne.
+            */
+            characters: {
+              where: { ownerId: user.id },
+              include: { essence: { select: { marks: true } } },
+            },
             entities: { orderBy: { createdAt: 'asc' } },
             canon: { orderBy: { createdAt: 'asc' } },
+            party: {
+              include: {
+                members: {
+                  orderBy: { joinedAt: 'asc' },
+                  include: { user: { select: { username: true } } },
+                },
+              },
+            },
             /*
               Le monde visite, quand il y en a un : c'est le sien qu'on rend,
               avec ce que cette histoire y a decouvert par-dessus.
@@ -176,7 +194,9 @@ export class GenerationController {
       throw new NotFoundException({ code: 'not_ready' });
     }
 
-    const attributes = AttributesSchema.safeParse(universe.character?.attributes);
+    const played = universe.characters[0] ?? null;
+
+    const attributes = AttributesSchema.safeParse(played?.attributes);
     if (!attributes.success) {
       // Le meme constat que plus haut : la fiche est illisible, donc la
       // partie l'est aussi, `TurnMemoryService` la relisant a chaque tour.
@@ -184,21 +204,21 @@ export class GenerationController {
       throw new NotFoundException({ code: 'not_ready' });
     }
 
-    const progress = (universe.character?.progress ?? {}) as Record<string, unknown>;
+    const progress = (played?.progress ?? {}) as Record<string, unknown>;
 
     /*
       La reserve derive de `corps`, et `hp` nul en base vaut la reserve
       pleine : rien n'a encore entame ce personnage.
     */
     const hpMax = hpMaxOf(attributes.data.corps);
-    const hp = universe.character?.hp ?? hpMax;
+    const hp = played?.hp ?? hpMax;
 
     /*
       Les autres mondes ou la meme essence s'est posee. Vide pour un
       personnage qui n'a jamais franchi de faille, et c'est le cas ordinaire :
       la requete ne part meme pas.
     */
-    const essenceId = universe.character?.essenceId ?? null;
+    const essenceId = played?.essenceId ?? null;
     const elsewhere = essenceId
       ? await this.prisma.character.findMany({
           where: {
@@ -270,22 +290,30 @@ export class GenerationController {
             : null,
         bond: universe.visiting ? null : (bible.data.arc?.hero?.bond ?? null),
       },
+      /*
+        La table, quand ce monde se joue a plusieurs : l'ecran s'en sert
+        pour rafraichir le journal pendant que d'autres jouent, et pour
+        montrer qui est assis.
+      */
+      party: universe.party
+        ? await this.partyBlock(user.id, universe.party, universe.id)
+        : null,
       character: {
-        name: universe.character?.name,
-        gender: universe.character?.gender,
-        age: universe.character?.age,
-        personality: universe.character?.personality,
+        name: played?.name,
+        gender: played?.gender,
+        age: played?.age,
+        personality: played?.personality,
         attributes: attributes.data,
         standing: standingOf(attributes.data, progress),
         health: { hp, hpMax, condition: conditionOf(hp, hpMax) },
-        talents: universe.character?.talents ?? [],
-        inventory: universe.character?.inventory ?? [],
-        arrival: universe.character?.arrival ?? 'natif',
+        talents: played?.talents ?? [],
+        inventory: played?.inventory ?? [],
+        arrival: played?.arrival ?? 'natif',
         /*
           Des marques illisibles valent une liste vide : elles decorent une
           fiche, elles ne doivent pas l'empecher de s'ouvrir.
         */
-        marks: MarksSchema.catch([]).parse(universe.character?.essence?.marks ?? []),
+        marks: MarksSchema.catch([]).parse(played?.essence?.marks ?? []),
         elsewhere: elsewhere.flatMap((row) =>
           row.universe
             ? [
@@ -301,6 +329,52 @@ export class GenerationController {
             : [],
         ),
       },
+    });
+  }
+
+  /*
+    La table pour la vue du monde. Le contrat est celui de PartySchema, un
+    seul pour le parcours et pour la table ; les noms de personnages y
+    remplacent les pseudos, le joueur joue des personnages.
+  */
+  private async partyBlock(
+    userId: string,
+    party: {
+      id: string;
+      size: number;
+      inviteCode: string;
+      members: {
+        userId: string;
+        isHost: boolean;
+        ready: boolean;
+        user: { username: string | null };
+      }[];
+    },
+    universeId: string,
+  ): Promise<Party> {
+    const names = await this.prisma.character.findMany({
+      where: { universeId },
+      select: { ownerId: true, name: true },
+    });
+    const byOwner = new Map(
+      names.flatMap((row) =>
+        row.ownerId && row.name ? [[row.ownerId, row.name] as const] : [],
+      ),
+    );
+
+    return PartySchema.parse({
+      id: party.id,
+      universeId,
+      size: party.size,
+      inviteCode: party.inviteCode,
+      members: party.members.map((member) => ({
+        userId: member.userId,
+        username: member.user.username,
+        characterName: byOwner.get(member.userId) ?? null,
+        ready: member.ready,
+        host: member.isHost,
+        mine: member.userId === userId,
+      })),
     });
   }
 

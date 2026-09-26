@@ -136,6 +136,60 @@ describe('arbitrage du canon', () => {
     expect(verdict.accepted).toHaveLength(1);
     expect(verdict.rejected).toHaveLength(1);
   });
+
+  /*
+    Dans une table, un fait dont le sujet est le personnage d'un autre joueur
+    parlerait pour lui dans chaque prompt suivant.
+  */
+  it('refuse un fait dont le sujet est le personnage d un autre joueur', () => {
+    const verdict = arbitrateCanon(
+      [
+        fact('Brèn', 'Il a trahi les Scelleurs.'),
+        fact('bren le garde', 'Il doit trois outres.'),
+      ],
+      CHARTER,
+      [],
+      ['Bren'],
+    );
+
+    expect(verdict.accepted).toHaveLength(0);
+    expect(verdict.rejected.map((row) => row.verdict)).toEqual([
+      { reason: 'other_player', detail: 'bren' },
+      { reason: 'other_player', detail: 'bren' },
+    ]);
+  });
+
+  it('laisse passer son propre personnage et le monde', () => {
+    const verdict = arbitrateCanon(
+      [
+        fact('Ael', 'Elle a dessine la carte des canyons.'),
+        fact('les puits', 'Ils se scellent au sel.'),
+      ],
+      CHARTER,
+      [],
+      ['Bren'],
+    );
+
+    expect(verdict.accepted).toHaveLength(2);
+  });
+
+  // Un nom se compare en mots entiers : Ael n'est pas dans Raelle.
+  it('ne refuse pas sur un nom contenu dans un autre mot', () => {
+    const verdict = arbitrateCanon(
+      [fact('Raelle', 'Elle tient le relais du col.')],
+      CHARTER,
+      [],
+      ['Ael'],
+    );
+
+    expect(verdict.accepted).toHaveLength(1);
+  });
+
+  it('ne change rien au solo, sans autres joueurs', () => {
+    const verdict = arbitrateCanon([fact('Bren', 'Il garde le col.')], CHARTER, []);
+
+    expect(verdict.accepted).toHaveLength(1);
+  });
 });
 
 /*

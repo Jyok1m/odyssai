@@ -268,6 +268,17 @@ export const TurnMessageSchema = z.object({
   seq: z.number().int().nonnegative(),
   role: z.enum(['user', 'assistant']),
   content: z.string(),
+  /*
+    Le nom du personnage qui a parle, dans une partie : le journal se lit
+    comme une conversation de groupe, et il faut savoir qui dit quoi. Nul sur
+    les reponses du meneur et partout dans une histoire solo.
+  */
+  author: z.string().nullable(),
+  /*
+    Le message d'un joueur parti de la table : son rang reste, ses mots non.
+    L'ecran dit qu'il a ete retire plutot que de montrer une bulle vide.
+  */
+  erased: z.boolean(),
   // Porte par la reponse du meneur, jamais par le message du joueur.
   outcome: PublicOutcomeSchema.nullable(),
   /*
@@ -324,7 +335,16 @@ export const TurnErrorBodySchema = z.object({
     // Le monde n'est pas encore genere.
     'not_ready',
     'rate_limited',
+    /*
+      Une narration est deja en cours sur cette histoire : le meneur ne
+      raconte qu'une scene a la fois, et le journal n'a qu'un rang suivant.
+    */
     'busy',
+    /*
+      La premiere scene existe deja : elle ne se rejoue pas a chaque
+      rechargement, chacun ne la paie qu'une fois.
+    */
+    'already_started',
     // La reserve de credits est epuisee.
     'out_of_credits',
     // Le message a ete refuse par la moderation.

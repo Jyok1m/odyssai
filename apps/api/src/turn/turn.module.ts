@@ -5,6 +5,7 @@ import { ModerationModule } from '../moderation/moderation.module.js';
 import { OnboardingModule } from '../onboarding/onboarding.module.js';
 import { TurnController } from './turn.controller.js';
 import { TurnLimitsService } from './turn-limits.service.js';
+import { TurnLockService } from './turn-lock.service.js';
 import { PendingRollService } from './pending-roll.service.js';
 import { TurnMemoryService } from './turn-memory.service.js';
 
@@ -12,6 +13,6 @@ import { TurnMemoryService } from './turn-memory.service.js';
 @Module({
   imports: [AuthModule, AlphaModule, OnboardingModule, ModerationModule],
   controllers: [TurnController],
-  providers: [TurnMemoryService, TurnLimitsService, PendingRollService],
+  providers: [TurnMemoryService, TurnLimitsService, TurnLockService, PendingRollService],
 })
 export class TurnModule {}
