@@ -138,6 +138,7 @@ async function boot(options: Options): Promise<INestApplication<App>> {
       {
         id: '01860000-0000-7000-8000-000000000002',
         universeId: UNIVERSE_ID,
+        ownerId: user.id,
         name: 'Ael',
         gender: 'femme',
         age: 31,
