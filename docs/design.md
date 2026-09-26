@@ -12,3 +12,16 @@
 - **Waiting without a stream goes through `components/ui/spinner.tsx`.** A stream shows as it flows; an extraction or a generation streams nothing, and without an indicator the greyed button read as broken. `motion-safe` on the animation, and a label next to it saying one is waiting: do not copy a circle elsewhere.
 - **A conversation field grows with the text**, through `components/ui/auto-grow-textarea.tsx`, shared by the guide, character creation and the game table. Three fields each did their own cooking: only one grew, the other two stayed on one line and showed a scrollbar from the second on, and Safari added a horizontal scrollbar. Height is reset before being measured, else `scrollHeight` never goes back down when clearing. Do not copy that logic into a fourth field.
 - A field's style lives in `apps/web/src/components/ui/field.ts` (`FIELD`, `FIELD_AREA`, `FIELD_DANGER`). Do not copy it. Two accepted and commented exceptions: a conditional border and a `select`.
+
+## Motion
+
+- **No motion library.** Everything goes through CSS: tokens and keyframes in `globals.css`, Headless UI's `transition` for dialogs, entrances as `animate-*` classes that play when the element mounts. A library would ship ~30 kB of JavaScript to do what the compositor already does.
+- Tokens live once, in `:root`: `--motion-quick` (150 ms, the kit's controls), `--motion-base`, `--motion-slow`, `--motion-epic`, `--motion-stagger`, and the distances `--motion-rise`, `--motion-shift`, `--motion-pop`. They surface as native utilities: `duration-quick|base|slow`, `ease-emerge|settle|exit`, `animate-rise|fade|pop|forward|backward|leave|ink|tumble|meter|draw` and the loops `animate-halo|shimmer|breathe|blink|float|wobble`. Add a token, never an arbitrary duration.
+- **Reduced motion is handled in the tokens, not at each call.** Under `prefers-reduced-motion: reduce`, distances drop to zero, the stagger to zero, entrances become short fades and every loop is set to `none`. A new animation must be written with these tokens to inherit that; a transform-based hover goes behind `motion-safe:` or the `lift` utility.
+- Only `transform` (`translate`, `scale`, `rotate`), `opacity` and `clip-path` are animated. A gauge is `components/ui/meter.tsx`, filled by `clip-path`, never by `width`.
+- Entrances use `backwards` fill, never `forwards` or `both`: a lingering `translate` makes the element the containing block of its `fixed` descendants.
+- Route transitions are `template.tsx` files (`(marketing)`, `(game)/play`, `admin`) wrapping the page in `animate-page`. Entrance only: the App Router does not keep the leaving page.
+- `reveal` reveals a block on scroll through `animation-timeline: view()`, without JavaScript. Browsers without scroll-driven animations show the block as is.
+- `stagger` on a list makes its children enter one after the other, capped at the seventh.
+- `components/motion/streamed-text.tsx` fades in each fragment of a streamed text; `components/motion/use-presence.ts` gives a list enter and leave phases (`presenceClass`). Use them rather than a fourth hand-made version.
+- Loading a known layout shows `components/ui/skeleton.tsx` (`Loading` keeps the old label for screen readers). Waiting without a known layout stays `Spinner`.

@@ -133,6 +133,8 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       className={`${instrumentSans.variable} ${literata.variable} h-full antialiased`}
+      // Next suspend le défilement doux le temps d'un changement de page.
+      data-scroll-behavior="smooth"
     >
       <body className="min-h-full bg-ink text-vellum">
         <NextIntlClientProvider>

@@ -17,8 +17,14 @@ const SIZES = {
   sm: "h-8 px-3 text-ui-sm",
 } as const;
 
+/*
+  150 ms comme le kit. L'appui enfonce le bouton d'un cran, sauf mouvement
+  réduit ; désactivé, il pâlit, sinon il se lit comme un bouton qui ne répond
+  pas. `not-disabled` et non `enabled` : un lien habillé en bouton n'est ni
+  l'un ni l'autre, et doit s'enfoncer aussi.
+*/
 const BASE =
-  "inline-flex items-center justify-center gap-2 rounded-control border font-ui font-medium whitespace-nowrap transition-colors";
+  "inline-flex items-center justify-center gap-2 rounded-control border font-ui font-medium whitespace-nowrap transition duration-quick ease-out motion-safe:active:not-disabled:scale-97 disabled:opacity-50";
 
 type ButtonProps<T extends ElementType> = {
   as?: T;
