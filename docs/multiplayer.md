@@ -80,10 +80,25 @@ do is narrate twice at once, so:
 
 - One **turn lock** per story in Redis (`SET NX EX`, token, compare-and-del on
   release, TTL 180 s). While a member's turn is being narrated, any other
-  turn request on the same story answers 409 `busy`. The lock is taken before
-  the debit, so a refused turn costs nothing, and released in the `finally`
-  that ends the stream. Solo stories get the same lock: it closes the
-  double-submit race that two tabs could already trigger.
+  turn request on the same story answers 409 `busy`. Solo stories get the
+  same lock: it closes the double-submit race that two tabs could already
+  trigger.
+- **Everything a turn consumes is taken under the lock**: the pending roll
+  (`getdel`), the rate-limit slot, the `already_started` count, the debit.
+  Only moderation runs before it, since it consumes nothing and a
+  classification call must not hold the table. Taken after them, a `busy`
+  cost the player their awaited roll (the next click answered
+  `roll_expired`) and a slot of their hourly limit, for nothing played.
+- **The world is read again once the lock is held.** Read before, it was the
+  world as it stood before the turn that had just finished: its entities,
+  act and sheet were stale, and creating an entity that turn had just
+  created failed the final write after the narration had been streamed.
+- **The live turn renews its lock** (compare-and-expire every 60 s). A turn
+  chains the line, the narration, one lore call per new name and the mark,
+  and could outlast a fixed TTL: the lock fell, a second turn took the next
+  rank, and the first turn's final write failed after streaming. The TTL now
+  only bounds a dead process. The lock is released in the `finally` that
+  ends the stream.
 - The two-step die is unchanged and per player (the pending action lives in
   Redis under the user id). When a member's turn starts narrating, the
   **other** members' pending actions are dropped: the scene is about to move,

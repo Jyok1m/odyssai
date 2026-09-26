@@ -3,7 +3,7 @@ import { Test } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { App } from 'supertest/types.js';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   PARTY_MAX,
   type OnboardingState,
@@ -18,6 +18,8 @@ import { GenerationQueueService } from './../src/onboarding/generation-queue.ser
 import { ErasureService } from './../src/erasure/erasure.service.js';
 import { LockedError, OnboardingService } from './../src/onboarding/onboarding.service.js';
 import type { User } from '@odyssai/db';
+import { PendingRollService } from './../src/turn/pending-roll.service.js';
+import { TurnMemoryService } from './../src/turn/turn-memory.service.js';
 import { GuideFakeRedis } from './../src/guide/testing/doubles.js';
 import { makeFakeLlm, type FakeLlm } from './../src/guide/testing/doubles.js';
 import {
@@ -754,6 +756,66 @@ describe('le tour d une table (e2e)', () => {
 
     // Rien n'a ete ecrit : un tour refuse ne laisse rien.
     expect(store.messages.filter((row) => row.channel === 'game_turn')).toHaveLength(0);
+    await app.close();
+  });
+
+  /*
+    Un tour refuse parce que le meneur raconte ne consomme rien : ni le jet
+    qui attendait (le clic suivant repondait `roll_expired`), ni une place de
+    la limite horaire, ni un credit.
+  */
+  it('un tour refuse pendant la narration ne consomme rien', async () => {
+    const host = store.users[0]!;
+    const rolls = app.get(PendingRollService);
+    await rolls.hold(host.id, { content: 'Je frappe le garde.', situation: 'violence', locale: 'fr' });
+    await redis.set('turn:lock:' + store.universes[0]!.id, 'un-jeton', 'EX', 180);
+
+    const turn = (body: object) =>
+      request(app.getHttpServer()).post('/turn').set('Cookie', HOST_COOKIE).send(body);
+    await turn({ kind: 'roll' }).expect(409).expect({ code: 'busy' });
+    await turn({ kind: 'say', content: 'Je force la porte.' }).expect(409).expect({ code: 'busy' });
+    await turn({ kind: 'ask', content: 'Qui garde le puits ?' }).expect(409).expect({ code: 'busy' });
+
+    expect(await rolls.take(host.id)).toMatchObject({ content: 'Je frappe le garde.' });
+    const hour = Math.floor(Date.now() / 3_600_000);
+    expect(await redis.get(`turn:rl:${host.id}:h:${hour}`)).toBeNull();
+    expect(
+      (store.creditEntries ?? []).filter((row) => row.reason === 'turn' || row.reason === 'question'),
+    ).toHaveLength(0);
+    await app.close();
+  });
+
+  /*
+    Le monde se relit sous le verrou. Un autre tour peut se terminer entre la
+    premiere lecture et la prise du verrou : ce qu'il a ecrit doit etre ce
+    que celui-ci voit et ce sur quoi il ecrit.
+  */
+  it('joue sur le monde relu sous le verrou', async () => {
+    const friend = store.users[1]!;
+    const friendRow = store.characters.find((row) => row.ownerId === friend.id)!;
+    const memory = app.get(TurnMemoryService);
+    const read = memory.world.bind(memory);
+    let first = true;
+    vi.spyOn(memory, 'world').mockImplementation(async (user) => {
+      const world = await read(user);
+      // Un tour de l'ami, dans un autre onglet, se termine juste apres.
+      if (first) {
+        first = false;
+        friendRow.inventory = ['une lanterne'];
+      }
+      return world;
+    });
+
+    await play(FRIEND_COOKIE, 'Je regarde autour.').expect(200);
+
+    expect(friendRow.inventory).toEqual(['une lanterne']);
+    const llm = app.get(NARRATOR_LLM) as FakeLlm;
+    const turnCall = llm.calls.filter((call) =>
+      String(call.messages[0]?.content ?? '').includes('<groupe>'),
+    );
+    expect(String(turnCall[turnCall.length - 1]!.messages[0]!.content)).toContain(
+      '<inventaire>\nune lanterne\n</inventaire>',
+    );
     await app.close();
   });
 

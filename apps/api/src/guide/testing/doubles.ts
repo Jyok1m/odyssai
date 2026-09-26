@@ -66,7 +66,7 @@ export class GuideFakeRedis extends FakeRedis {
       return left - 1;
     }
 
-    return super.eval(script, numKeys, keys[0]!, argv[0]!);
+    return super.eval(script, numKeys, ...keys, ...argv);
   }
 
   async zrem(key: string, member: string): Promise<number> {

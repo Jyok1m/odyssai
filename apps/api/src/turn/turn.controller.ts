@@ -217,8 +217,8 @@ export class TurnController {
 
     const request = parsed.data;
 
-    const world = await this.memory.world(user);
-    if (!world) throw new NotFoundException({ code: 'not_ready' });
+    const found = await this.memory.world(user);
+    if (!found) throw new NotFoundException({ code: 'not_ready' });
 
     /*
       La langue du tour, et non celle du compte.
@@ -237,21 +237,6 @@ export class TurnController {
     let situation: Situation | null = null;
     let said = '';
 
-    /*
-      Second temps d'une action que le de tranche. Tout a deja ete decide au
-      premier : la moderation a tourne, la limite a ete consommee, et la
-      situation vient de Redis et non du navigateur.
-    */
-    if (request.kind === 'roll') {
-      const pending = await this.pending.take(user.id);
-      if (!pending) {
-        throw new HttpException({ code: 'roll_expired' }, HttpStatus.CONFLICT);
-      }
-      said = pending.content;
-      situation = pending.situation;
-      locale = pending.locale;
-    }
-
     // Avant la limite et avant tout appel : un message refuse ne doit ni
     // consommer un tour, ni atteindre le modele, ni entrer en base.
     if (request.kind === 'say' || request.kind === 'ask') {
@@ -264,10 +249,10 @@ export class TurnController {
       */
       const previous = await this.prisma.conversationMessage.findFirst({
         where: {
-          universeId: world.universeId,
+          universeId: found.universeId,
           channel: CHANNEL,
           role: 'user',
-          ...(world.party ? { memberId: user.id } : {}),
+          ...(found.party ? { memberId: user.id } : {}),
         },
         orderBy: { seq: 'desc' },
         select: { content: true },
@@ -293,83 +278,115 @@ export class TurnController {
     }
 
     /*
-      Une ouverture ne vaut que pour une partie qui n'a pas commence.
+      Une narration a la fois par histoire, et tout ce qui se consomme se
+      prend sous le verrou : le jet en attente, le creneau de la limite, la
+      garde d'ouverture. Pris apres eux, un `busy` coutait au joueur son jet
+      (le clic suivant repondait `roll_expired`) et une place de sa limite
+      horaire, sans que rien ne soit joue. La moderation reste avant : elle
+      ne consomme rien, et un appel de classification ne doit pas tenir la
+      table.
 
-      Sans cette garde, un rechargement de page en rejouerait une, et chaque
-      fois pour un credit. C'est la table qui tranche, pas l'ecran : lui peut
-      toujours demander, elle seule sait si quelque chose a deja ete joue.
+      Le meneur ne raconte qu'une scene, le journal n'a qu'un rang suivant, et
+      deux tours simultanes se marcheraient dessus, deux onglets du meme
+      joueur hier, deux joueurs d'une table aujourd'hui. Le tour vivant
+      prolonge le verrou ; un processus mort le laisse expirer seul.
     */
-    if (request.kind === 'open') {
-      const played = await this.prisma.turn.count({
-        where: { universeId: world.universeId },
-      });
-      if (played > 0) {
-        throw new HttpException(
-          { code: 'already_started' },
-          HttpStatus.CONFLICT,
-        );
-      }
-    }
-
-    const verdict =
-      request.kind === 'roll'
-        ? { allowed: true }
-        : await this.limits.consume(user.id);
-    if (!verdict.allowed) {
-      res.setHeader('Retry-After', String(verdict.retryAfterSeconds ?? 60));
-      throw new HttpException(
-        { code: 'rate_limited', retryAfterSeconds: verdict.retryAfterSeconds },
-        HttpStatus.TOO_MANY_REQUESTS,
-      );
-    }
-
-    const fate = request.kind === 'fate';
-    const opening = request.kind === 'open';
-    const asking = request.kind === 'ask';
-    if (request.kind === 'say' || asking) said = request.content;
-
-    /*
-      Une question ne se tranche pas au de : le joueur ne tente rien. Elle
-      annule aussi ce qui attendait un jet, comme n'importe quelle autre
-      chose que le joueur decide de faire a la place.
-    */
-    if (asking) await this.pending.drop(user.id);
-
-    /*
-      Premier temps : l'action se tranche au de, donc rien n'est genere et
-      rien n'est debite. Ce que le joueur a ecrit attend en Redis, et l'ecran
-      lui demande le jet.
-    */
-    if (request.kind === 'say' && settledByDie(situation)) {
-      await this.pending.hold(user.id, {
-        content: said,
-        situation: situation!,
-        locale,
-      });
-      this.openStream(res);
-      this.write(res, { type: 'roll_required' });
-      res.end();
-      return;
-    }
-
-    // Une action qui ne se tranche pas annule celle qui attendait son jet.
-    if (request.kind === 'say') await this.pending.drop(user.id);
-
-    /*
-      Une narration a la fois par histoire. Pris avant le debit : un tour
-      refuse n'a rien paye. Le meneur ne raconte qu'une scene, le journal
-      n'a qu'un rang suivant, et deux tours simultanes se marcheraient
-      dessus, deux onglets du meme joueur hier, deux joueurs d'une table
-      aujourd'hui.
-
-      Le verrou expire seul : un processus mort ne ferme pas la table.
-    */
-    const token = await this.locks.acquire(world.universeId);
+    const token = await this.locks.acquire(found.universeId);
     if (!token) {
       throw new HttpException({ code: 'busy' }, HttpStatus.CONFLICT);
     }
+    const stop = this.locks.keep(found.universeId, token);
 
     try {
+      /*
+        Le monde relu sous le verrou : lu avant, il etait celui d'avant le
+        tour qui venait de se terminer. Ses entites, son acte et sa fiche
+        dataient, et creer une entite que ce tour-la venait de creer faisait
+        tomber l'ecriture finale apres que le recit avait ete servi.
+      */
+      const world = await this.memory.world(user);
+      if (!world || world.universeId !== found.universeId) {
+        throw new NotFoundException({ code: 'not_ready' });
+      }
+
+      /*
+        Second temps d'une action que le de tranche. Tout a deja ete decide au
+        premier : la moderation a tourne, la limite a ete consommee, et la
+        situation vient de Redis et non du navigateur.
+      */
+      if (request.kind === 'roll') {
+        const pending = await this.pending.take(user.id);
+        if (!pending) {
+          throw new HttpException({ code: 'roll_expired' }, HttpStatus.CONFLICT);
+        }
+        said = pending.content;
+        situation = pending.situation;
+        locale = pending.locale;
+      }
+
+      /*
+        Une ouverture ne vaut que pour une partie qui n'a pas commence.
+
+        Sans cette garde, un rechargement de page en rejouerait une, et chaque
+        fois pour un credit. C'est la table qui tranche, pas l'ecran : lui peut
+        toujours demander, elle seule sait si quelque chose a deja ete joue.
+      */
+      if (request.kind === 'open') {
+        const played = await this.prisma.turn.count({
+          where: { universeId: world.universeId },
+        });
+        if (played > 0) {
+          throw new HttpException(
+            { code: 'already_started' },
+            HttpStatus.CONFLICT,
+          );
+        }
+      }
+
+      const verdict =
+        request.kind === 'roll'
+          ? { allowed: true }
+          : await this.limits.consume(user.id);
+      if (!verdict.allowed) {
+        res.setHeader('Retry-After', String(verdict.retryAfterSeconds ?? 60));
+        throw new HttpException(
+          { code: 'rate_limited', retryAfterSeconds: verdict.retryAfterSeconds },
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
+      }
+
+      const fate = request.kind === 'fate';
+      const opening = request.kind === 'open';
+      const asking = request.kind === 'ask';
+      if (request.kind === 'say' || asking) said = request.content;
+
+      /*
+        Une question ne se tranche pas au de : le joueur ne tente rien. Elle
+        annule aussi ce qui attendait un jet, comme n'importe quelle autre
+        chose que le joueur decide de faire a la place.
+      */
+      if (asking) await this.pending.drop(user.id);
+
+      /*
+        Premier temps : l'action se tranche au de, donc rien n'est genere et
+        rien n'est debite. Ce que le joueur a ecrit attend en Redis, et l'ecran
+        lui demande le jet.
+      */
+      if (request.kind === 'say' && settledByDie(situation)) {
+        await this.pending.hold(user.id, {
+          content: said,
+          situation: situation!,
+          locale,
+        });
+        this.openStream(res);
+        this.write(res, { type: 'roll_required' });
+        res.end();
+        return;
+      }
+
+      // Une action qui ne se tranche pas annule celle qui attendait son jet.
+      if (request.kind === 'say') await this.pending.drop(user.id);
+
       /*
         Dans une table, le tour de l'un fait avancer la scene : ce que les
         autres attendaient en travers d'un jet ne peut plus s'y poser telle
@@ -1134,7 +1151,8 @@ export class TurnController {
     } finally {
       // Le creneau de narration se rend, toujours : un tour qui rend la
       // main ferme la porte qu il a ouverte, et un tour en echec aussi.
-      await this.locks.release(world.universeId, token);
+      stop();
+      await this.locks.release(found.universeId, token);
     }
   }
 
