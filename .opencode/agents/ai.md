@@ -1,7 +1,7 @@
 ---
 description: AI and game engine work in packages/llm, packages/narrator, packages/engine and apps/worker (prompts, LLM calls, narration flow).
 mode: subagent
-model: openrouter/z-ai/glm-5.3-flash
+model: openrouter/deepseek/deepseek-v4-pro
 permissions:
   - { action: edit, resource: "*", effect: deny }
   - { action: edit, resource: "packages/llm/**", effect: allow }

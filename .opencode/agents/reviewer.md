@@ -1,7 +1,7 @@
 ---
 description: Read-only reviewer. Use after any change, before commit, to check the diff against the repo rules.
 mode: subagent
-model: openrouter/z-ai/glm-5.3
+model: openrouter/deepseek/deepseek-v4-pro
 permissions:
   - { action: edit, resource: "*", effect: deny }
   - { action: shell, resource: "*", effect: deny }
