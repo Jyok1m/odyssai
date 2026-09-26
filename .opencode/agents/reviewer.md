@@ -1,7 +1,7 @@
 ---
 description: Read-only reviewer. Use after any change, before commit, to check the diff against the repo rules.
 mode: subagent
-model: openrouter/deepseek/deepseek-v4-pro
+model: openrouter/deepseek/deepseek-v4.1-flash
 permissions:
   - { action: edit, resource: "*", effect: deny }
   - { action: shell, resource: "*", effect: deny }

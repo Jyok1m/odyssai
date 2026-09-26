@@ -1,7 +1,7 @@
 ---
 description: Backend work in apps/api, packages/db and packages/schemas (NestJS, Prisma, Zod, auth).
 mode: subagent
-model: openrouter/z-ai/glm-5.3-flashx
+model: openrouter/z-ai/glm-5.3-flash
 permissions:
   - { action: edit, resource: "*", effect: deny }
   - { action: edit, resource: "apps/api/**", effect: allow }

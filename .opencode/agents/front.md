@@ -1,7 +1,7 @@
 ---
 description: Frontend work in apps/web (Next.js, next-intl fr/en, design tokens, SEO).
 mode: subagent
-model: openrouter/z-ai/glm-5.3-flashx
+model: openrouter/z-ai/glm-5.3-flash
 permissions:
   - { action: edit, resource: "*", effect: deny }
   - { action: edit, resource: "apps/web/**", effect: allow }
