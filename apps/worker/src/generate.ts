@@ -7,6 +7,7 @@ import {
   InspirationSchema,
   WorldBibleSchema,
   entityKey,
+  normalizeWorkTitle,
   WorldCharterSchema,
   WorldThemesSchema,
   type WorldThemes,
@@ -76,6 +77,27 @@ async function journal(
 // Le message d'erreur est borne par la colonne : de quoi diagnostiquer.
 const ERROR_MAX = 500;
 
+/*
+  L'union des oeuvres citees par les sieges, dedoublees par titre replie :
+  deux membres qui citent la meme oeuvre n'en font qu'une, et l'abstraction
+  recoit une liste, comme pour un solo.
+*/
+function combinedWorks(bySeat: string[][]): string[] {
+  const seen = new Set<string>();
+  const works: string[] = [];
+
+  for (const seat of bySeat) {
+    for (const title of seat) {
+      const folded = normalizeWorkTitle(title);
+      if (seen.has(folded)) continue;
+      seen.add(folded);
+      works.push(title);
+    }
+  }
+
+  return works;
+}
+
 export interface GenerateDeps {
   prisma: PrismaClient;
   llm: LlmClient;
@@ -119,9 +141,10 @@ export async function generate(
   const universe = await prisma.universe.findUnique({
     where: { id: universeId },
     include: {
-      character: true,
+      characters: true,
       owner: { select: { id: true, locale: true } },
       jobs: { orderBy: { createdAt: 'desc' }, take: 1 },
+      party: { include: { members: { orderBy: { joinedAt: 'asc' } } } },
     },
   });
 
@@ -136,20 +159,41 @@ export async function generate(
   const job = universe.jobs[0];
   if (!job) throw new NothingToDo('aucun travail enregistre');
 
+  /*
+    Une table se nourrit de l'union des sieges : chaque membre cite ses
+    oeuvres, l'abstraction n'en voit qu'une liste, et deux membres qui citent
+    la meme oeuvre n'en font qu'une. Le solo lit les siennes, sur l'univers.
+  */
   const inspiration = InspirationSchema.safeParse(
-    universe.mode === 'works'
-      ? { mode: 'works', works: universe.works }
-      : { mode: 'own', ownDescription: universe.ownDescription ?? '' },
+    universe.party
+      ? {
+          mode: 'works' as const,
+          works: combinedWorks(
+            universe.party.members.map((member) => member.works),
+          ),
+        }
+      : universe.mode === 'works'
+        ? { mode: 'works' as const, works: universe.works }
+        : { mode: 'own' as const, ownDescription: universe.ownDescription ?? '' },
   );
-  const character = CharacterSheetSchema.safeParse({
-    name: universe.character?.name ?? undefined,
-    gender: universe.character?.gender ?? undefined,
-    age: universe.character?.age ?? undefined,
-    personality: universe.character?.personality ?? undefined,
-    attributes: universe.character?.attributes ?? undefined,
+
+  /*
+    Les fiches de tous les joueurs : une dans un solo, une par membre dans
+    une table. Le prompt de generation les recoit toutes, et c'est au groupe
+    que les personnages non joueurs, les affinites et l'arc se lient.
+  */
+  const characters = universe.characters.flatMap((row) => {
+    const sheet = CharacterSheetSchema.safeParse({
+      name: row.name ?? undefined,
+      gender: row.gender ?? undefined,
+      age: row.age ?? undefined,
+      personality: row.personality ?? undefined,
+      attributes: row.attributes ?? undefined,
+    });
+    return sheet.success ? [sheet.data] : [];
   });
 
-  if (!inspiration.success || !character.success) {
+  if (!inspiration.success || characters.length === 0) {
     await fail(deps, job.id, universeId, 'saisie incomplete');
     throw new NothingToDo('saisie incomplete');
   }
@@ -189,7 +233,7 @@ export async function generate(
         universeId,
         locale: universe.owner.locale,
         themes,
-        character: character.data,
+        characters,
         works,
         // Tire ici, garde dans le fil : une reprise ne retire pas.
         flavour: drawFlavour(),
