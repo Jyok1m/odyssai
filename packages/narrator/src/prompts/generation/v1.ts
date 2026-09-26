@@ -53,6 +53,14 @@ const W = wordsWithin;
   un registre et une palette de noms avant la generation et les impose ; les
   prenoms trop vus sont interdits, dits ici et verifies par le graphe ; le
   complot est interdit sauf registre qui l'appelle.
+
+  v10 : les fiches de tous les joueurs. Le bloc <fiche_joueur> portait une
+  fiche unique, celle du createur : une partie y voyait un monde ancre sur
+  son hote seul. Il porte desormais la liste, une fiche ou plusieurs, et les
+  consignes qui parlaient du personnage du joueur parlent des joueurs : les
+  personnages non joueurs, les affinites et l'arc se lient au groupe, et
+  l'arc ancre le groupe entier. Une fiche seule se lit comme avant, rien ne
+  change pour le solo.
 */
 
 // Le registre tire, dit au modele. Sans accent dans la cle, accentue ici.
@@ -126,8 +134,12 @@ function flavourBlocks(locale: UiLocale, flavour: Flavour | undefined): string {
 }
 export interface GenerationContext {
   themes: WorldThemes;
-  // Fiche du joueur. Texte joueur, donc delimitee dans le prompt.
-  character: CharacterSheet;
+  /*
+    Les fiches des joueurs : une seule dans une histoire solo, une par membre
+    dans une partie. Texte joueur, donc delimite dans le prompt, et une liste
+    quand ils sont plusieurs.
+  */
+  characters: CharacterSheet[];
   // Rempli au fur et a mesure : chaque noeud lit ce que les autres ont ecrit.
   produced?: Record<string, unknown>;
   // Le registre et la palette tires par le code. Absents, rien n'est impose.
@@ -278,7 +290,7 @@ Chaque objet : name, role, faction, drive, secret.
 - faction est le nom exact d'une faction existante, ou null pour un indépendant.
 - drive (${W(L.npc.drive)} mots au plus) : une chose précise qu'il veut et qui peut le mettre en conflit avec quelqu'un : une personne, une somme, un lieu, un titre, une preuve, un pardon.
 - secret (${W(L.npc.secret)} mots au plus) : un fait qu'on pourrait apprendre en fouillant : un acte passé, une dette, un lien caché, un mensonge tenu. Jamais une aura ni un pouvoir mystérieux.
-- Au moins un d'entre eux a une raison de s'intéresser au personnage du joueur.`,
+- Au moins un d'entre eux a une raison de s'intéresser au personnage de chaque joueur.`,
     en: `You write the non-player characters of a world.
 
 Key: npcs, a list of three to six objects.
@@ -288,38 +300,38 @@ Each object: name, role, faction, drive, secret.
 - faction is the exact name of an existing faction, or null for an independent.
 - drive (up to ${W(L.npc.drive)} words): one precise thing they want that can put them at odds with someone: a person, a sum, a place, a title, a proof, a pardon.
 - secret (up to ${W(L.npc.secret)} words): a fact one could learn by digging: a past deed, a debt, a hidden tie, a lie kept up. Never an aura nor a mysterious power.
-- At least one of them has a reason to care about the player's character.`,
+- At least one of them has a reason to care about each player's character.`,
   },
 
   arc: {
-    fr: `Tu écris l'histoire dans laquelle ce personnage est parachuté, à partir du monde qui vient d'être écrit.
+    fr: `Tu écris l'histoire dans laquelle les joueurs sont parachutés, à partir du monde qui vient d'être écrit.
 
 Clés : hook, stakes, acts, hero.
-- hook (${W(L.arc.hook)} mots au plus) : la situation où le joueur arrive, en deux ou trois phrases. Un lieu, quelqu'un, et une chose qui ne va pas. Un problème qu'une personne pourrait vraiment avoir : une disparition, une dette, une récolte perdue, un procès, un chantier arrêté, une route coupée. Elle doit concerner ce personnage-là, pas n'importe qui.
+- hook (${W(L.arc.hook)} mots au plus) : la situation où le groupe arrive, en deux ou trois phrases. Un lieu, quelqu'un, et une chose qui ne va pas. Un problème qu'une personne pourrait vraiment avoir : une disparition, une dette, une récolte perdue, un procès, un chantier arrêté, une route coupée. Elle doit concerner ces personnages-là, pas n'importe qui.
 - stakes (${W(L.arc.stakes)} mots au plus) : ce qui pousse, et ce que cela coûte de ne rien faire, en termes concrets : qui perd quoi.
 - acts : exactement trois objets, chacun avec title, goal et done.
   - title (${W(L.arc.title)} mots au plus) : le nom de l'acte, en trois à six mots. C'est la seule part de l'arc que le joueur lira, en tête de sa partie : il nomme la situation qu'on traverse, jamais sa résolution ni ce qu'il faut faire. « Le phare sans gardien », « La dette de la maison Varek », « Ce qu'on a laissé sous la glace ». Pas « Retrouver le gardien », pas « La victoire finale ».
   - goal (${W(L.arc.goal)} mots au plus) : ce vers quoi cet acte tend.
   - done (${W(L.arc.done)} mots au plus) : à quoi on reconnaît qu'il est achevé. Un fait observable, pas un sentiment : « la porte du sanctuaire est ouverte », jamais « il comprend enfin ».
 
-- hero : deux clés, bond et secret, chacune de ${W(L.arc.bond)} mots au plus. bond, ce qui rattache ce personnage à cette histoire et qu'il sait : une dette, une promesse, quelqu'un qu'il a perdu. secret, ce que le monde sait de lui et qu'il ignore encore : un fait concret que le jeu pourra révéler, jamais une vague menace.
+- hero : deux clés, bond et secret, chacune de ${W(L.arc.bond)} mots au plus. bond, ce qui rattache ces joueurs à cette histoire et qu'ils savent : une dette, une promesse, quelqu'un qu'ils ont perdu. secret, ce que le monde sait d'eux et qu'ils ignorent encore : un fait concret que le jeu pourra révéler, jamais une vague menace.
 
 **Le bloc « registre » est le registre de cette histoire** : hook, stakes et actes en découlent, et rien d'autre ne vient s'y substituer. Le premier acte part de la situation d'ouverture, le deuxième complique, le troisième résout. Sers-toi des factions et des personnages déjà écrits : une histoire qui n'utilise rien du monde aurait pu se passer ailleurs.
 
 **Relis « tone » dans la charte avant d'écrire, et obéis-lui.** Si elle dit chaleureux ou plein d'espoir, hook et stakes le sont : une ruine fumante, une créature qui traque le héros et une communauté condamnée sont une faute dans ce monde-là. Une enquête tranquille, une dette à rembourser, une fête à sauver, un voyage valent une catastrophe. Le ton commande, pas le réflexe dramatique.
 
 Et ce n'est pas une fin : quand le troisième acte se clôt, le joueur continue ses propres aventures. Écris une histoire qui se termine, pas un monde qui s'arrête.`,
-    en: `You write the story this character is dropped into, from the world just written.
+    en: `You write the story the players are dropped into, from the world just written.
 
 Keys: hook, stakes, acts, hero.
-- hook (up to ${W(L.arc.hook)} words): the situation the player arrives in, in two or three sentences. A place, someone, and one thing that is wrong. A problem a person could actually have: a disappearance, a debt, a lost harvest, a trial, a halted worksite, a cut road. It must concern this character, not just anyone.
+- hook (up to ${W(L.arc.hook)} words): the situation the group arrives in, in two or three sentences. A place, someone, and one thing that is wrong. A problem a person could actually have: a disappearance, a debt, a lost harvest, a trial, a halted worksite, a cut road. It must concern these characters, not just anyone.
 - stakes (up to ${W(L.arc.stakes)} words): what pushes, and what doing nothing would cost, in concrete terms: who loses what.
 - acts: exactly three objects, each with title, goal and done.
   - title (up to ${W(L.arc.title)} words): the name of the act, in three to six words. It is the only part of the arc the player will read, at the top of their game: it names the situation being lived through, never its resolution nor what must be done. "The lighthouse without a keeper", "The debt of house Varek", "What we left under the ice". Not "Find the keeper", not "The final victory".
   - goal (up to ${W(L.arc.goal)} words): what this act works towards.
   - done (up to ${W(L.arc.done)} words): how you can tell it is over. An observable fact, not a feeling: "the sanctuary door stands open", never "he finally understands".
 
-- hero: two keys, bond and secret, each up to ${W(L.arc.bond)} words. bond, what ties this character to this story and that they know: a debt, a promise, someone they lost. secret, what the world knows of them and that they do not know yet: a concrete fact the game can reveal, never a vague threat.
+- hero: two keys, bond and secret, each up to ${W(L.arc.bond)} words. bond, what ties these players to this story and that they know: a debt, a promise, someone they lost. secret, what the world knows of them and that they do not know yet: a concrete fact the game can reveal, never a vague threat.
 
 **The "registre" block is the register of this story**: hook, stakes and acts follow from it, and nothing else takes its place. The first act starts from the opening situation, the second complicates, the third resolves. Use the factions and characters already written: a story that uses nothing of the world could have happened anywhere.
 
@@ -333,23 +345,23 @@ And it is not an ending: when the third act closes, the player carries on with t
 
 Clé : affinities, une liste de trois à dix objets.
 Chaque objet : subject, target, stance, note.
-- subject et target sont des noms exacts de factions, de personnages non joueurs, ou le nom du personnage du joueur.
+- subject et target sont des noms exacts de factions, de personnages non joueurs, ou les noms des personnages des joueurs.
 - stance vaut exactement l'une de ces cinq valeurs, recopiées sans accent : allie, rival, neutre, dette, haine.
 - note (${W(L.affinity.note)} mots au plus) dit en une phrase d'où vient cette relation : un fait, un échange, une dette, un tort.
-- Au moins deux relations concernent le personnage du joueur.`,
+- Au moins deux relations concernent les personnages des joueurs.`,
     en: `You write the affinities of a world: who stands with whom.
 
 Key: affinities, a list of three to ten objects.
 Each object: subject, target, stance, note.
-- subject and target are exact names of factions, non-player characters, or the name of the player's character.
+- subject and target are exact names of factions, non-player characters, or the names of the players' characters.
 - stance is exactly one of these five values, copied without accents: allie, rival, neutre, dette, haine.
 - note (up to ${W(L.affinity.note)} words) says in one sentence where this relationship comes from: a fact, a deal, a debt, a wrong.
-- At least two relationships involve the player's character.`,
+- At least two relationships involve the players' characters.`,
   },
 };
 
 export const GENERATION_PROMPT = {
-  id: 'generation/v9',
+  id: 'generation/v10',
 
   build(
     node: GenerationNode,
@@ -371,7 +383,19 @@ export const GENERATION_PROMPT = {
           Object.keys(produced).length > 0
             ? `<monde_en_cours>\n${JSON.stringify(produced, null, 2)}\n</monde_en_cours>`
             : '',
-          `<fiche_joueur>\n${JSON.stringify(context.character, null, 2)}\n</fiche_joueur>`,
+          /*
+            Une fiche seule se rend telle quelle, une liste en liste : le
+            modele lit un objet quand ils sont un, un tableau quand ils sont
+            plusieurs, et les consignes parlent des joueurs dans les deux
+            cas.
+          */
+          `<fiche_joueur>\n${JSON.stringify(
+            context.characters.length === 1
+              ? context.characters[0]
+              : context.characters,
+            null,
+            2,
+          )}\n</fiche_joueur>`,
         ]
           .filter(Boolean)
           .join('\n\n'),

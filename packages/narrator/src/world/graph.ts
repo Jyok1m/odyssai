@@ -69,7 +69,7 @@ const GenerationState = Annotation.Root({
   universeId: Annotation<string>,
   locale: Annotation<UiLocale>,
   themes: Annotation<WorldThemes>,
-  character: Annotation<CharacterSheet>,
+  characters: Annotation<CharacterSheet[]>,
   works: Annotation<string[]>,
   // Le registre et la palette tires par le worker, gardes avec le fil.
   flavour: Annotation<Flavour>,
@@ -135,7 +135,7 @@ function node<T, K extends keyof GenerationStateType>(
         config: deps.config,
         messages: GENERATION_PROMPT.build(step, state.locale, {
           themes: state.themes,
-          character: state.character,
+          characters: state.characters,
           produced: produced(state),
           flavour: state.flavour,
         }),
@@ -323,7 +323,7 @@ export interface RunGenerationOptions {
     universeId: string;
     locale: UiLocale;
     themes: WorldThemes;
-    character: CharacterSheet;
+    characters: CharacterSheet[];
     works: string[];
     flavour: Flavour;
   };

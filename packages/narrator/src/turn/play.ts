@@ -7,12 +7,17 @@ import {
   type UiLocale,
 } from '@odyssai/schemas';
 import { TURN_PROMPT, type TurnContext } from '../prompts/turn/v1.js';
+import {
+  PARTY_TURN_PROMPT,
+  type PartyTurnContext,
+} from '../prompts/turn/party.js';
 import { splitTail, type TailUsage } from './split-tail.js';
 
 export { CANON_MARKER } from './split-tail.js';
-export type { TurnContext };
+export type { TurnContext, PartyTurnContext };
 
 export const TURN_PROMPT_VERSION = TURN_PROMPT.id;
+export const PARTY_TURN_PROMPT_VERSION = PARTY_TURN_PROMPT.id;
 
 export interface TurnModelConfig {
   model: string;
@@ -49,6 +54,15 @@ export function buildTurnMessages(
   message: string,
 ) {
   return TURN_PROMPT.build(locale, context, message);
+}
+
+// Et la version de partie, pour ce qui relit un prompt construit.
+export function buildPartyTurnMessages(
+  locale: UiLocale,
+  context: PartyTurnContext,
+  message: string,
+) {
+  return PARTY_TURN_PROMPT.build(locale, context, message);
 }
 
 // Un bloc absent vaut une action sans de, sans fait invente et sans objet.
@@ -145,19 +159,21 @@ export function readDelta(tail: string): TurnDelta {
 }
 
 /*
-  Un tour de jeu.
-
-  Le flux n'est jamais avorte, meme si le joueur s'en va : le bloc de queue
-  doit arriver pour que le canon s'ecrive. C'est a l'appelant d'arreter la
-  diffusion sans arreter la generation.
+  Un tour de jeu, solo ou en partie : la plomberie est la meme, seul le
+  constructeur de prompt change. Le flux n'est jamais avorte, meme si le
+  joueur s'en va : le bloc de queue doit arriver pour que le canon s'ecrive.
+  C'est a l'appelant d'arreter la diffusion sans arreter la generation.
 */
-export function playTurn(request: PlayTurnRequest): PlayedTurn {
-  const { llm, config, locale, context, message, signal, trace } = request;
+function narrate(
+  build: () => ReturnType<typeof TURN_PROMPT.build>,
+  request: PlayTurnRequest,
+): PlayedTurn {
+  const { llm, config, signal, trace } = request;
 
   const split = splitTail(
     llm.streamChat({
       model: config.model,
-      messages: buildTurnMessages(locale, context, message),
+      messages: build(),
       maxOutputTokens: config.maxOutputTokens,
       temperature: config.temperature,
       extraBody: config.extraBody,
@@ -171,4 +187,23 @@ export function playTurn(request: PlayTurnRequest): PlayedTurn {
     delta: () => readDelta(split.tail()),
     usage: split.usage,
   };
+}
+
+export function playTurn(request: PlayTurnRequest): PlayedTurn {
+  const { locale, context, message } = request;
+  return narrate(
+    () => TURN_PROMPT.build(locale, context, message),
+    request,
+  );
+}
+
+// Le tour d'une partie : les memes blocs, des consignes dites pour un groupe.
+export function playPartyTurn(
+  request: Omit<PlayTurnRequest, 'context'> & { context: PartyTurnContext },
+): PlayedTurn {
+  const { locale, context, message } = request;
+  return narrate(
+    () => PARTY_TURN_PROMPT.build(locale, context, message),
+    request as PlayTurnRequest,
+  );
 }

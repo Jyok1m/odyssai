@@ -344,7 +344,9 @@ const FATE: Record<UiLocale, string> = {
   tout droit, et le joueur n'aurait plus qu'a suivre : une histoire qui sait
   ou elle va se raconte, elle ne se joue pas.
 */
-function entitiesBlock(entities: Entity[]): string {
+// Partage avec la version de partie : les blocs ne changent pas, seules les
+// consignes sur les joueurs changent.
+export function entitiesBlock(entities: Entity[]): string {
   if (entities.length === 0) return '';
   const lines = entities.map((entity) =>
     [
@@ -356,7 +358,8 @@ function entitiesBlock(entities: Entity[]): string {
   return `<entites>\n${lines.join('\n')}\n</entites>`;
 }
 
-function arcBlock(context: TurnContext): string {
+// Partage avec la version de partie : l'histoire se raconte pareil.
+export function arcBlock(context: TurnContext): string {
   const { arc, act } = context;
   if (!arc || !act) return '';
 
