@@ -79,7 +79,7 @@ export function Pricing() {
         className="mx-auto mt-16 grid max-w-md grid-cols-1 gap-5 sm:max-w-none sm:grid-cols-2 lg:grid-cols-4"
       >
         {PLAN_SLOTS.map((slot) => (
-          <Skeleton key={slot} className="h-96 rounded-card" />
+          <Skeleton key={slot} className="h-96" round="card" />
         ))}
       </Loading>
     );

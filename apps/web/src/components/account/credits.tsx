@@ -7,6 +7,8 @@ import toast from "react-hot-toast";
 
 import { Button } from "@/components/ui/button";
 import { Definition, Panel } from "@/components/ui/panel";
+import { Meter } from "@/components/ui/meter";
+import { Loading, Skeleton, SkeletonLines } from "@/components/ui/skeleton";
 import { Link } from "@/i18n/navigation";
 import {
   BillingError,
@@ -61,7 +63,11 @@ export function Credits() {
   if (!summary || !catalog) {
     return (
       <Panel title={t("title")}>
-        <p className="text-ui-sm text-vellum-3">{t("loading")}</p>
+        <Loading label={t("loading")} className="space-y-4">
+          <Skeleton className="h-9 w-40" />
+          <Skeleton className="h-1.5 w-full" round="full" />
+          <SkeletonLines lines={3} />
+        </Loading>
       </Panel>
     );
   }
@@ -129,16 +135,13 @@ export function Credits() {
       </p>
 
       {renews ? (
-        <div
+        <Meter
           role="img"
           aria-label={`${summary.credits} / ${granted} ${balance}`}
-          className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-mist"
-        >
-          <div
-            className="h-full rounded-full bg-accent transition-all duration-500"
-            style={{ width: `${filled}%` }}
-          />
-        </div>
+          value={filled}
+          rounded
+          className="mt-4 w-full"
+        />
       ) : (
         <p className="mt-3 text-caption text-vellum-3">
           {summary.unlimited ? t("unlimitedNote") : t("noRenewal")}

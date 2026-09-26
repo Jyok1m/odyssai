@@ -403,7 +403,7 @@ export function GameChat({
         {!loaded ? (
           <Loading label={t("loading")} className="space-y-6 px-1">
             <SkeletonLines lines={4} className="max-w-measure" />
-            <Skeleton className="ml-auto h-10 w-1/2 rounded-card" />
+            <Skeleton className="ml-auto h-10 w-1/2" round="card" />
             <SkeletonLines lines={3} className="max-w-measure" />
           </Loading>
         ) : (

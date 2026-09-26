@@ -9,6 +9,7 @@ import type { ProseSection } from "@/components/marketing/prose-page";
 import { Definition, Panel, Tag } from "@/components/ui/panel";
 import { Absent, WorldSkin, useWorld } from "@/components/play/use-world";
 import { Button } from "@/components/ui/button";
+import { PageSkeleton } from "@/components/ui/skeleton";
 import { Link, useRouter } from "@/i18n/navigation";
 import { fetchStories, fetchTravellers } from "@/lib/stories";
 import { fetchOpenWorlds, visitWorld } from "@/lib/world";
@@ -29,7 +30,7 @@ export function WorldBook() {
   const state = useWorld();
 
   if (state.status === "loading") {
-    return <p className="text-ui-sm text-vellum-3">{t("loading")}</p>;
+    return <PageSkeleton label={t("loading")} />;
   }
   if (state.status === "error") {
     return <p className="text-ui-sm text-ember">{t("error")}</p>;
@@ -41,7 +42,7 @@ export function WorldBook() {
   */
   if (state.status === "not_ready") {
     return (
-      <div className="space-y-5">
+      <div className="stagger space-y-5">
         <Header />
         <General />
         <Stories />
@@ -52,7 +53,7 @@ export function WorldBook() {
   }
 
   return (
-    <WorldSkin world={state.world} className="space-y-5">
+    <WorldSkin world={state.world} className="stagger space-y-5">
       <Header world={state.world} />
       <General />
       <Stories />
@@ -257,14 +258,14 @@ function OpenWorlds() {
                   {t("visitNeedsTraveller")}
                 </p>
               ) : entering === world.universeId ? (
-                <ul className="space-y-2">
+                <ul className="stagger space-y-2">
                   {travellers.map((traveller) => (
                     <li key={traveller.id}>
                       <button
                         type="button"
                         disabled={busy}
                         onClick={() => void enter(world.universeId, traveller.id)}
-                        className="w-full rounded-control border border-line px-3 py-2 text-left text-ui-sm text-vellum transition-colors hover:border-accent hover:bg-mist disabled:cursor-not-allowed disabled:opacity-60"
+                        className="lift w-full rounded-control border border-line px-3 py-2 text-left text-ui-sm text-vellum hover:border-accent hover:bg-mist disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {traveller.name}
                       </button>

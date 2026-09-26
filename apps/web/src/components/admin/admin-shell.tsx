@@ -125,13 +125,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
       <Dialog open={open} onClose={setOpen} className="relative z-50 xl:hidden">
         <DialogBackdrop
           transition
-          className="fixed inset-0 bg-ink/80 transition-opacity duration-300 ease-linear data-closed:opacity-0"
+          className="fixed inset-0 bg-ink/80 transition-opacity duration-slow ease-emerge data-closed:opacity-0 data-leave:duration-base data-leave:ease-exit"
         />
 
         <div className="fixed inset-0 flex">
           <DialogPanel
             transition
-            className="relative mr-16 flex w-full max-w-xs flex-1 transform transition duration-300 ease-in-out data-closed:-translate-x-full"
+            className="relative mr-16 flex w-full max-w-xs flex-1 transition duration-slow ease-emerge data-leave:duration-base data-leave:ease-exit motion-safe:data-closed:-translate-x-full motion-reduce:data-closed:opacity-0"
           >
             <div className="absolute top-0 left-full flex w-16 justify-center pt-5">
               <button

@@ -328,7 +328,7 @@ function WizardSkeleton({ label }: { label: string }) {
         </div>
         <Skeleton className="h-5 w-64" />
       </div>
-      <Skeleton className="h-72 rounded-card" />
+      <Skeleton className="h-72" round="card" />
     </Loading>
   );
 }

@@ -12,6 +12,7 @@ import { AttributeBlocks } from "@/components/play/attributes";
 import { Die, Verdict } from "@/components/play/game-chat";
 import { HealthBar } from "@/components/play/health";
 import { Definition, Panel, Tag } from "@/components/ui/panel";
+import { PageSkeleton } from "@/components/ui/skeleton";
 import { Absent, WorldSkin, useWorld } from "@/components/play/use-world";
 import { fetchProfile } from "@/lib/profile";
 import { fetchHistory } from "@/lib/turn";
@@ -33,7 +34,7 @@ export function CharacterSheet() {
   const state = useWorld();
 
   if (state.status === "loading") {
-    return <p className="text-ui-sm text-vellum-3">{t("loading")}</p>;
+    return <PageSkeleton label={t("loading")} />;
   }
   if (state.status === "not_ready") {
     return <Absent message={t("notReady")} />;
@@ -78,7 +79,7 @@ function Sheet({ world }: { world: WorldView }) {
   const character = world.character;
 
   return (
-    <div className="space-y-5">
+    <div className="stagger space-y-5">
       <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div>
           <p className="text-caption tracking-widest text-vellum-3 uppercase">

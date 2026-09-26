@@ -83,13 +83,13 @@ export function UserPanel({ id, onClose, onChanged }: Props) {
     <Dialog open onClose={onClose} className="relative z-50">
       <DialogBackdrop
         transition
-        className="fixed inset-0 bg-ink/80 transition-opacity duration-300 ease-linear data-closed:opacity-0"
+        className="fixed inset-0 bg-ink/80 transition-opacity duration-slow ease-emerge data-closed:opacity-0 data-leave:duration-base data-leave:ease-exit"
       />
 
       <div className="fixed inset-y-0 right-0 flex max-w-full">
         <DialogPanel
           transition
-          className="flex w-screen max-w-xl transform flex-col overflow-y-auto border-l border-line bg-abyss transition duration-300 ease-in-out data-closed:translate-x-full"
+          className="flex w-screen max-w-xl flex-col overflow-y-auto border-l border-line bg-abyss transition duration-slow ease-emerge data-leave:duration-base data-leave:ease-exit motion-safe:data-closed:translate-x-full motion-reduce:data-closed:opacity-0"
         >
           <header className="sticky top-0 flex items-start justify-between gap-4 border-b border-line bg-abyss px-6 py-4">
             <div>

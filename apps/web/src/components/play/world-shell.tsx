@@ -359,12 +359,12 @@ function TableSkeleton({ label }: { label: string }) {
             <SkeletonLines lines={5} className="max-w-measure" />
             <SkeletonLines lines={3} className="max-w-measure" />
           </div>
-          <Skeleton className="h-36 rounded-card" />
+          <Skeleton className="h-36" round="card" />
         </div>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
-          <Skeleton className="h-80 rounded-card sm:col-span-2 lg:col-span-1" />
-          <Skeleton className="h-44 rounded-card" />
-          <Skeleton className="h-44 rounded-card" />
+          <Skeleton className="h-80 sm:col-span-2 lg:col-span-1" round="card" />
+          <Skeleton className="h-44" round="card" />
+          <Skeleton className="h-44" round="card" />
         </div>
       </div>
     </Loading>

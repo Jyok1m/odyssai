@@ -42,7 +42,7 @@ export function Confirm({ label, title, lead, confirmLabel, onConfirm }: Props) 
   return (
     <form
       data-focus-ring="container"
-      className="rounded-card border border-ember/40 bg-ember/8 p-4"
+      className="animate-pop rounded-card border border-ember/40 bg-ember/8 p-4"
       onSubmit={async (event) => {
         event.preventDefault();
         if (!ready || busy) return;

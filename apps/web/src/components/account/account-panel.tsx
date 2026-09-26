@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { useAuthLinks } from "@/components/auth/auth-links";
 import { useSession } from "@/components/auth/session-provider";
 import { Button } from "@/components/ui/button";
+import { PageSkeleton } from "@/components/ui/skeleton";
 import { Definition, Panel, Tag } from "@/components/ui/panel";
 import { FIELD } from "@/components/ui/field";
 import { requestSignOut } from "@/lib/api";
@@ -51,7 +52,7 @@ export function AccountPanel() {
   }, [session.status, t]);
 
   if (session.status === "loading") {
-    return <p className="text-ui-sm text-vellum-3">{t("loading")}</p>;
+    return <PageSkeleton label={t("loading")} />;
   }
 
   if (session.status === "anonymous") {
@@ -107,7 +108,7 @@ export function AccountPanel() {
   const chosen = profile?.username ?? null;
 
   return (
-    <div className="space-y-5">
+    <div className="stagger space-y-5">
       <div className="grid gap-5 lg:grid-cols-3">
         {/* Le pseudo : la seule pièce de l'identité que l'application décide,
             et elle ne se choisit qu'une fois. */}

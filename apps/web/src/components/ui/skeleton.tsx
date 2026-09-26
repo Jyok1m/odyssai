@@ -7,11 +7,25 @@ import type { ReactNode } from "react";
   Pour une attente sans forme connue (une extraction, une génération), c'est
   toujours `Spinner` : un squelette promet une mise en page.
 */
-export function Skeleton({ className = "" }: { className?: string }) {
+// L'arrondi en propriété : deux utilitaires de rayon sur un même élément
+// seraient arbitrés par la feuille, pas par l'ordre des classes.
+const ROUND = {
+  control: "rounded-control",
+  card: "rounded-card",
+  full: "rounded-full",
+} as const;
+
+export function Skeleton({
+  className = "",
+  round = "control",
+}: {
+  className?: string;
+  round?: keyof typeof ROUND;
+}) {
   return (
     <span
       aria-hidden="true"
-      className={`relative block overflow-hidden rounded-control bg-mist ${className}`}
+      className={`relative block overflow-hidden bg-mist ${ROUND[round]} ${className}`}
     >
       <span className="absolute inset-0 animate-shimmer bg-linear-to-r from-transparent via-vellum/6 to-transparent" />
     </span>
@@ -50,5 +64,22 @@ export function SkeletonLines({ lines = 3, className = "" }: { lines?: number; c
         />
       ))}
     </span>
+  );
+}
+
+/*
+  Une page de panneaux : un titre, puis une rangée de trois blocs. La forme
+  commune de la fiche, du livre du monde et du compte.
+*/
+export function PageSkeleton({ label }: { label: string }) {
+  return (
+    <Loading label={label} className="space-y-5">
+      <Skeleton className="h-40" round="card" />
+      <div className="grid gap-5 lg:grid-cols-3">
+        <Skeleton className="h-56" round="card" />
+        <Skeleton className="h-56" round="card" />
+        <Skeleton className="h-56" round="card" />
+      </div>
+    </Loading>
   );
 }
