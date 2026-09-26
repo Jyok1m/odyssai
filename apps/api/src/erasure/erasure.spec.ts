@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { PrismaClient } from '@odyssai/db';
 import type Stripe from 'stripe';
+import type { Redis } from 'ioredis';
 import { ErasureService } from './erasure.service.js';
+import type { CreditsService } from '../credits/credits.service.js';
 
 /*
   La resiliation au depart.
@@ -24,6 +26,7 @@ describe('depart et abonnement', () => {
         ),
       },
       universe: { findMany: vi.fn().mockResolvedValue([]) },
+      partyMember: { findMany: vi.fn().mockResolvedValue([]) },
       user: {
         delete: vi.fn(() => {
           order.push('user.delete');
@@ -43,6 +46,8 @@ describe('depart et abonnement', () => {
     const service = new ErasureService(
       prisma as unknown as PrismaClient,
       stripe as unknown as Stripe | null,
+      { del: vi.fn() } as unknown as Redis,
+      { refund: vi.fn() } as unknown as CreditsService,
     );
 
     return { service, order };

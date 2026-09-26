@@ -8,7 +8,7 @@ import {
   type Story,
   type Travellers,
 } from '@odyssai/schemas';
-import { PrismaClient, type User } from '@odyssai/db';
+import { Prisma, PrismaClient, type User } from '@odyssai/db';
 import { PRISMA } from '../prisma/prisma.module.js';
 import { ChronicleService } from './chronicle.service.js';
 
@@ -49,13 +49,25 @@ type Owner = Pick<User, 'id' | 'currentUniverseId'>;
 /*
   Le filtre de l'histoire ouverte, ou null si le joueur n'en a aucune.
 
-  Le proprietaire est toujours dans le filtre : le pointeur dit laquelle, il
-  ne vaut pas preuve. Pure, pour que les services qui lisent l'histoire
-  courante n'aient pas a dependre de ce module.
+  Le pointeur ne vaut pas preuve, et il vise desormais deux sortes d'histoires :
+  les siennes, et celle de sa table. Le filtre porte les deux, et c'est lui
+  que lisent le parcours, le tour et le monde. `findFirst` et non
+  `findUnique` : la disjonction n'entre pas dans le where etendu.
+
+  Pure, pour que les services qui lisent l'histoire courante n'aient pas a
+  dependre de ce module.
 */
-export function currentStory(user: Owner): { id: string; ownerId: string } | null {
+export function openStoryWhere(
+  user: Owner,
+): Prisma.UniverseWhereInput | null {
   return user.currentUniverseId
-    ? { id: user.currentUniverseId, ownerId: user.id }
+    ? {
+        id: user.currentUniverseId,
+        OR: [
+          { ownerId: user.id },
+          { party: { members: { some: { userId: user.id } } } },
+        ],
+      }
     : null;
 }
 
@@ -66,6 +78,8 @@ const SUMMARY = {
   accentHue: true,
   isOpen: true,
   visitingId: true,
+  // Present des qu'on joue a plusieurs : le drapeau se lit sur la relation.
+  party: { select: { id: true } },
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -77,6 +91,7 @@ type Summary = {
   accentHue: number | null;
   isOpen: boolean;
   visitingId: string | null;
+  party: { id: string } | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -94,9 +109,18 @@ export class StoriesService {
   ) {}
 
   async list(user: Owner): Promise<Stories> {
+    /*
+      Les siennes, et celles des tables ou il siege : une histoire partagee
+      se liste pour qui la joue, pas pour qui l'heberge seulement.
+    */
     const [rows, pending] = await Promise.all([
       this.prisma.universe.findMany({
-        where: { ownerId: user.id },
+        where: {
+          OR: [
+            { ownerId: user.id },
+            { party: { members: { some: { userId: user.id } } } },
+          ],
+        },
         orderBy: { createdAt: 'asc' },
         select: SUMMARY,
       }),
@@ -194,6 +218,7 @@ export class StoriesService {
                 create: {
                   essenceId: essence.id,
                   arrival: 'voyageur',
+                  ownerId: user.id,
                   name: essence.name,
                   gender: essence.gender,
                   age: essence.age,
@@ -315,6 +340,7 @@ export class StoriesService {
             create: {
               essenceId: essence.id,
               arrival: 'voyageur',
+              ownerId: user.id,
               name: essence.name,
               gender: essence.gender,
               age: essence.age,
@@ -334,8 +360,22 @@ export class StoriesService {
     return this.toStory(row, row.id);
   }
 
+  /*
+    Ouvrir une autre histoire. Les siennes, ou celle de sa table : le
+    pointeur dit laquelle, le filtre tranche a qui elle appartient.
+  */
   async select(user: Owner, universeId: string): Promise<Story> {
-    const row = await this.find(user, universeId);
+    const row = await this.prisma.universe.findFirst({
+      where: {
+        id: universeId,
+        OR: [
+          { ownerId: user.id },
+          { party: { members: { some: { userId: user.id } } } },
+        ],
+      },
+      select: SUMMARY,
+    });
+    if (!row) throw new StoryNotFoundError();
     await this.open(user.id, row.id);
     return this.toStory(row, row.id);
   }
@@ -367,6 +407,7 @@ export class StoriesService {
       open: row.isOpen,
       visiting: row.visitingId !== null,
       chronicle,
+      party: row.party !== null,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };

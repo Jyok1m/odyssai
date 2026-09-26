@@ -3,6 +3,7 @@ import { AlphaModule } from '../alpha/alpha.module.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { ErasureModule } from '../erasure/erasure.module.js';
 import { ModerationModule } from '../moderation/moderation.module.js';
+import { PartyModule } from '../party/party.module.js';
 import { StoriesController } from '../stories/stories.controller.js';
 import { StoriesModule } from '../stories/stories.module.js';
 import { CharacterController } from './character.controller.js';
@@ -21,6 +22,7 @@ import { OnboardingService } from './onboarding.service.js';
     AuthModule,
     AlphaModule,
     ErasureModule,
+    PartyModule,
     StoriesModule,
     forwardRef(() => ModerationModule),
   ],
