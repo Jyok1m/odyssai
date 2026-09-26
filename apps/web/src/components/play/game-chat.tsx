@@ -700,6 +700,13 @@ function errorKey(caught: unknown) {
       return "errorUnavailable" as const;
     case "roll_expired":
       return "errorRollExpired" as const;
+    /*
+      La table joue : un autre membre est en pleine narration, la sienne
+      vient dans un instant. Ce n'est pas une panne, et le message le dit,
+      sinon le premier reflexe est de recliquer.
+    */
+    case "busy":
+      return "errorBusy" as const;
     default:
       return "errorGeneric" as const;
   }

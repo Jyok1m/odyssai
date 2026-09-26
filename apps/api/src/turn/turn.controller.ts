@@ -258,9 +258,17 @@ export class TurnController {
       /*
         Le message precedent situe un message court : « Je retente ! » n'a
         pas de situation a lui, et un 20 naturel s'est perdu la-dessus.
+
+        Dans une table, c'est le sien : la derniere phrase d'un autre siege
+        ne situe rien de ce que celui-ci vient de dire.
       */
       const previous = await this.prisma.conversationMessage.findFirst({
-        where: { universeId: world.universeId, channel: CHANNEL, role: 'user' },
+        where: {
+          universeId: world.universeId,
+          channel: CHANNEL,
+          role: 'user',
+          ...(world.party ? { memberId: user.id } : {}),
+        },
         orderBy: { seq: 'desc' },
         select: { content: true },
       });
@@ -393,7 +401,13 @@ export class TurnController {
         throw error;
       }
 
-      const memory = await this.memory.recall(world, said);
+      /*
+        Le debit est pris, la scene se prepare : ce qui suit peut encore
+        echouer avant le premier octet servi, et un joueur qui n'a rien eu
+        ne doit rien payer. Le flux n'est pas encore ouvert, l'exception
+        peut donc sortir apres remboursement.
+      */
+      const memory = await this.guarded(debit, () => this.memory.recall(world, said));
       const seq = memory.nextSeq;
 
       /*
@@ -485,18 +499,20 @@ export class TurnController {
       // perdre au joueur ce qu'il a tape. Rien a ecrire a l'ouverture, ou la
       // reponse du meneur prend le premier rang.
       if (!opening) {
-        await this.prisma.conversationMessage.create({
-          data: {
-            universeId: world.universeId,
-            channel: CHANNEL,
-            role: 'user',
+        await this.guarded(debit, () =>
+          this.prisma.conversationMessage.create({
+            data: {
+              universeId: world.universeId,
+              channel: CHANNEL,
+              role: 'user',
             seq,
             content: fate ? "Je m'en remets au sort." : said,
             // Dans une table, qui a parle : la reponse du meneur est celle du
             // groupe, le message de joueur ne l'est jamais.
             memberId: world.party ? user.id : null,
           },
-        });
+          }),
+        );
       }
 
       // A partir d'ici, plus aucune exception ne sort : seulement du SSE.
@@ -967,6 +983,9 @@ export class TurnController {
             data: {
               universeId: world.universeId,
               seq,
+              // A qui ce tour appartenait : son jet, sa fiche, ses degats.
+              // Sans lui, chaque membre relirait le dernier de d'un autre.
+              memberId: world.party ? user.id : null,
               // Ce que le joueur a envoye, pour diagnostiquer : le `kind` du
               // delta est ce que le modele en a fait, pas ce qui est arrive.
               request: request.kind,
@@ -1105,6 +1124,24 @@ export class TurnController {
       // Le creneau de narration se rend, toujours : un tour qui rend la
       // main ferme la porte qu il a ouverte, et un tour en echec aussi.
       await this.locks.release(world.universeId, token);
+    }
+  }
+
+  /*
+    Un pas entre le debit et le premier octet servi : s'il echoue, le joueur
+    n'a rien eu et ne doit rien payer. Le remboursement se fait ici plutot que
+    de noyer chaque appel dans son propre try, l'exception remontant ensuite
+    comme si rien n'avait ete debite.
+  */
+  private async guarded<T>(
+    debit: string | null,
+    run: () => Promise<T>,
+  ): Promise<T> {
+    try {
+      return await run();
+    } catch (error: unknown) {
+      if (debit) await this.credits.refund(debit);
+      throw error;
     }
   }
 

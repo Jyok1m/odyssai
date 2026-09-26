@@ -330,7 +330,16 @@ export const TurnErrorBodySchema = z.object({
     // Le monde n'est pas encore genere.
     'not_ready',
     'rate_limited',
+    /*
+      Une narration est deja en cours sur cette histoire : le meneur ne
+      raconte qu'une scene a la fois, et le journal n'a qu'un rang suivant.
+    */
     'busy',
+    /*
+      La premiere scene existe deja : elle ne se rejoue pas a chaque
+      rechargement, chacun ne la paie qu'une fois.
+    */
+    'already_started',
     // La reserve de credits est epuisee.
     'out_of_credits',
     // Le message a ete refuse par la moderation.
