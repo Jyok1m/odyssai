@@ -1,0 +1,28 @@
+# Leaving: restarting, deleting one's account
+
+`DELETE /onboarding` restarts a game, `DELETE /me` erases the account. Both go through `ErasureService` (`apps/api/src/erasure/`), a separate module: `MeController` lives in `AuthModule`, which `OnboardingModule` already imports, and the reverse would make a cycle.
+
+- **Two independent questions**, not one. A character met elsewhere is kept with `died_at` set; a visited world is kept, detached. A character travels, so it can have been met without its world having received anyone.
+- `encounters.universe_id` is the universe **where** the encounter took place, not the one the character comes from. That is what makes the two questions genuinely independent, and a test demonstrated it by failing on a fixture that confused them.
+- Nobody writes into `encounters`: the crossing between universes remains to be built. The two predicates are therefore false and everything is deleted, which is fair as long as nobody can cross paths.
+- A kept world is **emptied of the player's words**: `works`, `own_description` and the whole creation conversation. What remains is the model's text, with no link to a person. That is what allows keeping it without betraying the Privacy page, which now says it explicitly.
+- `DELETE /onboarding` only touches the open story (see "Several stories per player"), `DELETE /me` all of them.
+- `universes.owner_id` and `characters.universe_id` are nullable in `SetNull`, not in `Cascade`: it is the service that decides the fate of a world, not the database. Counterpart: deleting a user by hand leaves his world orphaned. The worker refuses to generate for a world without an owner.
+- **The API has no rights over Keycloak**, and gains none: `DELETE /me` erases the game and closes the session, then returns `accountUrl` so the player deletes his identity himself. The ansible role enables for that the required action `delete_account` and the client role `account/delete-account`.
+- The confirmation is a **word to type** (`DangerAction`), not a checkbox nor a second click: both are obtained by reflex, copying a word requires reading.
+- A Stripe failure **does not stop the departure**: the right to erasure is not suspended on a third party's availability. It goes to `logger.error` with the identifier, to be caught up by hand. It is the only case where someone would keep being charged without being able to object.
+- The Stripe client stays, only the subscription goes: invoices must survive the game account, it is an accounting obligation, and they carry nothing attached to it anymore.
+- `ErasureService` takes the Stripe client from `StripeModule`, which is global. Going through `BillingService` would make `AuthModule` to `ErasureModule` to `BillingModule` to `AuthModule`, and a `forwardRef` for one cancellation line would be paid dearly.
+
+## Several stories per player
+
+`universes.owner_id` is no longer unique: a player runs several stories, on the same credit reserve. `users.current_universe_id` says which one is **open**, and it is the one the path, the generation, `GET /world` and the game turn read.
+
+- **The pointer is not proof.** `currentStory(user)` (`apps/api/src/stories/stories.service.ts`) returns the filter `{ id, ownerId }`, never `{ id }` alone: a pointer aiming at another's world would read `null`. Pure, so that erasure and the turn do not have to import the module.
+- `GET /stories` lists, `POST /stories` starts one (empty, at the inspiration, open at once), `PUT /stories/:id/current` opens another one, `DELETE /stories/:id` deletes one, open or not, by the departure rule (`ErasureService.releaseStory`), and refuses `locked` during generation like the restart does. The controller lives in `OnboardingModule`, which already has the session guard and the erasure: a `StoriesModule` importing `AuthModule` would make Auth to Erasure to Stories to Auth.
+- **Without an open story, the first write of the path starts one**: that is what replaces the per-owner `upsert`, and what keeps the first path identical. `GET /onboarding` still writes nothing.
+- **Restarting only erases the open story.** A deleted world removes the pointer through the database (`SetNull`), a kept world (detached) removes it through the service: the player restarts on a new story, the others stay within reach. Deleting the account passes all stories through the same rule, and `DepartureOutcome` keeps the worst case visible: kept wins over deleted.
+- `STORIES_MAX` (`packages/schemas/src/stories.ts`) bounds the count: an empty story costs nothing, but beyond a few the list stops being a choice.
+- The migration opened, for each existing player, the only story he had. The pointer of a player who had none stays null, which is the state of a new player.
+- **Web-side, stories have their tab**: `/play/stories`, two tabs above the game (`GameTabs`), and `StoriesPanel` to create, play and delete. Playing opens the story then brings back to the table: it is the path that follows the open story, the tab only says which one. An inline selector above the assistant was tried and removed: it could not delete, and two places for the same thing read as two rules. The table therefore never displays for two stories at once, which dispenses with a per-story key on the input screens: changing story goes through a navigation, which raises the wizard again.
+- An e2e test (`test/stories.e2e-spec.ts`) plays the round trip, including that opening another's world answers 404 without saying it exists.
