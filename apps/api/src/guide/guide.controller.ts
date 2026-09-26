@@ -260,8 +260,13 @@ export class GuideController {
       clearInterval(ping);
       res.off('close', onClose);
 
-      await this.budget.settle(questionId, usage);
-      await this.limits.releaseSlot(questionId);
+      // Un Redis tombe ne doit ni masquer l'issue ni laisser le flux ouvert.
+      await this.budget.settle(questionId, usage).catch((error: unknown) => {
+        this.logger.warn(`budget non regle : ${String(error)}`);
+      });
+      await this.limits.releaseSlot(questionId).catch((error: unknown) => {
+        this.logger.warn(`creneau non rendu : ${String(error)}`);
+      });
 
       await this.journal.record({
         ...base,

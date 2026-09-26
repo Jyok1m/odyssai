@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GuideStreamEvent } from '@odyssai/schemas';
 import { AppModule } from './../src/app.module.js';
 import { REDIS } from './../src/redis/redis.module.js';
+import { GenerationQueueService } from './../src/onboarding/generation-queue.service.js';
 import { PRISMA } from './../src/prisma/prisma.module.js';
 import { GuideFaqService } from './../src/guide/guide-faq.service.js';
 import { GUIDE_LLM } from './../src/guide/guide-llm.provider.js';
@@ -69,6 +70,8 @@ async function boot(
       .useValue(llm)
       .overrideProvider(GuideFaqService)
       .useValue(fakeFaq)
+      .overrideProvider(GenerationQueueService)
+      .useValue({ enqueue: async () => {}, onApplicationShutdown: async () => {} })
       .compile();
 
     const app = moduleFixture.createNestApplication<INestApplication<App>>();

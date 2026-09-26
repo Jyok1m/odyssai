@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { CREDIT_COSTS } from '@odyssai/engine';
 import { PRISMA } from './../src/prisma/prisma.module.js';
 import { REDIS } from './../src/redis/redis.module.js';
+import { GenerationQueueService } from './../src/onboarding/generation-queue.service.js';
 import { FakeRedis } from './../src/auth/testing/doubles.js';
 import {
   PLAN_FIXTURES,
@@ -89,6 +90,8 @@ describe('Facturation (e2e)', () => {
       .useValue(new FakeRedis())
       .overrideProvider(PRISMA)
       .useValue(makeOnboardingPrisma(store))
+      .overrideProvider(GenerationQueueService)
+      .useValue({ enqueue: async () => {}, onApplicationShutdown: async () => {} })
       .compile();
 
     // La meme option que main.ts : sans elle, req.rawBody est absent.
