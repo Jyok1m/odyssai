@@ -6,10 +6,11 @@ import {
   type ConversationMessage,
 } from '@odyssai/schemas';
 import type { ConversationTurn } from '@odyssai/narrator';
-import { PrismaClient, type User } from '@odyssai/db';
+import { Prisma, PrismaClient, type User } from '@odyssai/db';
 import { PRISMA } from '../prisma/prisma.module.js';
+import { isUniqueViolation } from '../prisma/unique-violation.js';
 import { LockedError, WrongStepError } from './onboarding.service.js';
-import { currentStory } from '../stories/stories.service.js';
+import { openStoryWhere } from '../stories/stories.service.js';
 
 // Les tours sont epuises. La fiche reste extractible de ce qui a ete dit.
 export class ConversationOverError extends Error {
@@ -29,6 +30,14 @@ export class TooShortError extends Error {
 
 const CHANNEL = 'character_creation' as const;
 
+/*
+  Le fil d'un joueur dans cette conversation. Nul dans une histoire solo, ou
+  tout le journal est a un seul ; l'identifiant du membre dans une table, ou
+  chacun cause avec le meneur de son cote. Les reponses du meneur portent le
+  meme fil que la question : c'est un dialogue, pas un canal public.
+*/
+export type ThreadKey = string | null;
+
 @Injectable()
 export class CharacterService {
   constructor(@Inject(PRISMA) private readonly prisma: PrismaClient) {}
@@ -38,10 +47,10 @@ export class CharacterService {
     les routes de la conversation passent par la : l'etat vit en base, et un
     ecran ne suffit pas a garantir qu'on y est.
   */
-  async open(user: User): Promise<string> {
-    const where = currentStory(user);
+  async open(user: User): Promise<{ universeId: string; thread: ThreadKey }> {
+    const where = openStoryWhere(user);
     const universe = where
-      ? await this.prisma.universe.findUnique({
+      ? await this.prisma.universe.findFirst({
           where,
           select: { id: true, step: true },
         })
@@ -53,7 +62,16 @@ export class CharacterService {
     }
     if (universe.step !== 'character') throw new WrongStepError();
 
-    return universe.id;
+    // Le fil : le sien dans une table, le journal entier dans un solo.
+    const seat = await this.prisma.partyMember.findUnique({
+      where: { userId: user.id },
+      select: { party: { select: { universeId: true } } },
+    });
+
+    return {
+      universeId: universe.id,
+      thread: seat?.party.universeId === universe.id ? user.id : null,
+    };
   }
 
   /*
@@ -61,21 +79,33 @@ export class CharacterService {
     partent, l'inspiration et ses themes restent. Le monde n'existe pas
     encore, donc rien d'autre ne tient au personnage.
 
+    Dans une table, seul le fil du joueur part : celui des autres est a eux,
+    et la reponse du meneur qui leur est adresse aussi.
+
     Les credits depenses pour ces messages ne sont pas rendus : les appels ont
     eu lieu, et le joueur les a lus.
   */
-  async reset(universeId: string): Promise<void> {
+  async reset(universeId: string, thread: ThreadKey): Promise<void> {
     await this.prisma.$transaction([
       this.prisma.conversationMessage.deleteMany({
-        where: { universeId, channel: CHANNEL },
+        where: threaded(thread, {
+          universeId,
+          channel: CHANNEL,
+        }),
       }),
-      this.prisma.character.deleteMany({ where: { universeId } }),
+      // La fiche, la sienne : une par joueur et par univers.
+      this.prisma.character.deleteMany({
+        where: { universeId, ...(thread ? { ownerId: thread } : {}) },
+      }),
     ]);
   }
 
-  async conversation(universeId: string): Promise<CharacterConversation> {
+  async conversation(
+    universeId: string,
+    thread: ThreadKey,
+  ): Promise<CharacterConversation> {
     const rows = await this.prisma.conversationMessage.findMany({
-      where: { universeId, channel: CHANNEL },
+      where: threaded(thread, { universeId, channel: CHANNEL }),
       orderBy: { seq: 'asc' },
     });
 
@@ -90,9 +120,9 @@ export class CharacterService {
   }
 
   // Historique dans la forme attendue par le prompt, sans les horodatages.
-  async history(universeId: string): Promise<ConversationTurn[]> {
+  async history(universeId: string, thread: ThreadKey): Promise<ConversationTurn[]> {
     const rows = await this.prisma.conversationMessage.findMany({
-      where: { universeId, channel: CHANNEL },
+      where: threaded(thread, { universeId, channel: CHANNEL }),
       orderBy: { seq: 'asc' },
       select: { role: true, content: true },
     });
@@ -104,43 +134,60 @@ export class CharacterService {
     Le message du joueur est ecrit avant l'appel au modele, pas apres : une
     coupure en cours de reponse ne doit pas lui faire perdre ce qu'il a tape.
   */
-  async recordUser(universeId: string, content: string): Promise<void> {
-    const turns = await this.turnsUsed(universeId);
+  async recordUser(
+    universeId: string,
+    thread: ThreadKey,
+    content: string,
+  ): Promise<void> {
+    const turns = await this.turnsUsed(universeId, thread);
     if (turns >= CHARACTER_TURNS_MAX) throw new ConversationOverError();
 
-    await this.record(universeId, 'user', content);
+    await this.record(universeId, thread, 'user', content);
   }
 
-  async recordAssistant(universeId: string, content: string): Promise<void> {
-    await this.record(universeId, 'assistant', content);
+  async recordAssistant(
+    universeId: string,
+    thread: ThreadKey,
+    content: string,
+  ): Promise<void> {
+    await this.record(universeId, thread, 'assistant', content);
   }
 
   /*
     Ecrit un message avec son rang.
 
-    `seq` a un defaut a zero et une contrainte d'unicite par canal : ne pas le
-    renseigner faisait passer le premier message et echouer tous les suivants,
-    puisqu'ils visaient tous le rang zero. Le tour de jeu le calculait deja,
-    cette conversation ne l'avait jamais fait.
+    Le rang est unique par (univers, canal), pas par fil : un seul compteur
+    par canal, les fils le lisent filtre. Deux membres ecrivant en meme temps
+    peuvent donc viser le meme rang, et la contrainte tranche : on relit et
+    on repose une fois, la course est rare et bornee.
   */
   private async record(
     universeId: string,
+    thread: ThreadKey,
     role: 'user' | 'assistant',
     content: string,
   ): Promise<void> {
-    await this.prisma.conversationMessage.create({
-      data: {
-        universeId,
-        channel: CHANNEL,
-        role,
-        content,
-        seq: await this.nextSeq(universeId),
-      },
-    });
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        await this.prisma.conversationMessage.create({
+          data: {
+            universeId,
+            channel: CHANNEL,
+            role,
+            content,
+            memberId: thread,
+            seq: await this.nextSeq(universeId),
+          },
+        });
+        return;
+      } catch (error: unknown) {
+        if (!isUniqueViolation(error) || attempt === 1) throw error;
+      }
+    }
   }
 
   /*
-    Le rang suivant dans ce canal, comme le fait le tour de jeu. La colonne a
+    Le rang suivant dans le canal, comme le fait le tour de jeu. La colonne a
     un defaut a zero, qui ne vaut que pour la premiere ligne : sans rang
     explicite, le deuxieme message tombait sur la contrainte d'unicite
     (univers, canal, rang) et la conversation s'arretait au premier echange.
@@ -156,15 +203,15 @@ export class CharacterService {
   }
 
   // Assez d'echanges pour qu'une fiche ait de quoi se remplir.
-  async assertExtractable(universeId: string): Promise<void> {
-    if ((await this.turnsUsed(universeId)) < CHARACTER_TURNS_MIN) {
+  async assertExtractable(universeId: string, thread: ThreadKey): Promise<void> {
+    if ((await this.turnsUsed(universeId, thread)) < CHARACTER_TURNS_MIN) {
       throw new TooShortError();
     }
   }
 
-  async turnsUsed(universeId: string): Promise<number> {
+  async turnsUsed(universeId: string, thread: ThreadKey): Promise<number> {
     return this.prisma.conversationMessage.count({
-      where: { universeId, channel: CHANNEL, role: 'user' },
+      where: threaded(thread, { universeId, channel: CHANNEL, role: 'user' }),
     });
   }
 
@@ -177,4 +224,12 @@ export class CharacterService {
       canExtract: turns >= CHARACTER_TURNS_MIN,
     };
   }
+}
+
+/*
+  Le fil dans un where : nul dans un solo, donc tout le journal y passe ; son
+  identifiant dans une table, donc seul son fil.
+*/
+function threaded(thread: ThreadKey, where: Prisma.ConversationMessageWhereInput) {
+  return thread ? { ...where, memberId: thread } : where;
 }

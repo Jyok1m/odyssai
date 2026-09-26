@@ -116,8 +116,14 @@ export class FakeRedis {
     return value;
   }
 
-  async del(key: string): Promise<number> {
-    return this.store.delete(key) ? 1 : 0;
+  // Plusieurs cles a la fois : les actions en attente d'une table tombent
+  // ensemble, et chacune compte.
+  async del(...keys: string[]): Promise<number> {
+    let count = 0;
+    for (const key of keys) {
+      if (this.store.delete(key)) count += 1;
+    }
+    return count;
   }
 
   // Rejoue le script de liberation : supprime si la valeur colle.

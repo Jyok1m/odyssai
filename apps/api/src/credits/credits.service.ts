@@ -107,13 +107,17 @@ export class CreditsService {
   /*
     Debite, ou refuse. Rend l'identifiant de l'ecriture, qui sert a rembourser
     si l'appel echoue ensuite.
+
+    Le montant se deduit du bareme, sauf s'il est donne : une partie partage
+    le prix d'un monde, et chacun paie sa part arrondie. Le motif au grand
+    livre reste l'action, le montant se lit dans l'ecriture.
   */
   async spend(
     action: CreditAction,
     userId: string,
     ref?: string,
+    cost: number = creditsFor(action),
   ): Promise<string | null> {
-    const cost = creditsFor(action);
     if (cost === 0) return null;
 
     /*

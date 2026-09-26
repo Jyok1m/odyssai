@@ -21,6 +21,15 @@ export interface PendingRoll {
   locale: UiLocale;
 }
 
+/*
+  La cle d'une action en attente. Exportee pour le depart d'une table : la
+  partie qui s'en va laisse ce qu'elle attendait, sans que le module de
+  partie ait besoin du module de tour (et de tout ce qu'il importe).
+*/
+export function pendingRollKey(userId: string): string {
+  return `turn:pending:${userId}`;
+}
+
 @Injectable()
 export class PendingRollService {
   private readonly logger = new Logger(PendingRollService.name);
@@ -28,7 +37,7 @@ export class PendingRollService {
   constructor(@Inject(REDIS) private readonly redis: Redis) {}
 
   private key(userId: string): string {
-    return `turn:pending:${userId}`;
+    return pendingRollKey(userId);
   }
 
   async hold(userId: string, pending: PendingRoll): Promise<void> {
@@ -60,6 +69,16 @@ export class PendingRollService {
 
   // Le joueur repart sur autre chose : ce qui attendait n'a plus lieu d'etre.
   async drop(userId: string): Promise<void> {
-    await this.redis.del(this.key(userId));
+    await this.redis.del(pendingRollKey(userId));
+  }
+
+  /*
+    Les actions en attente d'autres joueurs. Dans une partie, le tour de
+    l'un fait avancer la scene : ce que les autres attendaient en travers
+    d'un jet ne peut plus s'y poser telle quelle. Ils reecriront.
+  */
+  async dropAll(userIds: string[]): Promise<void> {
+    if (userIds.length === 0) return;
+    await this.redis.del(...userIds.map(pendingRollKey));
   }
 }

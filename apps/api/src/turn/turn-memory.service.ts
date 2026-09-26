@@ -1,7 +1,8 @@
 import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import { TUNING, hpMaxOf, type Progress } from '@odyssai/engine';
+import { TUNING, conditionOf, hpMaxOf, type Progress } from '@odyssai/engine';
 import type { LlmClient } from '@odyssai/llm';
 import {
+  AttributesSchema,
   CanonFactSchema,
   CharacterSheetSchema,
   MarksSchema,
@@ -14,12 +15,13 @@ import {
   type WorldBible,
   type WorldCharter,
 } from '@odyssai/schemas';
+import type { PartyActor } from '@odyssai/narrator';
 import { PrismaClient, type User } from '@odyssai/db';
 import { PRISMA } from '../prisma/prisma.module.js';
 import { NarratorConfig } from '../config/narrator-config.js';
 import { NARRATOR_LLM } from '../onboarding/narrator-llm.provider.js';
 import { UsageService } from '../usage/usage.service.js';
-import { currentStory } from '../stories/stories.service.js';
+import { openStoryWhere } from '../stories/stories.service.js';
 
 // Les deux bornes viennent de l'index de reglages : c'est `recentTurns` qui
 // decide de ce que coute un tour, et le curseur doit se voir avec les autres.
@@ -44,11 +46,19 @@ export interface TurnWorld {
   bible: WorldBible;
   character: CharacterSheet;
   /*
+    La ligne de la fiche, pour ecrire dessus : une fiche par joueur et par
+    univers, l'unicite n'est plus sur l'univers seul.
+  */
+  characterId: string | null;
+  /*
     Les oeuvres citees a l'inspiration, pour la garde sur les emprunts.
 
     Elles ne partent jamais dans un prompt : c'est `findBorrowedNames` qui les
     lit, pour relire ce que le meneur vient d'ecrire. Le canon grandit a chaque
     tour, et un nom refuse a la generation ne doit pas rentrer par la.
+
+    Dans une table, l'union des sieges : un nom emprunte peut venir de
+    l'inspiration de n'importe lequel.
   */
   works: string[];
   /*
@@ -78,6 +88,11 @@ export interface TurnWorld {
   act: number | null;
   // Ce que le monde sait, cache compris : le meneur connait les secrets.
   entities: Entity[];
+  /*
+    Les personnages joues, un par siege. Nul dans une histoire solo : le
+    prompt du tour seul n'en a pas besoin, celui de la table le demande.
+  */
+  party: { actors: PartyActor[]; members: string[] } | null;
 }
 
 export interface TurnMemory {
@@ -92,8 +107,8 @@ export interface TurnMemory {
 
   Tout est en base, rien ne se perd. Ce qui entre dans un tour, en revanche,
   est choisi : la charte et le canon toujours, les derniers tours mot pour mot,
-  et des tours anciens seulement s'ils ressemblent a ce que le joueur vient de
-  dire.
+  et des tours anciens seulement s'ils ressemblent a ce que le joueur vient
+  de dire.
 */
 @Injectable()
 export class TurnMemoryService implements OnModuleInit {
@@ -139,12 +154,20 @@ export class TurnMemoryService implements OnModuleInit {
 
   // Le monde de l'histoire ouverte, ou `null` si la partie n'est pas jouable.
   async world(user: Pick<User, 'id' | 'currentUniverseId'>): Promise<TurnWorld | null> {
-    const where = currentStory(user);
+    const where = openStoryWhere(user);
     const universe = where
-      ? await this.prisma.universe.findUnique({
+      ? await this.prisma.universe.findFirst({
           where,
           include: {
-            character: { include: { essence: { select: { id: true, marks: true } } } },
+            /*
+              Sa fiche, et lui seul : une histoire solo en porte une, une
+              table une par membre, et le filtre sur le proprietaire rend
+              toujours la sienne.
+            */
+            characters: {
+              where: { ownerId: user.id },
+              include: { essence: { select: { id: true, marks: true } } },
+            },
             entities: { orderBy: { createdAt: 'asc' } },
             /*
               Le monde visite, quand il y en a un : c'est lui qu'on lit. Ses
@@ -153,6 +176,14 @@ export class TurnMemoryService implements OnModuleInit {
             */
             visiting: {
               include: { entities: { orderBy: { createdAt: 'asc' } } },
+            },
+            party: {
+              include: {
+                members: {
+                  orderBy: { joinedAt: 'asc' },
+                  select: { userId: true, works: true },
+                },
+              },
             },
           },
         })
@@ -165,17 +196,21 @@ export class TurnMemoryService implements OnModuleInit {
 
     const charter = WorldCharterSchema.safeParse(source.charter);
     const bible = WorldBibleSchema.safeParse(source.bible);
+    const row = universe.characters[0] ?? null;
     const character = CharacterSheetSchema.safeParse({
-      name: universe.character?.name ?? undefined,
-      gender: universe.character?.gender ?? undefined,
-      age: universe.character?.age ?? undefined,
-      personality: universe.character?.personality ?? undefined,
-      attributes: universe.character?.attributes ?? undefined,
-      talents: universe.character?.talents ?? [],
+      name: row?.name ?? undefined,
+      gender: row?.gender ?? undefined,
+      age: row?.age ?? undefined,
+      personality: row?.personality ?? undefined,
+      attributes: row?.attributes ?? undefined,
+      talents: row?.talents ?? [],
     });
 
-    if (!charter.success || !bible.success || !character.success) {
-      this.logger.error(`monde ${source.id} illisible malgre l'etape ready`);
+    if (!charter.success || !bible.success || !character.success || !row) {
+      this.logger.error(
+        `monde ${source.id} illisible malgre l'etape ready` +
+          ` (chartre ${charter.success}, bible ${bible.success}, fiche ${character.success}, ligne ${row !== null})`,
+      );
       return null;
     }
 
@@ -185,7 +220,7 @@ export class TurnMemoryService implements OnModuleInit {
       Des marques illisibles valent une liste vide : on n'en ecrase aucune,
       la borne s'applique quand meme, et le tour ne tombe pas pour autant.
     */
-    const marks = MarksSchema.safeParse(universe.character?.essence?.marks);
+    const marks = MarksSchema.safeParse(row.essence?.marks);
 
     return {
       universeId: universe.id,
@@ -193,25 +228,28 @@ export class TurnMemoryService implements OnModuleInit {
       charter: charter.data,
       bible: bible.data,
       character: character.data,
+      characterId: row.id,
       /*
-        Les oeuvres citees sont celles du monde qu'on lit : c'est contre elles
-        que la garde sur les emprunts relit ce que le meneur ecrit, et c'est ce
-        monde-la qu'il ecrit.
+        Les oeuvres citees : celles du monde qu'on lit en solo, l'union des
+        sieges dans une table. C'est contre elles que la garde relit ce que
+        le meneur ecrit, et c'est ce monde-la qu'il ecrit.
       */
-      works: source.works,
-      progress: (universe.character?.progress ?? {}) as Progress,
-      essence: universe.character?.essence
+      works: universe.party
+        ? universe.party.members.flatMap((member) => member.works)
+        : source.works,
+      progress: (row.progress ?? {}) as Progress,
+      essence: row.essence
         ? {
-            id: universe.character.essence.id,
+            id: row.essence.id,
             marks: marks.success ? marks.data : [],
           }
         : null,
       health: {
-        hp: universe.character?.hp ?? hpMax,
+        hp: row.hp ?? hpMax,
         hpMax,
-        rest: universe.character?.rest ?? 0,
+        rest: row.rest ?? 0,
       },
-      inventory: universe.character?.inventory ?? [],
+      inventory: row.inventory ?? [],
       /*
         L'arc appartient a l'histoire qu'on joue, pas au monde qu'on lit : un
         visiteur n'herite pas de celle de son hote, il vient y vivre la
@@ -229,14 +267,74 @@ export class TurnMemoryService implements OnModuleInit {
         de neuf s'ecrira du cote de l'histoire, jamais chez l'hote.
       */
       entities: [...(universe.visiting?.entities ?? []), ...universe.entities].map(
-        (row) => ({
-          name: row.name,
-          kind: row.kind as Entity['kind'],
-          known: row.known,
-          hidden: row.hidden,
+        (entity) => ({
+          name: entity.name,
+          kind: entity.kind as Entity['kind'],
+          known: entity.known,
+          hidden: entity.hidden,
         }),
       ),
+      party: universe.party
+        ? {
+            actors: await this.actors(universe.id, universe.party.members, user.id),
+            members: universe.party.members.map((member) => member.userId),
+          }
+        : null,
     };
+  }
+
+  /*
+    Les personnages joues de la table, pour le prompt de partie : chacun avec
+    son nom, une ligne de lui, et son etat en un mot. Le personnage du joueur
+    qui lit est marque actif : c'est lui dont c'est le tour.
+
+    La fiche du joueur actif part entiere dans le prompt, les autres en une
+    ligne : le meneur doit savoir qui est la, pas recalculer leurs jets.
+  */
+  private async actors(
+    universeId: string,
+    members: { userId: string }[],
+    activeId: string,
+  ): Promise<PartyActor[]> {
+    const rows = await this.prisma.character.findMany({
+      where: { universeId, ownerId: { in: members.map((member) => member.userId) } },
+      select: {
+        ownerId: true,
+        name: true,
+        personality: true,
+        attributes: true,
+        hp: true,
+      },
+    });
+
+    const byOwner = new Map(rows.flatMap((row) => (row.ownerId ? [[row.ownerId, row] as const] : [])));
+
+    return members.flatMap((member) => {
+      const row = byOwner.get(member.userId);
+      if (!row || !row.name) return [];
+
+      // Une ligne de lui, pas un socle chiffre : le prompt de table demande
+      // qui il est, ses jets restent au moteur.
+      const personality = (row.personality ?? {}) as {
+        summary?: string;
+        traits?: string[];
+      };
+      const summary =
+        personality.summary || (personality.traits ?? []).join(', ');
+
+      const attributes = AttributesSchema.safeParse(row.attributes);
+      const hpMax = attributes.success ? hpMaxOf(attributes.data.corps) : 1;
+      const condition = conditionOf(row.hp ?? hpMax, hpMax);
+
+      return [
+        {
+          name: row.name,
+          summary,
+          condition,
+          active: member.userId === activeId,
+        },
+      ];
+    });
   }
 
   /*

@@ -11,8 +11,11 @@ const REASON = 'worldGeneration';
 
   Une generation qui echoue ne doit rien couter : le joueur n'a pas eu son
   monde. Tous les autres appels de modele remboursent deja, celui-la ne le
-  faisait pas, et c'est le plus cher des cinq : vingt-cinq credits perdus par
-  echec, et vingt-cinq de plus a chaque relance.
+  faisait pas, et il est le plus cher des cinq : vingt-cinq credits perdus
+  par echec, et vingt-cinq de plus a chaque relance.
+
+  Dans une table, chacun a paye sa part : il y a autant de debits que de
+  sieges, et chacun se rembourse comme il s'etait debite.
 
   Le remboursement se declenche a la lecture, la ou la panne se constate : le
   flux d'avancement qui la sert, et la relecture du parcours qui trouve l'etape
@@ -50,8 +53,9 @@ export class GenerationRefundService {
       });
       if (claimed.count === 0) continue;
 
-      const entry = await this.pending(universeId);
-      if (!entry) {
+      // Tous les debits non rendus, un par siege dans une table.
+      const entries = await this.pending(universeId);
+      if (entries.length === 0) {
         /*
           Rien a rendre : un administrateur ne consomme rien, donc rien ne
           s'est ecrit au grand livre. La date reste posee, la question est
@@ -60,25 +64,29 @@ export class GenerationRefundService {
         continue;
       }
 
-      await this.credits.refund(entry);
-      this.logger.log(`generation ${universeId} remboursee apres echec`);
+      for (const entry of entries) {
+        await this.credits.refund(entry);
+      }
+      this.logger.log(
+        `generation ${universeId} remboursee apres echec (${entries.length} part(s))`,
+      );
     }
   }
 
   /*
-    Le debit qui n'a pas encore ete rendu, le plus ancien d'abord.
+    Les debits qui n'ont pas encore ete rendus, le plus ancien d'abord.
 
     C'est le grand livre qui repond, et non un compteur a cote : il est en
     ajout seul, un remboursement y porte l'identifiant du debit qu'il annule,
-    et la question « lequel reste-t-il a rendre » se lit donc dedans.
+    et la question « lesquels restent-ils a rendre » se lit donc dedans.
   */
-  private async pending(universeId: string): Promise<string | null> {
+  private async pending(universeId: string): Promise<string[]> {
     const debits = await this.prisma.creditEntry.findMany({
       where: { ref: universeId, reason: REASON, delta: { lt: 0 } },
       orderBy: { createdAt: 'asc' },
       select: { id: true },
     });
-    if (debits.length === 0) return null;
+    if (debits.length === 0) return [];
 
     const returned = new Set(
       (
@@ -89,6 +97,6 @@ export class GenerationRefundService {
       ).map((row) => row.ref),
     );
 
-    return debits.find((row) => !returned.has(row.id))?.id ?? null;
+    return debits.filter((row) => !returned.has(row.id)).map((row) => row.id);
   }
 }

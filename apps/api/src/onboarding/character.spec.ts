@@ -26,12 +26,12 @@ describe('conversation de creation', () => {
   it('enchaine plusieurs echanges', async () => {
     const characters = open();
 
-    await characters.recordUser(UNIVERSE_ID, 'Elle vient du nord.');
-    await characters.recordAssistant(UNIVERSE_ID, 'Du nord. Son nom ?');
-    await characters.recordUser(UNIVERSE_ID, 'Ael.');
-    await characters.recordAssistant(UNIVERSE_ID, 'Ael, entendu.');
+    await characters.recordUser(UNIVERSE_ID, null, 'Elle vient du nord.');
+    await characters.recordAssistant(UNIVERSE_ID, null, 'Du nord. Son nom ?');
+    await characters.recordUser(UNIVERSE_ID, null, 'Ael.');
+    await characters.recordAssistant(UNIVERSE_ID, null, 'Ael, entendu.');
 
-    const { messages } = await characters.conversation(UNIVERSE_ID);
+    const { messages } = await characters.conversation(UNIVERSE_ID, null);
     expect(messages).toHaveLength(4);
   });
 
@@ -40,11 +40,11 @@ describe('conversation de creation', () => {
   it('rend les echanges dans l ordre ou ils ont ete dits', async () => {
     const characters = open();
 
-    await characters.recordUser(UNIVERSE_ID, 'un');
-    await characters.recordAssistant(UNIVERSE_ID, 'deux');
-    await characters.recordUser(UNIVERSE_ID, 'trois');
+    await characters.recordUser(UNIVERSE_ID, null, 'un');
+    await characters.recordAssistant(UNIVERSE_ID, null, 'deux');
+    await characters.recordUser(UNIVERSE_ID, null, 'trois');
 
-    const { messages } = await characters.conversation(UNIVERSE_ID);
+    const { messages } = await characters.conversation(UNIVERSE_ID, null);
     expect(messages.map((message) => message.content)).toEqual([
       'un',
       'deux',
@@ -61,10 +61,10 @@ describe('conversation de creation', () => {
   it('donne au prompt la meme suite', async () => {
     const characters = open();
 
-    await characters.recordUser(UNIVERSE_ID, 'un');
-    await characters.recordAssistant(UNIVERSE_ID, 'deux');
+    await characters.recordUser(UNIVERSE_ID, null, 'un');
+    await characters.recordAssistant(UNIVERSE_ID, null, 'deux');
 
-    expect(await characters.history(UNIVERSE_ID)).toEqual([
+    expect(await characters.history(UNIVERSE_ID, null)).toEqual([
       { role: 'user', content: 'un' },
       { role: 'assistant', content: 'deux' },
     ]);

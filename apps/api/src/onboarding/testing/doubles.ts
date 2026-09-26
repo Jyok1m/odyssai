@@ -49,6 +49,8 @@ export interface UniverseRow {
 export interface CharacterRow {
   id: string;
   universeId: string | null;
+  // Le joueur qui l'incarne : une fiche par joueur et par univers.
+  ownerId: string | null;
   name: string | null;
   gender: string | null;
   age: number | null;
@@ -185,6 +187,8 @@ interface MessageRow {
   channel: string;
   role: 'user' | 'assistant';
   content: string;
+  // Le membre auquel ce message appartient, nul hors d'une table.
+  memberId: string | null;
   // Rang dans son canal, unique par univers : la base le contraint.
   seq: number;
   createdAt: Date;
@@ -221,6 +225,55 @@ export interface OnboardingStore {
   // Absente, le jeu est ouvert : c'est l'etat que presque tous les tests veulent.
   siteSettings?: SiteSettingsRow;
   bugs?: BugRow[];
+  // Les tables, et leurs sieges. Absentes, aucune histoire n'en porte.
+  parties?: PartyRow[];
+  partyMembers?: PartyMemberRow[];
+  turns?: TurnRow[];
+}
+
+export interface PartyRow {
+  id: string;
+  universeId: string;
+  size: number;
+  inviteCode: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PartyMemberRow {
+  id: string;
+  partyId: string;
+  userId: string;
+  works: string[];
+  ready: boolean;
+  isHost: boolean;
+  joinedAt: Date;
+}
+
+export interface TurnRow {
+  id: string;
+  universeId: string;
+  memberId: string | null;
+  seq: number;
+  request: string | null;
+  die: number;
+  band: string;
+  modifier: number;
+  attribute: string | null;
+  usedDie: boolean;
+  kind: string;
+  learned: number;
+  situation: string | null;
+  guidance: string[];
+  speaker: string | null;
+  line: string | null;
+  provider: string | null;
+  model: string | null;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  costUsd: number | null;
+  traceId: string | null;
+  createdAt: Date;
 }
 
 export interface BugRow {
@@ -256,7 +309,8 @@ function matchMessages(store: OnboardingStore, where: any): MessageRow[] {
     (row) =>
       row.universeId === where.universeId &&
       row.channel === where.channel &&
-      (where.role === undefined || row.role === where.role),
+      (where.role === undefined || row.role === where.role) &&
+      (where.memberId === undefined || row.memberId === where.memberId),
   );
 }
 
@@ -352,14 +406,72 @@ function pickEntry(row: CreditEntryRow, select?: Record<string, boolean>) {
 }
 
 export function makeOnboardingPrisma(store: OnboardingStore) {
+  /*
+    Les sieges d'une table, par ordre d'arrivee, le pseudo venu avec : c'est
+    la forme que lisent le parcours et la vue du monde.
+  */
+  const membersOf = (partyId: string) =>
+    (store.partyMembers ?? [])
+      .filter((row) => row.partyId === partyId)
+      .sort((a, b) => a.joinedAt.getTime() - b.joinedAt.getTime())
+      .map((row) => ({
+        ...row,
+        user: {
+          username:
+            store.users.find((u) => u.id === row.userId)?.username ?? null,
+        },
+      }));
+
+  const partyOf = (partyId: string) =>
+    (store.parties ?? []).find((row) => row.id === partyId);
+
+  /*
+    Une universe, servie par include ou par select : les relations mentionnees
+    dans l'un comme dans l'autre, les colonnes par leur nom.
+  */
+  const projectUniverse = (row: UniverseRow, include: any, select: any) => {
+    if (!select) return hydrate(row, include);
+
+    const hydrated = hydrate(row, {
+      ...include,
+      characters: select.characters ?? include?.characters,
+      jobs: typeof select.jobs === 'object' ? select.jobs : include?.jobs,
+      party: select.party ?? include?.party,
+    }) as Record<string, unknown>;
+
+    return Object.fromEntries(
+      Object.keys(select).map((key) => [key, hydrated[key]]),
+    );
+  };
+
+  /*
+    La disjonction de l'histoire ouverte : la sienne, ou celle de sa table.
+    Un seul membre suffit : l'unicite du siege est celle de la base.
+  */
+  const matchesOpenStory = (
+    store: OnboardingStore,
+    universe: UniverseRow,
+    disjunction: any[],
+  ) =>
+    disjunction.some((branch) => {
+      if (branch.ownerId !== undefined) return universe.ownerId === branch.ownerId;
+      const userId = branch.party?.members?.some?.userId;
+      return (store.partyMembers ?? []).some(
+        (member) =>
+          member.userId === userId &&
+          partyOf(member.partyId)?.universeId === universe.id,
+      );
+    });
+
   const hydrate = (
     universe: UniverseRow | undefined,
     include?: {
-      character?: unknown;
+      characters?: { where?: { ownerId?: string }; include?: unknown };
       jobs?: { take?: number };
       entities?: unknown;
       canon?: unknown;
       visiting?: unknown;
+      party?: unknown;
     },
   ): any => {
     if (!universe) return null;
@@ -369,12 +481,27 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
       .filter((job) => job.universeId === universe.id)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
+    /*
+      Les fiches qu'on y incarne, filtres par proprietaire quand la lecture
+      le demande : une fiche par joueur et par univers, et c'est le lecteur
+      qui dit la sienne.
+    */
+    const characters = store.characters.filter(
+      (row) =>
+        row.universeId === universe.id &&
+        (include.characters?.where?.ownerId === undefined ||
+          row.ownerId === include.characters.where.ownerId),
+    );
+
+    const party =
+      include.party === undefined
+        ? undefined
+        : ((store.parties ?? []).find((row) => row.universeId === universe.id) ??
+          null);
+
     return {
       ...universe,
-      character: include.character
-        ? (store.characters.find((row) => row.universeId === universe.id) ??
-          null)
-        : undefined,
+      characters: include.characters ? characters : undefined,
       jobs: include.jobs
         ? jobs.slice(0, include.jobs.take ?? jobs.length)
         : undefined,
@@ -392,6 +519,12 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
             { entities: true, canon: true },
           ) ?? null)
         : undefined,
+      party:
+        party === undefined
+          ? undefined
+          : party === null
+            ? null
+            : { ...party, members: membersOf(party.id) },
     };
   };
 
@@ -554,18 +687,27 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
             (where.ownerId === undefined || universe.ownerId === where.ownerId),
         );
         if (!row) return null;
-        if (!select) return hydrate(row, include);
-
-        // `select` peut porter une relation, comme `jobs` : on la sert par la
-        // meme hydratation, et les colonnes simples par leur nom.
-        const hydrated = hydrate(row, {
-          character: select.character !== undefined,
-          jobs: typeof select.jobs === 'object' ? select.jobs : undefined,
-        }) as Record<string, unknown>;
-
-        return Object.fromEntries(
-          Object.keys(select).map((key) => [key, hydrated[key]]),
+        return projectUniverse(row, include, select);
+      },
+      /*
+        L'histoire ouverte, la sienne ou celle de sa table : la disjonction ne
+        passe pas par le where etendu, et le double l'applique pareil.
+      */
+      findFirst: async ({ where, include, select }: any = {}) => {
+        const row = store.universes.find(
+          (universe) =>
+            where?.id === undefined || universe.id === where.id,
         );
+        if (!row) return null;
+        if (where?.OR && !matchesOpenStory(store, row, where.OR)) return null;
+        return projectUniverse(row, include, select);
+      },
+      findFirstOrThrow: async ({ where, include }: any = {}) => {
+        const row = store.universes.find(
+          (universe) => where?.id === undefined || universe.id === where.id,
+        );
+        if (!row) throw new Error('univers absent');
+        return hydrate(row, include);
       },
       findUniqueOrThrow: async ({ where, include }: any) => {
         const row = hydrate(
@@ -591,13 +733,7 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
               (orderBy?.createdAt === 'desc' ? -1 : 1) *
               (a.createdAt.getTime() - b.createdAt.getTime()),
           );
-        return rows.map((row) => {
-          const hydrated = hydrate(row, include) as Record<string, unknown>;
-          if (!select) return hydrated;
-          return Object.fromEntries(
-            Object.keys(select).map((key) => [key, hydrated[key]]),
-          );
-        });
+        return rows.map((row) => projectUniverse(row, include, select));
       },
       count: async ({ where }: any = {}) =>
         store.universes.filter(
@@ -640,10 +776,38 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         row.updatedAt = new Date();
         return hydrate(row, include);
       },
-      // Cascade sur messages, travaux et rencontres ; SetNull sur le
+      // L'ecriture conditionnelle : ne touche que ce qui repond au filtre,
+      // et dit combien de lignes ont bouge. C'est elle qui tranche les courses.
+      updateMany: async ({ where, data }: any) => {
+        const step = where?.step;
+        const wanted = step?.in ?? step;
+        const rows = store.universes.filter(
+          (row) =>
+            (where?.id === undefined || row.id === where.id) &&
+            (step === undefined ||
+              (Array.isArray(wanted)
+                ? wanted.includes(row.step)
+                : row.step === wanted)),
+        );
+        for (const row of rows) {
+          assign(row, data);
+          row.updatedAt = new Date();
+        }
+        return { count: rows.length };
+      },
+      // Cascade sur messages, travaux, rencontres et tables ; SetNull sur le
       // personnage et sur l'histoire ouverte des joueurs.
       delete: async ({ where }: any) => {
         store.universes = store.universes.filter((row) => row.id !== where.id);
+        const gone = (store.parties ?? [])
+          .filter((row) => row.universeId === where.id)
+          .map((row) => row.id);
+        store.parties = (store.parties ?? []).filter(
+          (row) => row.universeId !== where.id,
+        );
+        store.partyMembers = (store.partyMembers ?? []).filter(
+          (row) => !gone.includes(row.partyId),
+        );
         for (const user of store.users) {
           if (user.currentUniverseId === where.id)
             user.currentUniverseId = null;
@@ -668,7 +832,10 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         const row = store.characters.find((item) =>
           where.id
             ? item.id === where.id
-            : item.universeId === where.universeId,
+            : where.universeId_ownerId
+              ? item.universeId === where.universeId_ownerId.universeId &&
+                item.ownerId === where.universeId_ownerId.ownerId
+              : item.universeId === where.universeId,
         );
         if (!row) return null;
         if (!select) return { ...row };
@@ -676,11 +843,46 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
           Object.keys(select).map((key) => [key, (row as any)[key]]),
         );
       },
+      findMany: async ({ where, select }: any = {}) =>
+        store.characters
+          .filter((row) => {
+            const universeId = where?.universeId;
+            if (universeId === undefined) return true;
+            if (typeof universeId === 'object') {
+              return (
+                universeId.not === undefined || row.universeId !== universeId.not
+              );
+            }
+            return row.universeId === universeId;
+          })
+          // Le proprietaire : une valeur nue par egalite, `in` par
+          // appartenance, `not: null` par presence.
+          .filter((row) => {
+            const ownerId = where?.ownerId;
+            if (ownerId === undefined) return true;
+            if (typeof ownerId !== 'object') return row.ownerId === ownerId;
+            if (ownerId.in !== undefined) return ownerId.in.includes(row.ownerId);
+            if (ownerId.not === null) return row.ownerId !== null;
+            return true;
+          })
+          .filter((row) =>
+            where?.essenceId === undefined || row.essenceId === where.essenceId,
+          )
+          .map((row) =>
+            select
+              ? Object.fromEntries(
+                  Object.keys(select).map((key) => [key, (row as any)[key]]),
+                )
+              : { ...row },
+          ),
       update: async ({ where, data }: any) => {
         const row = store.characters.find((item) =>
           where.id
             ? item.id === where.id
-            : item.universeId === where.universeId,
+            : where.universeId_ownerId
+              ? item.universeId === where.universeId_ownerId.universeId &&
+                item.ownerId === where.universeId_ownerId.ownerId
+              : item.universeId === where.universeId,
         )!;
         return { ...assign(row, data) };
       },
@@ -693,16 +895,38 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         );
         return {};
       },
+      deleteMany: async ({ where }: any) => {
+        const kept = store.characters.filter(
+          (row) =>
+            !(
+              row.universeId === where.universeId &&
+              (where.ownerId === undefined || row.ownerId === where.ownerId)
+            ),
+        );
+        const count = store.characters.length - kept.length;
+        store.characters = kept;
+        return { count };
+      },
+      count: async ({ where }: any = {}) =>
+        store.characters.filter(
+          (row) =>
+            (where?.essenceId === undefined || row.essenceId === where.essenceId) &&
+            (where?.universeId === undefined || row.universeId === where.universeId),
+        ).length,
       upsert: async ({ where, create, update }: any) => {
+        const target = where.universeId_ownerId ?? where;
         const existing = store.characters.find(
-          (row) => row.universeId === where.universeId,
+          (row) =>
+            row.universeId === target.universeId &&
+            row.ownerId === target.ownerId,
         );
         if (existing) return { ...assign(existing, update) };
 
         const now = new Date();
         const row: CharacterRow = {
           id: randomUUID(),
-          universeId: where.universeId,
+          universeId: target.universeId,
+          ownerId: target.ownerId,
           name: null,
           gender: null,
           age: null,
@@ -777,6 +1001,7 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
           channel: data.channel,
           role: data.role,
           content: data.content,
+          memberId: data.memberId ?? null,
           seq,
           // Les messages d'un meme test naissent dans la meme milliseconde :
           // sans ce decalage, leur ordre de lecture serait indefini. C'est
@@ -855,7 +1080,218 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
       },
     },
 
-    $transaction: async (run: any) => run(double),
+    /*
+      Les tables et leurs sieges, assez fideles pour jouer l'entree en jeu
+      d'un groupe : l'unicite du siege est celle de la base, le code
+      d'invitation l'universalite de la sienne.
+    */
+    party: {
+      findUnique: async ({ where, include, select }: any) => {
+        const row = (store.parties ?? []).find(
+          (party) =>
+            (where.id !== undefined ? party.id === where.id : true) &&
+            (where.inviteCode !== undefined
+              ? party.inviteCode === where.inviteCode
+              : true),
+        );
+        if (!row) return null;
+        const members =
+          include?.members || select?.members
+            ? membersOf(row.id)
+            : undefined;
+        const universe =
+          include?.universe || select?.universe
+            ? (store.universes.find((u) => u.id === row.universeId) ?? null)
+            : undefined;
+        if (!select) return { ...row, ...(members ? { members } : {}), ...(universe ? { universe } : {}) };
+        return Object.fromEntries(
+          Object.keys(select).map((key) =>
+            key === 'members'
+              ? [key, members]
+              : key === 'universe'
+                ? [key, universe]
+                : [key, (row as any)[key]],
+          ),
+        );
+      },
+      findUniqueOrThrow: async ({ where, include, select }: any) => {
+        const row = (store.parties ?? []).find((party) => party.id === where.id);
+        if (!row) throw new Error('table absente');
+        const members =
+          include?.members || select?.members ? membersOf(row.id) : undefined;
+        if (!select) {
+          return {
+            ...row,
+            ...(members !== undefined ? { members } : {}),
+          };
+        }
+        return Object.fromEntries(
+          Object.keys(select).map((key) =>
+            key === 'members' ? [key, members] : [key, (row as any)[key]],
+          ),
+        );
+      },
+      create: async ({ data, include }: any) => {
+        const now = new Date();
+        const row: PartyRow = {
+          id: randomUUID(),
+          universeId: data.universeId,
+          size: data.size,
+          inviteCode: data.inviteCode,
+          createdAt: now,
+          updatedAt: now,
+        };
+        store.parties = [...(store.parties ?? []), row];
+
+        if (data.members?.create) {
+          const seat = data.members.create;
+          store.partyMembers = [
+            ...(store.partyMembers ?? []),
+            {
+              id: randomUUID(),
+              partyId: row.id,
+              userId: seat.userId,
+              works: [],
+              ready: false,
+              isHost: seat.isHost ?? false,
+              joinedAt: now,
+            },
+          ];
+        }
+
+        if (!include) return { ...row };
+        return {
+          ...row,
+          members: include.members ? membersOf(row.id) : undefined,
+        };
+      },
+    },
+
+    partyMember: {
+      findUnique: async ({ where, select }: any) => {
+        const row = (store.partyMembers ?? []).find(
+          (member) => member.userId === where.userId,
+        );
+        if (!row) return null;
+        const party = partyOf(row.partyId);
+        if (!select) return { ...row, party };
+        return Object.fromEntries(
+          Object.keys(select).map((key) =>
+            key === 'party' ? [key, party] : [key, (row as any)[key]],
+          ),
+        );
+      },
+      findMany: async ({ where }: any = {}) =>
+        (store.partyMembers ?? [])
+          .filter(
+            (row) => where?.userId === undefined || row.userId === where.userId,
+          )
+          .map((row) => ({ ...row })),
+      create: async ({ data }: any) => {
+        const row: PartyMemberRow = {
+          id: randomUUID(),
+          partyId: data.partyId,
+          userId: data.userId,
+          works: [],
+          ready: false,
+          isHost: false,
+          joinedAt: new Date(),
+        };
+        store.partyMembers = [...(store.partyMembers ?? []), row];
+        return { ...row };
+      },
+      update: async ({ where, data }: any) => {
+        const row = (store.partyMembers ?? []).find(
+          (member) => member.userId === where.userId,
+        )!;
+        return { ...assign(row, data) };
+      },
+      deleteMany: async ({ where }: any) => {
+        const kept = (store.partyMembers ?? []).filter(
+          (row) =>
+            !(
+              (where?.partyId === undefined || row.partyId === where.partyId) &&
+              (where?.userId === undefined || row.userId === where.userId)
+            ),
+        );
+        const count = (store.partyMembers ?? []).length - kept.length;
+        store.partyMembers = kept;
+        return { count };
+      },
+    },
+
+    // Le tour de jeu : aucun e2e ne le joue au-dela de son ecriture.
+    turn: {
+      findMany: async ({ where }: any = {}) =>
+        (store.turns ?? [])
+          .filter(
+            (row) =>
+              (where?.universeId === undefined ||
+                row.universeId === where.universeId) &&
+              (where?.memberId === undefined || row.memberId === where.memberId),
+          )
+          .map((row) => ({ ...row })),
+      findFirst: async ({ where, orderBy, select }: any = {}) => {
+        const rows = (store.turns ?? [])
+          .filter(
+            (row) =>
+              (where?.universeId === undefined ||
+                row.universeId === where.universeId) &&
+              (where?.memberId === undefined || row.memberId === where.memberId) &&
+              (where?.request === undefined || row.request === where.request),
+          )
+          .sort((a, b) =>
+            orderBy?.seq === 'desc' ? b.seq - a.seq : a.seq - b.seq,
+          );
+        const row = rows[0];
+        if (!row) return null;
+        if (!select) return { ...row };
+        return Object.fromEntries(
+          Object.keys(select).map((key) => [key, (row as any)[key]]),
+        );
+      },
+      count: async ({ where }: any = {}) =>
+        (store.turns ?? []).filter(
+          (row) =>
+            (where?.universeId === undefined ||
+              row.universeId === where.universeId) &&
+            (where?.memberId === undefined || row.memberId === where.memberId),
+        ).length,
+      create: async ({ data }: any) => {
+        const row: TurnRow = {
+          id: randomUUID(),
+          universeId: data.universeId,
+          memberId: data.memberId ?? null,
+          seq: data.seq,
+          request: data.request ?? null,
+          die: data.die,
+          band: data.band,
+          modifier: data.modifier ?? 0,
+          attribute: data.attribute ?? null,
+          usedDie: data.usedDie ?? false,
+          kind: data.kind ?? 'action',
+          learned: data.learned ?? 0,
+          situation: data.situation ?? null,
+          guidance: data.guidance ?? [],
+          speaker: data.speaker ?? null,
+          line: data.line ?? null,
+          provider: data.provider ?? null,
+          model: data.model ?? null,
+          inputTokens: data.inputTokens ?? null,
+          outputTokens: data.outputTokens ?? null,
+          costUsd: data.costUsd ?? null,
+          traceId: data.traceId ?? null,
+          createdAt: new Date(),
+        };
+        store.turns = [...(store.turns ?? []), row];
+        return { ...row };
+      },
+    },
+
+    // Les deux formes : la liste d'ecritures, et la callback qui recoit le
+    // double. La liste se joue dans l'ordre, comme une transaction.
+    $transaction: async (run: any) =>
+      Array.isArray(run) ? Promise.all(run) : run(double),
 
     subscription: {
       findUnique: async ({ where }: any) =>

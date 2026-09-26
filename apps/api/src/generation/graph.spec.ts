@@ -215,7 +215,7 @@ function run(llm: WorldLlm, works: string[] = ['Dune', 'Le Nom de la Rose']) {
       universeId: '01860000-0000-7000-8000-000000000001',
       locale: 'fr',
       themes: THEMES,
-      character: CHARACTER,
+      characters: [CHARACTER],
       works,
       flavour: { register: 'dette', palette: 'bref' },
     },
