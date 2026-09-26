@@ -109,6 +109,33 @@ export function GameChat({
     if (element) element.scrollTop = element.scrollHeight;
   }, [messages]);
 
+  /*
+    À plusieurs, le journal vit sans soi : les autres jouent, et leurs tours
+    arrivent. Une relecture paisible tant qu'aucun tour local n'est en vol :
+    en pleine narration, c'est le flux qui écrit, et relire par-dessus
+    écraserait la bulle en cours.
+  */
+  useEffect(() => {
+    if (!world.party || !loaded) return;
+
+    const interval = setInterval(() => {
+      if (busy) return;
+
+      fetchHistory()
+        .then((history) => {
+          setMessages((current) =>
+            history.messages.length > current.length ? history.messages : current,
+          );
+        })
+        .catch(() => {
+          // Une relecture manquée n'est pas une panne de la partie : la
+          // prochaine relit, et le joueur qui joue voit le tour s'écrire.
+        });
+    }, 5_000);
+
+    return () => clearInterval(interval);
+  }, [world.party, busy, loaded]);
+
   const play = async (request: Parameters<typeof playTurn>[0]) => {
     if (busy) return;
 
@@ -132,6 +159,9 @@ export function GameChat({
               seq,
               role: "user",
               content: request.kind === "fate" ? t("fateSaid") : request.content,
+              // Dans une table, son nom au-dessus de sa phrase : le journal
+              // se lit comme une conversation de groupe.
+              author: world.character.name,
               outcome: null,
               request: request.kind,
               createdAt: now,
@@ -146,6 +176,8 @@ export function GameChat({
         seq: request.kind === "open" ? seq : seq + 1,
         role: "assistant",
         content: "",
+        // La réponse du meneur est celle du groupe, jamais signée.
+        author: null,
         outcome: null,
         request: request.kind,
         createdAt: now,
@@ -382,10 +414,22 @@ export function GameChat({
               ) : (
               <li key={item.message.id}>
                 {item.message.role === "user" ? (
-                  <p className="ml-auto max-w-17/20 rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum">
-                    <span className="sr-only">{t("you")} : </span>
-                    {item.message.content}
-                  </p>
+                  <div className="ml-auto flex max-w-17/20 flex-col items-end gap-1">
+                    {/* Dans une table, le nom de qui parle : le journal se
+                        lit comme une conversation de groupe. En solo, le
+                        screen-reader seul le portait, et il reste. */}
+                    {item.message.author ? (
+                      <p className="text-caption text-vellum-3">
+                        {item.message.author}
+                      </p>
+                    ) : null}
+                    <p className="rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum">
+                      <span className="sr-only">
+                        {item.message.author ?? t("you")} :{" "}
+                      </span>
+                      {item.message.content}
+                    </p>
+                  </div>
                 ) : (
                   <div className="max-w-measure">
                     {/* Le jet d'abord : le joueur a lancé, puis le meneur a

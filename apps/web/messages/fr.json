@@ -371,6 +371,21 @@
     "traveller": {
       "title": "Tu l'amènes avec toi",
       "lead": "Ce personnage vient d'un autre de tes mondes. Sa fiche arrive remplie : corrige-la si ce monde-ci demande autre chose, puis entre."
+    },
+    "party": {
+      "title": "La table",
+      "lead": "Chacun cite ses œuvres et dresse sa fiche. Quand tous sont prêts, le monde se génère une fois pour le groupe.",
+      "copy": "Copier le code",
+      "copied": "Code copié",
+      "seats": "{taken} sur {size} joueurs",
+      "unnamed": "Joueur sans pseudo",
+      "host": "Hôte",
+      "you": "Toi",
+      "ready": "Prêt",
+      "waiting": "En préparation",
+      "leaveTitle": "Quitter la table",
+      "leaveLead": "Ton personnage restera au groupe, et le monde leur appartiendra. Tes messages de la partie resteront au journal commun.",
+      "leaveLocked": "La génération est en cours : impossible de partir maintenant, réessaie une fois le monde écrit."
     }
   },
   "Stories": {
@@ -442,6 +457,20 @@
       "generating": "En construction : attends la fin avant de la supprimer.",
       "ready": "",
       "failed": "La construction n'a pas abouti. Reprends ton inspiration et relance."
+    },
+    "party": {
+      "open": "Jouer à plusieurs",
+      "openTitle": "Ouvrir une table",
+      "openLead": "Le monde se génère une fois pour le groupe. Chacun cite ses œuvres et dresse sa fiche, puis vous entrez ensemble.",
+      "size": "{size} joueurs",
+      "join": "Rejoindre une table",
+      "joinTitle": "Rejoindre par le code",
+      "joinLead": "Entre le code que t'a partagé l'hôte de la table.",
+      "codePlaceholder": "2345-6789",
+      "alreadySeated": "Tu es déjà à une table : quitte-la avant d'en rejoindre une autre.",
+      "partyFull": "Cette table est complète.",
+      "joinLocked": "Cette histoire a déjà commencé : on ne la rejoint plus.",
+      "tag": "À plusieurs"
     }
   },
   "Concept": {
@@ -1050,7 +1079,10 @@
       "lead": "Son monde et son personnage seront abandonnés. Tes autres histoires restent.",
       "confirm": "Supprimer",
       "busy": "Effacement."
-    }
+    },
+    "leaveParty": "Quitter la table",
+    "busy": "En cours…",
+    "error": "Une erreur est survenue, réessaie."
   },
   "Game": {
     "loading": "Ouverture de la table.",

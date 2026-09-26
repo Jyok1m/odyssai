@@ -15,6 +15,7 @@ import { useAuthLinks } from "@/components/auth/auth-links";
 import { useSession } from "@/components/auth/session-provider";
 import { Button } from "@/components/ui/button";
 import { DangerAction } from "@/components/ui/danger-action";
+import { FIELD } from "@/components/ui/field";
 import { useRouter } from "@/i18n/navigation";
 import {
   StoriesError,
@@ -27,6 +28,7 @@ import {
   setStoryOpenness,
   startStory,
 } from "@/lib/stories";
+import { createParty, joinParty, PartyError } from "@/lib/party";
 
 import { Tag } from "@/components/ui/panel";
 import { fetchWorld } from "@/lib/world";
@@ -56,6 +58,10 @@ export function StoriesPanel() {
   const [travellers, setTravellers] = useState<Traveller[]>([]);
   // Ouvre le choix du personnage à amener, plutôt que d'empiler les boutons.
   const [carrying, setCarrying] = useState(false);
+  // Ouvre le choix du nombre de joueurs, puis la saisie du code.
+  const [gathering, setGathering] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const [code, setCode] = useState("");
 
   const load = useCallback(
     (signal?: AbortSignal) =>
@@ -133,6 +139,37 @@ export function StoriesPanel() {
     }
   };
 
+  /*
+    Ouvrir une table : le joueur choisit combien ils seront, l'histoire naît
+    vide et chacun la remplit de sa part. Un bouton à part : le solo n'est pas
+    un cas particulier de la table, c'est l'autre chemin.
+  */
+  const openTable = async (size: number) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await createParty(size);
+      router.push("/play");
+    } catch (caught: unknown) {
+      setError(partyErrorKey(caught, t, data.max));
+      setBusy(false);
+    }
+  };
+
+  const joinTable = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await joinParty(code);
+      setJoining(false);
+      setCode("");
+      router.push("/play");
+    } catch (caught: unknown) {
+      setError(partyErrorKey(caught, t, data.max));
+      setBusy(false);
+    }
+  };
+
   const full = data.stories.length >= data.max;
   const free = Math.max(0, data.max - data.stories.length);
 
@@ -146,6 +183,26 @@ export function StoriesPanel() {
       <div className="flex flex-wrap items-center gap-4">
         <Button type="button" disabled={busy || full} onClick={() => void create()}>
           {t("new")}
+        </Button>
+
+        {/* Jouer à plusieurs : ouvrir une table, ou rejoindre celle d'un
+            ami par son code. Deux boutons plutôt qu'un menu, c'est deux
+            chemins et non deux réglages. */}
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={busy || full}
+          onClick={() => setGathering((open) => !open)}
+        >
+          {t("party.open")}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          disabled={busy}
+          onClick={() => setJoining((open) => !open)}
+        >
+          {t("party.join")}
         </Button>
 
         {/* Amener un personnage qu'on a déjà : son nom, son caractère et son
@@ -166,6 +223,64 @@ export function StoriesPanel() {
           {full ? t("full", { max: data.max }) : t("count", { count: data.stories.length, max: data.max })}
         </p>
       </div>
+
+      {/* Combien de joueurs : le monde se génère une fois pour la table, et
+          la taille choisit combien de sièges l'attendent. */}
+      {gathering ? (
+        <section className="rounded-card border border-line bg-abyss p-5 sm:p-6">
+          <h2 className="font-ui text-caption font-medium tracking-widest text-vellum-2 uppercase">
+            {t("party.openTitle")}
+          </h2>
+          <p className="mt-2 max-w-measure text-ui-sm text-pretty text-vellum-3">
+            {t("party.openLead")}
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            {[2, 3, 4].map((size) => (
+              <Button
+                key={size}
+                type="button"
+                variant="secondary"
+                disabled={busy}
+                onClick={() => void openTable(size)}
+              >
+                {t("party.size", { size })}
+              </Button>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {/* Le code se partage hors bande, à voix haute ou par message : le
+          champ accepte ce qu'on y colle, tirets et casses comprises. */}
+      {joining ? (
+        <section className="rounded-card border border-line bg-abyss p-5 sm:p-6">
+          <h2 className="font-ui text-caption font-medium tracking-widest text-vellum-2 uppercase">
+            {t("party.joinTitle")}
+          </h2>
+          <p className="mt-2 max-w-measure text-ui-sm text-pretty text-vellum-3">
+            {t("party.joinLead")}
+          </p>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <input
+              type="text"
+              value={code}
+              onChange={(event) => setCode(event.target.value.toUpperCase())}
+              placeholder={t("party.codePlaceholder")}
+              maxLength={20}
+              aria-label={t("party.joinTitle")}
+              data-focus-ring="container"
+              className={FIELD}
+            />
+            <Button
+              type="button"
+              disabled={busy || code.trim().length === 0}
+              onClick={() => void joinTable()}
+            >
+              {t("party.join")}
+            </Button>
+          </div>
+        </section>
+      ) : null}
 
       {carrying ? (
         <section className="rounded-card border border-line bg-abyss p-5 sm:p-6">
@@ -294,6 +409,31 @@ function outcomeText(
   return t("outcome.gone");
 }
 
+/*
+  Les refus de la table, dits dans la langue de la liste : une table pleine
+  et une histoire déjà commencée ne se lisent pas de la même façon.
+*/
+function partyErrorKey(
+  caught: unknown,
+  t: ReturnType<typeof useTranslations<"Stories">>,
+  max: number,
+): string {
+  if (!(caught instanceof PartyError)) return t("error");
+
+  switch (caught.code) {
+    case "in_party":
+      return t("party.alreadySeated");
+    case "party_full":
+      return t("party.partyFull");
+    case "locked":
+      return t("party.joinLocked");
+    case "stories_full":
+      return t("full", { max });
+    default:
+      return t("error");
+  }
+}
+
 interface CardProps {
   story: Story;
   busy: boolean;
@@ -333,6 +473,7 @@ function StoryCard({ story, busy, onPlay, onDeleted }: CardProps) {
         <div className="flex flex-wrap items-center gap-2">
           {story.current ? <Tag tone="accent">{t("open")}</Tag> : null}
           {story.visiting ? <Tag tone="arcane">{t("visiting")}</Tag> : null}
+          {story.party ? <Tag tone="brass">{t("party.tag")}</Tag> : null}
           <Tag tone={story.step === "failed" ? "ember" : "muted"}>
             {t(`step.${story.step}`)}
           </Tag>

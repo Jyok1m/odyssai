@@ -371,6 +371,21 @@
     "traveller": {
       "title": "You bring them along",
       "lead": "This character comes from another of your worlds. Their sheet arrives filled in: adjust it if this world asks for something else, then step in."
+    },
+    "party": {
+      "title": "The table",
+      "lead": "Everyone cites their works and draws up their sheet. When all are ready, the world is generated once for the group.",
+      "copy": "Copy the code",
+      "copied": "Code copied",
+      "seats": "{taken} of {size} players",
+      "unnamed": "Player without a name",
+      "host": "Host",
+      "you": "You",
+      "ready": "Ready",
+      "waiting": "Still working",
+      "leaveTitle": "Leave the table",
+      "leaveLead": "Your character stays with the group, and the world remains theirs. Your messages of the game stay in the shared journal.",
+      "leaveLocked": "Generation is running: you cannot leave now, try again once the world is written."
     }
   },
   "Stories": {
@@ -442,6 +457,20 @@
       "generating": "Under construction: wait for it to finish before deleting it.",
       "ready": "",
       "failed": "The build did not go through. Pick your inspiration back up and relaunch."
+    },
+    "party": {
+      "open": "Play with others",
+      "openTitle": "Open a table",
+      "openLead": "The world is generated once for the group. Everyone cites their works and draws up their sheet, then you enter together.",
+      "size": "{size} players",
+      "join": "Join a table",
+      "joinTitle": "Join by code",
+      "joinLead": "Enter the code the table's host shared with you.",
+      "codePlaceholder": "2345-6789",
+      "alreadySeated": "You are already at a table: leave it before joining another.",
+      "partyFull": "That table is full.",
+      "joinLocked": "That story has already begun: it cannot be joined anymore.",
+      "tag": "With others"
     }
   },
   "Concept": {
@@ -1050,7 +1079,10 @@
       "lead": "Its world and its character will be given up. Your other stories stay.",
       "confirm": "Delete",
       "busy": "Erasing."
-    }
+    },
+    "leaveParty": "Leave the table",
+    "busy": "In progress…",
+    "error": "Something went wrong, try again."
   },
   "Game": {
     "loading": "Opening the table.",
