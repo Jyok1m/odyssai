@@ -50,6 +50,18 @@ export const CREDIT_COSTS = {
 export type CreditAction = keyof typeof CREDIT_COSTS;
 
 /*
+  La part de chacun dans un monde genere a plusieurs.
+
+  Arrondie au credit superieur : un credit est la plus petite unite, et
+  arrondir en dessous ferait un monde partage moins cher qu'un monde solo,
+  ce qui serait incite a ne jamais jouer seul. Le total collecte depasse
+  donc le prix affiche d'au plus (taille - 1) credits, jamais l'inverse.
+*/
+export function partyShare(members: number): number {
+  return Math.ceil(CREDIT_COSTS.worldGeneration / members);
+}
+
+/*
   La moderation et les embeddings ne sont jamais factures. Faire payer au
   joueur le fait qu'on le surveille serait indefendable, et le rappel de sa
   propre histoire n'est pas un service qu'il commande.

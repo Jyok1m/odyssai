@@ -38,6 +38,11 @@ export const StorySchema = z.object({
     ce qu'on a ecrit chez un autre.
   */
   chronicle: z.number().int().nonnegative(),
+  /*
+    Cette histoire se joue a plusieurs : le joueur la partage avec une table,
+    dont il est l'hote ou un membre. Faux pour le solo.
+  */
+  party: z.boolean(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 });

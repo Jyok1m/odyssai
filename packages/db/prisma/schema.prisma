@@ -91,6 +91,14 @@ model User {
   universes    Universe[] @relation("Owner")
   /// Ses personnages, independamment des mondes ou ils s'incarnent.
   essences     Essence[]
+  /// Les personnages qu'il incarne : les siens dans une partie, une
+  /// recopie du proprietaire dans une histoire solo.
+  played       Character[] @relation("PlayedCharacter")
+  parties      PartyMember[]
+  /// Les messages qui appartiennent a son fil, dans une partie.
+  thread       ConversationMessage[] @relation("ThreadMessage")
+  /// Les tours dont c'etait a lui de jouer, dans une partie.
+  playedTurns  Turn[] @relation("PlayedTurn")
   encounters   Encounter[]
   llmUsage     LlmUsage[]
   subscription Subscription?
@@ -255,7 +263,14 @@ model Universe {
   /// s'ecrit au fil de l'eau. Nul pour un monde genere avant l'arc.
   arcAct Int? @map("arc_act")
 
-  character  Character?
+  /*
+    Les personnages qu'on y incarne : un seul dans une histoire solo, un par
+    membre dans une partie. Chaque lecteur dit a qui il lit, par
+    `characters.ownerId` : le champ n'est plus unique, un univers porte
+    plusieurs fiches.
+  */
+  characters  Character[]
+  party      Party?
   messages   ConversationMessage[]
   jobs       GenerationJob[]
   encounters Encounter[]
@@ -323,8 +338,9 @@ enum Arrival {
   @@map("arrival")
 }
 
-/// Le personnage du joueur. Un seul par univers pour l'instant, d'ou l'unicite
-/// sur universe_id : c'est celui qu'il incarne.
+/// Le personnage du joueur. Un par joueur et par univers : une histoire solo
+/// n'en porte qu'un, une partie en porte un par membre, d'ou l'unicite sur la
+/// paire et non plus sur l'univers seul.
 model Character {
   id String @id @default(uuid(7)) @db.Uuid
 
@@ -340,8 +356,14 @@ model Character {
   /// Nullable : un personnage que d'autres joueurs ont rencontre survit a la
   /// suppression de son monde. C'est le SetNull qui le protege de la cascade,
   /// sans dependre d'un ordre d'ecriture.
-  universeId String?   @unique @map("universe_id") @db.Uuid
+  universeId String?   @map("universe_id") @db.Uuid
   universe   Universe? @relation(fields: [universeId], references: [id], onDelete: SetNull)
+
+  /// Le joueur qui l'incarne. Recopie du proprietaire du monde pour les
+  /// histoires existantes, pose a soi dans une partie. SetNull : son depart
+  /// ne doit pas emporter un personnage que d'autres ont croise.
+  ownerId String? @map("owner_id") @db.Uuid
+  owner   User?   @relation("PlayedCharacter", fields: [ownerId], references: [id], onDelete: SetNull)
 
   /// Nullable parce que la fiche s'ecrit en plusieurs fois : la presence du
   /// nom est exigee par le schema strict au moment de lancer la generation,
@@ -392,6 +414,9 @@ model Character {
 
   encounters Encounter[]
 
+  /// Un personnage par joueur et par univers. Les orphelins (universe nul)
+  /// ne se genent pas entre eux : Postgres traite les nuls comme distincts.
+  @@unique([universeId, ownerId])
   @@map("characters")
 }
 
@@ -699,6 +724,19 @@ model ConversationMessage {
   role    MessageRole
   content String
 
+  /*
+    Le membre auquel ce message appartient.
+
+    Le canal de creation devient un fil par membre, et chaque fil garde
+    les reponses du meneur qui lui sont adressees ; dans le canal du jeu,
+    il dit qui a parle, et reste nul sur la reponse du meneur, qui est
+    celle du groupe. Nul partout dans une histoire solo. Le rang reste
+    unique par (univers, canal) : un seul compteur par canal, les fils le
+    lisant filtre.
+  */
+  memberId String? @map("member_id") @db.Uuid
+  member   User?   @relation("ThreadMessage", fields: [memberId], references: [id], onDelete: SetNull)
+
   /// Rang explicite dans son canal. L'ordre d'un journal de partie ne peut pas
   /// dependre d'une horloge a la milliseconde : le message du joueur et la
   /// reponse du meneur s'ecrivent dans la meme transaction, et rien ne les
@@ -712,6 +750,7 @@ model ConversationMessage {
 
   @@unique([universeId, channel, seq])
   @@index([universeId, channel, createdAt])
+  @@index([universeId, channel, memberId])
   @@map("conversation_messages")
 }
 
@@ -728,6 +767,13 @@ model Turn {
 
   /// Le rang du message du joueur qui a ouvert ce tour.
   seq Int
+
+  /// Le membre dont c'est le tour : son jet, sa fiche, ses degats. Nul dans
+  /// une histoire solo, ou la colonne ne dit rien de plus que l'univers.
+  /// Garder pour la meme raison que le jet brut : relire apres coup a qui
+  /// appartient un verdict, et rendre a chacun son dernier de.
+  memberId String? @map("member_id") @db.Uuid
+  member   User?   @relation("PlayedTurn", fields: [memberId], references: [id], onDelete: SetNull)
 
   /// Ce que le joueur a envoye : say, ask, fate, roll, open. `kind`, lui, est
   /// ce que le modele en a fait. Sans cette colonne, rien ne disait si une
@@ -781,6 +827,7 @@ model Turn {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   @@unique([universeId, seq])
+  @@index([universeId, memberId])
   @@map("turns")
 }
 
@@ -906,6 +953,71 @@ model GenerationJob {
 
   @@index([universeId, createdAt])
   @@map("generation_jobs")
+}
+
+/*
+  Une histoire jouee a plusieurs. Elle n'existe que pour une table de deux
+  joueurs au moins : le solo n'en a pas, et les deux chemins ne se croisent
+  nulle part.
+
+  L'univers EST l'histoire : ses messages, ses tours, son canon et son arc
+  sont l'etat partage. La partie s'y attache plutot que de vivre a cote.
+*/
+model Party {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  /// Unique et en cascade : la partie meurt avec son histoire, rien d'autre
+  /// ne l'attache.
+  universeId String   @unique @map("universe_id") @db.Uuid
+  universe   Universe @relation(fields: [universeId], references: [id], onDelete: Cascade)
+
+  /// Combien de joueurs s'asseoient a cette table, choisi par l'hote. La
+  /// table doit etre pleine pour generer : un siege vide, c'est quelqu'un
+  /// qu'on attend encore.
+  size Int
+
+  /// A partager hors bande, il n'y a pas de courriel d'invitation. Huit
+  /// caracteres sans ambiguite, unique.
+  inviteCode String @unique @map("invite_code") @db.VarChar(16)
+
+  members PartyMember[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("parties")
+}
+
+/// Un siege a la table. Le membre porte sa propre inspiration et son avancee,
+/// qui n'ont a vivre ni sur l'univers (partages) ni sur sa fiche (du jeu).
+model PartyMember {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  partyId String @map("party_id") @db.Uuid
+  party   Party  @relation(fields: [partyId], references: [id], onDelete: Cascade)
+
+  /// Unique : un joueur n'asseoit qu'a une table a la fois. Cascade : le
+  /// depart volontaire efface la ligne, et effacer le compte aussi.
+  userId String @unique @map("user_id") @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Ses oeuvres citees a l'inspiration : l'abstraction recoit l'union des
+  /// membres. Gardees apres la generation, comme `universes.works` : la garde
+  /// sur les emprunts relit contre elles a chaque tour.
+  works String[] @default([])
+
+  /// Sa fiche est validee et sa part du monde payee. Le dernier pret lance
+  /// la generation, une seule fois pour tous.
+  ready Boolean @default(false)
+
+  /// Celui qui a ouvert la table. L'appartenance de l'univers peut passer a
+  /// un autre membre si l'hote part ; ce drapeau dit qui l'a fondue.
+  isHost Boolean @default(false) @map("is_host")
+
+  joinedAt DateTime @default(now()) @map("joined_at") @db.Timestamptz(3)
+
+  @@index([partyId])
+  @@map("party_members")
 }
 
 /// Un bug signale depuis le jeu, avec sa capture s'il y en a une.

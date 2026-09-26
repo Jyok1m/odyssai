@@ -268,6 +268,12 @@ export const TurnMessageSchema = z.object({
   seq: z.number().int().nonnegative(),
   role: z.enum(['user', 'assistant']),
   content: z.string(),
+  /*
+    Le nom du personnage qui a parle, dans une partie : le journal se lit
+    comme une conversation de groupe, et il faut savoir qui dit quoi. Nul sur
+    les reponses du meneur et partout dans une histoire solo.
+  */
+  author: z.string().nullable(),
   // Porte par la reponse du meneur, jamais par le message du joueur.
   outcome: PublicOutcomeSchema.nullable(),
   /*

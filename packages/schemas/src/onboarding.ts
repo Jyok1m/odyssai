@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PartySchema } from './party.js';
 
 /*
   Ou en est le joueur. `username` n'existe pas dans l'enumeration de la base :
@@ -278,6 +279,11 @@ export const OnboardingStateSchema = z.object({
   */
   arrival: ArrivalSchema.nullable(),
   generation: GenerationProgressSchema.nullable(),
+  /*
+    La table, quand l'histoire ouverte se joue a plusieurs : le code a
+    partager, les sieges, qui est pret. Nul dans une histoire solo.
+  */
+  party: PartySchema.nullable(),
 });
 
 export type OnboardingState = z.infer<typeof OnboardingStateSchema>;
