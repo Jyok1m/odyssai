@@ -42,24 +42,24 @@ export function ProsePage({
       <BreadcrumbJsonLd locale={locale} href={href} name={title} />
 
       <header className="max-w-headline">
-        <h1 className="font-voice text-display-compact text-balance text-vellum sm:text-display">
+        <h1 className="animate-rise font-voice text-display-compact text-balance text-vellum sm:text-display">
           {title}
         </h1>
-        <p className="mt-8 font-voice text-tagline text-pretty text-vellum-2 italic">
+        <p className="mt-8 animate-rise font-voice text-tagline text-pretty text-vellum-2 italic motion-delay-1">
           {lead}
         </p>
       </header>
 
       <div className="mt-14 grid gap-x-12 lg:grid-cols-[minmax(0,1fr)_296px]">
         <div className="max-w-headline">
-          <div className="space-y-6 font-voice text-narration text-pretty text-vellum">
+          <div className="animate-rise space-y-6 font-voice text-narration text-pretty text-vellum motion-delay-2">
             {intro.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
             ))}
           </div>
 
           {sections.map((section, index) => (
-            <section key={section.title} className="mt-16">
+            <section key={section.title} className="reveal mt-16">
               <h2
                 id={nav[index]!.id}
                 className="scroll-mt-24 font-voice text-subtitle text-vellum"
@@ -74,7 +74,7 @@ export function ProsePage({
             </section>
           ))}
 
-          {footer ? <div className="mt-16">{footer}</div> : null}
+          {footer ? <div className="reveal mt-16">{footer}</div> : null}
         </div>
 
         {nav.length > 1 ? (

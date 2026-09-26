@@ -21,25 +21,34 @@ export function Hero({ children }: { children?: ReactNode }) {
       {/* Décor de fond et non plus décor de coin : centré derrière le titre,
           assez pâle pour rester une texture. `min()` n'a pas d'équivalent en
           classe native. */}
-      <Constellation className="pointer-events-none absolute -top-16 left-1/2 -z-10 w-[min(820px,115%)] -translate-x-1/2 opacity-20 sm:opacity-30" />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-16 left-1/2 -z-10 w-[min(820px,115%)] -translate-x-1/2 opacity-20 sm:opacity-30"
+      >
+        {/* La dérive sur le SVG et non sur ce conteneur : le centrage est
+            un `translate`, que l'animation écraserait. */}
+        <Constellation animated className="w-full animate-float" />
+      </div>
 
       <div className="mx-auto max-w-wrap px-6 lg:px-8">
         <div className="flex flex-col items-center pt-28 pb-24 text-center sm:pt-32 sm:pb-32">
-          <p className="relative inline-flex items-center rounded-full border border-line px-2.5 py-1 text-tag font-medium text-vellum-2 transition-colors hover:border-vellum-3">
+          {/* L'entrée en cascade : la pastille, le titre, la promesse, les
+              boutons, puis le guide. Un rang de cadence chacun. */}
+          <p className="relative inline-flex animate-rise items-center rounded-full border border-line px-2.5 py-1 text-tag font-medium text-vellum-2 transition-colors hover:border-vellum-3">
             {t("badge")}{" "}
-            <Link href="/concept" className="ml-1.5 font-semibold text-accent">
+            <Link href="/concept" className="group ml-1.5 font-semibold text-accent">
               <span aria-hidden="true" className="absolute inset-0" />
-              {t("badgeCta")} <span aria-hidden="true">&rarr;</span>
+              {t("badgeCta")} <Arrow />
             </Link>
           </p>
 
           {/* Plus large qu'avant : centré sur 896 px le titre tient en deux
               lignes au lieu de trois, ce qui pose la page au lieu de l'étirer. */}
-          <h1 className="mt-6 max-w-4xl font-voice text-display-compact text-balance text-vellum sm:text-display">
+          <h1 className="mt-6 max-w-4xl animate-rise font-voice text-display-compact text-balance text-vellum motion-delay-1 sm:text-display">
             {t("title")}
           </h1>
 
-          <p className="mt-6 max-w-headline text-ui text-pretty text-vellum-2">
+          <p className="mt-6 max-w-headline animate-rise text-ui text-pretty text-vellum-2 motion-delay-2">
             {t("description")}
           </p>
 
@@ -48,15 +57,15 @@ export function Hero({ children }: { children?: ReactNode }) {
               qui l'a déjà réservée, dire que le jeu n'est pas encore ouvert. */}
           <AlphaStanding />
 
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+          <div className="mt-8 flex animate-rise flex-wrap items-center justify-center gap-4 motion-delay-3">
             <SignupCta>{t("primaryCta")}</SignupCta>
             {/* Lien simple et non bouton : sans padding horizontal, il
                 reste aligné sur le bouton primaire quand la ligne passe. */}
             <Link
               href="/concept"
-              className="inline-flex items-center gap-2 text-control font-medium text-vellum transition-colors hover:text-accent"
+              className="group inline-flex items-center gap-2 text-control font-medium text-vellum transition-colors hover:text-accent"
             >
-              {t("secondaryCta")} <span aria-hidden="true">&rarr;</span>
+              {t("secondaryCta")} <Arrow />
             </Link>
           </div>
 
@@ -67,10 +76,25 @@ export function Hero({ children }: { children?: ReactNode }) {
 
           {/* text-left : la conversation ne se lit pas centrée. */}
           {children ? (
-            <div className="mt-14 w-full max-w-2xl text-left">{children}</div>
+            <div className="mt-14 w-full max-w-2xl animate-rise text-left motion-delay-4">{children}</div>
           ) : null}
         </div>
       </div>
     </div>
+  );
+}
+
+/*
+  La flèche d'un lien qui mène ailleurs : elle avance d'un cran au survol du
+  lien, qui porte `group`.
+*/
+function Arrow() {
+  return (
+    <span
+      aria-hidden="true"
+      className="inline-block transition-transform duration-base ease-emerge motion-safe:group-hover:translate-x-0.5"
+    >
+      &rarr;
+    </span>
   );
 }

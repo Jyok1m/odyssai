@@ -7,6 +7,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
+import { Caret, StreamedText } from "@/components/motion/streamed-text";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
@@ -162,7 +163,7 @@ export function GuideChat() {
       {/* Les amorces disparaissent dès la première question : elles ne
             servent qu'à démarrer, et elles tiennent trois lignes sur mobile. */}
       {!started && suggestions.length > 0 && (
-        <ul className="mt-4 flex flex-wrap gap-2 px-1">
+        <ul className="stagger mt-4 flex flex-wrap gap-2 px-1">
           {suggestions.map((suggestion) => (
             <li key={suggestion.id}>
               <Button
@@ -184,7 +185,7 @@ export function GuideChat() {
           className="mt-5 flex max-h-80 flex-col gap-5 overflow-y-auto overscroll-contain px-1 sm:max-h-96"
         >
           {turns.map((turn, index) => (
-            <li key={index} className="flex flex-col gap-3">
+            <li key={index} className="flex animate-rise flex-col gap-3">
               <p className="ml-auto max-w-[85%] rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum">
                 <span className="sr-only">{t("you")} : </span>
                 {turn.question}
@@ -201,11 +202,15 @@ export function GuideChat() {
                 <p className="text-caption text-vellum-3">{t("guide")}</p>
                 {turn.answer ? (
                   <p className="mt-1 text-ui-sm whitespace-pre-wrap text-vellum">
-                    {turn.answer}
+                    <StreamedText
+                      text={turn.answer}
+                      live={streaming && index === turns.length - 1}
+                    />
+                    {streaming && index === turns.length - 1 ? <Caret /> : null}
                   </p>
                 ) : (
                   !turn.error && (
-                    <p className="mt-1 text-ui-sm text-vellum-3">
+                    <p className="mt-1 animate-breathe text-ui-sm text-vellum-3">
                       {t("thinking")}
                     </p>
                   )
@@ -229,12 +234,12 @@ export function GuideChat() {
                 )}
 
                 {turn.partial && (
-                  <p className="mt-2 text-ui-sm text-vellum-3">
+                  <p className="mt-2 animate-fade text-ui-sm text-vellum-3">
                     {t("partial")}
                   </p>
                 )}
                 {turn.error && (
-                  <p className="mt-2 text-ui-sm text-ember">{turn.error}</p>
+                  <p className="mt-2 animate-fade text-ui-sm text-ember">{turn.error}</p>
                 )}
               </div>
             </li>

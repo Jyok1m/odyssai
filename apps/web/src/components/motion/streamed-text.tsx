@@ -58,3 +58,13 @@ function next(chunks: Chunk[], before: string, after: string): Chunk[] {
     ...grown.slice(grown.length - KEEP),
   ];
 }
+
+// Le curseur du kit, `.caret` : il clignote tant que la voix écrit.
+export function Caret() {
+  return (
+    <span
+      aria-hidden="true"
+      className="ml-1 inline-block h-4 w-0.5 -translate-y-px animate-blink bg-accent align-middle"
+    />
+  );
+}

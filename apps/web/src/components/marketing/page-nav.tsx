@@ -59,7 +59,7 @@ export function PageNav({
                   href={`#${section.id}`}
                   aria-current={current ? "true" : undefined}
                   className={[
-                    "-ml-px block border-l py-1.5 pl-4 text-ui-sm transition-colors",
+                    "-ml-px block border-l py-1.5 pl-4 text-ui-sm transition-colors duration-base",
                     current
                       ? "border-accent text-accent"
                       : "border-transparent text-vellum-3 hover:border-vellum-3 hover:text-vellum-2",

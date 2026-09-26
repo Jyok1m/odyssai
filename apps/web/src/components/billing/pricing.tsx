@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { useSession } from "@/components/auth/session-provider";
 import { useAuthLinks } from "@/components/auth/auth-links";
 import { Button } from "@/components/ui/button";
+import { Loading, Skeleton } from "@/components/ui/skeleton";
 import {
   BillingError,
   fetchBillingSummary,
@@ -26,6 +27,9 @@ import {
   dotation : même les lignes du comparatif se déduisent des chiffres, pour
   qu'un palier ajouté demain s'y range sans qu'on y touche.
 */
+// Autant de cartes que de paliers au catalogue, le plus souvent.
+const PLAN_SLOTS = [0, 1, 2, 3];
+
 export function Pricing() {
   const t = useTranslations("Pricing");
   const session = useSession();
@@ -67,7 +71,18 @@ export function Pricing() {
   }
 
   if (!catalog) {
-    return <p className="mt-10 text-ui-sm text-vellum-3">{t("loading")}</p>;
+    // La grille des paliers à sa taille, pour que la page ne saute pas à
+    // l'arrivée du catalogue.
+    return (
+      <Loading
+        label={t("loading")}
+        className="mx-auto mt-16 grid max-w-md grid-cols-1 gap-5 sm:max-w-none sm:grid-cols-2 lg:grid-cols-4"
+      >
+        {PLAN_SLOTS.map((slot) => (
+          <Skeleton key={slot} className="h-96 rounded-card" />
+        ))}
+      </Loading>
+    );
   }
 
   // La vedette vient de la base : elle se pose au tableau de bord, la table
@@ -96,7 +111,7 @@ export function Pricing() {
       {/* Une colonne par palier des que la place existe. `max-w-md` centre la
           pile sur telephone : etiree sur toute la largeur, une carte seule
           par ligne devient un bandeau. */}
-      <div className="mx-auto mt-16 grid max-w-md grid-cols-1 gap-5 sm:max-w-none sm:grid-cols-2 lg:grid-cols-4">
+      <div className="stagger mx-auto mt-16 grid max-w-md grid-cols-1 gap-5 sm:max-w-none sm:grid-cols-2 lg:grid-cols-4">
         {catalog.plans.map((plan) => (
           <PlanCard
             key={plan.id}
@@ -113,7 +128,7 @@ export function Pricing() {
 
       <Comparison catalog={catalog} featured={featured} />
 
-      <section className="mt-24 sm:mt-32">
+      <section className="reveal mt-24 sm:mt-32">
         <h2 className="text-center font-voice text-title text-balance text-vellum">
           {t("faqTitle")}
         </h2>
@@ -205,7 +220,7 @@ function PlanCard({
       : "border-line bg-abyss";
 
   return (
-    <div className={`flex flex-col rounded-card border p-6 ${skin}`}>
+    <div className={`flex flex-col rounded-card border p-6 transition-colors duration-base ${skin}`}>
       <div className="flex min-h-6 items-center justify-between gap-2">
         <h3 className="font-voice text-subtitle text-vellum">{plan.name}</h3>
 
@@ -344,7 +359,7 @@ function Comparison({
   ];
 
   return (
-    <section className="mt-24 sm:mt-32">
+    <section className="reveal mt-24 sm:mt-32">
       <h2 className="text-center font-voice text-title text-balance text-vellum">
         {t("compareTitle")}
       </h2>

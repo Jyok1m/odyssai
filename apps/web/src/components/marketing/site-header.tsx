@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog, DialogPanel } from "@headlessui/react";
+import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -20,6 +20,14 @@ const NAV_ITEMS = [
   { key: "lore", href: "/lore" },
   { key: "pricing", href: "/pricing" },
 ] as const;
+
+/*
+  Un trait d'accent se déroule sous le lien survolé. Un `scale`, pas une
+  largeur : il ne réagence rien. Le pseudo-élément suit le texte, le lien
+  garde son liseré de focus.
+*/
+const NAV_LINK =
+  "relative text-ui-sm font-medium text-vellum-2 transition-colors hover:text-vellum after:absolute after:inset-x-0 after:-bottom-1 after:h-px after:origin-left after:scale-x-0 after:bg-accent after:transition-transform after:duration-base after:ease-emerge hover:after:scale-x-100";
 
 export function SiteHeader() {
   const t = useTranslations("Nav");
@@ -55,7 +63,7 @@ export function SiteHeader() {
             <Link
               key={item.key}
               href={item.href}
-              className="text-ui-sm font-medium text-vellum-2 transition-colors hover:text-vellum"
+              className={NAV_LINK}
             >
               {t(item.key)}
             </Link>
@@ -78,8 +86,16 @@ export function SiteHeader() {
         onClose={setMobileMenuOpen}
         className="lg:hidden"
       >
-        <div className="fixed inset-0 z-50 bg-ink/60" />
-        <DialogPanel className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-abyss p-6 sm:max-w-sm sm:border-l sm:border-line">
+        {/* Pas de flou derrière le panneau : un `backdrop-filter` plein
+            écran coûte cher sur mobile, et le voile suffit. */}
+        <DialogBackdrop
+          transition
+          className="fixed inset-0 z-50 bg-ink/60 transition-opacity duration-slow ease-emerge data-closed:opacity-0 data-leave:duration-base data-leave:ease-exit"
+        />
+        <DialogPanel
+          transition
+          className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-abyss p-6 transition duration-slow ease-emerge data-closed:opacity-0 data-leave:duration-base data-leave:ease-exit motion-safe:data-closed:translate-x-full sm:max-w-sm sm:border-l sm:border-line"
+        >
           <div className="flex items-center justify-between">
             <Link
               href="/"
@@ -101,7 +117,7 @@ export function SiteHeader() {
 
           <div className="mt-6 flow-root">
             <div className="-my-6 divide-y divide-line">
-              <div className="space-y-1 py-6">
+              <div className="stagger space-y-1 py-6">
                 {NAV_ITEMS.map((item) => (
                   <Link
                     key={item.key}

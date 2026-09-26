@@ -37,7 +37,7 @@ export function CookieBanner() {
       aria-labelledby="cookie-banner-title"
       className="fixed inset-x-0 bottom-0 z-50 px-4 pb-4 sm:px-6 sm:pb-6"
     >
-      <div className="mx-auto flex max-w-3xl flex-col gap-4 rounded-card border border-line bg-abyss p-5 shadow-lg sm:flex-row sm:items-center sm:gap-6">
+      <div className="mx-auto flex max-w-3xl animate-rise flex-col gap-4 rounded-card border border-line bg-abyss p-5 shadow-lg sm:flex-row sm:items-center sm:gap-6">
         <div className="min-w-0 flex-1">
           <p id="cookie-banner-title" className="text-ui-sm text-vellum">
             {t("body")}

@@ -35,16 +35,44 @@ const WORLDS = [
 const LORE_STAR =
   "M0-10C1.2-2.4 2.4-1.2 10 0 2.4 1.2 1.2 2.4 0 10-1.2 2.4-2.4 1.2-10 0-2.4-1.2-1.2-2.4 0-10Z";
 
-export function Constellation({ className }: { className?: string }) {
+/*
+  `animated` : le décor se dessine à l'arrivée. Les arêtes se tracent, les
+  étoiles s'allument, les mondes éclosent, puis l'étoile du Lore. Les
+  retards sont des rangs de cadence, nuls quand le mouvement est réduit, et le
+  tracé est coupé net dans ce cas.
+*/
+export function Constellation({
+  className,
+  animated = false,
+}: {
+  className?: string;
+  animated?: boolean;
+}) {
+  // Le centre de chaque forme, et non l'origine du SVG : sans quoi un monde
+  // grandirait depuis le coin haut gauche du dessin.
+  const bloom = animated ? "transform-fill origin-center animate-pop" : undefined;
+
   return (
     <svg viewBox="0 0 600 440" aria-hidden="true" className={className}>
-      <path d={EDGES} fill="none" stroke="var(--color-line)" strokeWidth="1" />
+      <path
+        d={EDGES}
+        fill="none"
+        stroke="var(--color-line)"
+        strokeWidth="1"
+        {...(animated
+          ? { pathLength: 1, strokeDasharray: 1, className: "animate-draw" }
+          : {})}
+      />
       <g fill="var(--color-vellum-3)">
-        {STARS.map((s) => (
-          <circle key={`${s.cx}-${s.cy}-${s.r}`} {...s} />
+        {STARS.map((s, index) => (
+          <circle
+            key={`${s.cx}-${s.cy}-${s.r}`}
+            {...s}
+            className={animated ? `animate-fade ${STAR_DELAYS[index % STAR_DELAYS.length]}` : undefined}
+          />
         ))}
       </g>
-      {WORLDS.map((w) => (
+      {WORLDS.map((w, index) => (
         <circle
           key={`${w.cx}-${w.cy}`}
           cx={w.cx}
@@ -53,13 +81,23 @@ export function Constellation({ className }: { className?: string }) {
           fill="var(--color-ink)"
           stroke={w.stroke}
           strokeWidth="2"
+          className={animated ? `${bloom} ${WORLD_DELAYS[index]}` : undefined}
         />
       ))}
-      <path
-        transform="translate(300 160) scale(.7)"
-        d={LORE_STAR}
-        fill="var(--color-brass)"
-      />
+      <g className={animated ? `${bloom} motion-delay-9` : undefined}>
+        <path
+          transform="translate(300 160) scale(.7)"
+          d={LORE_STAR}
+          fill="var(--color-brass)"
+        />
+      </g>
     </svg>
   );
 }
+
+/*
+  Écrits en entier pour que Tailwind les trouve : une classe composée à
+  l'exécution n'est jamais générée.
+*/
+const STAR_DELAYS = ["motion-delay-1", "motion-delay-3", "motion-delay-2", "motion-delay-4"];
+const WORLD_DELAYS = ["motion-delay-5", "motion-delay-6", "motion-delay-7", "motion-delay-8"];

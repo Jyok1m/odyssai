@@ -75,16 +75,16 @@
   /* Des entrées seulement en `backwards` : un remplissage vers l'avant
      laisserait un `translate` posé, qui fait de l'élément le bloc conteneur
      de ses descendants `fixed`. */
-  --animate-page: rise var(--motion-slow) var(--ease-emerge) backwards;
-  --animate-rise: rise var(--motion-slow) var(--ease-emerge) backwards;
-  --animate-fade: fade var(--motion-base) var(--ease-emerge) backwards;
-  --animate-pop: pop var(--motion-base) var(--ease-emerge) backwards;
-  --animate-forward: forward var(--motion-slow) var(--ease-emerge) backwards;
-  --animate-backward: backward var(--motion-slow) var(--ease-emerge) backwards;
+  --animate-page: rise var(--motion-slow) var(--ease-emerge) var(--motion-delay) backwards;
+  --animate-rise: rise var(--motion-slow) var(--ease-emerge) var(--motion-delay) backwards;
+  --animate-fade: fade var(--motion-base) var(--ease-emerge) var(--motion-delay) backwards;
+  --animate-pop: pop var(--motion-base) var(--ease-emerge) var(--motion-delay) backwards;
+  --animate-forward: forward var(--motion-slow) var(--ease-emerge) var(--motion-delay) backwards;
+  --animate-backward: backward var(--motion-slow) var(--ease-emerge) var(--motion-delay) backwards;
   --animate-leave: leave var(--motion-base) var(--ease-exit) forwards;
-  --animate-ink: fade var(--motion-ink) ease-out backwards;
-  --animate-tumble: tumble var(--motion-epic) var(--ease-emerge) backwards;
-  --animate-meter: meter var(--motion-epic) var(--ease-emerge) backwards;
+  --animate-ink: fade var(--motion-ink) ease-out var(--motion-delay) backwards;
+  --animate-tumble: tumble var(--motion-epic) var(--ease-emerge) var(--motion-delay) backwards;
+  --animate-meter: meter var(--motion-epic) var(--ease-emerge) var(--motion-delay) backwards;
   --animate-draw: draw 1.8s var(--ease-settle) backwards;
   /* Les boucles, toujours derrière `motion-safe:` à l'appel. */
   --animate-halo: halo 2.4s var(--ease-settle) infinite;
@@ -231,29 +231,40 @@
     animation: var(--animate-rise);
   }
   & > :nth-child(2) {
-    animation-delay: var(--motion-stagger);
+    --motion-delay: var(--motion-stagger);
   }
   & > :nth-child(3) {
-    animation-delay: calc(var(--motion-stagger) * 2);
+    --motion-delay: calc(var(--motion-stagger) * 2);
   }
   & > :nth-child(4) {
-    animation-delay: calc(var(--motion-stagger) * 3);
+    --motion-delay: calc(var(--motion-stagger) * 3);
   }
   & > :nth-child(5) {
-    animation-delay: calc(var(--motion-stagger) * 4);
+    --motion-delay: calc(var(--motion-stagger) * 4);
   }
   & > :nth-child(6) {
-    animation-delay: calc(var(--motion-stagger) * 5);
+    --motion-delay: calc(var(--motion-stagger) * 5);
   }
   /* Plafonné : une longue liste n'attend pas une seconde son dernier rang. */
   & > :nth-child(n + 7) {
-    animation-delay: calc(var(--motion-stagger) * 6);
+    --motion-delay: calc(var(--motion-stagger) * 6);
   }
 }
 
-/* Le retard d'une entrée, en rangs de cadence : `motion-delay-2`. */
+/*
+  Le retard d'une entrée, en rangs de cadence : `motion-delay-2`. Porté par
+  une propriété que les entrées lisent dans leur raccourci : un
+  `animation-delay` seul dépendrait de l'ordre de la feuille, que le
+  raccourci remet à zéro. Non héritée, pour ne pas retarder les descendants.
+*/
+@property --motion-delay {
+  syntax: "<time>";
+  inherits: false;
+  initial-value: 0s;
+}
+
 @utility motion-delay-* {
-  animation-delay: calc(var(--motion-stagger) * --value(integer));
+  --motion-delay: calc(var(--motion-stagger) * --value(integer));
 }
 
 /*
@@ -266,7 +277,9 @@
     @supports (animation-timeline: view()) {
       animation: reveal linear backwards;
       animation-timeline: view();
-      animation-range: entry 0% entry 55%;
+      /* Une longueur et non un pourcentage : une section plus haute que
+         l'écran resterait sinon à demi effacée tout le temps qu'on la lit. */
+      animation-range: entry 0% entry 8rem;
     }
   }
 }
@@ -341,7 +354,7 @@
     --motion-pop: 1;
     /* Le dé ne roule plus et le décor ne dérive plus : les boucles sont
        coupées ici, une fois, plutôt qu'à chaque appel. */
-    --animate-tumble: fade var(--motion-base) ease-out backwards;
+    --animate-tumble: fade var(--motion-base) ease-out var(--motion-delay) backwards;
     --animate-draw: none;
     --animate-halo: none;
     --animate-shimmer: none;
