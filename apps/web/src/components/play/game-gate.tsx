@@ -22,8 +22,8 @@ export function GameGate({ children }: { children: ReactNode }) {
   if (access === "open") return <>{children}</>;
 
   return (
-    <article className="mx-auto max-w-wrap px-6 pt-32 pb-24 sm:pt-40 lg:px-8">
-      <Panel title={t("closedTitle")} className="max-w-measure">
+    <article className="mx-auto max-w-wrap px-6 pt-4 pb-16 sm:pt-40 sm:pb-24 lg:px-8">
+      <Panel title={t("closedTitle")} className="max-w-measure animate-rise">
         <p className="text-ui-sm text-pretty text-vellum-2">{t("closedBody")}</p>
         <Button as={Link} href="/" variant="secondary" className="mt-5">
           {t("closedHome")}

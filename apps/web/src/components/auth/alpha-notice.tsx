@@ -21,7 +21,7 @@ export function AlphaNotice() {
   if (dismissed || !status || !status.notice) return null;
 
   return (
-    <div role="status" className="border-b border-line bg-mist/60 px-6 py-3 lg:px-8">
+    <div role="status" className="animate-fade border-b border-line bg-mist/60 px-6 py-3 lg:px-8">
       <div className="mx-auto flex max-w-wrap items-center gap-4">
         <p className="flex-1 text-ui-sm text-vellum-2">
           <Announcement status={status} />
@@ -30,7 +30,7 @@ export function AlphaNotice() {
         <button
           type="button"
           onClick={() => setDismissed(true)}
-          className="-m-1.5 shrink-0 rounded-control p-1.5 text-vellum-3 transition-colors hover:text-vellum"
+          className="-m-3 shrink-0 rounded-control p-3 text-vellum-3 transition-colors hover:text-vellum"
         >
           <span className="sr-only">{t("noticeClose")}</span>
           <XMarkIcon aria-hidden="true" className="size-5" />

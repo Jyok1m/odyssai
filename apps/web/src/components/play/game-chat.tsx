@@ -17,9 +17,11 @@ import toast from "react-hot-toast";
 import { useEffect, useRef, useState } from "react";
 
 import { OutOfCredits } from "@/components/billing/out-of-credits";
+import { Caret, StreamedText } from "@/components/motion/streamed-text";
 import { Panel, Tag } from "@/components/ui/panel";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { Button } from "@/components/ui/button";
+import { Loading, Skeleton, SkeletonLines } from "@/components/ui/skeleton";
 import { isOutOfCredits } from "@/lib/billing";
 import { TurnError, fetchHistory, playTurn } from "@/lib/turn";
 
@@ -71,6 +73,13 @@ export function GameChat({
   // qu'il faut montrer est un lien, pas une phrase.
   const [empty, setEmpty] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  /*
+    Le rang à partir duquel un message est neuf, et entre en glissant. Ce que
+    l'historique rapporte à l'ouverture se pose sans bouger : une partie de
+    deux cents tours ne rejoue pas deux cents entrées.
+  */
+  const [baseline, setBaseline] = useState(0);
+  const count = useRef(0);
 
   const thread = useRef<HTMLOListElement>(null);
   const streamed = useRef("");
@@ -82,6 +91,7 @@ export function GameChat({
     fetchHistory(controller.signal)
       .then((history) => {
         setMessages(history.messages);
+        setBaseline(history.messages.length);
         report.carrying(history.inventory, []);
         report.rolled(history.lastRoll);
         report.staged(history.scene);
@@ -105,6 +115,7 @@ export function GameChat({
 
   // Le fil suit toujours le dernier message : une partie se lit vers l'avant.
   useEffect(() => {
+    count.current = messages.length;
     const element = thread.current;
     if (element) element.scrollTop = element.scrollHeight;
   }, [messages]);
@@ -123,6 +134,12 @@ export function GameChat({
 
       fetchHistory()
         .then((history) => {
+          /*
+            La relecture remplace les messages locaux par ceux du serveur,
+            sous d'autres clés : ce qui était déjà à l'écran ne doit pas
+            rejouer son entrée, seuls les tours des autres sont neufs.
+          */
+          if (history.messages.length > count.current) setBaseline(count.current);
           setMessages((current) =>
             history.messages.length > current.length ? history.messages : current,
           );
@@ -343,6 +360,8 @@ export function GameChat({
     void play({ kind, content });
   };
 
+  const fresh = new Set(messages.slice(baseline).map((message) => message.id));
+
   // Le premier récit de la partie, seul à porter la lettrine : celui-là
   // commence l'histoire, les autres la continuent.
   const first = messages.find((message) => message.role === "assistant");
@@ -382,31 +401,50 @@ export function GameChat({
         </header>
 
         {!loaded ? (
-          <p className="text-ui-sm text-vellum-3">{t("loading")}</p>
+          <Loading label={t("loading")} className="space-y-6 px-1">
+            <SkeletonLines lines={4} className="max-w-measure" />
+            <Skeleton className="ml-auto h-10 w-1/2" round="card" />
+            <SkeletonLines lines={3} className="max-w-measure" />
+          </Loading>
         ) : (
+          /*
+            Plafonne aussi par la hauteur d'ecran : un fil plus haut que
+            l'ecran, en paysage sur un telephone, gardait le doigt dans son
+            defilement sans rendre la page. `svh` et non `dvh`, stable quand
+            la barre d'adresse se replie. `min()` n'a pas de classe native.
+          */
           <ol
             ref={thread}
-            className="flex max-h-136 flex-col gap-6 overflow-y-auto overscroll-contain px-1"
+            className="flex max-h-[min(34rem,60svh)] flex-col gap-6 overflow-y-auto overscroll-contain px-1"
           >
             {messages.length === 0 ? (
-              <li className="text-ui-sm text-pretty text-vellum-3">{t("opening")}</li>
+              <li className="animate-breathe text-ui-sm text-pretty text-vellum-3">{t("opening")}</li>
             ) : null}
 
             {group(messages).map((item) =>
               item.kind === "aside" ? (
                 <li
                   key={item.question.id}
-                  className="rounded-card border border-arcane/35 bg-arcane/6 px-4 py-3.5"
+                  className={`rounded-card border border-arcane/35 bg-arcane/6 px-4 py-3.5 ${fresh.has(item.question.id) ? "animate-rise" : ""}`}
                 >
                   <p className="text-caption text-arcane">{t("aside")}</p>
-                  <p className="mt-2 text-ui-sm text-pretty text-vellum italic">
+                  <p className="mt-2 text-ui-sm text-pretty text-vellum italic wrap-anywhere">
                     {item.question.content}
                   </p>
                   {item.answer ? (
                     <div className="mt-3 border-t border-arcane/25 pt-3">
-                      <p className="font-voice text-ui-sm whitespace-pre-wrap text-vellum-2">
-                        {item.answer.content || t("thinking")}
-                      </p>
+                      {item.answer.content ? (
+                        <p className="font-voice text-ui-sm whitespace-pre-wrap text-vellum-2">
+                          <StreamedText
+                            text={item.answer.content}
+                            live={busy && item.answer.id === messages.at(-1)?.id}
+                          />
+                        </p>
+                      ) : (
+                        <p className="animate-breathe font-voice text-ui-sm text-vellum-3">
+                          {t("thinking")}
+                        </p>
+                      )}
                       {(notes[item.answer.id] ?? []).map((entry) => (
                         <LoreNote key={`${item.answer!.id}-${entry.name}`} entry={entry} />
                       ))}
@@ -414,7 +452,10 @@ export function GameChat({
                   ) : null}
                 </li>
               ) : (
-              <li key={item.message.id}>
+              <li
+                key={item.message.id}
+                className={fresh.has(item.message.id) ? "animate-rise" : undefined}
+              >
                 {item.message.role === "user" ? (
                   <div className="ml-auto flex max-w-17/20 flex-col items-end gap-1">
                     {/* Dans une table, le nom de qui parle : le journal se
@@ -432,7 +473,7 @@ export function GameChat({
                         {t("erased")}
                       </p>
                     ) : (
-                      <p className="rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum">
+                      <p className="rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum wrap-anywhere">
                         <span className="sr-only">
                           {item.message.author ?? t("you")} :{" "}
                         </span>
@@ -448,29 +489,41 @@ export function GameChat({
 
                     <p className="flex items-center gap-2 text-caption text-vellum-3">
                       {t("narrator")}
-                      {item.message.outcome ? <Verdict outcome={item.message.outcome} /> : null}
+                      {item.message.outcome ? (
+                        <span className={fresh.has(item.message.id) ? "animate-pop" : undefined}>
+                          <Verdict outcome={item.message.outcome} />
+                        </span>
+                      ) : null}
                     </p>
 
                     {/* `font-voice` reste : c'est la voix du meneur. La taille
                         est celle des autres conversations du site. */}
-                    <p
-                      className={[
-                        "mt-1.5 font-voice text-ui-sm whitespace-pre-wrap text-vellum",
-                        item.message.id === first?.id ? "dropcap" : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                    >
-                      {item.message.content || t("thinking")}
-                    </p>
+                    {item.message.content ? (
+                      <p
+                        className={[
+                          "mt-1.5 font-voice text-ui-sm whitespace-pre-wrap text-vellum",
+                          item.message.id === first?.id ? "dropcap" : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                      >
+                        {/* L'encre prend fragment par fragment, tant que le
+                            meneur écrit ; l'historique se pose tel quel. */}
+                        <StreamedText
+                          text={item.message.content}
+                          live={busy && item.message.id === messages.at(-1)?.id}
+                        />
+                      </p>
+                    ) : (
+                      <p className="mt-1.5 animate-breathe font-voice text-ui-sm text-vellum-3 italic">
+                        {t("thinking")}
+                      </p>
+                    )}
 
                     {busy && item.message.content && item.message.id === messages.at(-1)?.id ? (
-                      <p className="mt-2 font-voice text-ui-sm text-vellum-3 italic">
+                      <p className="mt-2 animate-fade font-voice text-ui-sm text-vellum-3 italic">
                         {t("writing")}
-                        <span
-                          aria-hidden="true"
-                          className="ml-1 inline-block h-4 w-0.5 -translate-y-px bg-accent align-middle motion-safe:animate-pulse"
-                        />
+                        <Caret />
                       </p>
                     ) : null}
 
@@ -492,7 +545,13 @@ export function GameChat({
           au lancer. Rien n'a encore été débité.
         */}
         {awaiting ? (
-          <div className="flex flex-col items-center gap-3 rounded-card border border-line bg-ink p-5">
+          <div className="flex animate-pop flex-col items-center gap-3 rounded-card border border-line bg-ink p-5">
+            {/* Le dé attend qu'on le lance, et roule pendant qu'on le lance. */}
+            <Die
+              className={
+                busy ? "h-9 w-9 motion-safe:animate-spin" : "h-9 w-9 animate-wobble"
+              }
+            />
             <p className="text-ui-sm text-pretty text-center text-vellum-2">
               {t("rollPrompt")}
             </p>
@@ -502,6 +561,7 @@ export function GameChat({
           </div>
         ) : (
           <form
+            className="animate-fade"
             onSubmit={(event) => {
               event.preventDefault();
               submit("say");
@@ -566,7 +626,11 @@ export function GameChat({
         </div>
 
         <p aria-live="polite" className="mt-3 min-h-5 text-ui-sm text-ember">
-          {empty ? <OutOfCredits /> : error}
+          {empty || error ? (
+            <span key={empty ? "empty" : error} className="block animate-fade">
+              {empty ? <OutOfCredits /> : error}
+            </span>
+          ) : null}
         </p>
       </Panel>
     </div>
@@ -581,9 +645,10 @@ function RollPill({ roll }: { roll: RollRecord }) {
   const t = useTranslations("Game");
 
   return (
-    <p className="mb-3 inline-flex flex-wrap items-center gap-x-2.5 gap-y-1 rounded-full border border-line bg-ink py-1.5 pr-3.5 pl-2 text-ui-sm tabular-nums text-vellum-2">
-      <Die />
-      <strong className="font-medium text-vellum">{roll.die}</strong>
+    <p className="mb-3 inline-flex animate-fade flex-wrap items-center gap-x-2.5 gap-y-1 rounded-full border border-line bg-ink py-1.5 pr-3.5 pl-2 text-ui-sm tabular-nums text-vellum-2">
+      {/* Le dé roule, le chiffre tombe, puis le verdict : l'ordre du jet. */}
+      <Die className="h-5 w-5 animate-tumble" />
+      <strong className="animate-pop font-medium text-vellum motion-delay-5">{roll.die}</strong>
       {roll.modifier !== 0 && roll.attribute ? (
         <span>
           {t("dieModifier", {
@@ -596,7 +661,9 @@ function RollPill({ roll }: { roll: RollRecord }) {
       ) : (
         <span>{t("dieRolled")}</span>
       )}
-      <Verdict outcome={roll.outcome} />
+      <span className="animate-pop motion-delay-8">
+        <Verdict outcome={roll.outcome} />
+      </span>
     </p>
   );
 }
@@ -628,7 +695,7 @@ function LoreNote({ entry }: { entry: PublicEntity }) {
   const t = useTranslations("Game");
 
   return (
-    <div className="mt-4 flex max-w-measure items-start gap-3 rounded-card border border-arcane/40 bg-arcane/8 px-3.5 py-3">
+    <div className="mt-4 flex max-w-measure animate-rise items-start gap-3 rounded-card border border-arcane/40 bg-arcane/8 px-3.5 py-3">
       <span aria-hidden="true" className="mt-1.5 h-2.5 w-2.5 flex-none rounded-full bg-arcane" />
       <div>
         <p className="text-ui-sm text-vellum">

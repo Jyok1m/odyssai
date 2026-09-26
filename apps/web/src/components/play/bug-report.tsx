@@ -33,12 +33,37 @@ export function BugReportButton() {
       <Button variant="ghost" size="sm" type="button" onClick={() => setOpen(true)}>
         {t("button")}
       </Button>
-      {open ? <BugReportDialog page={pathname} onClose={() => setOpen(false)} /> : null}
+
+      {/*
+        Toujours monté, piloté par `open` : c'est ce qui laisse à la fenêtre
+        le temps de sa sortie. Le formulaire, lui, vit dans le panneau, que
+        Headless UI démonte une fois fermé : il repart vide à chaque ouverture.
+      */}
+      <Dialog open={open} onClose={() => setOpen(false)} className="relative z-50">
+        <DialogBackdrop
+          transition
+          className="fixed inset-0 bg-ink/80 transition-opacity duration-slow ease-emerge data-closed:opacity-0 data-leave:duration-base data-leave:ease-exit"
+        />
+
+        {/* Le cadre defile, la fenetre non : en paysage sur un telephone,
+            le formulaire est plus haut que l'ecran, et ses boutons restaient
+            hors d'atteinte. */}
+        <div className="fixed inset-0 overflow-y-auto overscroll-contain">
+          <div className="flex min-h-full items-end justify-center p-safe-4 sm:items-center">
+            <DialogPanel
+              transition
+              className="w-full max-w-lg rounded-card border border-line bg-abyss p-6 transition duration-slow ease-emerge data-closed:translate-y-(--motion-shift) data-closed:scale-(--motion-pop) data-closed:opacity-0 data-leave:duration-base data-leave:ease-exit"
+            >
+              <BugReportForm page={pathname} onClose={() => setOpen(false)} />
+            </DialogPanel>
+          </div>
+        </div>
+      </Dialog>
     </>
   );
 }
 
-function BugReportDialog({ page, onClose }: { page: string; onClose: () => void }) {
+function BugReportForm({ page, onClose }: { page: string; onClose: () => void }) {
   const t = useTranslations("Bug");
   const [message, setMessage] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -94,85 +119,73 @@ function BugReportDialog({ page, onClose }: { page: string; onClose: () => void 
   };
 
   return (
-    <Dialog open onClose={onClose} className="relative z-50">
-      <DialogBackdrop
-        transition
-        className="fixed inset-0 bg-ink/80 transition-opacity duration-300 ease-linear data-closed:opacity-0"
-      />
+    <>
+      <DialogTitle className="font-voice text-subtitle text-vellum">{t("title")}</DialogTitle>
+      <p className="mt-1 text-ui-sm text-pretty text-vellum-3">{t("lead", { page })}</p>
 
-      <div className="fixed inset-0 flex items-end justify-center p-4 sm:items-center">
-        <DialogPanel
-          transition
-          className="w-full max-w-lg rounded-card border border-line bg-abyss p-6 transition duration-300 ease-out data-closed:translate-y-4 data-closed:opacity-0"
-        >
-          <DialogTitle className="font-voice text-subtitle text-vellum">{t("title")}</DialogTitle>
-          <p className="mt-1 text-ui-sm text-pretty text-vellum-3">{t("lead", { page })}</p>
+      <form onSubmit={(event) => void submit(event)} data-focus-ring="container" className="mt-5 space-y-4">
+        <div>
+          <label htmlFor="bug-message" className="text-caption text-vellum-3">
+            {t("message")}
+          </label>
+          <textarea
+            id="bug-message"
+            rows={5}
+            value={message}
+            maxLength={BUG_MESSAGE_MAX}
+            placeholder={t("messagePlaceholder")}
+            onChange={(event) => setMessage(event.target.value)}
+            className={`mt-1.5 ${FIELD_AREA}`}
+          />
+        </div>
 
-          <form onSubmit={(event) => void submit(event)} data-focus-ring="container" className="mt-5 space-y-4">
-            <div>
-              <label htmlFor="bug-message" className="text-caption text-vellum-3">
-                {t("message")}
-              </label>
-              <textarea
-                id="bug-message"
-                rows={5}
-                value={message}
-                maxLength={BUG_MESSAGE_MAX}
-                placeholder={t("messagePlaceholder")}
-                onChange={(event) => setMessage(event.target.value)}
-                className={`mt-1.5 ${FIELD_AREA}`}
+        <div>
+          <p className="text-caption text-vellum-3">{t("screenshot")}</p>
+          <div className="mt-1.5 flex flex-wrap items-center gap-3">
+            {/* Un libellé en bouton autour du champ : le champ natif ne
+                s'habille pas, le libellé si. */}
+            <label className="touch-target inline-flex h-8 cursor-pointer items-center rounded-control border border-line px-3 font-ui text-ui-sm font-medium text-vellum transition-colors hover:border-vellum-3 hover:bg-mist">
+              {file ? t("screenshotChange") : t("screenshotPick")}
+              <input
+                type="file"
+                accept={SCREENSHOT_TYPES.join(",")}
+                className="sr-only"
+                onChange={(event) => pick(event.target.files?.[0] ?? null)}
               />
-            </div>
-
-            <div>
-              <p className="text-caption text-vellum-3">{t("screenshot")}</p>
-              <div className="mt-1.5 flex flex-wrap items-center gap-3">
-                {/* Un libellé en bouton autour du champ : le champ natif ne
-                    s'habille pas, le libellé si. */}
-                <label className="inline-flex h-8 cursor-pointer items-center rounded-control border border-line px-3 font-ui text-ui-sm font-medium text-vellum transition-colors hover:border-vellum-3 hover:bg-mist">
-                  {file ? t("screenshotChange") : t("screenshotPick")}
-                  <input
-                    type="file"
-                    accept={SCREENSHOT_TYPES.join(",")}
-                    className="sr-only"
-                    onChange={(event) => pick(event.target.files?.[0] ?? null)}
-                  />
-                </label>
-                {file ? (
-                  <Button variant="ghost" size="sm" type="button" onClick={() => pick(null)}>
-                    {t("screenshotRemove")}
-                  </Button>
-                ) : (
-                  <span className="text-caption text-vellum-3">
-                    {t("screenshotHint", { max: Math.round(SCREENSHOT_MAX_BYTES / 1024 / 1024) })}
-                  </span>
-                )}
-              </div>
-              {preview ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={preview}
-                  alt=""
-                  className="mt-3 max-h-48 rounded-control border border-line object-contain"
-                />
-              ) : null}
-            </div>
-
-            <p aria-live="polite" className="min-h-5 text-ui-sm text-ember">
-              {error}
-            </p>
-
-            <div className="flex flex-wrap items-center justify-end gap-3">
-              <Button variant="ghost" type="button" disabled={busy} onClick={onClose}>
-                {t("cancel")}
+            </label>
+            {file ? (
+              <Button variant="ghost" size="sm" type="button" onClick={() => pick(null)}>
+                {t("screenshotRemove")}
               </Button>
-              <Button type="submit" disabled={busy || message.trim().length < BUG_MESSAGE_MIN}>
-                {t("send")}
-              </Button>
-            </div>
-          </form>
-        </DialogPanel>
-      </div>
-    </Dialog>
+            ) : (
+              <span className="text-caption text-vellum-3">
+                {t("screenshotHint", { max: Math.round(SCREENSHOT_MAX_BYTES / 1024 / 1024) })}
+              </span>
+            )}
+          </div>
+          {preview ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={preview}
+              alt=""
+              className="mt-3 max-h-48 animate-pop rounded-control border border-line object-contain"
+            />
+          ) : null}
+        </div>
+
+        <p aria-live="polite" className="min-h-5 text-ui-sm text-ember">
+          {error}
+        </p>
+
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          <Button variant="ghost" type="button" disabled={busy} onClick={onClose}>
+            {t("cancel")}
+          </Button>
+          <Button type="submit" disabled={busy || message.trim().length < BUG_MESSAGE_MIN}>
+            {t("send")}
+          </Button>
+        </div>
+      </form>
+    </>
   );
 }

@@ -43,7 +43,7 @@ export default function LorePage() {
       footer={
         <Link
           href="/glossary"
-          className="inline-flex items-center gap-2 font-ui text-control font-medium text-accent transition-colors hover:text-vellum"
+          className="touch-target inline-flex items-center gap-2 font-ui text-control font-medium text-accent transition-colors hover:text-vellum"
         >
           {t("glossaryCta")} <span aria-hidden="true">&rarr;</span>
         </Link>

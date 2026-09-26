@@ -18,7 +18,9 @@ import { CreditsBadge } from "@/components/play/credits-badge";
 import { AttributeCells } from "@/components/play/attributes";
 import { Die, GameChat, Verdict, type TableEvents } from "@/components/play/game-chat";
 import { HealthBar } from "@/components/play/health";
+import { presenceClass, usePresence } from "@/components/motion/use-presence";
 import { Panel, Tag } from "@/components/ui/panel";
+import { Loading, Skeleton, SkeletonLines } from "@/components/ui/skeleton";
 import { Link } from "@/i18n/navigation";
 
 import { RestartAction } from "./restart-action";
@@ -33,7 +35,7 @@ export function WorldShell({ onRestart }: { onRestart: () => void }) {
   const state = useWorld();
 
   if (state.status === "loading") {
-    return <p className="text-ui-sm text-vellum-3">{t("world.loading")}</p>;
+    return <TableSkeleton label={t("world.loading")} />;
   }
   if (state.status === "not_ready") {
     return <p className="text-ui-sm text-vellum-3">{t("generation.title")}</p>;
@@ -85,6 +87,10 @@ function GameTable({
   const [learned, setLearned] = useState<number | null>(null);
   // Incrémenté à chaque tour joué : c'est ce qui fait relire la réserve.
   const [played, setPlayed] = useState(0);
+  // Un compte par jet et par coup : le panneau rejoue le dé, la jauge redit
+  // le coût, même quand deux jets ou deux coups se ressemblent.
+  const [throws, setThrows] = useState(0);
+  const [hits, setHits] = useState(0);
 
   const report = useMemo<TableEvents>(
     () => ({
@@ -96,7 +102,10 @@ function GameTable({
           setFresh((marked) => [...new Set([...marked, ...gained])]);
         }
       },
-      rolled: setRoll,
+      rolled(next) {
+        setRoll(next);
+        setThrows((count) => count + 1);
+      },
       grew(attribute, next) {
         setStanding((current) => ({ ...current, [attribute]: next }));
       },
@@ -104,6 +113,7 @@ function GameTable({
       hurt(next, taken) {
         setHealth(next);
         setHarm(taken);
+        if (taken > 0) setHits((count) => count + 1);
       },
       learned(entity) {
         setCodex((current) => [
@@ -121,18 +131,24 @@ function GameTable({
 
   const tested = roll?.attribute ?? null;
 
+  // Ce qui entre dans le sac, dans la scène, au codex, entre en glissant ; ce
+  // qui en sort s'efface.
+  const bag = usePresence(carrying, (item) => item);
+  const cast = usePresence(scene, (present) => `${present.kind}-${present.name}`);
+  const recent = usePresence(codex.slice(-4).reverse(), (entry) => `${entry.kind}-${entry.name}`);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
         <CreditsBadge refreshKey={played} />
       </div>
 
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_24rem]">
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_24rem]">
         {/* La table, d'abord : c'est là qu'on joue, le reste est ce qu'on
             consulte sans quitter la partie des yeux. */}
         <GameChat world={world} report={report} />
 
-        <aside className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
+        <aside className="stagger grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-1">
           <Panel
             title={t("character")}
             aside={<PanelLink href="/play/character">{t("sheetLink")}</PanelLink>}
@@ -176,7 +192,7 @@ function GameTable({
             {/* La jauge, sous la fiche : c'est le code qui l'entame et qui
                 la rend, le meneur n'en reçoit qu'un mot. */}
             <div className="mt-5">
-              <HealthBar health={health} harm={harm} />
+              <HealthBar health={health} harm={harm} hit={hits} />
             </div>
 
             <div className="mt-5">
@@ -186,12 +202,14 @@ function GameTable({
 
           <Panel title={t("lastRoll")}>
             {roll ? (
-              <div className="flex flex-col items-center gap-2 text-center">
-                <Die className="h-10 w-10" />
-                <p className="font-voice text-title tabular-nums text-vellum">
+              /* Remonté à chaque jet : le dé roule, le total tombe, puis le
+                 détail et le verdict. */
+              <div key={throws} className="flex flex-col items-center gap-2 text-center">
+                <Die className="h-10 w-10 animate-tumble" />
+                <p className="animate-pop font-voice text-title tabular-nums text-vellum motion-delay-5">
                   {roll.die + roll.modifier}
                 </p>
-                <p className="text-caption tabular-nums text-vellum-3">
+                <p className="animate-fade text-caption tabular-nums text-vellum-3 motion-delay-7">
                   {roll.modifier !== 0 && roll.attribute
                     ? t("dieDetail", {
                         die: roll.die,
@@ -201,7 +219,9 @@ function GameTable({
                       })
                     : t("dieRolled")}
                 </p>
-                <Verdict outcome={roll.outcome} />
+                <span className="animate-pop motion-delay-8">
+                  <Verdict outcome={roll.outcome} />
+                </span>
               </div>
             ) : (
               <p className="text-ui-sm text-pretty text-vellum-3">{t("noRoll")}</p>
@@ -218,13 +238,18 @@ function GameTable({
               <p className="text-ui-sm text-pretty text-vellum-3">{t("carryEmpty")}</p>
             ) : (
               <ul>
-                {carrying.map((item) => (
+                {bag.map(({ key, item, presence }) => (
                   <li
-                    key={item}
-                    className="flex items-center justify-between gap-3 border-b border-line py-2.5 text-ui-sm text-vellum last:border-0"
+                    key={key}
+                    aria-hidden={presence === "leave" || undefined}
+                    className={`flex items-center justify-between gap-3 border-b border-line py-2.5 text-ui-sm text-vellum last:border-0 ${presenceClass(presence)}`}
                   >
                     <span className="text-pretty">{item}</span>
-                    {fresh.includes(item) ? <Tag tone="brass">{t("newItem")}</Tag> : null}
+                    {fresh.includes(item) ? (
+                      <span className="animate-pop motion-delay-2">
+                        <Tag tone="brass">{t("newItem")}</Tag>
+                      </span>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -249,10 +274,11 @@ function GameTable({
                 </span>
                 <span className="text-caption text-vellum-3">{t("youTag")}</span>
               </li>
-              {scene.map((present) => (
+              {cast.map(({ key, item: present, presence }) => (
                 <li
-                  key={`${present.kind}-${present.name}`}
-                  className="flex items-center justify-between gap-3 rounded-card border border-line px-3 py-2 text-ui-sm text-vellum"
+                  key={key}
+                  aria-hidden={presence === "leave" || undefined}
+                  className={`flex items-center justify-between gap-3 rounded-card border border-line px-3 py-2 text-ui-sm text-vellum ${presenceClass(presence)}`}
                 >
                   <span className="flex items-center gap-2.5">
                     <span aria-hidden="true" className="h-2 w-2 rounded-full bg-arcane" />
@@ -273,10 +299,11 @@ function GameTable({
             ) : (
               <ul className="mt-2 space-y-3">
                 {/* Les dernières apprises : le codex entier se lit ailleurs. */}
-                {codex.slice(-4).reverse().map((entry) => (
+                {recent.map(({ key, item: entry, presence }) => (
                   <li
-                    key={`${entry.kind}-${entry.name}`}
-                    className="border-l-2 border-line pl-3"
+                    key={key}
+                    aria-hidden={presence === "leave" || undefined}
+                    className={`border-l-2 border-line pl-3 ${presenceClass(presence)}`}
                   >
                     <p className="text-ui-sm text-vellum">
                       {entry.name}
@@ -297,7 +324,7 @@ function GameTable({
                 Vide est la réponse normale : le canon dit ce qui est vrai, pas
                 ce qui se passe. */}
             {learned !== null && learned > 0 ? (
-              <p className="mt-5 flex items-center gap-2 text-caption text-brass">
+              <p key={played} className="mt-5 flex animate-fade items-center gap-2 text-caption text-brass">
                 <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-brass" />
                 {t("canonThisTurn", { count: learned })}
               </p>
@@ -315,11 +342,40 @@ function GameTable({
   );
 }
 
+/*
+  La table en attente de son monde, à sa forme : le récit à gauche, les
+  panneaux à droite. Rien ne saute quand elle arrive.
+*/
+function TableSkeleton({ label }: { label: string }) {
+  return (
+    <Loading label={label} className="space-y-6">
+      <div className="flex justify-end">
+        <Skeleton className="h-4 w-24" />
+      </div>
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_24rem]">
+        <div className="space-y-5">
+          <div className="space-y-6 rounded-card border border-line bg-abyss p-5 sm:p-6">
+            <Skeleton className="h-9 w-2/3" />
+            <SkeletonLines lines={5} className="max-w-measure" />
+            <SkeletonLines lines={3} className="max-w-measure" />
+          </div>
+          <Skeleton className="h-36" round="card" />
+        </div>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-1">
+          <Skeleton className="h-80 sm:col-span-2 lg:col-span-1" round="card" />
+          <Skeleton className="h-44" round="card" />
+          <Skeleton className="h-44" round="card" />
+        </div>
+      </div>
+    </Loading>
+  );
+}
+
 function PanelLink({ href, children }: { href: "/play/character" | "/play/world"; children: string }) {
   return (
     <Link
       href={href}
-      className="font-ui text-caption font-medium text-accent transition-colors hover:text-vellum"
+      className="touch-target font-ui text-caption font-medium text-accent transition-colors hover:text-vellum"
     >
       {children} <span aria-hidden="true">&rarr;</span>
     </Link>

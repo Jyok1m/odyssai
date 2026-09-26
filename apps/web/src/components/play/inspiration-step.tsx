@@ -109,28 +109,38 @@ export function InspirationStep({
             </span>
           ) : null}
 
-          <div
-            role="tablist"
-            aria-label={t("inspiration.title")}
-            className="inline-flex rounded-control border border-line p-1"
-          >
-            {(["works", "own"] as const).map((value) => (
-              <button
-                key={value}
-                role="tab"
-                type="button"
-                aria-selected={mode === value}
-                onClick={() => change(() => setMode(value))}
+          {/* La pastille glisse d'un onglet à l'autre au lieu de sauter. Deux
+              colonnes égales : c'est ce qui permet de la déplacer d'une
+              largeur exacte. */}
+          <div className="inline-flex rounded-control border border-line p-1">
+            <div
+              role="tablist"
+              aria-label={t("inspiration.title")}
+              className="relative grid grid-cols-2"
+            >
+              <span
+                aria-hidden="true"
                 className={[
-                  "rounded-control px-3.5 py-1.5 font-ui text-ui-sm font-medium transition-colors",
-                  mode === value
-                    ? "bg-accent text-on-accent"
-                    : "text-vellum-2 hover:text-vellum",
+                  "absolute inset-y-0 left-0 w-1/2 rounded-control bg-accent transition-transform duration-base ease-emerge motion-reduce:transition-none",
+                  mode === "own" ? "translate-x-full" : "translate-x-0",
                 ].join(" ")}
-              >
-                {t(`inspiration.mode.${value}`)}
-              </button>
-            ))}
+              />
+              {(["works", "own"] as const).map((value) => (
+                <button
+                  key={value}
+                  role="tab"
+                  type="button"
+                  aria-selected={mode === value}
+                  onClick={() => change(() => setMode(value))}
+                  className={[
+                    "touch-target rounded-control px-3.5 py-1.5 font-ui text-ui-sm font-medium transition-colors duration-base",
+                    mode === value ? "text-on-accent" : "text-vellum-2 hover:text-vellum",
+                  ].join(" ")}
+                >
+                  {t(`inspiration.mode.${value}`)}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       }
@@ -141,13 +151,13 @@ export function InspirationStep({
         </p>
 
       {mode === "works" ? (
-        <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
+        <div className="mt-6 grid grid-cols-1 animate-fade gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
           <div>
           <p className="text-ui-sm text-vellum-2">{t("inspiration.worksHint")}</p>
 
           <ul className="mt-4 space-y-3">
             {works.map((work, index) => (
-              <li key={index} className="flex items-center gap-3">
+              <li key={index} className="flex animate-rise items-center gap-3">
                 <label htmlFor={`work-${index}`} className="sr-only">
                   {t("inspiration.workLabel", { position: index + 1 })}
                 </label>
@@ -172,7 +182,7 @@ export function InspirationStep({
                     la feuille CSS, pas par l'ordre dans className.
                   */
                   className={[
-                    "h-10 min-w-0 flex-1 rounded-control border bg-ink px-3.5 font-ui text-ui-sm text-vellum transition-colors focus:border-accent",
+                    "h-10 min-w-0 flex-1 rounded-control border bg-ink px-3.5 font-ui text-ui-sm text-vellum transition-colors pointer-coarse:h-11 focus:border-accent",
                     marked.has(index) ? "border-ember" : "border-line",
                   ].join(" ")}
                 />
@@ -210,7 +220,7 @@ export function InspirationStep({
           ) : null}
 
           {marked.size > 0 ? (
-            <p className="mt-4 text-ui-sm text-ember">
+            <p className="mt-4 animate-fade text-ui-sm text-ember">
               {t("inspiration.duplicate")}
             </p>
           ) : null}
@@ -224,7 +234,7 @@ export function InspirationStep({
           </p>
         </div>
       ) : (
-        <div className="mt-6">
+        <div className="mt-6 animate-fade">
           <label htmlFor="own-description" className="sr-only">
             {t("inspiration.mode.own")}
           </label>

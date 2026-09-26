@@ -16,7 +16,7 @@ export function CookieSettingsButton() {
     <button
       type="button"
       onClick={openBanner}
-      className="text-vellum-3 transition-colors hover:text-vellum"
+      className="touch-target text-vellum-3 transition-colors hover:text-vellum"
     >
       {t("manage")}
     </button>

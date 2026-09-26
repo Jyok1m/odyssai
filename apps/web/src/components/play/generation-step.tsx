@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/panel";
 import { watchGeneration } from "@/lib/world";
 
+import { Connector, Halo } from "./step-rail";
+
 /*
   Les étapes du graphe, dans leur ordre d'exécution. Reprises du schéma
   partagé plutôt que recopiées : une étape ajoutée au graphe doit se voir ici
@@ -69,7 +71,7 @@ export function GenerationStep({ onReady }: Props) {
       /* La bordure dit ce qui s'est passé avant qu'on lise le titre. */
       <Panel
         title={t("generation.failedLabel")}
-        className="border-ember/40 lg:max-w-headline"
+        className="animate-pop border-ember/40 lg:max-w-headline"
       >
         <h2 className="font-voice text-title text-balance text-vellum">
           {t("generation.failedTitle")}
@@ -122,15 +124,14 @@ export function GenerationStep({ onReady }: Props) {
           return (
             <li key={name} className="flex min-w-0 flex-1 flex-col items-center gap-2">
               <span aria-hidden="true" className="flex w-full items-center">
+                {index === 0 ? (
+                  <span className="h-px flex-1" />
+                ) : (
+                  <Connector filled={state !== "todo"} className="flex-1" />
+                )}
                 <span
                   className={[
-                    "h-px flex-1",
-                    index === 0 ? "bg-transparent" : state === "todo" ? "bg-line" : "bg-accent",
-                  ].join(" ")}
-                />
-                <span
-                  className={[
-                    "flex size-6 shrink-0 items-center justify-center rounded-full border text-tag",
+                    "relative flex size-6 shrink-0 items-center justify-center rounded-full border text-tag transition-colors duration-base",
                     state === "done"
                       ? "border-accent bg-accent text-on-accent"
                       : state === "current"
@@ -138,23 +139,21 @@ export function GenerationStep({ onReady }: Props) {
                         : "border-line text-vellum-3",
                   ].join(" ")}
                 >
-                  {state === "done" ? "\u2713" : state === "current" ? "\u25cf" : ""}
+                  {state === "current" ? <Halo /> : null}
+                  <span key={state} className={state === "todo" ? undefined : "animate-pop"}>
+                    {state === "done" ? "\u2713" : state === "current" ? "\u25cf" : ""}
+                  </span>
                 </span>
-                <span
-                  className={[
-                    "h-px flex-1",
-                    index === STEPS.length - 1
-                      ? "bg-transparent"
-                      : state === "done"
-                        ? "bg-accent"
-                        : "bg-line",
-                  ].join(" ")}
-                />
+                {index === STEPS.length - 1 ? (
+                  <span className="h-px flex-1" />
+                ) : (
+                  <Connector filled={state === "done"} className="flex-1" />
+                )}
               </span>
 
               <span
                 className={[
-                  "hidden w-full text-center text-caption text-balance md:block",
+                  "hidden w-full text-center text-caption text-balance transition-colors duration-slow md:block",
                   state === "current" ? "text-vellum" : "text-vellum-3",
                 ].join(" ")}
                 aria-current={state === "current" ? "step" : undefined}
@@ -168,7 +167,7 @@ export function GenerationStep({ onReady }: Props) {
 
       {/* Sous `md`, le fil n'a plus de libelles : celui de l'etape en cours
           se dit ici, et lui seul. */}
-      <p className="mt-4 text-ui-sm text-vellum md:hidden">
+      <p key={current} className="mt-4 animate-fade text-ui-sm text-vellum md:hidden">
         {current === -1
           ? t("generation.queued")
           : t("generation.at", {

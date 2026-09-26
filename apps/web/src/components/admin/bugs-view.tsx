@@ -166,11 +166,11 @@ function Screenshot({ id }: { id: string }) {
       <div>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={url} alt="Capture d'écran du rapport" className="max-h-160 rounded-control border border-line" />
-        <div className="mt-2 flex gap-3">
-          <a href={url} target="_blank" rel="noreferrer" className="text-caption text-vellum-2 underline decoration-line underline-offset-4 hover:text-vellum">
+        <div className="mt-2 flex gap-3 pointer-coarse:gap-6">
+          <a href={url} target="_blank" rel="noreferrer" className="touch-target text-caption text-vellum-2 underline decoration-line underline-offset-4 hover:text-vellum">
             Ouvrir en grand
           </a>
-          <button type="button" onClick={() => setUrl(null)} className="text-caption text-vellum-3 hover:text-vellum">
+          <button type="button" onClick={() => setUrl(null)} className="touch-target text-caption text-vellum-3 hover:text-vellum">
             Replier
           </button>
         </div>

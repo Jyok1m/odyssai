@@ -4,6 +4,7 @@ import type { OnboardingState } from "@odyssai/schemas";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { presenceClass, usePresence } from "@/components/motion/use-presence";
 import { Button } from "@/components/ui/button";
 import { DangerAction } from "@/components/ui/danger-action";
 import { Tag } from "@/components/ui/panel";
@@ -25,6 +26,8 @@ export function PartyPanel({ party }: { party: NonNullable<OnboardingState["part
 
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Qui s'assoit entre en glissant, qui se lève s'efface avant de partir.
+  const seats = usePresence(party.members, (member) => member.userId);
 
   const share = async () => {
     try {
@@ -64,7 +67,9 @@ export function PartyPanel({ party }: { party: NonNullable<OnboardingState["part
           {party.inviteCode}
         </span>
         <Button type="button" variant="secondary" size="sm" onClick={() => void share()}>
-          {copied ? t("copied") : t("copy")}
+          <span key={String(copied)} className={copied ? "animate-pop" : undefined}>
+            {copied ? t("copied") : t("copy")}
+          </span>
         </Button>
         <p className="text-ui-sm text-vellum-3">
           {t("seats", { taken: party.members.length, size: party.size })}
@@ -72,14 +77,23 @@ export function PartyPanel({ party }: { party: NonNullable<OnboardingState["part
       </div>
 
       <ul className="mt-5 space-y-3">
-        {party.members.map((member) => (
-          <li key={member.userId} className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        {seats.map(({ key, item: member, presence }) => (
+          <li
+            key={key}
+            aria-hidden={presence === "leave" || undefined}
+            className={`flex flex-wrap items-center gap-x-3 gap-y-1 ${presenceClass(presence)}`}
+          >
             <span className="font-voice text-ui-sm text-vellum">
               {member.characterName ?? member.username ?? t("unnamed")}
             </span>
             {member.host ? <Tag tone="brass">{t("host")}</Tag> : null}
             {member.mine ? <Tag tone="accent">{t("you")}</Tag> : null}
-            <span className="text-caption text-vellum-3">
+            <span
+              className={[
+                "text-caption transition-colors duration-slow",
+                member.ready ? "text-accent" : "text-vellum-3",
+              ].join(" ")}
+            >
               {member.ready ? t("ready") : t("waiting")}
             </span>
           </li>

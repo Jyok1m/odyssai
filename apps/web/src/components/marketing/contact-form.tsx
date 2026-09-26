@@ -50,7 +50,7 @@ export function ContactForm() {
 
   if (sent) {
     return (
-      <div className="rounded-card border border-verdigris/40 bg-mist/60 p-6">
+      <div className="animate-pop rounded-card border border-verdigris/40 bg-mist/60 p-6">
         <p className="font-voice text-subtitle text-vellum">{t("sentTitle")}</p>
         <p className="mt-3 text-ui-sm text-vellum-2">{t("sentBody")}</p>
       </div>
@@ -66,7 +66,7 @@ export function ContactForm() {
         void submit();
       }}
     >
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <Field id="contact-name" label={t("name")} hint={t("nameHint")}>
           <input
             id="contact-name"

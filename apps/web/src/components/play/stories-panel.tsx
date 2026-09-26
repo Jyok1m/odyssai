@@ -14,6 +14,7 @@ import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { useAuthLinks } from "@/components/auth/auth-links";
 import { useSession } from "@/components/auth/session-provider";
 import { Button } from "@/components/ui/button";
+import { Loading, Skeleton } from "@/components/ui/skeleton";
 import { DangerAction } from "@/components/ui/danger-action";
 import { FIELD } from "@/components/ui/field";
 import { useRouter } from "@/i18n/navigation";
@@ -89,7 +90,7 @@ export function StoriesPanel() {
   }, [session.status, load]);
 
   if (session.status === "loading") {
-    return <p className="text-ui-sm text-vellum-3">{t("loading")}</p>;
+    return <StoriesSkeleton label={t("loading")} />;
   }
 
   if (session.status === "anonymous") {
@@ -104,7 +105,11 @@ export function StoriesPanel() {
   }
 
   if (!data) {
-    return <p className="text-ui-sm text-ember">{error ?? t("loading")}</p>;
+    return error ? (
+      <p className="text-ui-sm text-ember">{error}</p>
+    ) : (
+      <StoriesSkeleton label={t("loading")} />
+    );
   }
 
   // Ouvrir puis rejoindre la table : la partie repart de l'état de celle-là.
@@ -291,14 +296,14 @@ export function StoriesPanel() {
             {t("carryHint")}
           </p>
 
-          <ul className="mt-5 grid gap-3 sm:grid-cols-2">
+          <ul className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {travellers.map((traveller) => (
               <li key={traveller.id}>
                 <button
                   type="button"
                   disabled={busy || full}
                   onClick={() => void create(traveller.id)}
-                  className="w-full rounded-card border border-line p-4 text-left transition-colors hover:border-accent hover:bg-mist disabled:cursor-not-allowed disabled:opacity-60"
+                  className="lift w-full rounded-card border border-line p-4 text-left hover:border-accent hover:bg-mist disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                     <span className="font-voice text-subtitle text-vellum">
@@ -330,7 +335,7 @@ export function StoriesPanel() {
           celle qu'on vient reprendre, les autres sont un choix qu'on fait de
           temps en temps.
         */
-        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="stagger grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {sorted.map((story) => (
             <StoryCard
               key={story.id}
@@ -379,9 +384,9 @@ export function StoriesPanel() {
 
       <div aria-live="polite" className="min-h-5">
         {error ? (
-          <p className="text-ui-sm text-ember">{error}</p>
+          <p className="animate-fade text-ui-sm text-ember">{error}</p>
         ) : outcome ? (
-          <div className="flex items-start gap-3 rounded-card border border-arcane/40 bg-arcane/8 px-4 py-3.5">
+          <div className="flex animate-pop items-start gap-3 rounded-card border border-arcane/40 bg-arcane/8 px-4 py-3.5">
             <span
               aria-hidden="true"
               className="mt-2 h-2 w-2 flex-none rounded-full bg-arcane"
@@ -463,7 +468,7 @@ function StoryCard({ story, busy, onPlay, onDeleted }: CardProps) {
       data-world={themed ? (story.name ?? "") : undefined}
       style={themed ? ({ "--world-hue": story.accentHue } as CSSProperties) : undefined}
       className={[
-        "flex flex-col gap-5 rounded-card border bg-abyss p-5",
+        "flex flex-col gap-5 rounded-card border bg-abyss p-5 transition-colors duration-base",
         story.current
           ? "border-accent/50 sm:col-span-2 lg:col-span-1 lg:row-span-2"
           : "border-line",
@@ -729,7 +734,7 @@ function Chronicle({ story }: { story: Story }) {
       <button
         type="button"
         onClick={() => setOpen((shown) => !shown)}
-        className="flex w-full items-center justify-between gap-3 text-left"
+        className="touch-target flex w-full items-center justify-between gap-3 text-left"
       >
         <span className="text-ui-sm font-medium text-vellum">
           {t("chronicle.title")}
@@ -738,7 +743,7 @@ function Chronicle({ story }: { story: Story }) {
       </button>
 
       {open ? (
-        <div className="mt-3 space-y-4">
+        <div className="mt-3 animate-fade space-y-4">
           <p className="text-caption text-pretty text-vellum-3">
             {t("chronicle.lead")}
           </p>
@@ -805,5 +810,16 @@ function Chronicle({ story }: { story: Story }) {
         </div>
       ) : null}
     </div>
+  );
+}
+
+// Trois cartes à la place de la grille des histoires.
+function StoriesSkeleton({ label }: { label: string }) {
+  return (
+    <Loading label={label} className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <Skeleton className="h-72 sm:col-span-2 lg:col-span-1 lg:row-span-2 lg:h-auto" round="card" />
+      <Skeleton className="h-64" round="card" />
+      <Skeleton className="h-64" round="card" />
+    </Loading>
   );
 }

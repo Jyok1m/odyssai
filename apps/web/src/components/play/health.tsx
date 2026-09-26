@@ -3,6 +3,7 @@
 import type { Condition, Health } from "@odyssai/schemas";
 import { useTranslations } from "next-intl";
 
+import { Meter } from "@/components/ui/meter";
 import { Tag } from "@/components/ui/panel";
 
 /*
@@ -26,9 +27,12 @@ export function HealthBar({
   health,
   // Ce que le dernier tour a coûté. Absent tant qu'aucun coup n'a été pris.
   harm,
+  hit,
 }: {
   health: Health;
   harm?: number;
+  // Change à chaque coup reçu : le coût se redit même s'il est le même.
+  hit?: number;
 }) {
   const t = useTranslations("Game");
   const tone = TONE[health.condition];
@@ -43,15 +47,12 @@ export function HealthBar({
         </span>
       </div>
 
-      <div className="mt-2.5 h-1.5 overflow-hidden rounded-xs bg-mist">
-        <div
-          className={`h-full transition-all duration-500 motion-reduce:transition-none ${tone.bar}`}
-          style={{ width: `${share}%` }}
-        />
-      </div>
+      <Meter value={share} tone={tone.bar} className="mt-2.5" />
 
       {harm !== undefined && harm > 0 ? (
-        <p className="mt-2 text-caption text-ember">{t("harm", { harm })}</p>
+        <p key={hit} className="mt-2 animate-pop text-caption text-ember">
+          {t("harm", { harm })}
+        </p>
       ) : null}
     </div>
   );

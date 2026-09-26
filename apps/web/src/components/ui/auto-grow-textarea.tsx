@@ -37,13 +37,19 @@ export function AutoGrowTextarea({ value, fieldRef, className, ...rest }: Props)
     field.style.overflowY = field.scrollHeight > MAX_PX ? "auto" : "hidden";
   }, [value, ref]);
 
+  /*
+    Les trois appelants envoient sur Entree : le clavier tactile le dit par
+    sa touche, faute de quoi rien n'annonce qu'Entree envoie. Au doigt, le
+    champ monte a 44 px, la hauteur d'une cible.
+  */
   return (
     <textarea
       ref={ref}
       rows={1}
       value={value}
+      enterKeyHint="send"
       className={[
-        "block w-full min-w-0 resize-none self-center overflow-x-hidden border-0 bg-transparent py-1.5 font-ui text-ui-sm leading-6 text-vellum placeholder:text-vellum-3",
+        "block w-full min-w-0 resize-none self-center overflow-x-hidden border-0 bg-transparent py-1.5 font-ui text-ui-sm leading-6 text-vellum placeholder:text-vellum-3 pointer-coarse:py-2.5",
         className ?? "",
       ].join(" ")}
       {...rest}

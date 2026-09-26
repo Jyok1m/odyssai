@@ -81,7 +81,7 @@ export function Absent({ message }: { message: string }) {
       <p className="text-ui-sm text-pretty text-vellum-2">{message}</p>
       <Link
         href="/play"
-        className="font-ui text-control font-medium text-accent transition-colors hover:text-vellum"
+        className="touch-target font-ui text-control font-medium text-accent transition-colors hover:text-vellum"
       >
         {t("back")} <span aria-hidden="true">&rarr;</span>
       </Link>

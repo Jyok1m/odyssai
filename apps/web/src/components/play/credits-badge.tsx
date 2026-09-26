@@ -34,6 +34,9 @@ export function CreditsBadge({ refreshKey }: { refreshKey: number }) {
   if (credits === null) return null;
 
   return (
-    <span className="text-caption text-vellum-3">{t("credits", { credits })}</span>
+    // La clé suit la réserve : elle se redit en fondu quand un tour l'entame.
+    <span key={credits} className="animate-fade text-caption text-vellum-3">
+      {t("credits", { credits })}
+    </span>
   );
 }

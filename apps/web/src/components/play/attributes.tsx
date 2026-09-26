@@ -3,6 +3,8 @@
 import { ATTRIBUTES, type Attribute, type AttributeStanding } from "@odyssai/schemas";
 import { useTranslations } from "next-intl";
 
+import { Meter } from "@/components/ui/meter";
+
 /*
   Le socle chiffré, tel qu'il se lit.
 
@@ -24,7 +26,7 @@ function Pips({ score }: { score: number }) {
         <span
           key={index}
           className={[
-            "h-1.5 w-2.5 rounded-xs",
+            "h-1.5 w-2.5 rounded-xs transition-colors duration-slow",
             index < score ? "bg-accent" : "bg-mist",
           ].join(" ")}
         />
@@ -57,7 +59,7 @@ export function AttributeCells({
           <li key={name} className="flex items-center justify-between gap-4 py-2">
             <span
               className={[
-                "text-ui-sm capitalize",
+                "text-ui-sm capitalize transition-colors duration-slow",
                 tested === name ? "text-accent" : "text-vellum-2",
               ].join(" ")}
             >
@@ -93,7 +95,7 @@ export function AttributeBlocks({
   const tSheet = useTranslations("Sheet");
 
   return (
-    <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {ATTRIBUTES.map((name) => {
         const cell = standing[name];
         const share = cell.needed
@@ -115,12 +117,11 @@ export function AttributeBlocks({
               </span>
             </div>
 
-            <div className="mt-3 h-1.5 overflow-hidden rounded-xs bg-mist">
-              <div
-                className={cell.needed ? "h-full bg-brass" : "h-full bg-accent"}
-                style={{ width: `${share}%` }}
-              />
-            </div>
+            <Meter
+              value={share}
+              tone={cell.needed ? "bg-brass" : "bg-accent"}
+              className="mt-3"
+            />
             <p className="mt-1.5 text-caption tabular-nums text-vellum-3">
               {cell.needed
                 ? tSheet("progress", { uses: cell.uses, needed: cell.needed })

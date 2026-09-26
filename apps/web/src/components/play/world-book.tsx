@@ -9,6 +9,7 @@ import type { ProseSection } from "@/components/marketing/prose-page";
 import { Definition, Panel, Tag } from "@/components/ui/panel";
 import { Absent, WorldSkin, useWorld } from "@/components/play/use-world";
 import { Button } from "@/components/ui/button";
+import { PageSkeleton } from "@/components/ui/skeleton";
 import { Link, useRouter } from "@/i18n/navigation";
 import { fetchStories, fetchTravellers } from "@/lib/stories";
 import { fetchOpenWorlds, visitWorld } from "@/lib/world";
@@ -29,7 +30,7 @@ export function WorldBook() {
   const state = useWorld();
 
   if (state.status === "loading") {
-    return <p className="text-ui-sm text-vellum-3">{t("loading")}</p>;
+    return <PageSkeleton label={t("loading")} />;
   }
   if (state.status === "error") {
     return <p className="text-ui-sm text-ember">{t("error")}</p>;
@@ -41,7 +42,7 @@ export function WorldBook() {
   */
   if (state.status === "not_ready") {
     return (
-      <div className="space-y-5">
+      <div className="stagger space-y-5">
         <Header />
         <General />
         <Stories />
@@ -52,7 +53,7 @@ export function WorldBook() {
   }
 
   return (
-    <WorldSkin world={state.world} className="space-y-5">
+    <WorldSkin world={state.world} className="stagger space-y-5">
       <Header world={state.world} />
       <General />
       <Stories />
@@ -105,7 +106,7 @@ function General() {
         ))}
       </Panel>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {sections.map((section) => (
           <Panel key={section.title} title={section.title}>
             {section.body.map((paragraph) => (
@@ -147,7 +148,7 @@ function Stories() {
 
   return (
     <Panel title={t("stories")}>
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stories.map((story) => (
           <li key={story.id}>
             <Link
@@ -229,7 +230,7 @@ function OpenWorlds() {
 
   return (
     <Panel title={t("open")}>
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {worlds.map((world) => (
           <li
             key={world.universeId}
@@ -257,14 +258,14 @@ function OpenWorlds() {
                   {t("visitNeedsTraveller")}
                 </p>
               ) : entering === world.universeId ? (
-                <ul className="space-y-2">
+                <ul className="stagger space-y-2">
                   {travellers.map((traveller) => (
                     <li key={traveller.id}>
                       <button
                         type="button"
                         disabled={busy}
                         onClick={() => void enter(world.universeId, traveller.id)}
-                        className="w-full rounded-control border border-line px-3 py-2 text-left text-ui-sm text-vellum transition-colors hover:border-accent hover:bg-mist disabled:cursor-not-allowed disabled:opacity-60"
+                        className="lift w-full rounded-control border border-line px-3 py-2 text-left text-ui-sm text-vellum hover:border-accent hover:bg-mist disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {traveller.name}
                       </button>
@@ -311,7 +312,7 @@ function World({ world }: { world: WorldView }) {
           {world.charter.tone}
         </p>
 
-        <div className="mt-6 grid gap-6 sm:grid-cols-2">
+        <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div>
             <p className="text-caption text-vellum-3">{t("allowed")}</p>
             <ul className="mt-2 space-y-1.5">
@@ -335,7 +336,7 @@ function World({ world }: { world: WorldView }) {
         </div>
       </Panel>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Panel title={t("lore")}>
           <dl className="divide-y divide-line">
             <Definition term={t("era")}>{world.lore.era}</Definition>
@@ -368,7 +369,7 @@ function World({ world }: { world: WorldView }) {
       </div>
 
       <Panel title={t("factions")}>
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {world.factions.map((faction) => (
             <li key={faction.name} className="@container rounded-card border border-line p-4">
               <p className="font-voice text-subtitle text-accent">{faction.name}</p>
@@ -383,7 +384,7 @@ function World({ world }: { world: WorldView }) {
         </ul>
       </Panel>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* Aucun secret ici : le schéma de vue ne les porte pas, ils se
             découvriront en jeu. */}
         <Panel title={t("people")}>
@@ -426,7 +427,7 @@ function World({ world }: { world: WorldView }) {
         </Panel>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* Ce que le joueur a appris, entité par entité. Le caché n'est pas
             dans le type, il sortira par le jeu. */}
         <Panel title={t("codex")} aside={String(world.entities.length)}>

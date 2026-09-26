@@ -38,7 +38,7 @@ export default function PlayPage() {
   // l'alpha garde la route entiere, par GameGate.
   return (
     <GameGate>
-      <article className="mx-auto max-w-wrap px-6 pt-32 pb-24 sm:pt-40 lg:px-8">
+      <article className="mx-auto max-w-wrap px-6 pt-4 pb-16 sm:pt-40 sm:pb-24 lg:px-8">
         <OnboardingWizard />
       </article>
     </GameGate>

@@ -30,17 +30,22 @@
   --font-voice: var(--font-literata), Georgia, serif;
   --font-ui: var(--font-instrument-sans), system-ui, sans-serif;
 
-  /* Échelle du kit. Les rôles sont ceux de la section « Deux voix ». */
-  --text-display: 56px;
+  /* Échelle du kit. Les rôles sont ceux de la section « Deux voix ».
+     Les tailles d'affiche sont fluides : la valeur du kit est le plafond,
+     atteint des 640 px (compact) ou 960 px (display), et le plancher garde un
+     mot long dans la largeur d'un telephone de 320 px. En rem plus vw, pour
+     que le zoom du navigateur les agrandisse encore. `display` prend la suite
+     de `compact` sans saut, les deux valant 44 px a 640 px. */
+  --text-display: clamp(2.75rem, 1.25rem + 3.75vw, 3.5rem);
   --text-display--line-height: 1.05;
   --text-display--letter-spacing: -0.02em;
-  --text-display-compact: 44px;
+  --text-display-compact: clamp(2.25rem, 1.75rem + 2.5vw, 2.75rem);
   --text-display-compact--line-height: 1.05;
   --text-display-compact--letter-spacing: -0.02em;
-  --text-title: 36px;
+  --text-title: clamp(1.875rem, 1.5rem + 1.875vw, 2.25rem);
   --text-title--line-height: 1.15;
   --text-title--letter-spacing: -0.01em;
-  --text-tagline: 28px;
+  --text-tagline: clamp(1.5rem, 1.25rem + 1.25vw, 1.75rem);
   --text-tagline--line-height: 1.35;
   --text-subtitle: 24px;
   --text-subtitle--line-height: 1.3;
@@ -62,6 +67,143 @@
   --container-measure: 52ch;
   /* Largeur des chapeaux de section (.sec-head du kit). */
   --container-headline: 64ch;
+
+  /* Mouvement. Les durées pointent sur les jetons bruts de `:root`, que la
+     préférence de mouvement réduit redéfinit en un seul endroit. */
+  --ease-emerge: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-settle: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-exit: cubic-bezier(0.55, 0, 1, 0.45);
+  --transition-duration-quick: var(--motion-quick);
+  --transition-duration-base: var(--motion-base);
+  --transition-duration-slow: var(--motion-slow);
+
+  /* Des entrées seulement en `backwards` : un remplissage vers l'avant
+     laisserait un `translate` posé, qui fait de l'élément le bloc conteneur
+     de ses descendants `fixed`. */
+  --animate-page: rise var(--motion-slow) var(--ease-emerge) var(--motion-delay) backwards;
+  --animate-rise: rise var(--motion-slow) var(--ease-emerge) var(--motion-delay) backwards;
+  --animate-fade: fade var(--motion-base) var(--ease-emerge) var(--motion-delay) backwards;
+  --animate-pop: pop var(--motion-base) var(--ease-emerge) var(--motion-delay) backwards;
+  --animate-forward: forward var(--motion-slow) var(--ease-emerge) var(--motion-delay) backwards;
+  --animate-backward: backward var(--motion-slow) var(--ease-emerge) var(--motion-delay) backwards;
+  --animate-leave: leave var(--motion-base) var(--ease-exit) forwards;
+  --animate-ink: fade var(--motion-ink) ease-out var(--motion-delay) backwards;
+  --animate-tumble: tumble var(--motion-epic) var(--ease-emerge) var(--motion-delay) backwards;
+  --animate-meter: meter var(--motion-epic) var(--ease-emerge) var(--motion-delay) backwards;
+  --animate-draw: draw 1.8s var(--ease-settle) backwards;
+  /* Les boucles, toujours derrière `motion-safe:` à l'appel. */
+  --animate-halo: halo 2.4s var(--ease-settle) infinite;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-breathe: breathe 1.8s ease-in-out infinite;
+  --animate-blink: blink 1.1s steps(1) infinite;
+  --animate-float: float 14s ease-in-out infinite;
+  --animate-wobble: wobble 2.8s var(--ease-settle) infinite;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      translate: 0 var(--motion-rise);
+    }
+  }
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes pop {
+    from {
+      opacity: 0;
+      scale: var(--motion-pop);
+    }
+  }
+  @keyframes forward {
+    from {
+      opacity: 0;
+      translate: var(--motion-shift) 0;
+    }
+  }
+  @keyframes backward {
+    from {
+      opacity: 0;
+      translate: calc(var(--motion-shift) * -1) 0;
+    }
+  }
+  @keyframes leave {
+    to {
+      opacity: 0;
+      scale: var(--motion-pop);
+    }
+  }
+  @keyframes tumble {
+    from {
+      opacity: 0;
+      rotate: -300deg;
+      scale: 0.4;
+    }
+    65% {
+      scale: 1.12;
+    }
+  }
+  @keyframes meter {
+    from {
+      clip-path: inset(0 100% 0 0);
+    }
+  }
+  @keyframes draw {
+    from {
+      stroke-dashoffset: 1;
+    }
+  }
+  @keyframes halo {
+    from {
+      opacity: 0.6;
+      scale: 1;
+    }
+    to {
+      opacity: 0;
+      scale: 2.1;
+    }
+  }
+  @keyframes shimmer {
+    from {
+      translate: -100% 0;
+    }
+    to {
+      translate: 100% 0;
+    }
+  }
+  @keyframes breathe {
+    50% {
+      opacity: 0.45;
+    }
+  }
+  /* Le curseur du kit, `.caret`. */
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
+  }
+  @keyframes float {
+    50% {
+      translate: 0 -10px;
+    }
+  }
+  @keyframes wobble {
+    0%,
+    70%,
+    100% {
+      rotate: 0deg;
+    }
+    78% {
+      rotate: -10deg;
+    }
+    86% {
+      rotate: 8deg;
+    }
+    93% {
+      rotate: -4deg;
+    }
+  }
 }
 
 /* En `inline`, les utilitaires pointent sur `var(--accent)` au lieu d'en
@@ -88,11 +230,168 @@
   }
 }
 
+/* Les enfants entrent l'un après l'autre, à la cadence de `--motion-stagger`. */
+@utility stagger {
+  & > * {
+    animation: var(--animate-rise);
+  }
+  & > :nth-child(2) {
+    --motion-delay: var(--motion-stagger);
+  }
+  & > :nth-child(3) {
+    --motion-delay: calc(var(--motion-stagger) * 2);
+  }
+  & > :nth-child(4) {
+    --motion-delay: calc(var(--motion-stagger) * 3);
+  }
+  & > :nth-child(5) {
+    --motion-delay: calc(var(--motion-stagger) * 4);
+  }
+  & > :nth-child(6) {
+    --motion-delay: calc(var(--motion-stagger) * 5);
+  }
+  /* Plafonné : une longue liste n'attend pas une seconde son dernier rang. */
+  & > :nth-child(n + 7) {
+    --motion-delay: calc(var(--motion-stagger) * 6);
+  }
+}
+
+/*
+  Le retard d'une entrée, en rangs de cadence : `motion-delay-2`. Porté par
+  une propriété que les entrées lisent dans leur raccourci : un
+  `animation-delay` seul dépendrait de l'ordre de la feuille, que le
+  raccourci remet à zéro. Non héritée, pour ne pas retarder les descendants.
+*/
+@property --motion-delay {
+  syntax: "<time>";
+  inherits: false;
+  initial-value: 0s;
+}
+
+@utility motion-delay-* {
+  --motion-delay: calc(var(--motion-stagger) * --value(integer));
+}
+
+/*
+  Révélé au défilement, par la timeline de vue : le compositeur s'en charge
+  et rien ne passe par JavaScript. Un navigateur qui ne la connaît pas montre
+  le bloc tel quel, et c'est aussi ce que voit un robot.
+*/
+@utility reveal {
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      animation: reveal linear backwards;
+      animation-timeline: view();
+      /* Une longueur et non un pourcentage : une section plus haute que
+         l'écran resterait sinon à demi effacée tout le temps qu'on la lit. */
+      animation-range: entry 0% entry 8rem;
+    }
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    translate: 0 calc(var(--motion-rise) * 2.5);
+  }
+}
+
+/*
+  Une carte cliquable se soulève d'un cran au survol. Le cran seul, la
+  bordure reste à l'appelant : chaque carte a déjà la sienne.
+*/
+@utility lift {
+  transition-property: translate, border-color, background-color, color;
+  transition-duration: var(--motion-base);
+  transition-timing-function: var(--ease-emerge);
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    &:hover:not(:disabled) {
+      translate: 0 -2px;
+    }
+  }
+}
+
+/*
+  Zone de toucher d'au moins 44 px, sur un ecran tactile seulement : un
+  pseudo-element centre agrandit la cible sans changer le dessin du kit. Le
+  motif de Catalyst (Tailwind), ecrit une fois ici. L'element devient
+  `relative` : ne pas le poser sur un element deja positionne, ni sur un
+  element qui occupe deja son `::before`.
+*/
+@utility touch-target {
+  position: relative;
+  @media (pointer: coarse) {
+    &::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: max(100%, 44px);
+      height: max(100%, 44px);
+      translate: -50% -50%;
+    }
+  }
+}
+
+/*
+  Marges qui degagent l'encoche et l'indicateur d'accueil, pour les elements
+  fixes que le `padding` du `body` n'atteint pas. `pb-safe-4` vaut 16 px, ou
+  la hauteur de l'indicateur si elle est plus grande : le `max()` que
+  WebKit recommande. Sans `viewportFit: "cover"` les `env()` valent zero, et
+  ces classes redeviennent leurs equivalents natifs.
+*/
+@utility p-safe-* {
+  padding-top: max(calc(var(--spacing) * --value(integer)), env(safe-area-inset-top));
+  padding-right: max(calc(var(--spacing) * --value(integer)), env(safe-area-inset-right));
+  padding-bottom: max(calc(var(--spacing) * --value(integer)), env(safe-area-inset-bottom));
+  padding-left: max(calc(var(--spacing) * --value(integer)), env(safe-area-inset-left));
+}
+
+@utility px-safe-* {
+  padding-right: max(calc(var(--spacing) * --value(integer)), env(safe-area-inset-right));
+  padding-left: max(calc(var(--spacing) * --value(integer)), env(safe-area-inset-left));
+}
+
+@utility pt-safe-* {
+  padding-top: max(calc(var(--spacing) * --value(integer)), env(safe-area-inset-top));
+}
+
+@utility pr-safe-* {
+  padding-right: max(calc(var(--spacing) * --value(integer)), env(safe-area-inset-right));
+}
+
+@utility pb-safe-* {
+  padding-bottom: max(calc(var(--spacing) * --value(integer)), env(safe-area-inset-bottom));
+}
+
+@utility pl-safe-* {
+  padding-left: max(calc(var(--spacing) * --value(integer)), env(safe-area-inset-left));
+}
+
+/* Le remplissage d'une jauge change par découpe et non par largeur : la
+   largeur recalcule la mise en page à chaque image. */
+@utility transition-clip {
+  transition-property: clip-path, background-color;
+  transition-duration: var(--motion-slow);
+  transition-timing-function: var(--ease-settle);
+}
+
 :root {
   --accent: #5fb8a5;
   --on-accent: #0f1b1d;
   --radius-portal: 50% 50% 12px 12px / 88px 88px 12px 12px;
   transition: --accent 0.6s ease;
+
+  /* 150 ms est la durée des contrôles du kit. */
+  --motion-quick: 150ms;
+  --motion-base: 220ms;
+  --motion-slow: 420ms;
+  --motion-epic: 900ms;
+  --motion-ink: 480ms;
+  --motion-stagger: 60ms;
+  --motion-rise: 10px;
+  --motion-shift: 18px;
+  --motion-pop: 0.94;
 }
 
 /* <body data-world style="--world-hue: 250"> : seule la teinte change. */
@@ -100,16 +399,59 @@
   --accent: oklch(0.75 0.11 var(--world-hue));
 }
 
+/*
+  Mouvement réduit : plus de déplacement ni d'échelle, plus de cascade, des
+  fondus courts. Les entrées restent lisibles comme telles sans rien faire
+  bouger dans l'espace.
+*/
 @media (prefers-reduced-motion: reduce) {
   :root {
     transition: none;
+    --motion-slow: 160ms;
+    --motion-epic: 160ms;
+    --motion-ink: 0ms;
+    --motion-stagger: 0ms;
+    --motion-rise: 0px;
+    --motion-shift: 0px;
+    --motion-pop: 1;
+    /* Le dé ne roule plus et le décor ne dérive plus : les boucles sont
+       coupées ici, une fois, plutôt qu'à chaque appel. */
+    --animate-tumble: fade var(--motion-base) ease-out var(--motion-delay) backwards;
+    --animate-draw: none;
+    --animate-halo: none;
+    --animate-shimmer: none;
+    --animate-breathe: none;
+    --animate-blink: none;
+    --animate-float: none;
+    --animate-wobble: none;
   }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Le flash gris de WebKit au toucher double les etats du kit, qui disent
+   deja l'appui. */
+html {
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
   background: var(--color-ink);
   color: var(--color-vellum);
   font-family: var(--font-ui);
+  /* En paysage, l'encoche mange un cote de l'ecran depuis `viewportFit:
+     "cover"` : le fond passe dessous, le contenu non. Les elements fixes,
+     que ce padding n'atteint pas, portent les classes `*-safe-*`. */
+  padding-right: env(safe-area-inset-right);
+  padding-left: env(safe-area-inset-left);
+  /* Un mot sans espace, une adresse ou une URL passe a la ligne plutot que
+     d'elargir la page au dela de l'ecran. `break-word` et non `anywhere` :
+     la largeur minimale des flex et des grilles n'en est pas changee. */
+  overflow-wrap: break-word;
 }
 
 h1,
@@ -164,4 +506,20 @@ summary {
 button:disabled,
 [aria-disabled="true"] {
   cursor: not-allowed;
+}
+
+/*
+  Au doigt, pas de survol pour annoncer la cible : l'appui se voit donc sur
+  le controle lui-meme. Une opacite et non un mouvement, pour valoir aussi
+  sous mouvement reduit. Les `hover:` de Tailwind 4 sont deja confines a
+  `(hover: hover)` et ne restent pas colles apres un toucher.
+*/
+@media (pointer: coarse) {
+  a[href]:active,
+  button:not(:disabled):active,
+  [role="button"]:not([aria-disabled="true"]):active,
+  label[for]:active,
+  summary:active {
+    opacity: 0.7;
+  }
 }

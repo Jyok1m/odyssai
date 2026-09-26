@@ -11,6 +11,13 @@ export function Toaster() {
   return (
     <HotToaster
       position="bottom-center"
+      // Au dessus de l'indicateur d'accueil et hors de l'encoche : le
+      // conteneur est fixe, le `padding` du `body` ne l'atteint pas.
+      containerStyle={{
+        right: "max(16px, env(safe-area-inset-right))",
+        bottom: "max(16px, env(safe-area-inset-bottom))",
+        left: "max(16px, env(safe-area-inset-left))",
+      }}
       toastOptions={{
         duration: 5000,
         style: {

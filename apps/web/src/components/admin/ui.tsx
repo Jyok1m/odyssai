@@ -45,7 +45,7 @@ export function Page({
 */
 export function StatGrid({ children }: { children: ReactNode }) {
   return (
-    <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <dl className="stagger grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {children}
     </dl>
   );
@@ -105,7 +105,7 @@ export function Stat({
   return (
     <Link
       href={href}
-      className={`${shell} transition-colors hover:border-accent hover:bg-mist`}
+      className={`${shell} lift hover:border-accent hover:bg-mist`}
     >
       {body}
     </Link>

@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { Toaster } from "@/components/ui/toaster";
-import { BRAND_INK } from "@/lib/site";
+import { SITE_VIEWPORT } from "@/lib/site";
 import "../globals.css";
 
 /*
@@ -30,10 +30,7 @@ const literata = Literata({
   display: "swap",
 });
 
-export const viewport: Viewport = {
-  themeColor: BRAND_INK,
-  colorScheme: "dark",
-};
+export const viewport: Viewport = SITE_VIEWPORT;
 
 export const metadata: Metadata = {
   title: "Administration",
@@ -46,6 +43,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     <html
       lang="fr"
       className={`${instrumentSans.variable} ${literata.variable} h-full antialiased`}
+      // Next suspend le défilement doux le temps d'un changement de page.
+      data-scroll-behavior="smooth"
     >
       <body className="min-h-full bg-ink text-vellum">
         <SessionProvider>

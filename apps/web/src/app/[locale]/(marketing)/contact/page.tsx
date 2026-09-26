@@ -37,7 +37,7 @@ export default function Page() {
   const t = useTranslations(NS);
 
   return (
-    <div className="mx-auto max-w-wrap px-6 pt-32 pb-24 sm:pt-40 lg:px-8">
+    <div className="mx-auto max-w-wrap px-6 pt-28 pb-16 sm:pt-40 sm:pb-24 lg:px-8">
       <div className="mx-auto max-w-2xl">
         <h1 className="font-voice text-display-compact text-balance text-vellum">
           {t("metaTitle")}

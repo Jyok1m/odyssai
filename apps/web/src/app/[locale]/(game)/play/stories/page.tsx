@@ -38,7 +38,7 @@ export default function StoriesPage() {
   // pas jouer.
   return (
     <GameGate>
-      <article className="mx-auto max-w-wrap px-6 pt-32 pb-24 sm:pt-40 lg:px-8">
+      <article className="mx-auto max-w-wrap px-6 pt-4 pb-16 sm:pt-40 sm:pb-24 lg:px-8">
         <header className="max-w-headline">
           <h1 className="font-voice text-display-compact text-balance text-vellum">
             {t("title")}
