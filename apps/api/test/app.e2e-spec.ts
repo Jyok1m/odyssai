@@ -65,3 +65,38 @@ describe('API (e2e)', () => {
   });
 });
 
+// Un Redis tombe repond 503 : le service est indisponible, pas en faute.
+describe('Redis injoignable (e2e)', () => {
+  let app: INestApplication<App>;
+
+  beforeEach(async () => {
+    const redis = Object.assign(new FakeRedis(), {
+      get: () => Promise.reject(new Error('Connection is closed.')),
+    });
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    })
+      .overrideProvider(REDIS)
+      .useValue(redis)
+      .overrideProvider(GenerationQueueService)
+      .useValue({ enqueue: async () => {}, onApplicationShutdown: async () => {} })
+      .compile();
+
+    app = moduleFixture.createNestApplication();
+    app.use(cookieParser());
+    await app.init();
+  });
+
+  afterEach(async () => {
+    await app.close();
+  });
+
+  it('/me (GET) avec une session repond 503', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/me')
+      .set('Cookie', 'odyssai_session=identifiant-quelconque')
+      .expect(503);
+
+    expect(response.body).toMatchObject({ code: 'unavailable' });
+  });
+});
