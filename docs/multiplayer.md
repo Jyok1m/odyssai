@@ -215,6 +215,10 @@ connection per api instance for a gain a poll already gives.
   out applies the usual departure rule to the world (kept if visited, deleted
   otherwise). A host deleting "their" story while others play is therefore
   the same as leaving it, and nobody can gut a table others sit at.
+- **Inheriting a story skips the story cap**, deliberately. The member who
+  receives ownership may go over `STORIES_MAX`: refusing the transfer would
+  leave a table without an owner, or block the host's departure on somebody
+  else's count. The cap bounds what a player starts, not what they inherit.
 - **Leaving while assembling** refunds the share: nothing was generated for
   them. Only the request that actually deletes the seat refunds (the delete
   runs first, in the departure's transaction, and a count of zero means
@@ -226,6 +230,19 @@ connection per api instance for a gain a poll already gives.
   the host chose, and an empty seat means somebody is still expected. A
   table that never fills is disbanded and recreated; the disbanded members'
   shares are refunded.
+- **The story leaves inspiration only when the table is full** and every
+  seat has cited its works. It used to leave as soon as the seated members
+  had: two early seats out of three closed the door on the third, for a
+  table `launch` would never accept.
+- **Joining and leaving inspiration take the party row** (`SELECT ... FOR
+  UPDATE`, `lockParty`): the step is re-read, the seats counted and the new
+  one inserted in one transaction. Two concurrent joins both saw a free seat
+  and the table went over its size, which no generation accepted any more;
+  a join could also land between the works check and the step change.
+- **Opening a table is one transaction**: the story and the party are
+  written together, so two concurrent opens leave one table and one story.
+  The second one used to fail on the unique seat with a 500, after creating
+  a story that counted against the cap; it now answers `in_party`.
 - **A failed generation** settles like solo: every unreturned debit with the
   story's ref, **up to the failed job's creation**, is refunded (the refund
   service returns all of them, not the oldest), and the path reopens for all

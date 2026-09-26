@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CharacterService } from './character.service.js';
+import { LockedError } from './onboarding.service.js';
 import { makeOnboardingPrisma, type OnboardingStore } from './testing/doubles.js';
 
 const UNIVERSE_ID = '01860000-0000-7000-8000-0000000000a1';
@@ -68,5 +69,45 @@ describe('conversation de creation', () => {
       { role: 'user', content: 'un' },
       { role: 'assistant', content: 'deux' },
     ]);
+  });
+});
+
+/*
+  Dans une table, la remise a zero ne touche que son fil et sa fiche, et
+  jamais une fiche deja payee : le siege resterait pret sans fiche, et la
+  generation l'ecarterait sans rien dire.
+*/
+describe('remise a zero dans une table', () => {
+  const NOW = new Date();
+
+  function seated(ready: boolean) {
+    const store: OnboardingStore = {
+      users: [],
+      universes: [],
+      characters: [
+        { id: 'fiche', universeId: UNIVERSE_ID, ownerId: 'joueur', name: 'Ael' } as never,
+        { id: 'autre', universeId: UNIVERSE_ID, ownerId: 'voisin', name: 'Bren' } as never,
+      ],
+      messages: [],
+      jobs: [],
+      partyMembers: [
+        { id: 's1', partyId: 'table', userId: 'joueur', works: [], ready, isHost: true, joinedAt: NOW },
+      ],
+    };
+    return { store, characters: new CharacterService(makeOnboardingPrisma(store) as never) };
+  }
+
+  it('refuse a un siege pret, et ne touche a rien', async () => {
+    const { store, characters } = seated(true);
+
+    await expect(characters.reset(UNIVERSE_ID, 'joueur')).rejects.toBeInstanceOf(LockedError);
+    expect(store.characters.map((row) => row.id)).toEqual(['fiche', 'autre']);
+  });
+
+  it('efface sa fiche seule quand le siege n est pas pret', async () => {
+    const { store, characters } = seated(false);
+
+    await characters.reset(UNIVERSE_ID, 'joueur');
+    expect(store.characters.map((row) => row.id)).toEqual(['autre']);
   });
 });

@@ -8,6 +8,7 @@ import {
 } from '@odyssai/schemas';
 import { Prisma, PrismaClient, type User } from '@odyssai/db';
 import { PRISMA } from '../prisma/prisma.module.js';
+import { isUniqueViolation } from '../prisma/unique-violation.js';
 import { StoriesService } from '../stories/stories.service.js';
 
 // Le joueur siege deja a une table : il n'en ouvre pas une seconde.
@@ -44,6 +45,16 @@ export class PartyClosedError extends Error {
 
 type Owner = Pick<User, 'id' | 'currentUniverseId'>;
 
+/*
+  Prend la ligne de la table jusqu'a la fin de la transaction. Tout ce qui
+  compte ses sieges ou fait quitter l'inspiration a son histoire passe par
+  la : lu sans elle, deux arrivees simultanees voyaient chacune une place
+  libre, et une arrivee pouvait suivre le depart de l'histoire.
+*/
+export async function lockParty(tx: Prisma.TransactionClient, partyId: string): Promise<void> {
+  await tx.$queryRaw`SELECT id FROM parties WHERE id = ${partyId}::uuid FOR UPDATE`;
+}
+
 // La lecture d'une table avec ses sieges, membres d'abord.
 const WITH_MEMBERS = {
   members: {
@@ -77,28 +88,43 @@ export class PartyService {
   async create(user: User, size: number): Promise<Party> {
     if (await this.seated(user.id)) throw new AlreadySeatedError();
 
-    // L'histoire d'abord : la borne peut la refuser, et rien ne doit etre
-    // ecrit avant.
-    const story = await this.stories.start(user);
-
     // Le code, unique : on regarde avant de poser, et on repose s'il tombe
     // sur un existant. Huit caracteres tires, la collision est rare et le
     // nombre de tables vivantes est petit.
     const inviteCode = await this.drawCode();
 
-    const party = await this.prisma.party.create({
-      data: {
-        universeId: story.id,
-        size,
-        inviteCode,
-        members: {
-          create: { userId: user.id, isHost: true },
-        },
-      },
-      include: WITH_MEMBERS,
-    });
+    /*
+      L'histoire et la table dans une seule transaction : la borne peut
+      refuser l'histoire, et deux ouvertures simultanees passaient toutes
+      deux la garde du siege. La seconde tombait sur l'unicite du siege en
+      cinq cents, apres avoir cree une histoire qui comptait dans la borne.
+      Elle ne laisse maintenant rien, et dit qu'il siege deja.
+    */
+    let partyId: string;
+    try {
+      partyId = await this.prisma.$transaction(async (tx) => {
+        const story = await this.stories.start(user, undefined, tx);
+        const party = await tx.party.create({
+          data: {
+            universeId: story.id,
+            size,
+            inviteCode,
+            members: {
+              create: { userId: user.id, isHost: true },
+            },
+          },
+          select: { id: true },
+        });
+        return party.id;
+      });
+    } catch (error: unknown) {
+      if (isUniqueViolation(error) && (await this.seated(user.id))) {
+        throw new AlreadySeatedError();
+      }
+      throw error;
+    }
 
-    return this.toParty(party, user.id);
+    return this.read(user, partyId);
   }
 
   /*
@@ -112,28 +138,46 @@ export class PartyService {
     const folded = normalizePartyCode(code);
     if (folded.length !== PARTY_CODE_LENGTH) throw new PartyNotFoundError();
 
-    const party = await this.prisma.party.findUnique({
+    const found = await this.prisma.party.findUnique({
       where: { inviteCode: folded },
-      include: { ...WITH_MEMBERS, universe: { select: { step: true } } },
+      select: { id: true },
     });
-    if (!party) throw new PartyNotFoundError();
+    if (!found) throw new PartyNotFoundError();
 
-    if (party.universe.step !== 'inspiration') throw new PartyClosedError();
-    if (party.members.length >= party.size) throw new PartyFullError();
+    /*
+      Le compte et l'arrivee sous la ligne de la table : deux arrivees
+      simultanees passaient toutes deux « il reste une place », et la table
+      depassait sa taille, qu'aucune generation n'acceptait plus. L'etape se
+      relit sous le meme verrou, que prend aussi le passage a la fiche.
+    */
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        await lockParty(tx, found.id);
+        const party = await tx.party.findUniqueOrThrow({
+          where: { id: found.id },
+          include: { members: { select: { id: true } }, universe: { select: { step: true } } },
+        });
 
-    const [row] = await this.prisma.$transaction([
-      this.prisma.partyMember.create({
-        data: { partyId: party.id, userId: user.id },
-      }),
-      // Ouvrir l'histoire comme le ferait PUT /stories/:id/current : c'est
-      // celle qu'il vient de rejoindre.
-      this.prisma.user.update({
-        where: { id: user.id },
-        data: { currentUniverseId: party.universeId },
-      }),
-    ]);
+        if (party.universe.step !== 'inspiration') throw new PartyClosedError();
+        if (party.members.length >= party.size) throw new PartyFullError();
 
-    return this.read(user, row.partyId);
+        await tx.partyMember.create({
+          data: { partyId: party.id, userId: user.id },
+        });
+        // Ouvrir l'histoire comme le ferait PUT /stories/:id/current : c'est
+        // celle qu'il vient de rejoindre.
+        await tx.user.update({
+          where: { id: user.id },
+          data: { currentUniverseId: party.universeId },
+        });
+      });
+    } catch (error: unknown) {
+      // Deux tables rejointes en meme temps : le siege est unique par joueur.
+      if (isUniqueViolation(error)) throw new AlreadySeatedError();
+      throw error;
+    }
+
+    return this.read(user, found.id);
   }
 
   // La table ou le joueur siege, ou rien. L'etape de l'histoire vient avec :

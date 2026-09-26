@@ -1219,10 +1219,14 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
         if (!row) throw new Error('table absente');
         const members =
           include?.members || select?.members ? membersOf(row.id) : undefined;
+        const universe = include?.universe
+          ? (store.universes.find((u) => u.id === row.universeId) ?? null)
+          : undefined;
         if (!select) {
           return {
             ...row,
             ...(members !== undefined ? { members } : {}),
+            ...(universe !== undefined ? { universe } : {}),
           };
         }
         return Object.fromEntries(
@@ -1245,6 +1249,13 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
 
         if (data.members?.create) {
           const seat = data.members.create;
+          if ((store.partyMembers ?? []).some((member) => member.userId === seat.userId)) {
+            store.parties = store.parties.filter((party) => party.id !== row.id);
+            throw new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+              code: 'P2002',
+              clientVersion: 'double',
+            });
+          }
           store.partyMembers = [
             ...(store.partyMembers ?? []),
             {
@@ -1288,6 +1299,13 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
           )
           .map((row) => ({ ...row })),
       create: async ({ data }: any) => {
+        // `party_members.user_id` est unique : un joueur, une table.
+        if ((store.partyMembers ?? []).some((member) => member.userId === data.userId)) {
+          throw new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+            code: 'P2002',
+            clientVersion: 'double',
+          });
+        }
         const row: PartyMemberRow = {
           id: randomUUID(),
           partyId: data.partyId,
@@ -1596,6 +1614,8 @@ export function makeOnboardingPrisma(store: OnboardingStore) {
       ce que les tests doivent voir.
     */
     $queryRawUnsafe: async () => [{ ok: false }],
+    // Le verrou de ligne : les transactions du double passent deja une a une.
+    $queryRaw: async () => [],
 
     guideQuestion: {
       create: async () => ({}),

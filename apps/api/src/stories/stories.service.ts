@@ -202,14 +202,22 @@ export class StoriesService {
     conversation de creation et passe directement a la fiche, que le joueur
     n'a plus qu'a confirmer. Il entre en voyageur, la ou celui qui nait dans
     un monde y est natif.
+
+    `db` laisse l'appelant l'ecrire dans sa transaction : une table nait avec
+    son histoire, et une table qui echoue ne doit pas laisser d'histoire
+    comptee dans la borne.
   */
-  async start(user: Owner, essenceId?: string): Promise<Story> {
-    const count = await this.prisma.universe.count({ where: { ownerId: user.id } });
+  async start(
+    user: Owner,
+    essenceId?: string,
+    db: Prisma.TransactionClient = this.prisma,
+  ): Promise<Story> {
+    const count = await db.universe.count({ where: { ownerId: user.id } });
     if (count >= STORIES_MAX) throw new StoriesFullError();
 
     const essence = essenceId ? await this.carry(user.id, essenceId) : null;
 
-    const row = await this.prisma.universe.create({
+    const row = await db.universe.create({
       data: {
         ownerId: user.id,
         ...(essence
@@ -231,7 +239,7 @@ export class StoriesService {
       },
       select: SUMMARY,
     });
-    await this.open(user.id, row.id);
+    await this.open(user.id, row.id, db);
 
     return this.toStory(row, row.id);
   }
@@ -390,8 +398,12 @@ export class StoriesService {
     return row;
   }
 
-  private async open(userId: string, universeId: string): Promise<void> {
-    await this.prisma.user.update({
+  private async open(
+    userId: string,
+    universeId: string,
+    db: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    await db.user.update({
       where: { id: userId },
       data: { currentUniverseId: universeId },
     });

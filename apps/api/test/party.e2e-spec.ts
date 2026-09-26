@@ -17,6 +17,11 @@ import { NARRATOR_LLM } from './../src/onboarding/narrator-llm.provider.js';
 import { GenerationQueueService } from './../src/onboarding/generation-queue.service.js';
 import { ErasureService } from './../src/erasure/erasure.service.js';
 import { LockedError, OnboardingService } from './../src/onboarding/onboarding.service.js';
+import {
+  AlreadySeatedError,
+  PartyFullError,
+  PartyService,
+} from './../src/party/party.service.js';
 import type { User } from '@odyssai/db';
 import { PendingRollService } from './../src/turn/pending-roll.service.js';
 import { TurnMemoryService } from './../src/turn/turn-memory.service.js';
@@ -1325,6 +1330,103 @@ describe('une fiche payee reste en place (e2e)', () => {
     await app.get(ErasureService).releaseMembership(friend.id);
 
     expect((store.creditEntries ?? []).filter((row) => row.reason === 'refund')).toHaveLength(0);
+    await app.close();
+  });
+});
+
+/*
+  Les sieges quand les arrivees se croisent : une table ne depasse jamais sa
+  taille, une ouverture en double ne laisse pas d'histoire perdue, et la
+  porte ne se ferme que sur une table pleine.
+*/
+describe('les sieges sous concurrence (e2e)', () => {
+  let app: INestApplication<App>;
+  let store: OnboardingStore;
+
+  beforeEach(async () => {
+    ({ app, store } = await boot());
+  });
+
+  const asUser = (index: number) => store.users[index] as unknown as User;
+
+  it('deux arrivees simultanees ne depassent pas la taille', async () => {
+    const parties = app.get(PartyService);
+    const party = await parties.create(asUser(0), 2);
+
+    const results = await Promise.allSettled([
+      parties.join(asUser(1), party.inviteCode),
+      parties.join(asUser(2), party.inviteCode),
+    ]);
+
+    expect(results.map((result) => result.status).sort()).toEqual(['fulfilled', 'rejected']);
+    expect(results.find((result) => result.status === 'rejected')?.reason).toBeInstanceOf(
+      PartyFullError,
+    );
+    expect(store.partyMembers?.filter((row) => row.partyId === party.id)).toHaveLength(2);
+    await app.close();
+  });
+
+  it('deux ouvertures simultanees ne laissent qu une table et qu une histoire', async () => {
+    const parties = app.get(PartyService);
+
+    const results = await Promise.allSettled([
+      parties.create(asUser(0), 2),
+      parties.create(asUser(0), 2),
+    ]);
+
+    expect(results.map((result) => result.status).sort()).toEqual(['fulfilled', 'rejected']);
+    expect(results.find((result) => result.status === 'rejected')?.reason).toBeInstanceOf(
+      AlreadySeatedError,
+    );
+    expect(store.parties).toHaveLength(1);
+    expect(store.universes).toHaveLength(1);
+    await app.close();
+  });
+
+  /*
+    La porte se ferme en quittant l'inspiration. Deux sieges sur trois qui
+    avancent tot ne la ferment pas au troisieme : une table qui n'est pas
+    pleine ne genere jamais.
+  */
+  it('une table incomplete reste a l inspiration, et le dernier peut s asseoir', async () => {
+    const party = (
+      (await request(app.getHttpServer()).post('/parties').set('Cookie', HOST_COOKIE).send({ size: 3 }).expect(201)).body as Party
+    );
+    await request(app.getHttpServer())
+      .post('/parties/join')
+      .set('Cookie', FRIEND_COOKIE)
+      .send({ code: party.inviteCode })
+      .expect(201);
+    for (const cookie of [HOST_COOKIE, FRIEND_COOKIE]) {
+      await save(app, cookie, { step: 'inspiration', inspiration: WORKS, advance: true }).expect(200);
+    }
+    expect(store.universes[0]!.step).toBe('inspiration');
+
+    await request(app.getHttpServer())
+      .post('/parties/join')
+      .set('Cookie', LATE_COOKIE)
+      .send({ code: party.inviteCode })
+      .expect(201);
+    await save(app, LATE_COOKIE, { step: 'inspiration', inspiration: WORKS, advance: true }).expect(200);
+    expect(store.universes[0]!.step).toBe('character');
+    await app.close();
+  });
+});
+
+describe('le tour de l un fait tomber les jets des autres (e2e)', () => {
+  it('efface le jet en attente des autres sieges', async () => {
+    const { app, store } = await readyParty();
+    const friend = store.users[1];
+    const rolls = app.get(PendingRollService);
+    await rolls.hold(friend!.id, { content: 'Je frappe le garde.', situation: 'violence', locale: 'fr' });
+
+    await request(app.getHttpServer())
+      .post('/turn')
+      .set('Cookie', HOST_COOKIE)
+      .send({ kind: 'say', content: 'Je force la porte du depot.' })
+      .expect(200);
+
+    expect(await rolls.take(friend!.id)).toBeNull();
     await app.close();
   });
 });

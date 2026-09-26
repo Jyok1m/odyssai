@@ -15,7 +15,7 @@ import {
 import { Prisma, PrismaClient, type User } from '@odyssai/db';
 import { PRISMA } from '../prisma/prisma.module.js';
 import { CreditsService } from '../credits/credits.service.js';
-import { PartyService } from '../party/party.service.js';
+import { PartyService, lockParty } from '../party/party.service.js';
 import { GenerationQueueService } from './generation-queue.service.js';
 import { GenerationRefundService } from './generation-refund.service.js';
 import { StoriesService, openStoryWhere } from '../stories/stories.service.js';
@@ -239,23 +239,38 @@ export class OnboardingService {
   }
 
   /*
-    L'histoire quitte l'inspiration quand tous les sieges ont cite leurs
-    oeuvres : la porte se ferme, on ne la rejoint plus.
+    L'histoire quitte l'inspiration quand la table est pleine et que tous les
+    sieges ont cite leurs oeuvres : la porte se ferme, on ne la rejoint plus.
   */
   private async advanceWorks(partyId: string, universeId: string): Promise<void> {
-    const party = await this.prisma.party.findUniqueOrThrow({
-      where: { id: partyId },
-      include: { members: { orderBy: { joinedAt: 'asc' } } },
-    });
+    /*
+      Sous la ligne de la table, comme une arrivee : sans elle, un joueur
+      pouvait s'asseoir entre la lecture des sieges et le passage a la fiche,
+      et l'histoire avancait avec un siege sans oeuvres.
+    */
+    await this.prisma.$transaction(async (tx) => {
+      await lockParty(tx, partyId);
+      const party = await tx.party.findUniqueOrThrow({
+        where: { id: partyId },
+        include: { members: { orderBy: { joinedAt: 'asc' } } },
+      });
 
-    const all = party.members.every((member) =>
-      InspirationSchema.safeParse({ mode: 'works', works: member.works }).success,
-    );
-    if (!all) return;
+      /*
+        Pleine aussi : la porte se ferme en quittant l'inspiration, et une
+        table qui n'est pas pleine ne genere jamais. Deux sieges sur trois
+        qui avancaient tot fermaient la porte au troisieme, pour une table
+        que plus rien ne pouvait lancer.
+      */
+      const full = party.members.length === party.size;
+      const all = party.members.every((member) =>
+        InspirationSchema.safeParse({ mode: 'works', works: member.works }).success,
+      );
+      if (!full || !all) return;
 
-    await this.prisma.universe.update({
-      where: { id: universeId },
-      data: { step: 'character' },
+      await tx.universe.updateMany({
+        where: { id: universeId, step: 'inspiration' },
+        data: { step: 'character' },
+      });
     });
   }
 
