@@ -86,7 +86,7 @@ export function Tag({
 */
 export function Definition({ term, children }: { term: ReactNode; children: ReactNode }) {
   return (
-    <div className="grid gap-x-5 gap-y-1 py-2 @md:grid-cols-[8rem_minmax(0,1fr)]">
+    <div className="grid grid-cols-1 gap-x-5 gap-y-1 py-2 @md:grid-cols-[8rem_minmax(0,1fr)]">
       <dt className="text-ui-sm text-vellum-3">{term}</dt>
       <dd className="text-ui-sm text-pretty text-vellum">{children}</dd>
     </div>

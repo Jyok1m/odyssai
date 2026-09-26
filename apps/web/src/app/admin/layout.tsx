@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { Toaster } from "@/components/ui/toaster";
-import { BRAND_INK } from "@/lib/site";
+import { SITE_VIEWPORT } from "@/lib/site";
 import "../globals.css";
 
 /*
@@ -30,10 +30,7 @@ const literata = Literata({
   display: "swap",
 });
 
-export const viewport: Viewport = {
-  themeColor: BRAND_INK,
-  colorScheme: "dark",
-};
+export const viewport: Viewport = SITE_VIEWPORT;
 
 export const metadata: Metadata = {
   title: "Administration",

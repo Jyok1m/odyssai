@@ -29,7 +29,7 @@ export function LocaleSwitcher({
   return (
     <nav
       aria-label={t("label")}
-      className={["flex items-center gap-x-1", className]
+      className={["flex items-center gap-x-1 pointer-coarse:gap-x-2", className]
         .filter(Boolean)
         .join(" ")}
     >
@@ -52,7 +52,7 @@ export function LocaleSwitcher({
             aria-current={isActive ? "true" : undefined}
             onClick={onNavigate}
             className={[
-              "rounded-control px-2 py-1 text-ui-sm font-medium transition-colors",
+              "touch-target rounded-control px-2 py-1 text-ui-sm font-medium transition-colors",
               // La langue courante se marque par le contraste, pas par un
               // fond : a cote du bouton du tableau de bord, deux pastilles
               // pleines se disputaient l'oeil sans rien hierarchiser.

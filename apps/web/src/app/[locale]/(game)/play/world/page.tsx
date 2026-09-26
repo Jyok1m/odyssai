@@ -38,10 +38,10 @@ export default function WorldPage() {
   // La même porte que la table : pas de monde tant qu'on ne peut pas jouer.
   return (
     <GameGate>
-      <article className="mx-auto max-w-wrap px-6 pt-32 pb-24 sm:pt-40 lg:px-8">
+      <article className="mx-auto max-w-wrap px-6 pt-4 pb-16 sm:pt-40 sm:pb-24 lg:px-8">
         <Link
           href="/play"
-          className="font-ui text-control font-medium text-vellum-2 transition-colors hover:text-vellum"
+          className="touch-target font-ui text-control font-medium text-vellum-2 transition-colors hover:text-vellum"
         >
           <span aria-hidden="true">&larr;</span> {t("back")}
         </Link>

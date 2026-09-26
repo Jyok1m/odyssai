@@ -223,12 +223,12 @@ export function CharacterStep({ initial, arrival, saving, error, onAdvance }: Pr
 
       <ol
         ref={thread}
-        className="mt-5 flex max-h-96 flex-col gap-5 overflow-y-auto overscroll-contain px-1"
+        className="mt-5 flex max-h-[min(24rem,60svh)] flex-col gap-5 overflow-y-auto overscroll-contain px-1"
       >
         {messages.map((message, index) => (
           <li key={message.id} className="animate-rise">
             {message.role === "user" ? (
-              <p className="ml-auto max-w-17/20 rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum">
+              <p className="ml-auto max-w-17/20 rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum wrap-anywhere">
                 <span className="sr-only">{t("character.you")} : </span>
                 {message.content}
               </p>
@@ -357,7 +357,7 @@ export function CharacterStep({ initial, arrival, saving, error, onAdvance }: Pr
   if (!sheet) return conversation;
 
   return (
-    <div className="grid gap-5 xl:grid-cols-2">
+    <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
       {conversation}
       {sheet}
     </div>

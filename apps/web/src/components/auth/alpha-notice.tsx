@@ -30,7 +30,7 @@ export function AlphaNotice() {
         <button
           type="button"
           onClick={() => setDismissed(true)}
-          className="-m-1.5 shrink-0 rounded-control p-1.5 text-vellum-3 transition-colors hover:text-vellum"
+          className="-m-3 shrink-0 rounded-control p-3 text-vellum-3 transition-colors hover:text-vellum"
         >
           <span className="sr-only">{t("noticeClose")}</span>
           <XMarkIcon aria-hidden="true" className="size-5" />

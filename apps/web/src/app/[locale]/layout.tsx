@@ -13,7 +13,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { Toaster } from "@/components/ui/toaster";
 import { routing } from "@/i18n/routing";
 import { OG_LOCALE, SITE_URL, alternatesFor } from "@/lib/seo";
-import { BRAND_INK, SITE_NAME } from "@/lib/site";
+import { SITE_NAME, SITE_VIEWPORT } from "@/lib/site";
 import "../globals.css";
 
 // L'interface et le joueur.
@@ -36,12 +36,7 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
-export const viewport: Viewport = {
-  themeColor: BRAND_INK,
-  // Le kit n'a qu'un thème. On le déclare pour que les contrôles natifs et
-  // les barres de défilement suivent, au lieu de rester en clair.
-  colorScheme: "dark",
-};
+export const viewport: Viewport = SITE_VIEWPORT;
 
 export async function generateMetadata({
   params,

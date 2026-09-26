@@ -167,7 +167,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="-m-2.5 p-2.5 text-vellum-2 hover:text-vellum xl:hidden"
+            className="-m-3 p-3 text-vellum-2 hover:text-vellum xl:hidden"
           >
             <span className="sr-only">Ouvrir la navigation</span>
             <Bars3Icon aria-hidden="true" className="size-5" />
@@ -205,7 +205,9 @@ function Sidebar({
   onNavigate?: () => void;
 }) {
   return (
-    <div className="flex grow flex-col gap-y-6 overflow-y-auto border-r border-line bg-abyss px-6">
+    // Les `*-safe-*` ne jouent que dans le tiroir, colle au bord de l'ecran :
+    // sur la barre fixe du bureau, les `env()` valent zero.
+    <div className="flex grow flex-col gap-y-6 overflow-y-auto overscroll-contain border-r border-line bg-abyss pt-safe-0 pr-6 pb-safe-0 pl-safe-6">
       <div className="flex h-16 shrink-0 items-center gap-3">
         <Image
           src="/odyssai-mark.svg"
@@ -231,7 +233,7 @@ function Sidebar({
                   onClick={onNavigate}
                   aria-current={current ? "page" : undefined}
                   className={[
-                    "group flex gap-x-3 rounded-control p-2 font-ui text-ui-sm font-medium transition-colors",
+                    "group flex gap-x-3 rounded-control p-2 font-ui text-ui-sm font-medium transition-colors pointer-coarse:py-3",
                     current
                       ? "bg-mist text-vellum"
                       : "text-vellum-3 hover:bg-mist/60 hover:text-vellum",

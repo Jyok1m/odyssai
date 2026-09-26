@@ -99,7 +99,7 @@ function Sheet({ world }: { world: WorldView }) {
         </p>
       </header>
 
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <Panel title={t("identity")} aside={player ?? undefined}>
           <div className="flex items-center gap-5">
             <span
@@ -158,7 +158,7 @@ function Sheet({ world }: { world: WorldView }) {
         </Panel>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <Panel title={t("attributes")} className="lg:col-span-2">
           <AttributeBlocks standing={character.standing} />
         </Panel>
@@ -188,7 +188,7 @@ function Sheet({ world }: { world: WorldView }) {
         </Panel>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <Panel title={t("lastRoll")}>
           {roll ? (
             <div className="flex flex-col items-center gap-2 text-center">
@@ -225,7 +225,7 @@ function Sheet({ world }: { world: WorldView }) {
             {t("elsewhereEmpty")}
           </p>
         ) : (
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {character.elsewhere.map((incarnation) => (
               <li
                 key={incarnation.universeId}
@@ -266,7 +266,7 @@ function Sheet({ world }: { world: WorldView }) {
             {t("marksEmpty")}
           </p>
         ) : (
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {character.marks.map((mark) => (
               <li
                 key={`${mark.kind}-${mark.text}`}
@@ -286,7 +286,7 @@ function Sheet({ world }: { world: WorldView }) {
         )}
       </Panel>
 
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         {/* La couleur, là où les attributs sont le calcul : le moteur ne les
             lit pas, le meneur si. */}
         <Panel title={t("talents")}>
@@ -316,7 +316,7 @@ function Sheet({ world }: { world: WorldView }) {
           {character.inventory.length === 0 ? (
             <p className="text-ui-sm text-pretty text-vellum-3">{t("inventoryEmpty")}</p>
           ) : (
-            <ul className="grid gap-x-8 sm:grid-cols-2">
+            <ul className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
               {character.inventory.map((item) => (
                 <li
                   key={item}

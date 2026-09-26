@@ -106,7 +106,7 @@ function General() {
         ))}
       </Panel>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {sections.map((section) => (
           <Panel key={section.title} title={section.title}>
             {section.body.map((paragraph) => (
@@ -148,7 +148,7 @@ function Stories() {
 
   return (
     <Panel title={t("stories")}>
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stories.map((story) => (
           <li key={story.id}>
             <Link
@@ -230,7 +230,7 @@ function OpenWorlds() {
 
   return (
     <Panel title={t("open")}>
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {worlds.map((world) => (
           <li
             key={world.universeId}
@@ -312,7 +312,7 @@ function World({ world }: { world: WorldView }) {
           {world.charter.tone}
         </p>
 
-        <div className="mt-6 grid gap-6 sm:grid-cols-2">
+        <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div>
             <p className="text-caption text-vellum-3">{t("allowed")}</p>
             <ul className="mt-2 space-y-1.5">
@@ -336,7 +336,7 @@ function World({ world }: { world: WorldView }) {
         </div>
       </Panel>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Panel title={t("lore")}>
           <dl className="divide-y divide-line">
             <Definition term={t("era")}>{world.lore.era}</Definition>
@@ -369,7 +369,7 @@ function World({ world }: { world: WorldView }) {
       </div>
 
       <Panel title={t("factions")}>
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {world.factions.map((faction) => (
             <li key={faction.name} className="@container rounded-card border border-line p-4">
               <p className="font-voice text-subtitle text-accent">{faction.name}</p>
@@ -384,7 +384,7 @@ function World({ world }: { world: WorldView }) {
         </ul>
       </Panel>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* Aucun secret ici : le schéma de vue ne les porte pas, ils se
             découvriront en jeu. */}
         <Panel title={t("people")}>
@@ -427,7 +427,7 @@ function World({ world }: { world: WorldView }) {
         </Panel>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* Ce que le joueur a appris, entité par entité. Le caché n'est pas
             dans le type, il sortira par le jeu. */}
         <Panel title={t("codex")} aside={String(world.entities.length)}>

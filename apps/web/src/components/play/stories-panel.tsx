@@ -296,7 +296,7 @@ export function StoriesPanel() {
             {t("carryHint")}
           </p>
 
-          <ul className="mt-5 grid gap-3 sm:grid-cols-2">
+          <ul className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {travellers.map((traveller) => (
               <li key={traveller.id}>
                 <button
@@ -335,7 +335,7 @@ export function StoriesPanel() {
           celle qu'on vient reprendre, les autres sont un choix qu'on fait de
           temps en temps.
         */
-        <ul className="stagger grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="stagger grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {sorted.map((story) => (
             <StoryCard
               key={story.id}
@@ -734,7 +734,7 @@ function Chronicle({ story }: { story: Story }) {
       <button
         type="button"
         onClick={() => setOpen((shown) => !shown)}
-        className="flex w-full items-center justify-between gap-3 text-left"
+        className="touch-target flex w-full items-center justify-between gap-3 text-left"
       >
         <span className="text-ui-sm font-medium text-vellum">
           {t("chronicle.title")}
@@ -816,7 +816,7 @@ function Chronicle({ story }: { story: Story }) {
 // Trois cartes à la place de la grille des histoires.
 function StoriesSkeleton({ label }: { label: string }) {
   return (
-    <Loading label={label} className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <Loading label={label} className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
       <Skeleton className="h-72 sm:col-span-2 lg:col-span-1 lg:row-span-2 lg:h-auto" round="card" />
       <Skeleton className="h-64" round="card" />
       <Skeleton className="h-64" round="card" />

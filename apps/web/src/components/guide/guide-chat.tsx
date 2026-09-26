@@ -182,11 +182,11 @@ export function GuideChat() {
       {started && (
         <ol
           ref={threadRef}
-          className="mt-5 flex max-h-80 flex-col gap-5 overflow-y-auto overscroll-contain px-1 sm:max-h-96"
+          className="mt-5 flex max-h-[min(20rem,60svh)] flex-col gap-5 overflow-y-auto overscroll-contain px-1 sm:max-h-[min(24rem,60svh)]"
         >
           {turns.map((turn, index) => (
             <li key={index} className="flex animate-rise flex-col gap-3">
-              <p className="ml-auto max-w-[85%] rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum">
+              <p className="ml-auto max-w-[85%] rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum wrap-anywhere">
                 <span className="sr-only">{t("you")} : </span>
                 {turn.question}
               </p>

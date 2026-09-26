@@ -143,12 +143,12 @@ function GameTable({
         <CreditsBadge refreshKey={played} />
       </div>
 
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_24rem]">
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_24rem]">
         {/* La table, d'abord : c'est là qu'on joue, le reste est ce qu'on
             consulte sans quitter la partie des yeux. */}
         <GameChat world={world} report={report} />
 
-        <aside className="stagger grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
+        <aside className="stagger grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-1">
           <Panel
             title={t("character")}
             aside={<PanelLink href="/play/character">{t("sheetLink")}</PanelLink>}
@@ -352,7 +352,7 @@ function TableSkeleton({ label }: { label: string }) {
       <div className="flex justify-end">
         <Skeleton className="h-4 w-24" />
       </div>
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_24rem]">
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="space-y-5">
           <div className="space-y-6 rounded-card border border-line bg-abyss p-5 sm:p-6">
             <Skeleton className="h-9 w-2/3" />
@@ -361,7 +361,7 @@ function TableSkeleton({ label }: { label: string }) {
           </div>
           <Skeleton className="h-36" round="card" />
         </div>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-1">
           <Skeleton className="h-80 sm:col-span-2 lg:col-span-1" round="card" />
           <Skeleton className="h-44" round="card" />
           <Skeleton className="h-44" round="card" />
@@ -375,7 +375,7 @@ function PanelLink({ href, children }: { href: "/play/character" | "/play/world"
   return (
     <Link
       href={href}
-      className="font-ui text-caption font-medium text-accent transition-colors hover:text-vellum"
+      className="touch-target font-ui text-caption font-medium text-accent transition-colors hover:text-vellum"
     >
       {children} <span aria-hidden="true">&rarr;</span>
     </Link>

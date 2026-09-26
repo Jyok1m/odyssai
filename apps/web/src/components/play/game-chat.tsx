@@ -407,9 +407,15 @@ export function GameChat({
             <SkeletonLines lines={3} className="max-w-measure" />
           </Loading>
         ) : (
+          /*
+            Plafonne aussi par la hauteur d'ecran : un fil plus haut que
+            l'ecran, en paysage sur un telephone, gardait le doigt dans son
+            defilement sans rendre la page. `svh` et non `dvh`, stable quand
+            la barre d'adresse se replie. `min()` n'a pas de classe native.
+          */
           <ol
             ref={thread}
-            className="flex max-h-136 flex-col gap-6 overflow-y-auto overscroll-contain px-1"
+            className="flex max-h-[min(34rem,60svh)] flex-col gap-6 overflow-y-auto overscroll-contain px-1"
           >
             {messages.length === 0 ? (
               <li className="animate-breathe text-ui-sm text-pretty text-vellum-3">{t("opening")}</li>
@@ -422,7 +428,7 @@ export function GameChat({
                   className={`rounded-card border border-arcane/35 bg-arcane/6 px-4 py-3.5 ${fresh.has(item.question.id) ? "animate-rise" : ""}`}
                 >
                   <p className="text-caption text-arcane">{t("aside")}</p>
-                  <p className="mt-2 text-ui-sm text-pretty text-vellum italic">
+                  <p className="mt-2 text-ui-sm text-pretty text-vellum italic wrap-anywhere">
                     {item.question.content}
                   </p>
                   {item.answer ? (
@@ -467,7 +473,7 @@ export function GameChat({
                         {t("erased")}
                       </p>
                     ) : (
-                      <p className="rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum">
+                      <p className="rounded-card bg-mist px-4 py-2.5 text-ui-sm text-vellum wrap-anywhere">
                         <span className="sr-only">
                           {item.message.author ?? t("you")} :{" "}
                         </span>

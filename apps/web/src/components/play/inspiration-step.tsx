@@ -133,7 +133,7 @@ export function InspirationStep({
                   aria-selected={mode === value}
                   onClick={() => change(() => setMode(value))}
                   className={[
-                    "relative rounded-control px-3.5 py-1.5 font-ui text-ui-sm font-medium transition-colors duration-base",
+                    "touch-target rounded-control px-3.5 py-1.5 font-ui text-ui-sm font-medium transition-colors duration-base",
                     mode === value ? "text-on-accent" : "text-vellum-2 hover:text-vellum",
                   ].join(" ")}
                 >
@@ -151,7 +151,7 @@ export function InspirationStep({
         </p>
 
       {mode === "works" ? (
-        <div className="mt-6 grid animate-fade gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
+        <div className="mt-6 grid grid-cols-1 animate-fade gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
           <div>
           <p className="text-ui-sm text-vellum-2">{t("inspiration.worksHint")}</p>
 
@@ -182,7 +182,7 @@ export function InspirationStep({
                     la feuille CSS, pas par l'ordre dans className.
                   */
                   className={[
-                    "h-10 min-w-0 flex-1 rounded-control border bg-ink px-3.5 font-ui text-ui-sm text-vellum transition-colors focus:border-accent",
+                    "h-10 min-w-0 flex-1 rounded-control border bg-ink px-3.5 font-ui text-ui-sm text-vellum transition-colors pointer-coarse:h-11 focus:border-accent",
                     marked.has(index) ? "border-ember" : "border-line",
                   ].join(" ")}
                 />

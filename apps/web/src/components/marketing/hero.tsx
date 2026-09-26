@@ -31,13 +31,14 @@ export function Hero({ children }: { children?: ReactNode }) {
       </div>
 
       <div className="mx-auto max-w-wrap px-6 lg:px-8">
-        <div className="flex flex-col items-center pt-28 pb-24 text-center sm:pt-32 sm:pb-32">
+        <div className="flex flex-col items-center pt-28 pb-16 text-center sm:pt-32 sm:pb-32">
           {/* L'entrée en cascade : la pastille, le titre, la promesse, les
               boutons, puis le guide. Un rang de cadence chacun. */}
           <p className="relative inline-flex animate-rise items-center rounded-full border border-line px-2.5 py-1 text-tag font-medium text-vellum-2 transition-colors hover:border-vellum-3">
             {t("badge")}{" "}
             <Link href="/concept" className="group ml-1.5 font-semibold text-accent">
-              <span aria-hidden="true" className="absolute inset-0" />
+              {/* Deborde la pastille de 10 px en haut et en bas : 44 px au doigt. */}
+              <span aria-hidden="true" className="absolute inset-x-0 -inset-y-2.5" />
               {t("badgeCta")} <Arrow />
             </Link>
           </p>
@@ -63,7 +64,7 @@ export function Hero({ children }: { children?: ReactNode }) {
                 reste aligné sur le bouton primaire quand la ligne passe. */}
             <Link
               href="/concept"
-              className="group inline-flex items-center gap-2 text-control font-medium text-vellum transition-colors hover:text-accent"
+              className="group touch-target inline-flex items-center gap-2 text-control font-medium text-vellum transition-colors hover:text-accent"
             >
               {t("secondaryCta")} <Arrow />
             </Link>

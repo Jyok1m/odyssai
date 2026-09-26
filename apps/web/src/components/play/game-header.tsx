@@ -28,7 +28,12 @@ export function GameHeader() {
   const pathname = usePathname();
 
   return (
-    <header className="absolute inset-x-0 top-0 z-50">
+    /*
+      Dans le flux sous `sm`, pose sur la page au dela. Etroit, le groupe
+      d'actions passe sur deux lignes, et un bandeau pose en `absolute` au
+      dessus d'un `pt-32` fixe recouvrait le haut de la page a 360 px.
+    */
+    <header className="relative z-50 sm:absolute sm:inset-x-0 sm:top-0">
       <nav
         aria-label={t("label")}
         className="mx-auto flex max-w-wrap flex-wrap items-center gap-x-8 gap-y-4 px-6 py-6 lg:px-8"
@@ -55,7 +60,7 @@ export function GameHeader() {
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
                 className={[
-                  "border-b-2 pb-1 text-ui-sm font-medium transition-colors",
+                  "touch-target border-b-2 pb-1 text-ui-sm font-medium transition-colors",
                   active
                     ? "border-accent text-vellum"
                     : "border-transparent text-vellum-2 hover:text-vellum",

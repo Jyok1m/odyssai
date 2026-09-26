@@ -38,7 +38,7 @@ export default function PricingPage() {
   const t = useTranslations("Pricing");
 
   return (
-    <div className="mx-auto max-w-wrap px-6 pt-32 pb-24 sm:pt-40 lg:px-8">
+    <div className="mx-auto max-w-wrap px-6 pt-28 pb-16 sm:pt-40 sm:pb-24 lg:px-8">
       {/* Centre, contrairement aux pages de contenu : une grille de paliers se
           lit en colonnes et non en lignes, et un titre pousse a gauche
           au-dessus de colonnes symetriques fait pencher toute la page. */}

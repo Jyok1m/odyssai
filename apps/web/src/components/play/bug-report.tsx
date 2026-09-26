@@ -45,13 +45,18 @@ export function BugReportButton() {
           className="fixed inset-0 bg-ink/80 transition-opacity duration-slow ease-emerge data-closed:opacity-0 data-leave:duration-base data-leave:ease-exit"
         />
 
-        <div className="fixed inset-0 flex items-end justify-center p-4 sm:items-center">
-          <DialogPanel
-            transition
-            className="w-full max-w-lg rounded-card border border-line bg-abyss p-6 transition duration-slow ease-emerge data-closed:translate-y-(--motion-shift) data-closed:scale-(--motion-pop) data-closed:opacity-0 data-leave:duration-base data-leave:ease-exit"
-          >
-            <BugReportForm page={pathname} onClose={() => setOpen(false)} />
-          </DialogPanel>
+        {/* Le cadre defile, la fenetre non : en paysage sur un telephone,
+            le formulaire est plus haut que l'ecran, et ses boutons restaient
+            hors d'atteinte. */}
+        <div className="fixed inset-0 overflow-y-auto overscroll-contain">
+          <div className="flex min-h-full items-end justify-center p-safe-4 sm:items-center">
+            <DialogPanel
+              transition
+              className="w-full max-w-lg rounded-card border border-line bg-abyss p-6 transition duration-slow ease-emerge data-closed:translate-y-(--motion-shift) data-closed:scale-(--motion-pop) data-closed:opacity-0 data-leave:duration-base data-leave:ease-exit"
+            >
+              <BugReportForm page={pathname} onClose={() => setOpen(false)} />
+            </DialogPanel>
+          </div>
         </div>
       </Dialog>
     </>
@@ -139,7 +144,7 @@ function BugReportForm({ page, onClose }: { page: string; onClose: () => void })
           <div className="mt-1.5 flex flex-wrap items-center gap-3">
             {/* Un libellé en bouton autour du champ : le champ natif ne
                 s'habille pas, le libellé si. */}
-            <label className="inline-flex h-8 cursor-pointer items-center rounded-control border border-line px-3 font-ui text-ui-sm font-medium text-vellum transition-colors hover:border-vellum-3 hover:bg-mist">
+            <label className="touch-target inline-flex h-8 cursor-pointer items-center rounded-control border border-line px-3 font-ui text-ui-sm font-medium text-vellum transition-colors hover:border-vellum-3 hover:bg-mist">
               {file ? t("screenshotChange") : t("screenshotPick")}
               <input
                 type="file"

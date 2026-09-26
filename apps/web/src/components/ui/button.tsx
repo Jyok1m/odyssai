@@ -22,9 +22,12 @@ const SIZES = {
   réduit ; désactivé, il pâlit, sinon il se lit comme un bouton qui ne répond
   pas. `not-disabled` et non `enabled` : un lien habillé en bouton n'est ni
   l'un ni l'autre, et doit s'enfoncer aussi.
+
+  `touch-target` porte la cible a 44 px au doigt : `md` fait 40 px et `sm`
+  32, les tailles du kit, que le tactile ne change pas a l'oeil.
 */
 const BASE =
-  "inline-flex items-center justify-center gap-2 rounded-control border font-ui font-medium whitespace-nowrap transition duration-quick ease-out motion-safe:active:not-disabled:scale-97 disabled:opacity-50";
+  "touch-target inline-flex items-center justify-center gap-2 rounded-control border font-ui font-medium whitespace-nowrap transition duration-quick ease-out motion-safe:active:not-disabled:scale-97 disabled:opacity-50";
 
 type ButtonProps<T extends ElementType> = {
   as?: T;

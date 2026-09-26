@@ -13,7 +13,7 @@ export function GlossaryList({ entries }: { entries: GlossaryEntry[] }) {
       {entries.map((entry) => (
         <div
           key={entry.term}
-          className="reveal grid gap-1 p-5 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] sm:gap-6"
+          className="reveal grid grid-cols-1 gap-1 p-5 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] sm:gap-6"
         >
           <dt className="font-ui text-ui-sm font-semibold text-vellum">
             {entry.term}

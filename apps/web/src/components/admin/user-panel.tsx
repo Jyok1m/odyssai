@@ -89,7 +89,7 @@ export function UserPanel({ id, onClose, onChanged }: Props) {
       <div className="fixed inset-y-0 right-0 flex max-w-full">
         <DialogPanel
           transition
-          className="flex w-screen max-w-xl flex-col overflow-y-auto border-l border-line bg-abyss transition duration-slow ease-emerge data-leave:duration-base data-leave:ease-exit motion-safe:data-closed:translate-x-full motion-reduce:data-closed:opacity-0"
+          className="flex w-screen max-w-xl flex-col overflow-y-auto overscroll-contain border-l border-line bg-abyss pr-safe-0 pb-safe-0 transition duration-slow ease-emerge data-leave:duration-base data-leave:ease-exit motion-safe:data-closed:translate-x-full motion-reduce:data-closed:opacity-0"
         >
           <header className="sticky top-0 flex items-start justify-between gap-4 border-b border-line bg-abyss px-6 py-4">
             <div>
@@ -103,7 +103,7 @@ export function UserPanel({ id, onClose, onChanged }: Props) {
             <button
               type="button"
               onClick={onClose}
-              className="-m-2 p-2 text-vellum-3 hover:text-vellum"
+              className="-m-3 p-3 text-vellum-3 hover:text-vellum"
             >
               <span className="sr-only">Fermer</span>
               <XMarkIcon aria-hidden="true" className="size-5" />
@@ -262,7 +262,7 @@ export function UserPanel({ id, onClose, onChanged }: Props) {
                 ) : (
                   <ul className="mt-3 divide-y divide-line/60">
                     {detail.entries.map((entry) => (
-                      <li key={entry.id} className="flex items-baseline gap-3 py-2">
+                      <li key={entry.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
                         <span
                           className={`w-16 shrink-0 text-right tabular-nums text-ui-sm ${
                             entry.delta < 0 ? "text-ember" : "text-accent"
@@ -271,7 +271,7 @@ export function UserPanel({ id, onClose, onChanged }: Props) {
                           {entry.delta > 0 ? "+" : ""}
                           {entry.delta}
                         </span>
-                        <span className="text-ui-sm text-vellum-2">{entry.reason}</span>
+                        <span className="min-w-0 text-ui-sm text-vellum-2">{entry.reason}</span>
                         <span className="ml-auto text-caption text-vellum-3">
                           solde {entry.balance} · {date(entry.createdAt)}
                         </span>

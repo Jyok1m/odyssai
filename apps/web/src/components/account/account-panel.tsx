@@ -109,7 +109,7 @@ export function AccountPanel() {
 
   return (
     <div className="stagger space-y-5">
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         {/* Le pseudo : la seule pièce de l'identité que l'application décide,
             et elle ne se choisit qu'une fois. */}
         <Panel title={t("usernameLabel")}>
@@ -224,7 +224,7 @@ export function AccountPanel() {
         <StoriesStanding />
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         {/* L'identité appartient au service qui l'authentifie. Le profil de
             jeu reste ici, et ne remonte jamais là-bas. */}
         <Panel title={t("identityTitle")} aside={t("identityHeld")}>

@@ -35,7 +35,7 @@ export default function GlossaryPage() {
   const locale = useLocale() as Locale;
 
   return (
-    <article className="mx-auto max-w-wrap px-6 pt-32 pb-24 sm:pt-40 lg:px-8">
+    <article className="mx-auto max-w-wrap px-6 pt-28 pb-16 sm:pt-40 sm:pb-24 lg:px-8">
       <BreadcrumbJsonLd locale={locale} href={HREF} name={t("metaTitle")} />
 
       <header className="max-w-headline">

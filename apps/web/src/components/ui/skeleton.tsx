@@ -75,7 +75,7 @@ export function PageSkeleton({ label }: { label: string }) {
   return (
     <Loading label={label} className="space-y-5">
       <Skeleton className="h-40" round="card" />
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <Skeleton className="h-56" round="card" />
         <Skeleton className="h-56" round="card" />
         <Skeleton className="h-56" round="card" />

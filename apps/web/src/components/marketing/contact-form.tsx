@@ -66,7 +66,7 @@ export function ContactForm() {
         void submit();
       }}
     >
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <Field id="contact-name" label={t("name")} hint={t("nameHint")}>
           <input
             id="contact-name"

@@ -8,7 +8,7 @@ import { useState } from "react";
 import { AdminLink } from "@/components/auth/admin-link";
 import { AuthMenu } from "@/components/auth/auth-menu";
 import { OdyssaiLogo } from "@/components/brand/odyssai-logo";
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 
 import { LocaleSwitcher } from "./locale-switcher";
 
@@ -27,11 +27,23 @@ const NAV_ITEMS = [
   garde son liseré de focus.
 */
 const NAV_LINK =
-  "relative text-ui-sm font-medium text-vellum-2 transition-colors hover:text-vellum after:absolute after:inset-x-0 after:-bottom-1 after:h-px after:origin-left after:scale-x-0 after:bg-accent after:transition-transform after:duration-base after:ease-emerge hover:after:scale-x-100 motion-reduce:after:transition-none";
+  "touch-target text-ui-sm font-medium text-vellum-2 transition-colors hover:text-vellum after:absolute after:inset-x-0 after:-bottom-1 after:h-px after:origin-left after:scale-x-0 after:bg-accent after:transition-transform after:duration-base after:ease-emerge hover:after:scale-x-100 motion-reduce:after:transition-none";
 
 export function SiteHeader() {
   const t = useTranslations("Nav");
+  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  /*
+    Tout changement de page ferme le menu, y compris celui qui ne passe par
+    aucun de ses liens : le retour du navigateur. Ajuste pendant le rendu,
+    comme React le recommande, plutot que par un effet sur le chemin qui
+    ferait un rendu de plus.
+  */
+  const [menuPath, setMenuPath] = useState(pathname);
+  if (menuPath !== pathname) {
+    setMenuPath(pathname);
+    setMobileMenuOpen(false);
+  }
 
   return (
     <header className="absolute inset-x-0 top-0 z-50">
@@ -50,6 +62,7 @@ export function SiteHeader() {
             type="button"
             onClick={() => setMobileMenuOpen(true)}
             className="-m-2.5 inline-flex items-center justify-center rounded-control p-2.5 text-vellum-2 transition-colors hover:text-vellum"
+            aria-expanded={mobileMenuOpen}
           >
             <span className="sr-only">{t("openMenu")}</span>
             <Bars3Icon aria-hidden="true" className="size-6" />
@@ -94,7 +107,7 @@ export function SiteHeader() {
         />
         <DialogPanel
           transition
-          className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-abyss p-6 transition duration-slow ease-emerge data-closed:opacity-0 data-leave:duration-base data-leave:ease-exit motion-safe:data-closed:translate-x-full sm:max-w-sm sm:border-l sm:border-line"
+          className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto overscroll-contain bg-abyss p-safe-6 transition duration-slow ease-emerge data-closed:opacity-0 data-leave:duration-base data-leave:ease-exit motion-safe:data-closed:translate-x-full sm:max-w-sm sm:border-l sm:border-line sm:pl-6"
         >
           <div className="flex items-center justify-between">
             <Link
@@ -123,7 +136,7 @@ export function SiteHeader() {
                     key={item.key}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="-mx-3 block rounded-control px-3 py-2 text-narration font-medium text-vellum transition-colors hover:bg-mist"
+                    className="-mx-3 block min-h-11 rounded-control px-3 py-2 text-narration font-medium text-vellum transition-colors hover:bg-mist"
                   >
                     {t(item.key)}
                   </Link>

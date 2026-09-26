@@ -38,7 +38,7 @@ export function ProsePage({
   const nav = toNavSections(sections);
 
   return (
-    <article className="mx-auto max-w-wrap px-6 pt-32 pb-24 sm:pt-40 lg:px-8">
+    <article className="mx-auto max-w-wrap px-6 pt-28 pb-16 sm:pt-40 sm:pb-24 lg:px-8">
       <BreadcrumbJsonLd locale={locale} href={href} name={title} />
 
       <header className="max-w-headline">
@@ -50,7 +50,7 @@ export function ProsePage({
         </p>
       </header>
 
-      <div className="mt-14 grid gap-x-12 lg:grid-cols-[minmax(0,1fr)_296px]">
+      <div className="mt-14 grid grid-cols-1 gap-x-12 lg:grid-cols-[minmax(0,1fr)_296px]">
         <div className="max-w-headline">
           <div className="animate-rise space-y-6 font-voice text-narration text-pretty text-vellum motion-delay-2">
             {intro.map((paragraph) => (

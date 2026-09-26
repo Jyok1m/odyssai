@@ -46,18 +46,18 @@ export function SiteFooter() {
 
   return (
     <footer className="border-t border-line">
-      <div className="mx-auto max-w-wrap overflow-hidden px-6 py-20 sm:py-24 lg:px-8">
+      <div className="mx-auto max-w-wrap overflow-hidden px-6 py-16 sm:py-24 lg:px-8">
         {/* La marge négative compense le gap-y de la rangée : sans elle, un
             retour à la ligne creuserait l'espace sous la navigation. */}
         <nav
           aria-label={t("footerLegal")}
-          className="-mb-6 flex flex-wrap justify-center gap-x-12 gap-y-3 text-ui-sm"
+          className="-mb-6 flex flex-wrap justify-center gap-x-12 gap-y-3 text-ui-sm pointer-coarse:gap-y-6"
         >
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.key}
               href={item.href}
-              className="text-vellum-3 transition-colors hover:text-vellum"
+              className="touch-target text-vellum-3 transition-colors hover:text-vellum"
             >
               {t(item.key)}
             </Link>
@@ -73,7 +73,7 @@ export function SiteFooter() {
                 href={href}
                 target="_blank"
                 rel="noreferrer"
-                className="text-vellum-3 transition-colors hover:text-vellum"
+                className="touch-target text-vellum-3 transition-colors hover:text-vellum"
               >
                 <span className="sr-only">{name}</span>
                 <Icon aria-hidden="true" className="size-6" />

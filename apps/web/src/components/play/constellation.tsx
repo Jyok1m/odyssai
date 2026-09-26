@@ -65,7 +65,7 @@ export function Constellation({
       viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
       aria-hidden="true"
       fill="none"
-      className={["text-accent", className].filter(Boolean).join(" ")}
+      className={["pointer-events-none text-accent", className].filter(Boolean).join(" ")}
     >
       <polyline
         points={points.map((point) => `${point.x},${point.y}`).join(" ")}
