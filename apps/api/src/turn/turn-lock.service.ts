@@ -36,7 +36,17 @@ return 0
 export const LOCK_TTL_SECONDS = 180;
 
 // Assez souvent pour que deux renouvellements manques ne suffisent pas a le perdre.
-const RENEW_EVERY_MS = (LOCK_TTL_SECONDS / 3) * 1000;
+export const RENEW_EVERY_MS = (LOCK_TTL_SECONDS / 3) * 1000;
+
+/*
+  Le verrou tenu par un tour vivant. `confirm` se demande juste avant
+  l'ecriture finale : un tour qui a perdu son verrou en route ne doit plus
+  rien ecrire, un autre ayant pu prendre le rang suivant.
+*/
+export interface TurnLease {
+  confirm(): Promise<boolean>;
+  stop(): void;
+}
 
 /*
   Une narration a la fois par histoire.
@@ -90,21 +100,31 @@ export class TurnLockService {
   }
 
   /*
-    Tient le verrou tant que le tour court, et rend de quoi arreter. Un
-    renouvellement rate ne fait pas tomber le tour : il se voit au journal,
-    et le jeton empeche toujours de fermer le verrou d'un autre.
+    Tient le verrou tant que le tour court. Un renouvellement rate, refuse ou
+    en erreur, le donne pour perdu et le reste : on ne sait plus si un autre
+    tour l'a pris entre-temps, et `confirm` repond faux jusqu'au bout.
   */
-  keep(universeId: string, token: string): () => void {
-    const timer = setInterval(() => {
-      this.renew(universeId, token)
-        .then((held) => {
-          if (!held) this.logger.warn(`verrou de narration perdu : ${universeId}`);
-        })
-        .catch((error: unknown) => {
-          this.logger.warn(`verrou de narration non prolonge : ${String(error)}`);
-        });
-    }, RENEW_EVERY_MS);
+  keep(universeId: string, token: string): TurnLease {
+    let lost = false;
+
+    const check = async (): Promise<boolean> => {
+      if (lost) return false;
+      try {
+        if (await this.renew(universeId, token)) return true;
+        this.logger.warn(`verrou de narration perdu : ${universeId}`);
+      } catch (error: unknown) {
+        this.logger.warn(`verrou de narration non prolonge : ${String(error)}`);
+      }
+      lost = true;
+      return false;
+    };
+
+    const timer = setInterval(() => void check(), RENEW_EVERY_MS);
     timer.unref();
-    return () => clearInterval(timer);
+
+    return {
+      confirm: check,
+      stop: () => clearInterval(timer),
+    };
   }
 }
