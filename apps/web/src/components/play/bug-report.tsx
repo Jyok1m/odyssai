@@ -19,8 +19,17 @@ import { sendBugReport } from "@/lib/bugs";
   Derrière la session seulement : le bandeau du jeu se voit aussi porte
   fermée, et c'est là qu'on a le plus besoin d'entendre ce qui cloche, mais
   un anonyme n'a rien à quoi rattacher son rapport.
+
+  `stacked` est la forme du tiroir mobile. La fenêtre s'ouvre alors par-dessus
+  le tiroir, qui reste ouvert : le fermer démonterait la fenêtre avec lui.
 */
-export function BugReportButton() {
+export function BugReportButton({
+  size = "sm",
+  stacked = false,
+}: {
+  size?: "sm" | "md";
+  stacked?: boolean;
+}) {
   const t = useTranslations("Bug");
   const session = useSession();
   const pathname = usePathname();
@@ -30,7 +39,13 @@ export function BugReportButton() {
 
   return (
     <>
-      <Button variant="ghost" size="sm" type="button" onClick={() => setOpen(true)}>
+      <Button
+        variant={stacked ? "secondary" : "ghost"}
+        size={size}
+        type="button"
+        onClick={() => setOpen(true)}
+        className={stacked ? "w-full" : undefined}
+      >
         {t("button")}
       </Button>
 

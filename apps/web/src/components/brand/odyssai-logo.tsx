@@ -16,3 +16,17 @@ export function OdyssaiLogo({ className = "h-8 w-auto" }: { className?: string }
     />
   );
 }
+
+// Le symbole seul, pour les places de moins de 120 px.
+export function OdyssaiMark({ className = "size-8" }: { className?: string }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- SVG, rien à optimiser
+    <img
+      src="/odyssai-mark.svg"
+      alt={SITE_NAME}
+      width={96}
+      height={96}
+      className={className}
+    />
+  );
+}
