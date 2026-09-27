@@ -26,6 +26,15 @@
 - `components/motion/streamed-text.tsx` fades in each fragment of a streamed text; `components/motion/use-presence.ts` gives a list enter and leave phases (`presenceClass`). Use them rather than a fourth hand-made version.
 - Loading a known layout shows `components/ui/skeleton.tsx` (`Loading` keeps the old label for screen readers). Waiting without a known layout stays `Spinner`.
 
+## Waiting
+
+- **A wait must look alive, never faked.** No artificial delay, and no indicator outlives its data: every busy state is the request's own state.
+- **Skeletons shimmer in a wave.** `shimmer-wave` (carried by `Skeleton`) offsets each block's highlight after its previous sibling, by `animation-delay` and not `--motion-delay`: the `--animate-*` tokens are declared on `:root` and resolve their `var()` there. At rest the highlight sits outside the block, so reduced motion shows plain blocks, no frozen band.
+- **Route waits.** `loading.tsx` under `(marketing)`, `(marketing)/account`, `(game)/play` and each play section, and `admin`. They reuse the page's own frame and its real title when it depends on nothing. The play shapes live in `components/play/page-skeletons.tsx`, shared with `GameGate`, which shows them (`fallback`) while the alpha phase is read instead of a blank screen.
+- **Before the first token.** A stream shows `components/motion/typing-dots.tsx` at once (a static ellipsis under reduced motion), next to `components/motion/waiting-lines.tsx`.
+- **Waiting lines.** `WaitingLines` rotates short flavor lines from the `Waiting` namespace (`narrator`, `dice`, `character`, `sheet`, `world`, `guide`), at most six per context, every 2.5 to 4 s. All lines are stacked in one grid cell and only the current one is opaque: the cell keeps the height of the longest, so nothing moves, even when a line wraps at 320 px. The first render always shows the first line; the random rotation starts after mount, so the server and the client agree. The rotation is a loop: under reduced motion it never starts and the first line stays. The lines are `aria-hidden` (inside a `status` region each one would be read out every few seconds): the caller keeps a fixed `sr-only` label. `Spinner` takes `lines` to show them in place of its label, which stays for screen readers.
+- **A long action's button says it works.** `Button busy` disables the button (a second tap fires nothing), keeps it opaque and puts `SpinnerIcon` before its label. The button of the action in flight turns, the others are only disabled: track which action is pending, not a bare boolean. A raw `<button>` does the same with `aria-busy`, `SpinnerIcon` and `not-aria-busy:disabled:opacity-*`.
+
 ## Mobile
 
 - **The viewport is shared** by both root layouts (`[locale]` and `admin`): `SITE_VIEWPORT` in `lib/site.ts`. `viewportFit: "cover"` lets the ink background run under the notch and the home indicator; content is then pushed back by `env(safe-area-inset-*)`. Both `themeColor` entries (light and dark scheme) carry `BRAND_INK`: the site has one theme, a light browser must not paint a white bar over it.
