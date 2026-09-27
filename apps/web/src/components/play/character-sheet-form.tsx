@@ -325,7 +325,7 @@ export function CharacterSheetForm({
       </fieldset>
 
       <div className="mt-6 flex flex-wrap items-center gap-4">
-        <Button type="submit" disabled={!complete || saving}>
+        <Button type="submit" disabled={!complete || saving} busy={saving}>
           {t("sheet.confirm")}
         </Button>
 

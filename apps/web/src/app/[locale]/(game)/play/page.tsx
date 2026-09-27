@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 
 import { GameGate } from "@/components/play/game-gate";
 import { OnboardingWizard } from "@/components/play/onboarding-wizard";
+import { PlayFrame, TableFallback } from "@/components/play/page-skeletons";
 import { routing } from "@/i18n/routing";
 import { pageMetadata } from "@/lib/page-metadata";
 
@@ -37,10 +38,10 @@ export default function PlayPage() {
   // genere, l'ecran n'est plus un parcours et n'en veut plus. La phase de
   // l'alpha garde la route entiere, par GameGate.
   return (
-    <GameGate>
-      <article className="mx-auto max-w-wrap px-6 pt-4 pb-16 sm:pt-40 sm:pb-24 lg:px-8">
+    <GameGate fallback={<TableFallback />}>
+      <PlayFrame>
         <OnboardingWizard />
-      </article>
+      </PlayFrame>
     </GameGate>
   );
 }

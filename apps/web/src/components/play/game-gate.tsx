@@ -11,14 +11,20 @@ import { Link } from "@/i18n/navigation";
 /*
   Les pages de jeu derrière la phase de l'alpha. Fermée, la page le dit au
   lieu de répondre 404 : la phase est publique, le bandeau l'annonce déjà, il
-  n'y a plus rien à taire. Rien tant qu'on ne sait pas, plutôt qu'un état
-  qu'on démentirait.
+  n'y a plus rien à taire. Tant qu'on ne sait pas, la forme de la page
+  (`fallback`) plutôt qu'un écran vide, et jamais un état qu'on démentirait.
 */
-export function GameGate({ children }: { children: ReactNode }) {
+export function GameGate({
+  fallback = null,
+  children,
+}: {
+  fallback?: ReactNode;
+  children: ReactNode;
+}) {
   const t = useTranslations("Alpha");
   const access = useGameAccess();
 
-  if (access === "loading") return null;
+  if (access === "loading") return <>{fallback}</>;
   if (access === "open") return <>{children}</>;
 
   return (

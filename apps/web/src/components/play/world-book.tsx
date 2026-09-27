@@ -10,6 +10,7 @@ import { Definition, Panel, Tag } from "@/components/ui/panel";
 import { Absent, WorldSkin, useWorld } from "@/components/play/use-world";
 import { Button } from "@/components/ui/button";
 import { PageSkeleton } from "@/components/ui/skeleton";
+import { SpinnerIcon } from "@/components/ui/spinner";
 import { Link, useRouter } from "@/i18n/navigation";
 import { fetchStories, fetchTravellers } from "@/lib/stories";
 import { fetchOpenWorlds, visitWorld } from "@/lib/world";
@@ -196,7 +197,9 @@ function OpenWorlds() {
   const [travellers, setTravellers] = useState<Traveller[]>([]);
   // Le monde dont on est en train de choisir qui va y entrer.
   const [entering, setEntering] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  // Le monde et le personnage en route, jusqu'à ce que la table s'ouvre.
+  const [pending, setPending] = useState<string | null>(null);
+  const busy = pending !== null;
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -213,10 +216,15 @@ function OpenWorlds() {
     return () => controller.abort();
   }, []);
 
+  // Entrer dans un monde finit à la table : elle est prête avant le clic.
+  useEffect(() => {
+    if (worlds.length > 0) router.prefetch("/play");
+  }, [worlds.length, router]);
+
   if (worlds.length === 0) return null;
 
   const enter = async (universeId: string, essenceId: string) => {
-    setBusy(true);
+    setPending(`${universeId}:${essenceId}`);
     setError(null);
     try {
       await visitWorld(universeId, essenceId);
@@ -224,7 +232,7 @@ function OpenWorlds() {
       router.push("/play");
     } catch {
       setError(t("visitError"));
-      setBusy(false);
+      setPending(null);
     }
   };
 
@@ -264,9 +272,13 @@ function OpenWorlds() {
                       <button
                         type="button"
                         disabled={busy}
+                        aria-busy={pending === `${world.universeId}:${traveller.id}` || undefined}
                         onClick={() => void enter(world.universeId, traveller.id)}
-                        className="lift w-full rounded-control border border-line px-3 py-2 text-left text-ui-sm text-vellum hover:border-accent hover:bg-mist disabled:cursor-not-allowed disabled:opacity-60"
+                        className="touch-target lift flex w-full items-center gap-2 rounded-control border border-line px-3 py-2 text-left text-ui-sm text-vellum hover:border-accent hover:bg-mist not-aria-busy:disabled:opacity-60 aria-busy:border-accent"
                       >
+                        {pending === `${world.universeId}:${traveller.id}` ? (
+                          <SpinnerIcon className="h-3.5 w-3.5 text-accent" />
+                        ) : null}
                         {traveller.name}
                       </button>
                     </li>

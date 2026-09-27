@@ -3,8 +3,8 @@ import { hasLocale, useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
 
 import { GameGate } from "@/components/play/game-gate";
+import { BackToTable, PlayFrame, SheetFallback } from "@/components/play/page-skeletons";
 import { WorldBook } from "@/components/play/world-book";
-import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { pageMetadata } from "@/lib/page-metadata";
 
@@ -33,23 +33,18 @@ export async function generateMetadata({
 }
 
 export default function WorldPage() {
-  const t = useTranslations("Sheet");
+  const t = useTranslations("WorldBook");
 
   // La même porte que la table : pas de monde tant qu'on ne peut pas jouer.
   return (
-    <GameGate>
-      <article className="mx-auto max-w-wrap px-6 pt-4 pb-16 sm:pt-40 sm:pb-24 lg:px-8">
-        <Link
-          href="/play"
-          className="touch-target font-ui text-control font-medium text-vellum-2 transition-colors hover:text-vellum"
-        >
-          <span aria-hidden="true">&larr;</span> {t("back")}
-        </Link>
+    <GameGate fallback={<SheetFallback label={t("loading")} />}>
+      <PlayFrame>
+        <BackToTable />
 
         <div className="mt-8">
           <WorldBook />
         </div>
-      </article>
+      </PlayFrame>
     </GameGate>
   );
 }

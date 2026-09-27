@@ -84,6 +84,7 @@ export function UsernameStep({ onDone }: { onDone: () => void }) {
           type="submit"
           className="mt-4"
           disabled={username.trim().length === 0 || phase === "saving"}
+          busy={phase === "saving"}
         >
           {phase === "confirming"
             ? tAccount("confirm", { name: username.trim() })

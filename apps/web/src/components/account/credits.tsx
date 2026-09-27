@@ -189,7 +189,7 @@ export function Credits() {
           {summary.manageable ? (
             <Button
               variant="secondary"
-              disabled={leaving}
+              busy={leaving}
               onClick={() => void leave(openPortal)}
             >
               {t("manage")}

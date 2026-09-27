@@ -68,6 +68,12 @@ export function InspirationStep({
   // Le premier rendu ne doit rien enregistrer : ce serait réécrire ce qu'on
   // vient de lire, et marquer « enregistré » sans que le joueur ait rien tapé.
   const [touched, setTouched] = useState(false);
+  /*
+    Le passage à l'étape suivante, distinct de l'enregistrement automatique
+    qui partage le même état : seul le premier fait tourner le bouton. Une
+    saisie le rend à l'enregistrement automatique.
+  */
+  const [advancing, setAdvancing] = useState(false);
 
   const draft: InspirationDraft =
     mode === "works"
@@ -90,6 +96,7 @@ export function InspirationStep({
 
   const change = (next: () => void) => {
     setTouched(true);
+    setAdvancing(false);
     next();
   };
 
@@ -266,7 +273,11 @@ export function InspirationStep({
         <Button
           type="button"
           disabled={!complete || status === "saving"}
-          onClick={() => onAdvance(draft)}
+          busy={advancing && status === "saving"}
+          onClick={() => {
+            setAdvancing(true);
+            onAdvance(draft);
+          }}
         >
           {t("continue")}
         </Button>

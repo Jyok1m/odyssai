@@ -196,7 +196,11 @@ function BugReportForm({ page, onClose }: { page: string; onClose: () => void })
           <Button variant="ghost" type="button" disabled={busy} onClick={onClose}>
             {t("cancel")}
           </Button>
-          <Button type="submit" disabled={busy || message.trim().length < BUG_MESSAGE_MIN}>
+          <Button
+            type="submit"
+            disabled={busy || message.trim().length < BUG_MESSAGE_MIN}
+            busy={busy}
+          >
             {t("send")}
           </Button>
         </div>

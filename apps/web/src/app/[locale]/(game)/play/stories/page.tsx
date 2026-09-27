@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { hasLocale, useTranslations } from "next-intl";
+import { hasLocale } from "next-intl";
 import { getTranslations } from "next-intl/server";
 
 import { GameGate } from "@/components/play/game-gate";
+import { PlayFrame, StoriesFallback, StoriesHeader } from "@/components/play/page-skeletons";
 import { StoriesPanel } from "@/components/play/stories-panel";
 import { routing } from "@/i18n/routing";
 import { pageMetadata } from "@/lib/page-metadata";
@@ -32,28 +33,19 @@ export async function generateMetadata({
 }
 
 export default function StoriesPage() {
-  const t = useTranslations("Stories");
-
   // La meme porte que la table : pas d'histoires a gerer tant qu'on ne peut
   // pas jouer.
   return (
-    <GameGate>
-      <article className="mx-auto max-w-wrap px-6 pt-4 pb-16 sm:pt-40 sm:pb-24 lg:px-8">
-        <header className="max-w-headline">
-          <h1 className="font-voice text-display-compact text-balance text-vellum">
-            {t("title")}
-          </h1>
-          <p className="mt-4 max-w-measure text-ui text-pretty text-vellum-2">
-            {t("lead")}
-          </p>
-        </header>
+    <GameGate fallback={<StoriesFallback />}>
+      <PlayFrame>
+        <StoriesHeader />
 
         {/* Le compte et les boutons vivent dans le panneau, avec les cartes :
             ils dependent de ce qu'il a lu. */}
         <div className="mt-8">
           <StoriesPanel />
         </div>
-      </article>
+      </PlayFrame>
     </GameGate>
   );
 }

@@ -24,7 +24,8 @@
     "pricing": "Pricing",
     "terms": "Terms and conditions",
     "contact": "Contact",
-    "about": "About"
+    "about": "About",
+    "loading": "Loading the page."
   },
   "Hero": {
     "badge": "Open alpha · playable now",
@@ -1262,6 +1263,51 @@
     "visit": "Step in",
     "visitNeedsTraveller": "You need a character first: it is their essence that crosses the rift.",
     "visitError": "That world can't be entered right now."
+  },
+  "Waiting": {
+    "narrator": [
+      "The narrator consults fate…",
+      "The narrator dips the quill in ink…",
+      "The threads of your story are coming together…",
+      "The world holds its breath…",
+      "The narrator weighs your every move…",
+      "Somewhere, a page is turning…"
+    ],
+    "dice": [
+      "The die rolls across the table…",
+      "Fate is still making up its mind…",
+      "The faces tumble past…",
+      "Luck is doing the math…",
+      "It all comes down to this…"
+    ],
+    "character": [
+      "The guide is listening closely…",
+      "Every detail is being noted…",
+      "Your character is slowly taking shape…",
+      "Looking for the right question…",
+      "A face emerges from the mist…"
+    ],
+    "sheet": [
+      "Your character is taking shape…",
+      "Strengths and flaws are being written…",
+      "Your conversation is read line by line…",
+      "A sheet is born from your words…",
+      "The final strokes are going in…"
+    ],
+    "world": [
+      "Maps are being drawn…",
+      "Peoples are finding their names…",
+      "The world is setting its own rules…",
+      "Secrets are being buried for later…",
+      "Lights flicker on in the distance…",
+      "The world's past is being written…"
+    ],
+    "guide": [
+      "The guide is leafing through the site…",
+      "Looking for the right answer…",
+      "Checking the sources…",
+      "Gathering what it knows…"
+    ]
   },
   "Bug": {
     "button": "Report a bug",

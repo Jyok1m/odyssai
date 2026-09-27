@@ -213,7 +213,7 @@ export function UserPanel({ id, onClose, onChanged }: Props) {
                     />
                   </div>
 
-                  <Button type="submit" disabled={busy || note.trim().length < 3}>
+                  <Button type="submit" disabled={busy || note.trim().length < 3} busy={busy}>
                     {busy ? "Enregistrement." : "Enregistrer"}
                   </Button>
                 </form>

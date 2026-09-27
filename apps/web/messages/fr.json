@@ -24,7 +24,8 @@
     "pricing": "Tarifs",
     "terms": "Conditions générales",
     "contact": "Contact",
-    "about": "À propos"
+    "about": "À propos",
+    "loading": "Chargement de la page."
   },
   "Hero": {
     "badge": "Alpha ouverte · jouable dès maintenant",
@@ -1262,6 +1263,51 @@
     "visit": "Entrer",
     "visitNeedsTraveller": "Il te faut d'abord un personnage : c'est son essence qui franchit la faille.",
     "visitError": "Impossible d'entrer dans ce monde pour le moment."
+  },
+  "Waiting": {
+    "narrator": [
+      "Le narrateur consulte le destin…",
+      "Le narrateur trempe sa plume dans l'encre…",
+      "Les fils de ton histoire se nouent…",
+      "Le monde retient son souffle…",
+      "Le narrateur pèse chacun de tes gestes…",
+      "Quelque part, une page se tourne…"
+    ],
+    "dice": [
+      "Le dé roule sur la table…",
+      "Le sort hésite encore…",
+      "Les faces défilent…",
+      "La chance fait ses comptes…",
+      "Tout se joue maintenant…"
+    ],
+    "character": [
+      "Le guide t'écoute attentivement…",
+      "Il note chaque détail…",
+      "Ton personnage se dessine peu à peu…",
+      "Il cherche la bonne question…",
+      "Un visage sort de la brume…"
+    ],
+    "sheet": [
+      "Ton personnage prend forme…",
+      "Ses forces et ses failles s'écrivent…",
+      "Ta conversation est relue ligne à ligne…",
+      "Une fiche naît de tes mots…",
+      "Les derniers traits se posent…"
+    ],
+    "world": [
+      "Les cartes se dessinent…",
+      "Des peuples se trouvent un nom…",
+      "Le monde se donne ses règles…",
+      "Des secrets s'enfouissent pour plus tard…",
+      "Des lumières s'allument au loin…",
+      "Le passé du monde s'écrit…"
+    ],
+    "guide": [
+      "Le guide feuillette les pages du site…",
+      "Il cherche la bonne réponse…",
+      "Il vérifie ses sources…",
+      "Il rassemble ce qu'il sait…"
+    ]
   },
   "Bug": {
     "button": "Signaler un bug",

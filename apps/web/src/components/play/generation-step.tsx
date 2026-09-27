@@ -4,6 +4,8 @@ import { GenerationStepSchema } from "@odyssai/schemas";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
+import { TypingDots } from "@/components/motion/typing-dots";
+import { WaitingLines } from "@/components/motion/waiting-lines";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/panel";
 import { watchGeneration } from "@/lib/world";
@@ -30,6 +32,8 @@ export function GenerationStep({ onReady }: Props) {
   const [step, setStep] = useState<Step | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   const [lost, setLost] = useState(false);
+  // Le retour relit l'assistant, qui démonte cet écran : le bouton tourne jusque-là.
+  const [leaving, setLeaving] = useState(false);
 
   // Le flux se ferme de lui-même au bout de dix minutes, et une coupure
   // réseau le ferme plus tôt. On rouvre, plutôt que de laisser le joueur
@@ -83,7 +87,14 @@ export function GenerationStep({ onReady }: Props) {
             sans exposer de prompt. */}
         <p className="mt-3 text-ui-sm text-vellum-3">{failed}</p>
 
-        <Button className="mt-5" onClick={onReady}>
+        <Button
+          className="mt-5"
+          busy={leaving}
+          onClick={() => {
+            setLeaving(true);
+            onReady();
+          }}
+        >
           {t("generation.back")}
         </Button>
       </Panel>
@@ -177,7 +188,15 @@ export function GenerationStep({ onReady }: Props) {
             })}
       </p>
 
-      <p className="mt-6 max-w-measure text-ui-sm text-pretty text-vellum-2">
+      {/* Ce qui se trame pendant les minutes du graphe, une ligne à la fois,
+          dans la voix du narrateur. Le fil dit l'étape, ceci fait passer le
+          temps. */}
+      <p className="mt-6 flex max-w-measure items-center gap-2.5 font-voice text-ui-sm text-vellum-2 italic">
+        <TypingDots className="flex-none text-accent" />
+        <WaitingLines context="world" className="min-w-0 flex-1" />
+      </p>
+
+      <p className="mt-4 max-w-measure text-ui-sm text-pretty text-vellum-2">
         {t("generation.lead")}
       </p>
     </Panel>

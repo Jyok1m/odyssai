@@ -11,6 +11,8 @@ import { useEffect, useRef, useState } from "react";
 
 import { OutOfCredits } from "@/components/billing/out-of-credits";
 import { Caret, StreamedText } from "@/components/motion/streamed-text";
+import { TypingDots } from "@/components/motion/typing-dots";
+import { WaitingLines } from "@/components/motion/waiting-lines";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { Button } from "@/components/ui/button";
 import { DangerAction } from "@/components/ui/danger-action";
@@ -246,8 +248,10 @@ export function CharacterStep({ initial, arrival, saving, error, onAdvance }: Pr
                     {streaming && index === messages.length - 1 ? <Caret /> : null}
                   </p>
                 ) : (
-                  <p className="mt-1 animate-breathe text-ui-sm text-vellum-3">
-                    {t("character.thinking")}
+                  <p role="status" className="mt-1 flex items-center gap-2.5 text-ui-sm text-vellum-3">
+                    <span className="sr-only">{t("character.thinking")}</span>
+                    <TypingDots className="flex-none" />
+                    <WaitingLines context="character" className="min-w-0 flex-1" />
                   </p>
                 )}
               </div>
@@ -295,6 +299,7 @@ export function CharacterStep({ initial, arrival, saving, error, onAdvance }: Pr
             type="submit"
             size="sm"
             disabled={input.trim().length === 0 || streaming}
+            busy={streaming}
           >
             {t("character.send")}
           </Button>
@@ -305,7 +310,7 @@ export function CharacterStep({ initial, arrival, saving, error, onAdvance }: Pr
         {/* L'extraction ne diffuse rien : sans ce cercle, rien ne bougeait à
             l'écran pendant l'appel, et le bouton grisé se lisait comme cassé. */}
         {drafting ? (
-          <Spinner label={t("character.drafting")} />
+          <Spinner label={t("character.drafting")} lines="sheet" />
         ) : (
           <Button
             type="button"
