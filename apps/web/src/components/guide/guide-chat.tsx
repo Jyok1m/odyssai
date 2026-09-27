@@ -8,6 +8,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 import { Caret, StreamedText } from "@/components/motion/streamed-text";
+import { TypingDots } from "@/components/motion/typing-dots";
+import { WaitingLines } from "@/components/motion/waiting-lines";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
@@ -210,8 +212,10 @@ export function GuideChat() {
                   </p>
                 ) : (
                   !turn.error && (
-                    <p className="mt-1 animate-breathe text-ui-sm text-vellum-3">
-                      {t("thinking")}
+                    <p className="mt-1 flex items-center gap-2.5 text-ui-sm text-vellum-3">
+                      <span className="sr-only">{t("thinking")}</span>
+                      <TypingDots className="flex-none" />
+                      <WaitingLines context="guide" className="min-w-0 flex-1" />
                     </p>
                   )
                 )}

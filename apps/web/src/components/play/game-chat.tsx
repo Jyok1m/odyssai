@@ -10,6 +10,7 @@ import {
   type RollRecord,
   type ScenePresence,
   type TurnMessage,
+  type TurnRequest,
   type WorldView,
 } from "@odyssai/schemas";
 import { useLocale, useTranslations } from "next-intl";
@@ -18,6 +19,8 @@ import { useEffect, useRef, useState } from "react";
 
 import { OutOfCredits } from "@/components/billing/out-of-credits";
 import { Caret, StreamedText } from "@/components/motion/streamed-text";
+import { TypingDots } from "@/components/motion/typing-dots";
+import { WaitingLines } from "@/components/motion/waiting-lines";
 import { Panel, Tag } from "@/components/ui/panel";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { Button } from "@/components/ui/button";
@@ -67,7 +70,9 @@ export function GameChat({
   // tour se relit avec ce qui l'a décidé, pas dans un panneau à part.
   const [rolls, setRolls] = useState<Record<string, RollRecord>>({});
   const [notes, setNotes] = useState<Record<string, PublicEntity[]>>({});
-  const [busy, setBusy] = useState(false);
+  // Le geste en vol, pour que son bouton, et lui seul, dise qu'il travaille.
+  const [pending, setPending] = useState<TurnRequest["kind"] | null>(null);
+  const busy = pending !== null;
   const [error, setError] = useState<string | null>(null);
   // Distinct du message d'erreur : la réserve vide n'est pas une panne, et ce
   // qu'il faut montrer est un lien, pas une phrase.
@@ -156,7 +161,7 @@ export function GameChat({
   const play = async (request: Parameters<typeof playTurn>[0]) => {
     if (busy) return;
 
-    setBusy(true);
+    setPending(request.kind);
     setError(null);
     setEmpty(false);
     streamed.current = "";
@@ -298,7 +303,7 @@ export function GameChat({
       // la réponse vide serait un mensonge, on la retire.
       setMessages((current) => current.filter((message) => message.content !== ""));
     } finally {
-      setBusy(false);
+      setPending(null);
     }
   };
 
@@ -441,9 +446,7 @@ export function GameChat({
                           />
                         </p>
                       ) : (
-                        <p className="animate-breathe font-voice text-ui-sm text-vellum-3">
-                          {t("thinking")}
-                        </p>
+                        <Thinking context="narrator" />
                       )}
                       {(notes[item.answer.id] ?? []).map((entry) => (
                         <LoreNote key={`${item.answer!.id}-${entry.name}`} entry={entry} />
@@ -515,9 +518,17 @@ export function GameChat({
                         />
                       </p>
                     ) : (
-                      <p className="mt-1.5 animate-breathe font-voice text-ui-sm text-vellum-3 italic">
-                        {t("thinking")}
-                      </p>
+                      /* Le sort ou un jet s'attend comme un dé qui roule ; le
+                         jet posé, c'est de nouveau le meneur qu'on attend. */
+                      <Thinking
+                        className="mt-1.5"
+                        context={
+                          !rolls[item.message.id] &&
+                          (item.message.request === "fate" || item.message.request === "roll")
+                            ? "dice"
+                            : "narrator"
+                        }
+                      />
                     )}
 
                     {busy && item.message.content && item.message.id === messages.at(-1)?.id ? (
@@ -552,10 +563,22 @@ export function GameChat({
                 busy ? "h-9 w-9 motion-safe:animate-spin" : "h-9 w-9 animate-wobble"
               }
             />
-            <p className="text-ui-sm text-pretty text-center text-vellum-2">
-              {t("rollPrompt")}
+            {/* L'invite reste dans la case, invisible, pendant que le dé
+                roule : elle en garde la hauteur, et le bouton ne saute pas. */}
+            <p className="grid text-ui-sm text-pretty text-center text-vellum-2">
+              <span className={`col-start-1 row-start-1 ${busy ? "invisible" : ""}`}>
+                {t("rollPrompt")}
+              </span>
+              {busy ? (
+                <WaitingLines context="dice" className="col-start-1 row-start-1" />
+              ) : null}
             </p>
-            <Button type="button" disabled={busy} onClick={() => void play({ kind: "roll" })}>
+            <Button
+              type="button"
+              disabled={busy}
+              busy={pending === "roll"}
+              onClick={() => void play({ kind: "roll" })}
+            >
               {t("rollAction")}
             </Button>
           </div>
@@ -592,7 +615,12 @@ export function GameChat({
                   submit("say");
                 }}
               />
-              <Button type="submit" size="sm" disabled={!input.trim() || busy}>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={!input.trim() || busy}
+                busy={pending === "say"}
+              >
                 {t("send")}
               </Button>
             </div>
@@ -607,6 +635,7 @@ export function GameChat({
             variant="secondary"
             size="sm"
             disabled={busy}
+            busy={pending === "fate"}
             onClick={() => void play({ kind: "fate" })}
           >
             {t("rollDie")}
@@ -619,6 +648,7 @@ export function GameChat({
             variant="secondary"
             size="sm"
             disabled={busy || input.trim().length === 0}
+            busy={pending === "ask"}
             onClick={() => submit("ask")}
           >
             {t("askAction")}
@@ -634,6 +664,31 @@ export function GameChat({
         </p>
       </Panel>
     </div>
+  );
+}
+
+/*
+  Une réponse qui n'a pas encore son premier mot : des points dès l'envoi,
+  et une ligne qui dit ce qui se trame. Le libellé d'avant reste, caché.
+*/
+function Thinking({
+  context,
+  className = "",
+}: {
+  context: "narrator" | "dice";
+  className?: string;
+}) {
+  const t = useTranslations("Game");
+
+  return (
+    <p
+      role="status"
+      className={`flex items-center gap-2.5 font-voice text-ui-sm text-vellum-3 italic ${className}`}
+    >
+      <span className="sr-only">{t("thinking")}</span>
+      <TypingDots className="flex-none" />
+      <WaitingLines context={context} className="min-w-0 flex-1" />
+    </p>
   );
 }
 

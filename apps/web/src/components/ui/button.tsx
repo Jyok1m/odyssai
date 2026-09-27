@@ -1,5 +1,7 @@
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from "react";
 
+import { SpinnerIcon } from "./spinner";
+
 /*
   Variantes .btn du kit. Chaque variante fixe sa propre couleur de bordure :
   deux utilitaires de `border-color` sur le même élément sont arbitrés par
@@ -25,26 +27,32 @@ const SIZES = {
 
   `touch-target` porte la cible a 44 px au doigt : `md` fait 40 px et `sm`
   32, les tailles du kit, que le tactile ne change pas a l'oeil.
+
+  Occupé (`busy`), il est désactivé, un second appui ne part pas, mais il ne
+  pâlit pas : un cercle tourne devant son libellé, il travaille.
 */
 const BASE =
-  "touch-target inline-flex items-center justify-center gap-2 rounded-control border font-ui font-medium whitespace-nowrap transition duration-quick ease-out motion-safe:active:not-disabled:scale-97 disabled:opacity-50";
+  "touch-target inline-flex items-center justify-center gap-2 rounded-control border font-ui font-medium whitespace-nowrap transition duration-quick ease-out motion-safe:active:not-disabled:scale-97 not-aria-busy:disabled:opacity-50";
 
 type ButtonProps<T extends ElementType> = {
   as?: T;
   variant?: keyof typeof VARIANTS;
   size?: keyof typeof SIZES;
+  busy?: boolean;
   className?: string;
   children?: ReactNode;
 } & Omit<
   ComponentPropsWithoutRef<T>,
-  "as" | "variant" | "size" | "className" | "children"
+  "as" | "variant" | "size" | "busy" | "className" | "children"
 >;
 
 export function Button<T extends ElementType = "button">({
   as,
   variant = "primary",
   size = "md",
+  busy = false,
   className,
+  children,
   ...props
 }: ButtonProps<T>) {
   const Component = (as ?? "button") as ElementType;
@@ -55,6 +63,10 @@ export function Button<T extends ElementType = "button">({
         .filter(Boolean)
         .join(" ")}
       {...props}
-    />
+      {...(busy ? { disabled: true, "aria-busy": true } : {})}
+    >
+      {busy ? <SpinnerIcon className={size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4"} /> : null}
+      {children}
+    </Component>
   );
 }
