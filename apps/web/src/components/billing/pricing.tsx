@@ -277,7 +277,7 @@ function PlanCard({
           <Button
             variant={featured ? "primary" : "secondary"}
             className="w-full"
-            disabled={leaving}
+            busy={leaving}
             onClick={() => void choose()}
           >
             {leaving ? t("leaving") : t("choose")}

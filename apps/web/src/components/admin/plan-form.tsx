@@ -195,7 +195,11 @@ export function PlanForm({ plan, onCancel, onSubmit }: Props) {
       ) : null}
 
       <div className="mt-5 flex flex-wrap items-center gap-3">
-        <Button type="submit" disabled={busy || !name.trim() || (creating && !slug.trim())}>
+        <Button
+          type="submit"
+          disabled={busy || !name.trim() || (creating && !slug.trim())}
+          busy={busy}
+        >
           {busy ? "Enregistrement." : creating ? "Créer" : "Enregistrer"}
         </Button>
         <Button type="button" variant="ghost" onClick={onCancel}>

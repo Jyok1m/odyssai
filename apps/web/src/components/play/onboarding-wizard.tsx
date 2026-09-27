@@ -14,11 +14,11 @@ import { OutOfCredits } from "@/components/billing/out-of-credits";
 import { useAuthLinks } from "@/components/auth/auth-links";
 import { useSession } from "@/components/auth/session-provider";
 import { Button } from "@/components/ui/button";
-import { Loading, Skeleton } from "@/components/ui/skeleton";
 import { OnboardingError, fetchOnboarding, saveOnboarding } from "@/lib/onboarding";
 
 import { CharacterStep } from "./character-step";
 import { GenerationStep } from "./generation-step";
+import { WizardSkeleton } from "./page-skeletons";
 import { PartyPanel } from "./party-panel";
 import { RestartAction } from "./restart-action";
 import { WorldShell } from "./world-shell";
@@ -314,22 +314,6 @@ function StepMotion({ step, children }: { step: OnboardingStep; children: ReactN
     <div key={step} className={last.forward ? "animate-forward" : "animate-backward"}>
       {children}
     </div>
-  );
-}
-
-// La forme de l'assistant, titre à gauche et fil d'étapes à droite.
-function WizardSkeleton({ label }: { label: string }) {
-  return (
-    <Loading label={label} className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
-        <div className="w-full max-w-headline space-y-4">
-          <Skeleton className="h-11 w-3/4" />
-          <Skeleton className="h-4 w-full max-w-measure" />
-        </div>
-        <Skeleton className="h-5 w-64" />
-      </div>
-      <Skeleton className="h-72" round="card" />
-    </Loading>
   );
 }
 

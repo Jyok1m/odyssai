@@ -14,7 +14,7 @@ import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { useAuthLinks } from "@/components/auth/auth-links";
 import { useSession } from "@/components/auth/session-provider";
 import { Button } from "@/components/ui/button";
-import { Loading, Skeleton } from "@/components/ui/skeleton";
+import { SpinnerIcon } from "@/components/ui/spinner";
 import { DangerAction } from "@/components/ui/danger-action";
 import { FIELD } from "@/components/ui/field";
 import { useRouter } from "@/i18n/navigation";
@@ -35,6 +35,7 @@ import { Tag } from "@/components/ui/panel";
 import { fetchWorld } from "@/lib/world";
 
 import { Constellation } from "./constellation";
+import { StoriesSkeleton } from "./page-skeletons";
 
 /*
   Les histoires du joueur : en commencer une, en ouvrir une, en supprimer une.
@@ -49,7 +50,13 @@ export function StoriesPanel() {
   const router = useRouter();
 
   const [data, setData] = useState<Stories | null>(null);
-  const [busy, setBusy] = useState(false);
+  /*
+    Le geste en vol : tous les boutons se ferment, celui qu'on a pressé
+    tourne. Il reste occupé jusqu'à ce que la table s'ouvre, la navigation
+    comprise.
+  */
+  const [pending, setPending] = useState<string | null>(null);
+  const busy = pending !== null;
   const [error, setError] = useState<string | null>(null);
   const [outcome, setOutcome] = useState<DepartureOutcome | null>(null);
   /*
@@ -89,6 +96,11 @@ export function StoriesPanel() {
     return () => controller.abort();
   }, [session.status, load]);
 
+  // Chaque geste de cet écran finit à la table : elle est prête avant le clic.
+  useEffect(() => {
+    router.prefetch("/play");
+  }, [router]);
+
   if (session.status === "loading") {
     return <StoriesSkeleton label={t("loading")} />;
   }
@@ -114,19 +126,19 @@ export function StoriesPanel() {
 
   // Ouvrir puis rejoindre la table : la partie repart de l'état de celle-là.
   const play = async (story: Story) => {
-    setBusy(true);
+    setPending(`play:${story.id}`);
     setError(null);
     try {
       if (!story.current) await selectStory(story.id);
       router.push("/play");
     } catch {
       setError(t("error"));
-      setBusy(false);
+      setPending(null);
     }
   };
 
   const create = async (essenceId?: string) => {
-    setBusy(true);
+    setPending(essenceId ? `carry:${essenceId}` : "new");
     setError(null);
     try {
       await startStory(essenceId);
@@ -140,7 +152,7 @@ export function StoriesPanel() {
           { max: data.max },
         ),
       );
-      setBusy(false);
+      setPending(null);
     }
   };
 
@@ -150,28 +162,30 @@ export function StoriesPanel() {
     un cas particulier de la table, c'est l'autre chemin.
   */
   const openTable = async (size: number) => {
-    setBusy(true);
+    setPending(`size:${size}`);
     setError(null);
     try {
       await createParty(size);
       router.push("/play");
     } catch (caught: unknown) {
       setError(partyErrorKey(caught, t, data.max));
-      setBusy(false);
+      setPending(null);
     }
   };
 
+  /*
+    Le panneau du code reste ouvert jusqu'à la navigation : le refermer tout
+    de suite retirait le bouton qui tournait, et l'écran semblait figé.
+  */
   const joinTable = async () => {
-    setBusy(true);
+    setPending("join");
     setError(null);
     try {
       await joinParty(code);
-      setJoining(false);
-      setCode("");
       router.push("/play");
     } catch (caught: unknown) {
       setError(partyErrorKey(caught, t, data.max));
-      setBusy(false);
+      setPending(null);
     }
   };
 
@@ -186,7 +200,12 @@ export function StoriesPanel() {
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center gap-4">
-        <Button type="button" disabled={busy || full} onClick={() => void create()}>
+        <Button
+          type="button"
+          disabled={busy || full}
+          busy={pending === "new"}
+          onClick={() => void create()}
+        >
           {t("new")}
         </Button>
 
@@ -246,6 +265,7 @@ export function StoriesPanel() {
                 type="button"
                 variant="secondary"
                 disabled={busy}
+                busy={pending === `size:${size}`}
                 onClick={() => void openTable(size)}
               >
                 {t("party.size", { size })}
@@ -279,6 +299,7 @@ export function StoriesPanel() {
             <Button
               type="button"
               disabled={busy || code.trim().length === 0}
+              busy={pending === "join"}
               onClick={() => void joinTable()}
             >
               {t("party.join")}
@@ -302,11 +323,15 @@ export function StoriesPanel() {
                 <button
                   type="button"
                   disabled={busy || full}
+                  aria-busy={pending === `carry:${traveller.id}` || undefined}
                   onClick={() => void create(traveller.id)}
-                  className="lift w-full rounded-card border border-line p-4 text-left hover:border-accent hover:bg-mist disabled:cursor-not-allowed disabled:opacity-60"
+                  className="lift w-full rounded-card border border-line p-4 text-left hover:border-accent hover:bg-mist not-aria-busy:disabled:opacity-60 aria-busy:border-accent"
                 >
                   <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                    <span className="font-voice text-subtitle text-vellum">
+                    <span className="inline-flex items-center gap-2 font-voice text-subtitle text-vellum">
+                      {pending === `carry:${traveller.id}` ? (
+                        <SpinnerIcon className="h-4 w-4 text-accent" />
+                      ) : null}
                       {traveller.name}
                     </span>
                     <span className="text-caption text-vellum-3">
@@ -341,6 +366,7 @@ export function StoriesPanel() {
               key={story.id}
               story={story}
               busy={busy}
+              playing={pending === `play:${story.id}`}
               onPlay={() => void play(story)}
               onDeleted={(result) => {
                 setOutcome(result);
@@ -373,6 +399,7 @@ export function StoriesPanel() {
                 variant="secondary"
                 className="mt-4 self-start"
                 disabled={busy}
+                busy={pending === "new"}
                 onClick={() => void create()}
               >
                 {t("new")}
@@ -442,11 +469,13 @@ function partyErrorKey(
 interface CardProps {
   story: Story;
   busy: boolean;
+  // C'est celle-ci qu'on ouvre : son bouton tourne.
+  playing: boolean;
   onPlay: () => void;
   onDeleted: (outcome: DepartureOutcome) => void;
 }
 
-function StoryCard({ story, busy, onPlay, onDeleted }: CardProps) {
+function StoryCard({ story, busy, playing, onPlay, onDeleted }: CardProps) {
   const t = useTranslations("Stories");
   const tDanger = useTranslations("Danger");
   const format = useFormatter();
@@ -584,7 +613,7 @@ function StoryCard({ story, busy, onPlay, onDeleted }: CardProps) {
       {story.chronicle > 0 ? <Chronicle story={story} /> : null}
 
       <div className="mt-auto flex flex-wrap items-center gap-3">
-        <Button type="button" disabled={busy} onClick={onPlay}>
+        <Button type="button" disabled={busy} busy={playing} onClick={onPlay}>
           {story.current ? t("continue") : t("play")}
         </Button>
         <DangerAction
@@ -695,7 +724,9 @@ function Chronicle({ story }: { story: Story }) {
 
   const [open, setOpen] = useState(false);
   const [visits, setVisits] = useState<ChronicleVisit[] | null>(null);
-  const [busy, setBusy] = useState(false);
+  // L'entrée et le choix en vol : seul ce bouton-là tourne.
+  const [pending, setPending] = useState<string | null>(null);
+  const busy = pending !== null;
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -713,7 +744,7 @@ function Chronicle({ story }: { story: Story }) {
   }, [open, visits, story.id, t]);
 
   const decide = async (id: string, kind: "fact" | "entity", accept: boolean) => {
-    setBusy(true);
+    setPending(`${id}:${accept}`);
     setError(null);
     try {
       const read = await decideChronicle(story.id, [{ id, kind, accept }]);
@@ -721,7 +752,7 @@ function Chronicle({ story }: { story: Story }) {
     } catch {
       setError(t("error"));
     } finally {
-      setBusy(false);
+      setPending(null);
     }
   };
 
@@ -783,6 +814,7 @@ function Chronicle({ story }: { story: Story }) {
                           type="button"
                           size="sm"
                           disabled={busy}
+                          busy={pending === `${entry.id}:true`}
                           onClick={() => void decide(entry.id, entry.kind, true)}
                         >
                           {t("chronicle.accept")}
@@ -792,6 +824,7 @@ function Chronicle({ story }: { story: Story }) {
                           size="sm"
                           variant="secondary"
                           disabled={busy}
+                          busy={pending === `${entry.id}:false`}
                           onClick={() => void decide(entry.id, entry.kind, false)}
                         >
                           {t("chronicle.decline")}
@@ -810,16 +843,5 @@ function Chronicle({ story }: { story: Story }) {
         </div>
       ) : null}
     </div>
-  );
-}
-
-// Trois cartes à la place de la grille des histoires.
-function StoriesSkeleton({ label }: { label: string }) {
-  return (
-    <Loading label={label} className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      <Skeleton className="h-72 sm:col-span-2 lg:col-span-1 lg:row-span-2 lg:h-auto" round="card" />
-      <Skeleton className="h-64" round="card" />
-      <Skeleton className="h-64" round="card" />
-    </Loading>
   );
 }

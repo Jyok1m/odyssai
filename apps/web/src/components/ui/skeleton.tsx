@@ -2,7 +2,9 @@ import type { ReactNode } from "react";
 
 /*
   La place d'un contenu qui arrive, à sa taille : quand il arrive, rien ne
-  bouge autour. Le reflet glisse par `translate`, le fond ne se repeint pas.
+  bouge autour. Le reflet glisse par `translate`, le fond ne se repeint pas,
+  et part après celui du bloc voisin (`shimmer-wave`). Rangé hors du bloc au
+  repos : sous mouvement réduit, aucune bande figée au milieu.
 
   Pour une attente sans forme connue (une extraction, une génération), c'est
   toujours `Spinner` : un squelette promet une mise en page.
@@ -25,9 +27,9 @@ export function Skeleton({
   return (
     <span
       aria-hidden="true"
-      className={`relative block overflow-hidden bg-mist ${ROUND[round]} ${className}`}
+      className={`shimmer-wave relative block overflow-hidden bg-mist ${ROUND[round]} ${className}`}
     >
-      <span className="absolute inset-0 animate-shimmer bg-linear-to-r from-transparent via-vellum/6 to-transparent" />
+      <span className="absolute inset-0 -translate-x-full animate-shimmer bg-linear-to-r from-transparent via-vellum/6 to-transparent" />
     </span>
   );
 }

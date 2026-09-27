@@ -24,6 +24,7 @@ import {
   Th,
   reasonOf,
 } from "@/components/admin/ui";
+import { Loading, Skeleton } from "@/components/ui/skeleton";
 import { fetchOverview } from "@/lib/admin";
 
 export function OverviewView() {
@@ -53,7 +54,15 @@ export function OverviewView() {
   if (!data) {
     return (
       <Page title="Vue d'ensemble">
-        <Empty>Lecture des chiffres.</Empty>
+        <Loading
+          label="Lecture des chiffres."
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          <Skeleton className="h-28" round="card" />
+          <Skeleton className="h-28" round="card" />
+          <Skeleton className="h-28" round="card" />
+          <Skeleton className="h-28" round="card" />
+        </Loading>
       </Page>
     );
   }

@@ -122,7 +122,7 @@ export function ContactForm() {
       </Field>
 
       <div className="flex flex-wrap items-center gap-4">
-        <Button type="submit" disabled={busy || !ready}>
+        <Button type="submit" disabled={busy || !ready} busy={busy}>
           {busy ? t("sending") : t("send")}
         </Button>
         <p className="text-caption text-vellum-3">{t("privacy")}</p>

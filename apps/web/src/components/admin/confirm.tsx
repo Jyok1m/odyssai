@@ -72,7 +72,7 @@ export function Confirm({ label, title, lead, confirmLabel, onConfirm }: Props) 
           onChange={(event) => setTyped(event.target.value)}
           className={FIELD_DANGER}
         />
-        <Button type="submit" variant="danger" disabled={!ready || busy}>
+        <Button type="submit" variant="danger" disabled={!ready || busy} busy={busy}>
           {busy ? "En cours." : confirmLabel}
         </Button>
         <Button

@@ -89,7 +89,7 @@ export function DangerAction({
           onChange={(event) => setTyped(event.target.value)}
           className={`w-48 ${FIELD_DANGER}`}
         />
-        <Button type="submit" variant="danger" disabled={!ready || busy}>
+        <Button type="submit" variant="danger" disabled={!ready || busy} busy={busy}>
           {busy ? busyLabel : confirmLabel}
         </Button>
         <Button

@@ -195,6 +195,7 @@ export function AccountPanel() {
                 <Button
                   type="submit"
                   disabled={username.trim().length === 0 || step === "saving"}
+                  busy={step === "saving"}
                 >
                   {step === "confirming"
                     ? t("confirm", { name: username.trim() })
@@ -261,8 +262,7 @@ export function AccountPanel() {
         <Button
           variant="danger"
           onClick={() => void signOut()}
-          disabled={leaving}
-          className="disabled:opacity-60"
+          busy={leaving}
         >
           {tAuth("signOut")}
         </Button>
