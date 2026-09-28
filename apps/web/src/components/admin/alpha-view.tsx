@@ -46,7 +46,12 @@ export function AlphaView() {
   if (error) return <Feedback error={error} />;
   if (!status) return null;
 
-  const save = async (patch: { phase?: AlphaPhase; notice?: boolean; salesOpen?: boolean }) => {
+  const save = async (patch: {
+    phase?: AlphaPhase;
+    notice?: boolean;
+    salesOpen?: boolean;
+    partyOpen?: boolean;
+  }) => {
     setBusy(true);
     try {
       setStatus(await updateAlpha(patch));
@@ -107,6 +112,21 @@ export function AlphaView() {
             {status.salesOpen
               ? "Les paliers configurés chez Stripe sont en vente."
               : "Fermée le temps de l'alpha : la page des tarifs le dit, l'api refuse l'achat, tout le monde joue sur le palier libre."}
+          </span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 border-t border-line pt-5">
+          <Button
+            variant="secondary"
+            disabled={busy}
+            onClick={() => void save({ partyOpen: !status.partyOpen })}
+          >
+            {status.partyOpen ? "Fermer le jeu à plusieurs" : "Ouvrir le jeu à plusieurs"}
+          </Button>
+          <span className="text-caption text-vellum-3">
+            {status.partyOpen
+              ? "Ouvrir et rejoindre une table sont proposés sur l'écran des histoires."
+              : "Fermé le temps de le stabiliser : l'écran ne propose plus la table et l'api refuse de l'ouvrir comme de la rejoindre. Les tables existantes se jouent et se quittent. Un administrateur passe quand même."}
           </span>
         </div>
 
