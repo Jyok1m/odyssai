@@ -11,6 +11,7 @@ import type {
 import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
 
+import { usePartyAccess } from "@/components/auth/alpha-provider";
 import { useAuthLinks } from "@/components/auth/auth-links";
 import { useSession } from "@/components/auth/session-provider";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,8 @@ export function StoriesPanel() {
   const session = useSession();
   const { signIn } = useAuthLinks();
   const router = useRouter();
+  // Le jeu à plusieurs, le temps de le stabiliser : réglé au tableau de bord.
+  const party = usePartyAccess();
 
   const [data, setData] = useState<Stories | null>(null);
   /*
@@ -211,23 +214,29 @@ export function StoriesPanel() {
 
         {/* Jouer à plusieurs : ouvrir une table, ou rejoindre celle d'un
             ami par son code. Deux boutons plutôt qu'un menu, c'est deux
-            chemins et non deux réglages. */}
-        <Button
-          type="button"
-          variant="secondary"
-          disabled={busy || full}
-          onClick={() => setGathering((open) => !open)}
-        >
-          {t("party.open")}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          disabled={busy}
-          onClick={() => setJoining((open) => !open)}
-        >
-          {t("party.join")}
-        </Button>
+            chemins et non deux réglages. Absents plutôt que grisés quand la
+            table est fermée : un bouton éteint appelle une explication qu'on
+            n'a pas à donner. */}
+        {party === "open" ? (
+          <>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={busy || full}
+              onClick={() => setGathering((open) => !open)}
+            >
+              {t("party.open")}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={busy}
+              onClick={() => setJoining((open) => !open)}
+            >
+              {t("party.join")}
+            </Button>
+          </>
+        ) : null}
 
         {/* Amener un personnage qu'on a déjà : son nom, son caractère et son
             socle traversent ; ses talents et ses objets restent au monde
@@ -250,7 +259,7 @@ export function StoriesPanel() {
 
       {/* Combien de joueurs : le monde se génère une fois pour la table, et
           la taille choisit combien de sièges l'attendent. */}
-      {gathering ? (
+      {party === "open" && gathering ? (
         <section className="rounded-card border border-line bg-abyss p-5 sm:p-6">
           <h2 className="font-ui text-caption font-medium tracking-widest text-vellum-2 uppercase">
             {t("party.openTitle")}
@@ -277,7 +286,7 @@ export function StoriesPanel() {
 
       {/* Le code se partage hors bande, à voix haute ou par message : le
           champ accepte ce qu'on y colle, tirets et casses comprises. */}
-      {joining ? (
+      {party === "open" && joining ? (
         <section className="rounded-card border border-line bg-abyss p-5 sm:p-6">
           <h2 className="font-ui text-caption font-medium tracking-widest text-vellum-2 uppercase">
             {t("party.joinTitle")}

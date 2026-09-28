@@ -62,3 +62,23 @@ export function useGameAccess(): GameAccess {
 
   return session.user?.isAdmin ? "open" : "closed";
 }
+
+/*
+  Le jeu à plusieurs, ou non. L'API tient la règle, l'écran ne fait que
+  s'épargner un chemin qui répondrait 403.
+
+  Muette, elle ferme, à l'inverse de l'entrée en jeu : refuser d'entrer sur
+  une panne serait pire que laisser l'API dire non, mais montrer une table
+  qu'on a justement retirée mène à un bouton mort. Un bouton absent le temps
+  d'une panne ne coûte rien.
+*/
+export function usePartyAccess(): GameAccess {
+  const { status, failed } = useAlpha();
+  const session = useSession();
+
+  if (status === null) return failed ? "closed" : "loading";
+  if (status.partyOpen) return "open";
+  if (session.status === "loading") return "loading";
+
+  return session.user?.isAdmin ? "open" : "closed";
+}
