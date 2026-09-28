@@ -69,6 +69,17 @@ export class AlphaService {
     return row?.salesOpen === true;
   }
 
+  /*
+    Le jeu a plusieurs, lu aux deux entrees de la table. Absent, ferme.
+    `findFirst` pour la raison dite sur `isOpen`.
+  */
+  async partyOpen(): Promise<boolean> {
+    const row = await this.prisma.siteSettings.findFirst({
+      where: { id: true },
+    });
+    return row?.partyOpen === true;
+  }
+
   async update(request: UpdateAlphaRequest): Promise<AlphaStatus> {
     await this.prisma.siteSettings.update({
       where: { id: true },

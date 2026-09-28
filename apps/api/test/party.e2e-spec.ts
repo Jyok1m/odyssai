@@ -708,6 +708,90 @@ describe('/parties (e2e)', () => {
 });
 
 /*
+  L'interrupteur du tableau de bord. Ferme, la table ne s'ouvre ni ne se
+  rejoint ; mais on s'en releve toujours, sans quoi une table ouverte avant
+  la fermeture emprisonnerait ses joueurs.
+*/
+describe('le jeu a plusieurs ferme (e2e)', () => {
+  let app: INestApplication<App>;
+  let store: OnboardingStore;
+
+  function close(): void {
+    store.siteSettings = {
+      id: true,
+      alphaPhase: 'open',
+      alphaNotice: false,
+      salesOpen: false,
+      partyOpen: false,
+      updatedAt: new Date(0),
+    };
+  }
+
+  beforeEach(async () => {
+    ({ app, store } = await boot());
+  });
+
+  it('refuse d ouvrir une table, avec son code', async () => {
+    close();
+
+    await request(app.getHttpServer())
+      .post('/parties')
+      .set('Cookie', HOST_COOKIE)
+      .send({ size: 2 })
+      .expect(403)
+      .expect({ code: 'party_closed' });
+
+    // Rien n'a ete ecrit : le refus tombe avant l'histoire comme avant la table.
+    expect(store.parties ?? []).toHaveLength(0);
+    expect(store.universes).toHaveLength(0);
+    await app.close();
+  });
+
+  it('refuse de rejoindre une table ouverte avant la fermeture', async () => {
+    const party = (
+      (await request(app.getHttpServer()).post('/parties').set('Cookie', HOST_COOKIE).send({ size: 2 }).expect(201)).body as Party
+    );
+
+    close();
+
+    await request(app.getHttpServer())
+      .post('/parties/join')
+      .set('Cookie', FRIEND_COOKIE)
+      .send({ code: party.inviteCode })
+      .expect(403)
+      .expect({ code: 'party_closed' });
+    await app.close();
+  });
+
+  // C'est ainsi qu'on verifie la table avant de l'ouvrir a tous.
+  it('laisse passer un administrateur', async () => {
+    close();
+    store.users[0]!.isAdmin = true;
+
+    await request(app.getHttpServer())
+      .post('/parties')
+      .set('Cookie', HOST_COOKIE)
+      .send({ size: 2 })
+      .expect(201);
+    await app.close();
+  });
+
+  // Se relire et se lever ne passent pas par la garde : la fermeture retire
+  // une entree, elle ne ferme pas la sortie.
+  it('laisse lire sa table et la quitter', async () => {
+    await request(app.getHttpServer()).post('/parties').set('Cookie', HOST_COOKIE).send({ size: 2 }).expect(201);
+
+    close();
+
+    await request(app.getHttpServer()).get('/parties/me').set('Cookie', HOST_COOKIE).expect(200);
+    await request(app.getHttpServer()).delete('/parties/me').set('Cookie', HOST_COOKIE).expect(200);
+
+    expect(store.parties).toHaveLength(0);
+    await app.close();
+  });
+});
+
+/*
   Le tour d'une table : le journal est partage, chacun voit ce que les
   autres ont dit, le meneur ne raconte qu'une scene a la fois, et le
   personnage qui joue est celui du joueur qui parle.

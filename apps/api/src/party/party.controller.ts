@@ -21,6 +21,7 @@ import type { User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { SessionGuard } from '../auth/session.guard.js';
 import { AlphaOpenGuard } from '../alpha/alpha-open.guard.js';
+import { PartyOpenGuard } from './party-open.guard.js';
 import { ErasureService } from '../erasure/erasure.service.js';
 import { StoriesFullError } from '../stories/stories.service.js';
 import {
@@ -35,6 +36,10 @@ import {
   Les tables : ouvrir la sienne, y recevoir ses amis, la quitter. Le code
   d'invitation se partage hors bande, il n'y a pas de courriel : les joueurs
   d'une meme table se connaissent.
+
+  Les deux entrees portent PartyOpenGuard, jamais le controller : se relire
+  et se lever restent possibles quand le jeu a plusieurs est ferme, sans quoi
+  une table ouverte avant la fermeture emprisonnerait ses joueurs.
 
   L'etat d'une table ne se lit pas ici : le parcours le porte
   (GET /onboarding), qui est l'endroit ou l'ecran attend les autres.
@@ -54,6 +59,7 @@ export class PartyController {
     part.
   */
   @Post()
+  @UseGuards(PartyOpenGuard)
   @HttpCode(HttpStatus.CREATED)
   async create(@CurrentUser() user: User, @Body() rawBody: unknown): Promise<Party> {
     const parsed = PartyStartSchema.safeParse(rawBody);
@@ -73,6 +79,7 @@ export class PartyController {
   }
 
   @Post('join')
+  @UseGuards(PartyOpenGuard)
   @HttpCode(HttpStatus.CREATED)
   async join(@CurrentUser() user: User, @Body() rawBody: unknown): Promise<Party> {
     const parsed = PartyJoinSchema.safeParse(rawBody);
