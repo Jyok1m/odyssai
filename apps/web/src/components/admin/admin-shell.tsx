@@ -24,6 +24,8 @@ import { fetchBugReports } from "@/lib/bugs";
 import { fetchContactMessages } from "@/lib/contact";
 import { fetchProfile } from "@/lib/profile";
 
+import { AdminProfileProvider } from "./profile";
+
 const NAVIGATION = [
   { name: "Vue d'ensemble", href: "/admin", icon: ChartBarSquareIcon },
   { name: "Joueurs", href: "/admin/joueurs", icon: UsersIcon },
@@ -183,7 +185,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
           </span>
         </div>
 
-        <main>{children}</main>
+        {/* Le profil suit : les ecrans en ont besoin pour savoir quelle fiche
+            est la mienne, et le relire serait un appel de plus. */}
+        <main>
+          <AdminProfileProvider profile={profile}>{children}</AdminProfileProvider>
+        </main>
       </div>
     </div>
   );

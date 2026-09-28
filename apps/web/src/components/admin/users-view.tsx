@@ -111,6 +111,14 @@ export function UsersView() {
     toast.success("Enregistré.");
   };
 
+  /*
+    Le joueur vient d'etre supprime : sa ligne part sans recharger la liste,
+    qui repartirait de la premiere page et perdrait ce qu'on avait deroule.
+  */
+  const onDeleted = (id: string) => {
+    setRows((current) => current.filter((row) => row.id !== id));
+  };
+
   return (
     <Page
       title="Joueurs"
@@ -227,6 +235,7 @@ export function UsersView() {
           id={selected}
           onClose={() => setSelected(null)}
           onChanged={onChanged}
+          onDeleted={onDeleted}
         />
       ) : null}
     </Page>

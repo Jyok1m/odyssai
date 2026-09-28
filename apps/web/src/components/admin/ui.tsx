@@ -259,6 +259,8 @@ export function reasonOf(caught: unknown): string {
       return "Des joueurs portent encore ce palier. Archive-le plutôt que de le supprimer.";
     case "plan_protected":
       return "Le palier libre ne peut être ni archivé ni supprimé : tout y retombe.";
+    case "cannot_delete_self":
+      return "On ne supprime pas son propre compte d'ici : le droit d'administrer ne se repose par aucune page.";
     case "stripe_error":
       return "Stripe a refusé l'opération. Rien n'a été enregistré.";
     case "billing_disabled":

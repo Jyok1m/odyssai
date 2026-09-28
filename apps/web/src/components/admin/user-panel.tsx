@@ -16,14 +16,16 @@ import {
 } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
 import { FIELD } from "@/components/ui/field";
-import { adjustCredits, cancelSubscription, fetchUser } from "@/lib/admin";
+import { adjustCredits, cancelSubscription, deleteUser, fetchUser } from "@/lib/admin";
 
 import { Confirm } from "./confirm";
+import { useAdminProfile } from "./profile";
 
 interface Props {
   id: string;
   onClose: () => void;
   onChanged: (detail: AdminUserDetail) => void;
+  onDeleted: (id: string) => void;
 }
 
 /*
@@ -32,7 +34,10 @@ interface Props {
   En tiroir et non sur une page : on vient de la liste, on y retourne, et la
   position de lecture ne doit pas se perdre à chaque consultation.
 */
-export function UserPanel({ id, onClose, onChanged }: Props) {
+export function UserPanel({ id, onClose, onChanged, onDeleted }: Props) {
+  // Pour ne pas proposer de se supprimer soi-meme. L'API le refuse de toute
+  // facon : cacher l'action evite seulement de la proposer pour rien.
+  const me = useAdminProfile();
   const [detail, setDetail] = useState<AdminUserDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -280,6 +285,49 @@ export function UserPanel({ id, onClose, onChanged }: Props) {
                   </ul>
                 )}
               </section>
+
+              {me && me.id !== detail.id ? (
+                <section>
+                  <h3 className="font-voice text-ui text-vellum">
+                    Supprimer le compte
+                  </h3>
+                  <p className="mt-1.5 text-caption text-vellum-3">
+                    Le joueur, ses histoires et sa réserve partent. Son
+                    abonnement Stripe est résilié d&apos;abord, sans
+                    remboursement. Son identité, elle, appartient au realm :
+                    l&apos;API n&apos;a aucun droit dessus, et se reconnecter
+                    ici lui rendrait un compte vide.
+                  </p>
+
+                  <div className="mt-4">
+                    <Confirm
+                      label="Supprimer le joueur"
+                      title="Supprimer définitivement"
+                      lead={
+                        <>
+                          {detail.username ?? detail.email} perd ses{" "}
+                          {detail.worldCount} monde
+                          {detail.worldCount > 1 ? "s" : ""} et ses{" "}
+                          {detail.credits} crédits. Un monde que d&apos;autres
+                          ont visité leur reste, vidé de ce que ce joueur y
+                          avait écrit. Rien de tout cela ne revient.
+                        </>
+                      }
+                      confirmLabel="Supprimer"
+                      onConfirm={async () => {
+                        try {
+                          await deleteUser(detail.id);
+                          toast.success("Joueur supprimé.");
+                          onDeleted(detail.id);
+                          onClose();
+                        } catch (caught: unknown) {
+                          setError(reasonOf(caught));
+                        }
+                      }}
+                    />
+                  </div>
+                </section>
+              ) : null}
 
               <Feedback error={error} />
             </div>

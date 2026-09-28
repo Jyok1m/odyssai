@@ -40,6 +40,7 @@ export class AdminError extends Error {
     | "slug_taken"
     | "plan_in_use"
     | "plan_protected"
+    | "cannot_delete_self"
     | "billing_disabled"
     | "stripe_error"
     | "validation_error"
@@ -110,6 +111,20 @@ export async function adjustCredits(
 // Résilie chez Stripe. Le retour au palier libre viendra du webhook.
 export async function cancelSubscription(id: string): Promise<void> {
   await send(`${API_BASE_URL}/admin/users/${id}/subscription`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+}
+
+/*
+  Efface un joueur, ses histoires et sa reserve.
+
+  Cote API, la meme regle que le depart volontaire : l'abonnement Stripe est
+  resilie d'abord, les mondes suivent la regle des rencontres, la ligne part en
+  dernier. Ce qui ne part pas : l'identite, qui appartient au realm.
+*/
+export async function deleteUser(id: string): Promise<void> {
+  await send(`${API_BASE_URL}/admin/users/${id}`, {
     method: "DELETE",
     credentials: "include",
   });
