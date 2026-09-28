@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AlphaModule } from '../alpha/alpha.module.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { ContactModule } from '../contact/contact.module.js';
+import { ErasureModule } from '../erasure/erasure.module.js';
 import { BugsModule } from '../bugs/bugs.module.js';
 import { BillingModule } from '../billing/billing.module.js';
 import { AdminController } from './admin.controller.js';
@@ -13,10 +14,18 @@ import { AdminService } from './admin.service.js';
   AuthModule pour `SessionGuard`, que Nest construit dans le module qui
   l'applique. BillingModule pour la resiliation, qui passe par le meme
   service que le portail du joueur. AlphaModule pour l'etat annonce, dont la
-  lecture est publique et l'ecriture reservee.
+  lecture est publique et l'ecriture reservee. ErasureModule pour la
+  suppression d'un joueur, qui suit la regle du depart et ne la recopie pas.
 */
 @Module({
-  imports: [AuthModule, BillingModule, AlphaModule, ContactModule, BugsModule],
+  imports: [
+    AuthModule,
+    BillingModule,
+    AlphaModule,
+    ContactModule,
+    BugsModule,
+    ErasureModule,
+  ],
   controllers: [AdminController],
   providers: [AdminService, AdminPlansService, AdminGuard],
 })

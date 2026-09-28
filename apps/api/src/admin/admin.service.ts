@@ -11,6 +11,7 @@ import type {
 } from '@odyssai/schemas';
 import { BillingConfig } from '../config/billing-config.js';
 import { CreditsService } from '../credits/credits.service.js';
+import { ErasureService } from '../erasure/erasure.service.js';
 import { PlansService } from '../plans/plans.service.js';
 import { PRISMA } from '../prisma/prisma.module.js';
 
@@ -24,6 +25,21 @@ export class UserNotFoundError extends Error {
   constructor(id: string) {
     super(`joueur introuvable : ${id}`);
     this.name = 'UserNotFoundError';
+  }
+}
+
+/*
+  Un administrateur ne s'efface pas depuis le tableau de bord.
+
+  Le droit ne se repose par aucune route (`admin:grant`, donc un acces au
+  serveur) : se supprimer d'ici viderait le tableau de bord de son dernier
+  administrateur sans que rien ici puisse en nommer un autre. Partir reste
+  possible, par `DELETE /me`, ou la question est posee a la bonne personne.
+*/
+export class SelfDeletionError extends Error {
+  constructor(id: string) {
+    super(`suppression de soi refusee : ${id}`);
+    this.name = 'SelfDeletionError';
   }
 }
 
@@ -43,6 +59,9 @@ export class AdminService {
     private readonly plans: PlansService,
     private readonly credits: CreditsService,
     private readonly billing: BillingConfig,
+    // La regle du depart est deja ecrite, et une seule : un administrateur
+    // qui efface un joueur applique celle que le joueur s'applique.
+    private readonly erasure: ErasureService,
   ) {}
 
   async overview(): Promise<AdminOverview> {
@@ -259,6 +278,38 @@ export class AdminService {
     }
 
     return this.user(id);
+  }
+
+  /*
+    Efface un joueur et ce qui va avec : ses histoires, sa reserve, sa ligne.
+
+    Rien n'est reecrit ici : `ErasureService` porte deja la regle du depart,
+    celle que le joueur s'applique par `DELETE /me`. L'abonnement Stripe est
+    resilie avant la ligne, les mondes suivent la regle des rencontres, et la
+    ligne `users` part en dernier. Deux regles de depart divergeraient au
+    premier changement de l'une.
+
+    Ce que cela ne fait pas : l'identite, qui appartient au realm et sur
+    laquelle l'api n'a aucun droit. Le joueur efface qui se reconnecte
+    retrouve un compte vide, comme apres son propre depart.
+  */
+  async deleteUser(id: string, by: User): Promise<void> {
+    if (id === by.id) throw new SelfDeletionError(id);
+
+    // Une presence, pas une fiche : ce qui suit n'a besoin que de l'identifiant.
+    const found = await this.prisma.user.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!found) throw new UserNotFoundError(id);
+
+    const outcome = await this.erasure.eraseAccount(id);
+
+    // L'identifiant et non l'adresse : savoir qui a efface qui suffit, et le
+    // journal n'a pas a porter d'e-mail.
+    this.logger.log(
+      `joueur efface : ${id}, par ${by.id} (monde ${outcome.world}, personnage ${outcome.character})`,
+    );
   }
 
   private toRow(
