@@ -128,11 +128,12 @@ Rules specific to one area, moved verbatim from this file. Read the file before 
 - `docs/game-shell.md`: before touching the generation progress screen or `GET /world`.
 - `docs/stories-and-erasure.md`: before touching restart, account deletion, `ErasureService` or multiple stories.
 - `docs/game-turn.md`: before touching `POST /turn`, the GM prompt, the die, the dialogue model or the GM reference cards.
+- `docs/multiplayer.md`: before touching parties, seats, the invite code, the turn lock, the group prompt or the switch that keeps the table closed.
 - `docs/moderation.md`: before touching the lexical list or the moderation classifier.
 - `docs/llm-costs.md`: before touching `llm_usage`, cost fallbacks, OpenRouter tracing or LangSmith.
 - `docs/billing.md`: before touching credits, Stripe, the plans table or the pricing page.
 - `docs/admin.md`: before touching `/admin` or newsletter consent.
-- `docs/alpha.md`: before touching the alpha phase, sales switch, founder bonus or any text describing the alpha.
+- `docs/alpha.md`: before touching the alpha phase, the sales or multiplayer switch, the founder bonus or any text describing the alpha.
 - `docs/contact-mail.md`: before touching `/contact` or outgoing mail.
 - `docs/terms.md`: before touching `/terms` or the signup acceptance notice.
 - `docs/tuning.md`: before adding or moving a tunable value.
