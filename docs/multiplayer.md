@@ -6,6 +6,28 @@ player keeps their own character, their own inspiration, their own credits.
 Solo play is untouched: a player who starts alone never gets a `parties` row,
 and every rule below only exists when one does.
 
+## Closed for now
+
+Everything below is written, tested and dormant: `site_settings.party_open`
+is false by default, and the feature only shows when the dashboard says so.
+It is a switch, not a removal, so reopening costs a click and no deployment.
+
+- **The api holds the rule.** `PartyOpenGuard` sits on `POST /parties` and
+  `POST /parties/join`, at the method and never on the controller:
+  `GET /parties/me` and `DELETE /parties/me` stay open, because closing the
+  door is not locking in the ones already seated. A refusal is 403
+  `party_closed`.
+- **An administrator always passes**, as with the alpha phase: that is how the
+  table is checked in production before it opens to everyone.
+- **The screen only spares a dead end.** `usePartyAccess` hides the two
+  buttons and their panels on the stories screen. It closes when `GET /alpha`
+  is silent, unlike `useGameAccess` which opens: refusing to enter the game on
+  an outage is worse than letting the api say no, but showing a table that was
+  deliberately withdrawn leads to a button that answers 403.
+- Nothing else moves. The i18n keys, `PartyPanel`, the group prompt, the turn
+  lock and the credit shares stay where they are, and an open switch finds
+  them intact.
+
 ## Data model
 
 Three tables and three columns, nothing else. The universe **is** the story
