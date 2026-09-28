@@ -50,7 +50,7 @@ import {
   SlugTakenError,
   StripeUnavailableError,
 } from './admin-plans.service.js';
-import { AdminService, UserNotFoundError } from './admin.service.js';
+import { AdminService, SelfDeletionError, UserNotFoundError } from './admin.service.js';
 
 /*
   Le tableau de bord d'administration.
@@ -136,6 +136,23 @@ export class AdminController {
     await this.guarded(() =>
       this.billing.cancelSubscription(user.stripeSubscriptionId!),
     );
+  }
+
+  /*
+    Efface un joueur : ses histoires, sa reserve, sa ligne.
+
+    Passe par `ErasureService`, la meme regle que le depart volontaire : un
+    second chemin d'effacement divergerait du premier des qu'on toucherait a
+    l'un des deux. Un administrateur ne s'y efface pas lui-meme, le droit ne
+    se reposant par aucune route.
+
+    204 : il n'y a plus rien a projeter, et le sort des mondes appartient au
+    journal, pas a l'ecran qui vient de supprimer la fiche.
+  */
+  @Delete('users/:id')
+  @HttpCode(204)
+  async removeUser(@Param('id') id: string, @CurrentUser() by: User): Promise<void> {
+    await this.guarded(() => this.admin.deleteUser(id, by));
   }
 
   /*
@@ -247,6 +264,9 @@ export class AdminController {
     } catch (error: unknown) {
       if (error instanceof UserNotFoundError || error instanceof PlanNotFoundError) {
         throw new NotFoundException({ code: 'not_found' });
+      }
+      if (error instanceof SelfDeletionError) {
+        throw new ConflictException({ code: 'cannot_delete_self' });
       }
       if (error instanceof SlugTakenError) {
         throw new ConflictException({ code: 'slug_taken' });
