@@ -7,6 +7,10 @@ out/
 build/
 *.tsbuildinfo
 
+# Schémas drawio
+*.drawio
+*.drawio.bkp
+
 # Competences d'agents posees par le CLI Prisma, regenerees et symboliquement
 # dupliquees en trois exemplaires.
 .agents/
