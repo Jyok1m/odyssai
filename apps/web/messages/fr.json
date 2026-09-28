@@ -287,7 +287,8 @@
       "keepTalking": "Encore quelques échanges avant de pouvoir dresser la fiche.",
       "turnsLeft": "{count} messages restants.",
       "turnsOver": "La conversation est close. Tu peux dresser la fiche.",
-      "unavailable": "La création de personnage n'est pas disponible pour le moment.",
+      "unavailable": "Le guide n'a pas réussi à dresser la fiche. Réessaie : la conversation est gardée.",
+      "turnFailed": "Le guide n'a pas répondu. Réessaie : ton message est gardé et le crédit t'a été rendu.",
       "refused": "Ce message a été refusé. Reformule-le sans insulte ni contenu explicite.",
       "redraft": "Redresser la fiche"
     },

@@ -287,7 +287,8 @@
       "keepTalking": "A few more exchanges before the sheet can be drawn up.",
       "turnsLeft": "{count} messages left.",
       "turnsOver": "The conversation is closed. You can draw up the sheet.",
-      "unavailable": "Character creation is not available right now.",
+      "unavailable": "The guide could not draw up the sheet. Try again: the conversation is kept.",
+      "turnFailed": "The guide did not answer. Try again: your message is kept and the credit was given back.",
       "refused": "This message was refused. Rephrase it without insults or explicit content.",
       "redraft": "Redraw the sheet"
     },

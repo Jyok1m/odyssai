@@ -7,7 +7,26 @@ export interface CreateLlmClientOptions {
   apiKey: string;
   // Injecte par les tests, pour qu'aucun appel ne sorte vraiment.
   fetch?: typeof globalThis.fetch;
+  // Attente de l'ouverture de la reponse, et essais du SDK. Voir plus bas.
+  timeoutMs?: number;
+  maxRetries?: number;
 }
+
+/*
+  Attente de l'ouverture de la reponse. Le defaut du SDK est de dix minutes :
+  un fournisseur qui ne repond jamais laissait un joueur devant trois points
+  qui clignotent, et le flux SSE ouvert avec lui. Il ne borne que l'attente de
+  l'en-tete, pas la lecture du flux : un modele lent a ecrire n'est pas coupe.
+*/
+export const LLM_TIMEOUT_MS = 90_000;
+
+/*
+  Essais du SDK, sur l'ouverture de l'appel seule : 408, 409, 429 et 5xx. Il
+  est explicite pour la meme raison que la cle et l'URL le sont, et parce que
+  les rejeux des appelants se comptent avec lui : deux essais de noeud sur un
+  client qui en fait trois chacun font six appels au fournisseur.
+*/
+export const LLM_MAX_RETRIES = 2;
 
 /*
   De quoi retrouver un appel dans l'observabilite.
@@ -38,6 +57,14 @@ export interface StreamChatRequest {
 
 export type LlmStreamEvent =
   | { type: 'text'; text: string }
+  /*
+    Pourquoi le modele s'est arrete, tel qu'il le dit : `stop` quand il a fini
+    sa phrase, `length` quand il a bute sur `maxOutputTokens`. C'est la
+    difference entre une sortie illisible qu'un rejeu corrige et un JSON coupe
+    que le meme plafond coupera encore : sans elle, les deux se journalisent
+    pareil et on cherche au mauvais endroit.
+  */
+  | { type: 'stop'; reason: string }
   | {
       type: 'usage';
       model: string;
@@ -99,6 +126,8 @@ export function createLlmClient(options: CreateLlmClientOptions): LlmClient {
     baseURL: spec.baseUrl,
     organization: null,
     project: null,
+    timeout: options.timeoutMs ?? LLM_TIMEOUT_MS,
+    maxRetries: options.maxRetries ?? LLM_MAX_RETRIES,
     ...(options.fetch ? { fetch: options.fetch } : {}),
   });
 
@@ -171,6 +200,9 @@ export function createLlmClient(options: CreateLlmClientOptions): LlmClient {
           const text = chunk.choices?.[0]?.delta?.content;
           if (text) yield { type: 'text', text };
 
+          const finish = chunk.choices?.[0]?.finish_reason;
+          if (finish) yield { type: 'stop', reason: finish };
+
           const usage = chunk.usage as UsageChunk | null | undefined;
           if (usage) {
             yield {
@@ -204,6 +236,16 @@ interface UsageChunk {
 function toLlmError(error: unknown): LlmError {
   if (error instanceof LlmError) return error;
 
+  /*
+    Avant `APIError`, dont il herite, et c'est tout l'interet de l'ordre :
+    `APIUserAbortError` arrive sans statut, et `isRetryableStatus(undefined)`
+    le prenait pour une panne de reseau a retenter. Le joueur est parti, il n'y
+    a plus personne a servir, et un rejeu n'ecrirait que du cout.
+  */
+  if (error instanceof OpenAI.APIUserAbortError) {
+    return new LlmError('appel interrompu', { retryable: false });
+  }
+
   if (error instanceof OpenAI.APIError) {
     // Le message du fournisseur peut renvoyer une partie de la requete :
     // seuls le statut et le type d'erreur sortent d'ici.
@@ -213,6 +255,7 @@ function toLlmError(error: unknown): LlmError {
     });
   }
 
+  // Un abandon leve hors du SDK, quand le signal tombe avant l'appel.
   if (error instanceof Error && error.name === 'AbortError') {
     return new LlmError('appel interrompu', { retryable: false });
   }

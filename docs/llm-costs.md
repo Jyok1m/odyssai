@@ -6,6 +6,7 @@
 - `cost_usd` is a `Decimal(12,8)`, not a `Float`: a cost adds up over thousands of rows and the binary drifts there.
 - The relation to `users` is in **`SetNull`**: the accounting survives a player's departure, detached from him. What remains is a cost, no longer a person.
 - A failed write is logged, never retried: the player already got his answer, and the accounting is not worth breaking a turn. Same rule as the guide log.
+- **A replay counts as a call.** The graph's nodes, the abstraction pass and the sheet extraction each write one row per attempt: a replay that logs nothing would make the cost of a world or of a sheet lie, and it is precisely the replays the 25 credits of a world insure against.
 - `guide_questions` keeps its own log and **stays anonymous**: it has no player to attach, and it is a design decision, not an oversight.
 - The cost returned by the provider wins; otherwise it computes from the tokens, billing reasoning tokens at the output rate, which both providers do.
 - Watch the two `LLM_NARRATOR_PRICE_*`: **at zero, the computed fallback writes a false freebie** the day OpenRouter stops returning the cost. They are scale values, not a switch.

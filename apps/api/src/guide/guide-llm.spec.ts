@@ -81,6 +81,65 @@ describe('createLlmClient', () => {
     ]);
   });
 
+  /*
+    La raison d'arret du modele. C'est elle qui distingue une sortie illisible,
+    qu'un rejeu corrige, d'un JSON coupe par `maxOutputTokens`, que le meme
+    plafond coupera encore : sans elle les deux se journalisent pareil et on
+    cherche au mauvais endroit. Le champ est teste ici et pas seulement sur un
+    double, parce que c'est le chemin dans le chunk qui porte le diagnostic.
+  */
+  it('rend la raison d arret du fournisseur', async () => {
+    const body = [
+      'data: {"model":"m","choices":[{"delta":{"content":"une fiche coupee"},"finish_reason":"length"}]}\n\n',
+      'data: [DONE]\n\n',
+    ].join('');
+
+    const client = createLlmClient({
+      provider: 'openrouter',
+      apiKey: 'sk-or-x',
+      fetch: (async () =>
+        new Response(body, {
+          status: 200,
+          headers: { 'Content-Type': 'text/event-stream' },
+        })) as unknown as typeof fetch,
+    });
+
+    const events = [];
+    for await (const event of client.streamChat(REQUEST)) events.push(event);
+
+    expect(events).toContainEqual({ type: 'stop', reason: 'length' });
+  });
+
+  /*
+    `APIUserAbortError` herite de `APIError` et arrive sans statut : range avec
+    les pannes de reseau, un joueur parti se faisait rejouer son appel, et la
+    garde sur le nom d'erreur plus bas ne servait a rien.
+  */
+  it('ne rend pas retentable un appel interrompu', async () => {
+    const client = createLlmClient({
+      provider: 'openrouter',
+      apiKey: 'sk-or-x',
+      fetch: fakeFetch() as unknown as typeof fetch,
+    });
+
+    const controller = new AbortController();
+    controller.abort();
+
+    const drain = async () => {
+      for await (const _ of client.streamChat({
+        ...REQUEST,
+        signal: controller.signal,
+      })) {
+        // L'appel ne doit meme pas s'ouvrir.
+      }
+    };
+
+    await expect(drain()).rejects.toMatchObject({
+      name: 'LlmError',
+      retryable: false,
+    });
+  });
+
   it('n envoie jamais presence_penalty ni frequency_penalty', async () => {
     const fetchSpy = fakeFetch();
     const client = createLlmClient({

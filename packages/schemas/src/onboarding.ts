@@ -337,6 +337,17 @@ export const CHARACTER_MESSAGE_MAX_CHARS = 600;
 export const CHARACTER_TURNS_MIN = 3;
 export const CHARACTER_TURNS_MAX = 12;
 
+/*
+  Essais d'un appel de cette etape, conversation comme extraction. Un modele
+  rate rarement deux fois pareil, et perdre douze echanges payes sur un seul
+  mauvais tirage coute plus cher que le rejeu.
+
+  Ils se comptent avec ceux du client : `LLM_MAX_RETRIES` reprend deja
+  l'ouverture d'un appel refusee par le fournisseur. Ce qui se rejoue ici est
+  ce qu'il ne sait pas reprendre, un flux rompu ou une sortie illisible.
+*/
+export const CHARACTER_ATTEMPTS_PER_CALL = 2;
+
 export const ConversationMessageSchema = z.object({
   id: z.uuid(),
   role: z.enum(['user', 'assistant']),

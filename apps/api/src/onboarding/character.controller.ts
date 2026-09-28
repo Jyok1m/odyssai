@@ -18,19 +18,21 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import {
+  CHARACTER_ATTEMPTS_PER_CALL,
   CHARACTER_TURNS_MAX,
   CharacterMessageRequestSchema,
   type CharacterConversation,
   type CharacterExtractResponse,
   type CharacterStreamEvent,
 } from '@odyssai/schemas';
-import type { LlmClient } from '@odyssai/llm';
+import { isRetryable, type LlmClient } from '@odyssai/llm';
 import {
   CHARACTER_EXTRACT_PROMPT_VERSION,
   CHARACTER_OPENING,
   CHARACTER_PROMPT_VERSION,
   converseCharacter,
   extractCharacter,
+  type ConversationTurn,
 } from '@odyssai/narrator';
 import type { User } from '@odyssai/db';
 import { CurrentUser } from '../auth/current-user.decorator.js';
@@ -49,6 +51,9 @@ import { UsageService } from '../usage/usage.service.js';
 import { LockedError, WrongStepError } from './onboarding.service.js';
 
 const PING_INTERVAL_MS = 15_000;
+
+// Un tour ouvert : de quoi le relire, et lire son usage une fois le flux clos.
+type CharacterTurn = ReturnType<typeof converseCharacter>;
 
 /*
   Etape 3 du parcours : la conversation qui donne sa fiche au personnage.
@@ -163,26 +168,46 @@ export class CharacterController {
     let answer = '';
 
     try {
-      const turn = converseCharacter({
-        llm: this.llm,
-        config: this.config.modelFor('character'),
-        locale: user.locale,
-        history,
-        message: parsed.data.content,
-        signal: controller.signal,
-        trace: {
-          name: 'character',
-          metadata: {
-            universe_id: universeId,
-            prompt_version: CHARACTER_PROMPT_VERSION,
-            locale: user.locale,
-          },
-        },
-      });
+      /*
+        Le tour rejoue, mais seulement tant que rien n'est parti : une reponse
+        rompue apres son premier mot ne se rejoue pas, le joueur l'a deja lue
+        et le rejeu recommencerait la phrase sous ses yeux. Avant le premier
+        mot, en revanche, il n'a rien vu : un flux qui casse la est une panne
+        de transport, et son message est deja en base.
+      */
+      let turn: CharacterTurn | undefined;
+      // Tous les essais, pas seulement le dernier : un rejeu est paye comme le
+      // reste, et `record` ecarte de lui-meme celui qui n'a rien rapporte.
+      const attempts: CharacterTurn[] = [];
 
-      for await (const text of turn.chunks) {
-        answer += text;
-        this.write(res, { type: 'delta', text });
+      for (let attempt = 1; attempt <= CHARACTER_ATTEMPTS_PER_CALL; attempt += 1) {
+        turn = this.converse({
+          user,
+          universeId,
+          history,
+          message: parsed.data.content,
+          signal: controller.signal,
+          attempt,
+        });
+        attempts.push(turn);
+
+        try {
+          for await (const text of turn.chunks) {
+            answer += text;
+            this.write(res, { type: 'delta', text });
+          }
+          break;
+        } catch (error: unknown) {
+          const last = attempt === CHARACTER_ATTEMPTS_PER_CALL;
+          /*
+            Le signal en plus de l'erreur : un joueur parti se lit sur lui, et
+            c'est la garde qui ne depend pas de la facon dont le fournisseur a
+            nomme son abandon.
+          */
+          const gone = controller.signal.aborted;
+          if (answer.length > 0 || last || gone || !isRetryable(error)) throw error;
+          this.logger.warn(`tour de personnage rejoue : ${String(error)}`);
+        }
       }
 
       // Ecrite seulement si elle est complete : une reponse coupee en deux
@@ -191,14 +216,16 @@ export class CharacterController {
         await this.characters.recordAssistant(universeId, thread, answer);
       }
 
-      await this.usage.record({
-        kind: 'character',
-        provider: this.config.provider,
-        userId: user.id,
-        universeId,
-        usage: turn.usage(),
-        prices: this.config.prices,
-      });
+      for (const past of attempts) {
+        await this.usage.record({
+          kind: 'character',
+          provider: this.config.provider,
+          userId: user.id,
+          universeId,
+          usage: past.usage(),
+          prices: this.config.prices,
+        });
+      }
 
       const turns = await this.characters.turnsUsed(universeId, thread);
       const { canExtract } = await this.characters.conversation(universeId, thread);
@@ -208,7 +235,7 @@ export class CharacterController {
         canExtract,
         // Le marqueur ne vaut demande que si la fiche est extractible : pose
         // trop tot, il ferait appeler une extraction que l'api refuserait.
-        sheet: canExtract && turn.sheetRequested(),
+        sheet: canExtract && (turn?.sheetRequested() ?? false),
       });
     } catch (error: unknown) {
       this.logger.warn(`conversation de personnage en echec : ${String(error)}`);
@@ -244,20 +271,66 @@ export class CharacterController {
       },
     });
 
-    await this.usage.record({
-      kind: 'extract',
-      provider: this.config.provider,
-      userId: user.id,
-      universeId,
-      usage: result.usage,
-      prices: this.config.prices,
-    });
+    // Un essai par ligne : chacun a ete paye, et un rejeu muet ferait mentir
+    // le cout d'une fiche.
+    for (const usage of result.usages) {
+      await this.usage.record({
+        kind: 'extract',
+        provider: this.config.provider,
+        userId: user.id,
+        universeId,
+        usage,
+        prices: this.config.prices,
+      });
+    }
 
-    if (result.kind === 'invalid_json') {
+    /*
+      Journalise avant de refuser : sans cette ligne, une extraction qui echoue
+      rendait un 503 qu'aucun journal n'expliquait, et il n'y avait plus qu'a
+      deviner entre un modele bavard, un JSON coupe par le plafond de sortie et
+      un fournisseur en panne. Ni la conversation ni la sortie du modele n'y
+      figurent : la raison suffit a savoir ou chercher.
+    */
+    if (result.kind === 'rejected') {
+      const tries = result.attempts > 1 ? `${result.attempts} essais` : 'un essai';
+      this.logger.warn(
+        `fiche non dressee (${result.reason}) sur ${universeId} en ${tries} : ${result.details}`,
+      );
       throw new ServiceUnavailableException({ code: 'upstream_error' });
     }
 
     return { character: result.character, missing: result.missing };
+  }
+
+  /*
+    Un appel de conversation. A part pour que le rejeu porte son numero dans la
+    trace : deux appels pour un tour se lisent autrement que deux tours.
+  */
+  private converse(options: {
+    user: User;
+    universeId: string;
+    history: ConversationTurn[];
+    message: string;
+    signal: AbortSignal;
+    attempt: number;
+  }): CharacterTurn {
+    return converseCharacter({
+      llm: this.llm,
+      config: this.config.modelFor('character'),
+      locale: options.user.locale,
+      history: options.history,
+      message: options.message,
+      signal: options.signal,
+      trace: {
+        name: 'character',
+        metadata: {
+          universe_id: options.universeId,
+          prompt_version: CHARACTER_PROMPT_VERSION,
+          locale: options.user.locale,
+          attempt: options.attempt,
+        },
+      },
+    });
   }
 
   // Traduit les refus du parcours en codes que le front sait lire.

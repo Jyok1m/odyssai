@@ -100,8 +100,28 @@ export class GuideFakeRedis extends FakeRedis {
 
 export interface FakeLlmOptions {
   chunks?: string[];
+  /*
+    Un lot par appel, pour voir un rejeu rendre autre chose que le premier
+    essai. Au dela du dernier lot, le dernier se repete.
+  */
+  replies?: string[][];
   usage?: { inputTokens: number; outputTokens: number; costUsd?: number };
   fail?: boolean;
+  /*
+    Les appels qui echouent, numerotes a partir de un dans l'ordre ou ils
+    partent : de quoi faire tomber un role et pas les autres, la moderation
+    passant avant la conversation dans un meme message.
+  */
+  failCalls?: number[];
+  /*
+    Le flux rend ce nombre de morceaux puis casse, comme une connexion qui
+    tombe en cours de phrase : ce qui est parti est parti.
+  */
+  cutAfter?: number;
+  // De quoi echouer d'une facon precise : un refus franc, un abandon.
+  failWith?: unknown;
+  // Pourquoi le modele s'arrete. `length` vaut sortie coupee par le plafond.
+  stop?: string;
 }
 
 export interface FakeLlm extends LlmClient {
@@ -141,16 +161,28 @@ export function makeFakeLlm(options: FakeLlmOptions = {}): FakeLlm {
 
     async *streamChat(request: StreamChatRequest): AsyncIterable<LlmStreamEvent> {
       calls.push(request);
+      const index = calls.length - 1;
       request.signal?.addEventListener('abort', () => {
         state.aborted = true;
       });
 
-      if (options.fail) throw new Error('fournisseur en echec');
-
-      for (const text of options.chunks ?? ['Une reponse de test.']) {
-        if (request.signal?.aborted) return;
-        yield { type: 'text', text };
+      if (options.fail || options.failCalls?.includes(calls.length)) {
+        throw options.failWith ?? new Error('fournisseur en echec');
       }
+
+      const texts =
+        options.replies?.[Math.min(index, options.replies.length - 1)] ??
+        options.chunks ?? ['Une reponse de test.'];
+
+      let sent = 0;
+      for (const text of texts) {
+        if (request.signal?.aborted) return;
+        if (sent === options.cutAfter) throw new Error('flux rompu');
+        yield { type: 'text', text };
+        sent += 1;
+      }
+
+      if (options.stop) yield { type: 'stop', reason: options.stop };
 
       if (options.usage) {
         yield {

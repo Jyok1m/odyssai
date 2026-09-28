@@ -137,7 +137,9 @@ export function CharacterStep({ initial, arrival, saving, error, onAdvance }: Pr
           setCanExtract(event.canExtract);
           asked = event.sheet;
         }
-        if (event.type === "error") setChatError(t("errorGeneric"));
+        // Le tour a échoué après ses rejeux : le crédit a été rendu, et ce
+        // qu'il faut dire au joueur est qu'un second envoi a ses chances.
+        if (event.type === "error") setChatError(t("character.turnFailed"));
       });
     } catch (caught: unknown) {
       if (isOutOfCredits(caught)) setEmpty(true);

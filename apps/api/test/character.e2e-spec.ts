@@ -15,7 +15,7 @@ import { REDIS } from './../src/redis/redis.module.js';
 import { NARRATOR_LLM } from './../src/onboarding/narrator-llm.provider.js';
 import { GenerationQueueService } from './../src/onboarding/generation-queue.service.js';
 import { FakeRedis } from './../src/auth/testing/doubles.js';
-import { makeFakeLlm } from './../src/guide/testing/doubles.js';
+import { makeFakeLlm, type FakeLlm } from './../src/guide/testing/doubles.js';
 import {
   makeOnboardingPrisma,
   makeUser,
@@ -36,12 +36,19 @@ const SHEET = {
 interface Harness {
   app: INestApplication<App>;
   store: OnboardingStore;
+  llm: FakeLlm;
 }
 
 async function boot(options: {
   step?: string;
   chunks?: string[];
   model?: string;
+  // Le fournisseur refuse tous les appels, moderation comprise.
+  fail?: boolean;
+  // Ou seulement ceux-la, numerotes dans l'ordre ou ils partent.
+  failCalls?: number[];
+  // Ou tous, mais apres ce nombre de morceaux diffuses.
+  cutAfter?: number;
 } = {}): Promise<Harness> {
   const universeId = '01860000-0000-7000-8000-000000000001';
   const user = makeUser({
@@ -98,6 +105,13 @@ async function boot(options: {
     3600,
   );
 
+  const llm = makeFakeLlm({
+    chunks: options.chunks ?? ['Bonjour. ', 'Quel age ?'],
+    fail: options.fail,
+    failCalls: options.failCalls,
+    cutAfter: options.cutAfter,
+  });
+
   const previous = { ...process.env };
   process.env.LLM_NARRATOR_MODEL = options.model ?? 'modele/de-test';
 
@@ -110,14 +124,14 @@ async function boot(options: {
       .overrideProvider(GenerationQueueService)
       .useValue({ enqueue: async () => {}, onApplicationShutdown: async () => {} })
       .overrideProvider(NARRATOR_LLM)
-      .useValue(makeFakeLlm({ chunks: options.chunks ?? ['Bonjour. ', 'Quel age ?'] }))
+      .useValue(llm)
       .compile();
 
     const app = moduleFixture.createNestApplication<INestApplication<App>>();
     app.use(cookieParser());
     await app.init();
 
-    return { app, store };
+    return { app, store, llm };
   } finally {
     process.env = previous;
   }
@@ -330,6 +344,97 @@ describe('/onboarding/character (e2e)', () => {
     expect(body.character.name).toBe('Ael');
     expect(body.character.age).toBeUndefined();
     expect(body.missing).toEqual(['age', 'attributes']);
+
+    await harness.app.close();
+  });
+
+  /*
+    La fiche est ce qui sort de douze echanges payes : un seul appel malheureux
+    ne doit pas les emporter. Deux essais, et ce qui reste est un 503 que le
+    journal explique, la ou un modele injoignable rendait un 500 nu.
+  */
+  it('rejoue l extraction avant de renoncer', async () => {
+    const harness = await boot({ chunks: ['Je ne sais pas dresser de fiche.'] });
+
+    for (let index = 0; index < 3; index += 1) {
+      await say(harness.app, `message ${index}`).expect(200);
+    }
+
+    const before = harness.llm.calls.length;
+    await request(harness.app.getHttpServer())
+      .post('/onboarding/character/extract')
+      .set('Cookie', COOKIE)
+      .expect(503)
+      .expect({ code: 'upstream_error' });
+
+    expect(harness.llm.calls.length - before).toBe(2);
+
+    await harness.app.close();
+  });
+
+  /*
+    Un flux qui casse avant le premier mot est une panne de transport, et le
+    joueur n'a rien vu : le tour se rejoue sous lui, son credit reste pris une
+    fois, et il lit une reponse au lieu de "indisponible".
+
+    Le deuxieme appel est celui de la conversation : la moderation part la
+    premiere sur le meme client.
+  */
+  it('rejoue un tour rompu avant le premier mot', async () => {
+    const harness = await boot({ failCalls: [2] });
+
+    const stream = events((await say(harness.app, 'Elle vient du nord.').expect(200)).text);
+
+    expect(stream.some((event) => event.type === 'error')).toBe(false);
+    expect(
+      stream
+        .filter((event) => event.type === 'delta')
+        .map((event) => event.text)
+        .join(''),
+    ).toBe('Bonjour. Quel age ?');
+
+    // La reponse du second essai est celle qui est gardee, une seule fois.
+    expect(harness.store.messages.map((message) => message.role)).toEqual([
+      'user',
+      'assistant',
+    ]);
+
+    await harness.app.close();
+  });
+
+  /*
+    Passe le premier mot, il ne se rejoue plus : le joueur a lu le debut de la
+    phrase, et la reprendre depuis le debut sous ses yeux serait plus etrange
+    qu'un refus. Le credit est rendu, la reponse tronquee n'est pas gardee.
+  */
+  it('ne rejoue pas un tour rompu en cours de phrase', async () => {
+    const harness = await boot({ cutAfter: 1 });
+
+    const stream = events((await say(harness.app, 'Elle vient du nord.').expect(200)).text);
+
+    expect(stream.some((event) => event.type === 'error')).toBe(true);
+    // La moderation, puis un seul appel de conversation : rien n'a ete rejoue.
+    expect(harness.llm.calls).toHaveLength(2);
+    // Le message du joueur reste, la reponse coupee n'est pas gardee.
+    expect(harness.store.messages.map((message) => message.role)).toEqual(['user']);
+
+    await harness.app.close();
+  });
+
+  it('rend un 503 et non un 500 quand le fournisseur refuse', async () => {
+    const harness = await boot({ fail: true });
+
+    // Le tour echoue dans le flux, mais le message du joueur est en base : la
+    // conversation porte donc de quoi tenter une fiche.
+    for (let index = 0; index < 3; index += 1) {
+      await say(harness.app, `message ${index}`).expect(200);
+    }
+
+    await request(harness.app.getHttpServer())
+      .post('/onboarding/character/extract')
+      .set('Cookie', COOKIE)
+      .expect(503)
+      .expect({ code: 'upstream_error' });
 
     await harness.app.close();
   });

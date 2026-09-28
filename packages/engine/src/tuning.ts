@@ -12,6 +12,7 @@ import {
   ATTRIBUTE_MIN,
   ATTRIBUTES,
   CANON_FACTS_PER_TURN_MAX,
+  CHARACTER_ATTEMPTS_PER_CALL,
   CHARACTER_MESSAGE_MAX_CHARS,
   CHARACTER_NAME_MAX,
   CHARACTER_TURNS_MAX,
@@ -114,6 +115,8 @@ export const TUNING = {
     turnsMin: CHARACTER_TURNS_MIN,
     // Le cout est borne par le nombre de tours, le joueur etant authentifie.
     turnsMax: CHARACTER_TURNS_MAX,
+    // Essais d'un appel de l'etape, conversation comme extraction.
+    attemptsPerCall: CHARACTER_ATTEMPTS_PER_CALL,
   },
 
   // Le tour de jeu et la memoire du meneur.
