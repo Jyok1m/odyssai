@@ -104,7 +104,11 @@ Redis runs through a localhost tunnel on the server via `redis://:***@localhost:
 
 ## Agent fleet
 
+If working with OpenCode :
 Agent definitions, with their permissions and instructions, live in `.opencode/agents/`.
+
+If working with Claude Code :
+Agent definitions, with their permissions and instructions, live in `.claude/agents/`.
 
 | Agent | Owns |
 |---|---|

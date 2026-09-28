@@ -37,3 +37,4 @@ apps/api/scripts/measure-generation.ts
 
 # HOME du conteneur de test de la CI (corepack, cache pnpm).
 .ci-home/
+.claude/settings.local.json 
