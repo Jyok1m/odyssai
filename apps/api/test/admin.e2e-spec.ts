@@ -22,6 +22,9 @@ const COOKIE = `odyssai_session=${SESSION_ID}`;
 interface Harness {
   app: INestApplication<App>;
   store: AdminStore;
+  // Expose pour qu'un test puisse faire tomber une ecriture : une panne de la
+  // base ne se simule pas depuis le magasin, qui ne sait que reussir.
+  prisma: any;
 }
 
 async function boot(isAdmin: boolean): Promise<Harness> {
@@ -75,11 +78,13 @@ async function boot(isAdmin: boolean): Promise<Harness> {
     3600,
   );
 
+  const prisma = makeAdminPrisma(store) as any;
+
   const moduleFixture = await Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(REDIS)
     .useValue(redis)
     .overrideProvider(PRISMA)
-    .useValue(makeAdminPrisma(store))
+    .useValue(prisma)
     .overrideProvider(GenerationQueueService)
     .useValue({ enqueue: async () => {}, onApplicationShutdown: async () => {} })
     .compile();
@@ -88,7 +93,7 @@ async function boot(isAdmin: boolean): Promise<Harness> {
   app.use(cookieParser());
   await app.init();
 
-  return { app, store };
+  return { app, store, prisma };
 }
 
 let harness: Harness | null = null;
@@ -116,6 +121,7 @@ describe('Tableau de bord (e2e)', () => {
     ['patch', '/admin/bugs/00000000-0000-7000-8000-000000000000'],
     ['get', '/admin/bugs/00000000-0000-7000-8000-000000000000/screenshot'],
     ['get', '/admin/marketing/emails'],
+    ['delete', '/admin/users/00000000-0000-7000-8000-000000000000'],
   ])('refuse %s %s a un joueur ordinaire', async (method, path) => {
     harness = await boot(false);
 
@@ -223,6 +229,97 @@ describe('Tableau de bord (e2e)', () => {
       .send({ mode: 'add', credits: -999, note: 'sanction' });
 
     expect(response.body.credits).toBe(0);
+  });
+
+  /*
+    La suppression d'un joueur.
+
+    Elle passe par `ErasureService`, la meme regle que le depart volontaire.
+    Ce qui se verifie ici est la route : le code rendu, la ligne partie, et
+    les trois refus. Le sort des mondes et des personnages appartient a
+    `departure.e2e-spec.ts`, qui joue sur le double du parcours d'entree.
+  */
+  it('efface un joueur et rend 204', async () => {
+    harness = await boot(true);
+    const ael = harness.store.users.find((row) => row.username === 'Ael')!;
+
+    const response = await request(harness.app.getHttpServer())
+      .delete(`/admin/users/${ael.id}`)
+      .set('Cookie', COOKIE);
+
+    expect(response.status).toBe(204);
+    expect(harness.store.users.map((row) => row.username)).toEqual(['Patron']);
+    // La cascade emporte l'abonnement : le laisser derriere ferait un
+    // abonnement sans porteur, et une reserve que plus personne ne depense.
+    expect(harness.store.subscriptions).toHaveLength(0);
+  });
+
+  it('ne trouve plus la fiche du joueur efface', async () => {
+    harness = await boot(true);
+    const ael = harness.store.users.find((row) => row.username === 'Ael')!;
+
+    await request(harness.app.getHttpServer())
+      .delete(`/admin/users/${ael.id}`)
+      .set('Cookie', COOKIE);
+
+    const response = await request(harness.app.getHttpServer())
+      .get(`/admin/users/${ael.id}`)
+      .set('Cookie', COOKIE);
+
+    expect(response.status).toBe(404);
+  });
+
+  /*
+    Un joueur deja parti n'est pas une panne : l'ecran a pu etre ouvert avant
+    son depart, et il doit pouvoir le dire plutot que d'afficher un incident.
+  */
+  it('rend 404 sur un joueur qui n existe pas', async () => {
+    harness = await boot(true);
+
+    const response = await request(harness.app.getHttpServer())
+      .delete('/admin/users/00000000-0000-7000-8000-000000000000')
+      .set('Cookie', COOKIE);
+
+    expect(response.status).toBe(404);
+    expect(response.body.code).toBe('not_found');
+  });
+
+  /*
+    Une panne de la base rend 500, et rien n'est efface a moitie : un 204 sur
+    un compte toujours la ferait croire a une suppression qui n'a pas eu lieu.
+  */
+  it('rend 500 quand la base tombe, sans effacer personne', async () => {
+    harness = await boot(true);
+    const ael = harness.store.users.find((row) => row.username === 'Ael')!;
+
+    harness.prisma.user.delete = async () => {
+      throw new Error('database unavailable');
+    };
+
+    const response = await request(harness.app.getHttpServer())
+      .delete(`/admin/users/${ael.id}`)
+      .set('Cookie', COOKIE);
+
+    expect(response.status).toBe(500);
+    expect(harness.store.users).toHaveLength(2);
+  });
+
+  /*
+    Le droit d'administrer ne se repose par aucune route : se supprimer d'ici
+    laisserait un tableau de bord sans personne pour y entrer. Partir reste
+    possible par `DELETE /me`, ou la question est posee a la bonne personne.
+  */
+  it('refuse a un administrateur de s effacer lui-meme', async () => {
+    harness = await boot(true);
+    const me = harness.store.users.find((row) => row.username === 'Patron')!;
+
+    const response = await request(harness.app.getHttpServer())
+      .delete(`/admin/users/${me.id}`)
+      .set('Cookie', COOKIE);
+
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('cannot_delete_self');
+    expect(harness.store.users).toHaveLength(2);
   });
 
   it('liste les paliers avec le nombre d abonnes', async () => {

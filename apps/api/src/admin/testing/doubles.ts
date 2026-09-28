@@ -242,6 +242,24 @@ export function makeAdminPrisma(store: AdminStore) {
 
         return rows.map((row) => (include?.subscription ? withSubscription(row) : { ...row }));
       },
+      /*
+        La cascade de la base, en memoire : la ligne part, et son abonnement
+        avec elle. Ses ecritures du grand livre suivent l'abonnement.
+      */
+      delete: async ({ where }: any) => {
+        const at = store.users.findIndex((row) => row.id === where.id);
+        if (at < 0) throw new Error(`joueur inconnu : ${where.id}`);
+
+        const [removed] = store.users.splice(at, 1);
+        const owned = store.subscriptions.filter((row) => row.userId === where.id);
+        store.subscriptions = store.subscriptions.filter(
+          (row) => row.userId !== where.id,
+        );
+        store.entries = store.entries.filter(
+          (row) => !owned.some((sub) => sub.id === row.subscriptionId),
+        );
+        return removed;
+      },
     },
 
     plan: {
@@ -364,7 +382,14 @@ export function makeAdminPrisma(store: AdminStore) {
           .map((row) => ({ ...row })),
     },
 
-    universe: { count: async () => 0 },
+    /*
+      Ce que la regle du depart lit d'un joueur sans monde ni table. Les
+      mondes et les sieges eux-memes sont eprouves par `erasure.spec.ts` et
+      `departure.e2e-spec.ts`, sur le double du parcours d'entree qui
+      reproduit les cascades : les redoubler ici ferait deux jeux de regles.
+    */
+    universe: { count: async () => 0, findMany: async () => [] },
+    partyMember: { findMany: async () => [] },
     turn: { count: async () => 0 },
     llmUsage: { aggregate: async () => ({ _sum: { costUsd: null } }) },
     guideQuestion: { create: async () => ({}), deleteMany: async () => ({ count: 0 }) },
