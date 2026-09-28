@@ -32,6 +32,7 @@ async function boot(options: { isAdmin: boolean; phase: 'preregistration' | 'ope
       alphaPhase: options.phase,
       alphaNotice: false,
       salesOpen: false,
+      partyOpen: true,
       updatedAt: new Date(0),
     },
   };

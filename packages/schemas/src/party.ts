@@ -92,6 +92,8 @@ export const PartyErrorBodySchema = z.object({
     'stories_full',
     // La reserve de credits de ce joueur ne couvre pas sa part du monde.
     'out_of_credits',
+    // Le jeu a plusieurs est ferme : on n'ouvre ni ne rejoint de table.
+    'party_closed',
   ]),
 });
 

@@ -482,6 +482,10 @@ model SiteSettings {
   /// La vente des paliers. Fermee le temps de l'alpha.
   salesOpen Boolean @default(false) @map("sales_open")
 
+  /// Le jeu a plusieurs. Ferme le temps de le stabiliser : la feature reste
+  /// entiere, seules ses deux entrees se refusent.
+  partyOpen Boolean @default(false) @map("party_open")
+
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("site_settings")

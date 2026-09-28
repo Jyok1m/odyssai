@@ -17,6 +17,9 @@ export const AlphaStatusSchema = z.object({
   // La vente des paliers. Fermee le temps de l'alpha : tout le monde joue
   // sur le palier libre, et les premiers inscrits ont leur bonus.
   salesOpen: z.boolean(),
+  // Le jeu a plusieurs. Ferme le temps de le stabiliser : les deux entrees
+  // de la table se refusent, et l'ecran n'en propose plus le chemin.
+  partyOpen: z.boolean(),
   /*
     Les premiers inscrits et leur bonus : combien de places, combien de
     credits, combien sont prises, combien restent. Un cadeau, pas une porte :
@@ -37,6 +40,7 @@ export const UpdateAlphaRequestSchema = z.object({
   phase: AlphaPhaseSchema.optional(),
   notice: z.boolean().optional(),
   salesOpen: z.boolean().optional(),
+  partyOpen: z.boolean().optional(),
 });
 
 export type UpdateAlphaRequest = z.infer<typeof UpdateAlphaRequestSchema>;

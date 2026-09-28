@@ -33,6 +33,7 @@ async function boot() {
       alphaPhase: 'open',
       alphaNotice: false,
       salesOpen: false,
+      partyOpen: true,
       updatedAt: new Date(0),
     },
   };

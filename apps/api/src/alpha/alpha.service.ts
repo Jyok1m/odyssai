@@ -31,6 +31,7 @@ export class AlphaService {
       phase: settings.phase,
       notice: settings.notice,
       salesOpen: settings.salesOpen,
+      partyOpen: settings.partyOpen,
       founders: {
         seats: FOUNDER_BONUS.rank,
         credits: FOUNDER_BONUS.credits,
@@ -79,6 +80,9 @@ export class AlphaService {
         ...(request.salesOpen !== undefined
           ? { salesOpen: request.salesOpen }
           : {}),
+        ...(request.partyOpen !== undefined
+          ? { partyOpen: request.partyOpen }
+          : {}),
       },
     });
 
@@ -96,6 +100,7 @@ export class AlphaService {
     phase: AlphaStatus['phase'];
     notice: boolean;
     salesOpen: boolean;
+    partyOpen: boolean;
   }> {
     const row = await this.prisma.siteSettings.upsert({
       where: { id: true },
@@ -111,6 +116,7 @@ export class AlphaService {
       phase: phase.success ? phase.data : 'preregistration',
       notice: row.alphaNotice,
       salesOpen: row.salesOpen,
+      partyOpen: row.partyOpen,
     };
   }
 }

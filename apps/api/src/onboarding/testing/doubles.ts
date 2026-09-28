@@ -305,6 +305,7 @@ export interface SiteSettingsRow {
   alphaPhase: string;
   alphaNotice: boolean;
   salesOpen: boolean;
+  partyOpen: boolean;
   updatedAt: Date;
 }
 
@@ -313,6 +314,7 @@ const OPEN_SETTINGS: SiteSettingsRow = {
   alphaPhase: 'open',
   alphaNotice: false,
   salesOpen: false,
+  partyOpen: true,
   updatedAt: new Date(0),
 };
 

@@ -79,6 +79,7 @@ describe('Facturation (e2e)', () => {
         alphaPhase: 'open',
         alphaNotice: false,
         salesOpen: true,
+        partyOpen: true,
         updatedAt: new Date(0),
       },
     };
